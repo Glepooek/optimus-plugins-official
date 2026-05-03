@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="UAIDocx.Cli/UAIDocx.Cli.csproj" />
+  <Project Path="UAIDocx.Core/UAIDocx.Core.csproj" />
+</Solution>

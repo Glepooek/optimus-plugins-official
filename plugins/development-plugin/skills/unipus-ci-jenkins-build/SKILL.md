@@ -1,0 +1,88 @@
+---
+name: unipus:ci:jenkins-build
+description: 触发 Jenkins 构建并等待结果的自动化工具，支持指定 job 名称和构建参数
+globs:
+  - "jenkins_build/**"
+alwaysApply: false
+---
+
+# Jenkins 构建触发工具
+
+## 功能概述
+
+远程触发 Jenkins 构建并实时跟踪构建结果，支持：
+- **默认模式**：触发 config.yaml 中配置的第一个 job
+- **指定 job**：通过名称触发特定 job
+- **带参数构建**：支持传入 KEY=VALUE 格式的构建参数
+- 自动等待构建启动并轮询最终结果
+
+## 使用方法
+
+### 前置条件
+
+1. 已有 Jenkins 账号和访问权限
+2. 已配置 `jenkins_build/config.yaml`（参考 `config.yaml.example`）
+
+### 配置文件
+
+在 `.claude/skills/jenkins-build/jenkins_build/config.yaml` 中配置：
+
+```yaml
+jenkins:
+  url: "http://jenkins.example.com:8080"
+  username: "your_username"
+  api_token: "your_api_token"   # 优先使用，在 Jenkins → 用户设置 → API Token 中生成
+  # password: "your_password"   # 无 api_token 时使用密码
+
+jobs:
+  zk-api:
+    path: "view/aigc%E5%90%8E%E5%8F%B0%E7%9B%B8%E5%85%B3/job/zk-api"
+  # 添加更多 job：
+  # my-service:
+  #   path: "job/my-service"
+```
+
+### 执行构建
+
+优先使用 `scripts/run.sh` 脚本运行（自动检查配置、安装依赖）：
+
+```bash
+# 触发默认 job（config.yaml 第一个）
+.claude/skills/jenkins-build/scripts/run.sh
+
+# 触发指定 job
+.claude/skills/jenkins-build/scripts/run.sh zk-api
+
+# 触发带参数的 job
+.claude/skills/jenkins-build/scripts/run.sh zk-api BRANCH=main
+```
+
+也可以直接调用 Python 脚本（需手动安装依赖 `pip3 install requests pyyaml`）：
+
+```bash
+python3 jenkins_build/main.py [job_name] [KEY=VALUE ...]
+```
+
+## 代码位置
+
+- 主程序入口: `.claude/skills/jenkins-build/jenkins_build/main.py`
+- Jenkins 构建封装: `.claude/skills/jenkins-build/jenkins_build/jenkins_build.py`
+- 配置示例: `.claude/skills/jenkins-build/jenkins_build/config.yaml.example`
+
+## 构建完成后：API 变动通知
+
+`skill.run()` 返回 `(result, commits)`，其中 `commits` 是本次构建的 commit message 列表（从 Jenkins changeSet 提取）。
+
+构建结果出来后，**必须**调用 `notify-api-change` skill，并将以下信息传入：
+- `job_name`：job 名称
+- `build_number`：构建号
+- `build_result`：构建结果（SUCCESS / FAILURE 等）
+- `jenkins_url` + `job_path`：用于拼接构建地址
+- `commits`：本次 changeSet 的 commit message 列表
+
+## 注意事项
+
+- `api_token` 字段优先于 `password`，建议在 Jenkins 用户设置中生成 API Token 使用
+- job `path` 需与 Jenkins URL 中的路径一致，特殊字符需 URL 编码
+- 构建触发后会自动轮询状态，默认每 10 秒查询一次
+- 返回值：SUCCESS 时退出码为 0，其他结果退出码为 1

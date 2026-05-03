@@ -1,0 +1,36 @@
+{
+  "name": "unipus-plugins-offical",
+  "displayName": "Unipus 官方插件仓库",
+  "description": "Unipus 公司官方 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD 等企业级开发工具链",
+  "version": "1.0.0",
+  "owner": {
+    "name": "unipus",
+    "url": "https://www.unipus.cn"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Glepooek/unipus-plugins-offical"
+  },
+  "homepage": "https://github.com/Glepooek/unipus-plugins-offical",
+  "keywords": [
+    "unipus",
+    "enterprise",
+    "development",
+    "testing",
+    "qa",
+    "frontend",
+    "backend",
+    "office",
+    "feishu",
+    "prd",
+    "ci-cd"
+  ],
+  "license": "MIT",
+  "plugins": [
+    {
+      "name": "development-plugin",
+      "source": "./plugins/development-plugin",
+      "description": "企业级全栈开发工具集，包含 25 个专业技能：前端/后端开发、测试设计、PRD 管理、Office 文档处理、飞书集成、CI/CD 自动化等"
+    }
+  ]
+}

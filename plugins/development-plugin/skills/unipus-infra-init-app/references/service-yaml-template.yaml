@@ -1,0 +1,94 @@
+# service.yaml 模板
+# 字段说明：
+#   name: 服务唯一标识，小写字母+连字符，与 Git 仓库名一致
+#   displayName: 服务中文展示名称，用于平台 UI 显示
+#   team: 所属团队，与 Git 仓库 group 名称对应
+#   owner: 服务负责人，对应 Git config user.name
+#   repo: 完整 Git 仓库 SSH URL
+#   language: 运行时语言，枚举：java / go / python / node
+#   version: 语言运行时版本，字符串格式
+#   framework: 使用的框架名称
+#   port: 服务监听端口，整数
+#   health.livenessPath: 存活探针 HTTP GET 路径
+#   health.readinessPath: 就绪探针 HTTP GET 路径
+#   deploy.envs: 各环境部署配置
+#     enabled: 是否在该环境启用
+#     replicas: 副本数
+#     resources.requests/limits: CPU(m) 和内存(Mi/Gi)
+#   dependencies: 依赖声明（可选）
+#     db: MySQL 数据库依赖，name 为数据库标识
+#     redis: Redis 缓存依赖，name 为实例标识
+#     services: 其他平台服务依赖列表
+#   network.domains: 域名配置（可选）
+#     env: 适用环境
+#     subdomain: 子域名前缀，完整域名为 {subdomain}.unipus.cn
+
+apiVersion: platform.unipus.cn/v1alpha1
+kind: ServiceDefinition
+metadata:
+  name: {服务名称}
+  displayName: {展示名称}
+  team: {团队}
+  owner: {负责人}
+  repo: {仓库地址}
+spec:
+  runtime:
+    language: {语言}
+    version: "{语言版本}"
+    framework: {框架}
+    port: {端口}
+    health:
+      livenessPath: {liveness路径}
+      readinessPath: {readiness路径}
+  deploy:
+    envs:
+      dev:
+        enabled: true
+        replicas: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+      test:
+        enabled: true
+        replicas: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+      prod:
+        enabled: true
+        replicas: 2
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+  # 以下字段按需生成，无依赖时删除对应块
+  dependencies:
+    # MySQL 依赖（需要时取消注释）
+    # db:
+    #   name: {数据库标识}
+    # Redis 依赖（需要时取消注释）
+    # redis:
+    #   name: {Redis实例标识}
+    # 其他服务依赖（需要时取消注释）
+    # services:
+    #   - name: {依赖服务名}
+  # 域名配置（需要时取消注释）
+  # network:
+  #   domains:
+  #     - env: dev
+  #       subdomain: {子域名前缀}-dev
+  #     - env: test
+  #       subdomain: {子域名前缀}-test
+  #     - env: prod
+  #       subdomain: {子域名前缀}

@@ -1,0 +1,12 @@
+jenkins:
+  url: "http://jenkins.unipus.cn:8080"
+  username: "your_username"
+  api_token: "your_api_token"   # 优先使用，在 Jenkins → 用户设置 → API Token 中生成
+  # password: "your_password"   # 无 api_token 时使用密码
+
+jobs:
+  zk-api:
+    path: "view/aigc%E5%90%8E%E5%8F%B0%E7%9B%B8%E5%85%B3/job/zk-api"
+  # 添加更多 job 示例：
+  # my-service:
+  #   path: "job/my-service"

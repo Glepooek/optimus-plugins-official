@@ -1,0 +1,9 @@
+jenkins:
+  url: "https://jenkins-tc.unipus.cn"
+  username: "zhangqiyu"
+  api_token: "1106c87f2ad911b306a33b361e46170c6e"
+  password: ""
+
+jobs:
+  lms-api-test:
+    path: "view/mid/job/lms-api-test"

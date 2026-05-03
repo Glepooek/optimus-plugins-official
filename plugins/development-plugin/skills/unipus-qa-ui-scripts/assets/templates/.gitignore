@@ -1,0 +1,10 @@
+.env
+node_modules/
+test-results/
+test-report/
+playwright-report/
+test-screenshots/
+midscene_run/
+e2e/.auth/state.json
+playwright-temp.config.ts
+*.local

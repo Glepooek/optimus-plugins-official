@@ -1,0 +1,35 @@
+{
+  "test": {
+    "auth": {
+      "username": "test-user@example.com",
+      "password": "test-password",
+      "loginUrl": "https://your-app.test/login"
+    },
+    "pages": {
+      "home": "https://your-app.test",
+      "dashboard": "https://your-app.test/dashboard"
+    }
+  },
+  "staging": {
+    "auth": {
+      "username": "staging-user@example.com",
+      "password": "staging-password",
+      "loginUrl": "https://your-app.staging/login"
+    },
+    "pages": {
+      "home": "https://your-app.staging",
+      "dashboard": "https://your-app.staging/dashboard"
+    }
+  },
+  "production": {
+    "auth": {
+      "username": "prod-user@example.com",
+      "password": "prod-password",
+      "loginUrl": "https://your-app.com/login"
+    },
+    "pages": {
+      "home": "https://your-app.com",
+      "dashboard": "https://your-app.com/dashboard"
+    }
+  }
+}
