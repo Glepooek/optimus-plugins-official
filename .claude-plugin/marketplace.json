@@ -1,5 +1,5 @@
 {
-  "name": "unipus-plugins-offical",
+  "name": "unipus-plugins-official",
   "displayName": "Unipus 官方插件仓库",
   "description": "Unipus 公司官方 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD 等企业级开发工具链",
   "version": "1.0.0",
@@ -28,9 +28,39 @@
   "license": "MIT",
   "plugins": [
     {
-      "name": "development-plugin",
-      "source": "./plugins/development-plugin",
-      "description": "企业级全栈开发工具集，包含 25 个专业技能：前端/后端开发、测试设计、PRD 管理、Office 文档处理、飞书集成、CI/CD 自动化等"
+      "name": "unipus-frontend-plugin",
+      "source": "./plugins/unipus-frontend-plugin",
+      "description": "前端开发工具集：React/Vue 开发、UI 设计规范、组件库、前端架构文档等"
+    },
+    {
+      "name": "unipus-backend-plugin",
+      "source": "./plugins/unipus-backend-plugin",
+      "description": "后端开发工具集：API 开发、后端架构设计、数据库设计、API 文档生成等"
+    },
+    {
+      "name": "unipus-qa-plugin",
+      "source": "./plugins/unipus-qa-plugin",
+      "description": "测试 QA 工具集：测试用例设计、测试报告、JMeter 脚本、UI 自动化、飞书测试项目管理等"
+    },
+    {
+      "name": "unipus-prd-plugin",
+      "source": "./plugins/unipus-prd-plugin",
+      "description": "PRD 管理工具集：PRD 文档创建、优化、审查，产品需求全流程管理"
+    },
+    {
+      "name": "unipus-feishu-plugin",
+      "source": "./plugins/unipus-feishu-plugin",
+      "description": "飞书集成工具集：飞书文档读写、文档上传、文档加载等自动化操作"
+    },
+    {
+      "name": "unipus-office-plugin",
+      "source": "./plugins/unipus-office-plugin",
+      "description": "Office 文档处理工具集：Word、Excel、PowerPoint、PDF 文档的生成和处理"
+    },
+    {
+      "name": "unipus-devops-plugin",
+      "source": "./plugins/unipus-devops-plugin",
+      "description": "DevOps 工具集：Jenkins CI/CD、API 变更通知、应用初始化、项目分析等"
     }
   ]
 }
