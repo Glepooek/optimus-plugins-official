@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN}"
+      }
+    },
+    "mastergo-magic-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@mastergo/magic-mcp",
+        "--token=${MASTERGO_TOKEN}",
+        "--url=https://mastergo.com"
+      ],
+      "env": {}
+    }
+  }
+}
