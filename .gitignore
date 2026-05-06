@@ -422,3 +422,4 @@ FodyWeavers.xsd
 .claude/**/*.local.*
 .claude/memory/
 .claude/plans/
+**/.tip-state.json

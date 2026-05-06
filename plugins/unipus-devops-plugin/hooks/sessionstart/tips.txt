@@ -1,0 +1,277 @@
+[交互] 🚀 /fast 快速模式\n功能：使用 /fast 命令切换快速响应模式\n效果：适合快速迭代时减少等待，再次输入 /fast 可切回默认模式\n例子：需要快速来回试方案时，先用 /fast 提高响应速度
+---
+[交互] 💾 /commit 自动提交\n功能：快速创建 git 提交，自动分析改动生成提交信息\n效果：根据 git diff 智能生成符合规范的 commit message\n例子：/commit 会自动检查改动并创建提交，支持 Co-Authored-By 署名
+---
+[交互] 🔍 /remember 会话记忆\n功能：保存当前会话的重要状态和上下文\n效果：下次会话可以快速恢复工作进度，无需重新说明背景\n例子：在完成一个复杂任务后使用 /remember 保存进度
+---
+[交互] 🌿 /worktree 隔离环境\n功能：在独立的 git worktree 中工作，不影响主工作区\n效果：可以同时处理多个功能分支，互不干扰\n例子：/worktree feature-x 创建隔离环境开发新功能
+---
+[交互] 🔄 /loop 定期任务\n功能：设置定期执行的任务或命令\n效果：按指定间隔自动运行，适合监控、轮询等场景\n例子：/loop 5m 检查部署状态 - 每5分钟检查一次
+---
+[交互] 🧹 /clear 清空会话\n功能：快速清空当前对话历史，开始一个干净的新上下文\n效果：避免旧上下文干扰当前问题，适合切换任务时使用\n例子：/clear 后重新描述当前问题，让 Claude 聚焦新任务
+---
+[交互] 🗜️ /compact 压缩上下文\n功能：压缩当前会话，保留关键信息并减少上下文占用\n效果：长对话里可以降低上下文压力，同时尽量保留核心进展\n例子：讨论很久后用 /compact，把历史整理成更紧凑的上下文
+---
+[交互] 🔁 /resume 恢复会话\n功能：恢复之前的 Claude Code 会话，继续上次的工作\n效果：不用重新解释背景，适合跨时间续做同一个任务\n例子：重新打开终端后用 /resume 继续昨天的调试过程
+---
+[交互] 📺 Ctrl+O 视图切换\n功能：使用 Ctrl+O 快捷键切换详细/焦点视图\n效果：焦点模式只显示对话，详细模式显示所有工具调用\n例子：调试时用详细模式，日常开发用焦点模式
+---
+[交互] 🔄 Ctrl+L 重新生成\n功能：使用 Ctrl+L 重新生成最后一条响应\n效果：如果对答案不满意，可以获得不同的回答\n例子：代码方案不理想时，Ctrl+L 获取替代方案
+---
+[交互] ❓ /help 使用帮助\n功能：查看 Claude Code 的帮助信息和常见用法入口\n效果：当你忘记某个命令、能力或交互方式时，可以先从这里找线索\n例子：不确定有哪些内置能力时，先输入 /help
+---
+[交互] 📎 @ 符号快速引用\n功能：在输入框中使用 @ 符号可以快速引用文件、文件夹或工具输出\n效果：Claude 会自动读取内容并理解上下文，无需手动复制粘贴\n例子：输入 @src/main.ts 可以让 Claude 分析该文件的代码结构
+---
+[交互] ⚡ ! 命令前缀\n功能：在输入框中使用 ! 前缀可以直接运行 shell 命令\n效果：命令输出会自动进入对话上下文，Claude 可以看到结果并基于此给出建议\n例子：! git status 可以让 Claude 看到当前 git 状态并提供操作建议
+---
+[交互] 🖼️ 拖拽图片\n功能：直接拖拽图片文件到对话框\n效果：Claude 自动识别图片内容并提供分析\n例子：拖拽 UI 设计图，Claude 帮你分析并生成实现初稿
+---
+[工具] 📚 Glob 文件搜索\n功能：使用 Glob 工具搜索符合模式的文件\n效果：在 Claude Code 里很适合按模式查找文件，支持复杂的通配符模式\n例子：Glob(pattern="**/*.ts") 搜索所有 TypeScript 文件
+---
+[工具] 🔎 Grep 内容搜索\n功能：使用 Grep 工具在文件中搜索特定内容\n效果：支持正则表达式，可按文件类型过滤，显示上下文\n例子：Grep(pattern="function.*export") 搜索导出的函数定义
+---
+[工具] 📖 Read 多格式读取\n功能：Read 工具可以读取文本、图片、PDF 和 Jupyter notebook\n效果：Claude 可以直接分析图片内容、PDF 文档和交互式笔记本\n例子：Read 一个架构图可以让 Claude 理解系统设计
+---
+[工具] ✅ TaskCreate\n功能：创建任务跟踪多步骤工作的进度\n效果：清晰展示剩余工作，标记完成项，避免遗漏\n例子：TaskCreate 创建待办列表，完成后 TaskUpdate 标记
+---
+[Hook] 🪝 Hooks 自动化\n功能：Hooks 在特定事件时自动执行命令或脚本\n效果：实现自动格式化、测试、通知等自动化工作流\n例子：PostToolUse hook 可以在文件修改后自动运行 prettier
+---
+[Hook] ⚙️ PreToolUse Hook\n功能：在工具执行前拦截，可以验证、修改或阻止操作\n效果：实现安全检查、参数验证、条件执行等逻辑\n例子：PreToolUse hook 可以阻止删除重要文件的操作
+---
+[Hook] 📤 PostToolUse Hook\n功能：在工具成功执行后自动运行命令\n效果：实现后处理任务，如格式化、测试、部署等\n例子：Write 文件后自动运行 eslint --fix 修复代码风格
+---
+[Hook] 🚦 SessionStart Hook\n功能：在 Claude 启动时自动执行命令\n效果：可以显示欢迎消息、初始化环境、检查系统状态\n例子：显示每日技巧、检查 git 状态、启动开发服务器
+---
+[交互] 📊 /hooks 管理界面\n功能：打开 hooks 管理界面查看和配置所有 hooks\n效果：查看、启用或调整当前 hook 配置的入口\n例子：/hooks 查看当前激活的 SessionStart 和 PostToolUse hooks
+---
+[配置] 🛡️ permissions.allow\n功能：在 settings.json 中配置自动允许的命令模式\n效果：匹配的命令无需确认，提高开发效率\n例子：allow: ["Bash(npm:*)"] 自动允许所有 npm 命令
+---
+[配置] 🚫 permissions.deny\n功能：配置明确禁止的危险操作\n效果：防止误操作导致数据丢失或系统损坏\n例子：deny: ["Bash(rm -rf:*)"] 阻止递归删除操作
+---
+[配置] 🎛️ defaultMode 权限模式\n功能：控制操作确认策略，支持 acceptEdits（自动接受编辑）、auto（智能判断）、plan（计划审批）等模式\n效果：平衡开发效率和安全性，可按任务类型切换\n例子：日常开发用 acceptEdits，复杂重构用 plan 模式
+---
+[配置] 📄 CLAUDE.md 项目指令\n功能：在项目根目录创建 CLAUDE.md 提供项目特定指令\n效果：自动加载到系统提示，Claude 遵循项目规范\n例子：指定代码风格、测试要求、部署流程等
+---
+[配置] 🎨 outputStyle\n功能：控制 Claude 的响应风格\n效果：Explanatory 详细教育性，Concise 简洁专业\n例子：outputStyle: "Explanatory" 获得带说明的详细响应
+---
+[配置] 🗂️ additionalDirectories 持久目录权限\n功能：在 settings.json 中配置额外目录，永久扩展权限作用域\n效果：每次启动 Claude 都可以访问这些项目外的目录，无需重复配置\n例子：{"permissions": {"additionalDirectories": ["/opt/tools", "../sibling-project"]}}
+---
+[配置] 🔐 env 环境变量\n功能：在 settings.json 中设置环境变量\n效果：为 Claude 会话提供配置，如调试开关或功能标记\n例子：env: {"DEBUG": "true"} 启用调试模式
+---
+[配置] 🌍 language\n功能：设置 Claude 响应的首选语言\n效果：Claude 用指定语言回复，适合非英语用户\n例子：language: "chinese" 获得中文响应
+---
+[配置] 🎭 agent 配置\n功能：使用特定 agent 配置（系统提示和工具限制）\n效果：针对特定场景优化 Claude 的行为\n例子：agent: "code-reviewer" 专注于代码审查任务
+---
+[配置] 💭 alwaysThinkingEnabled\n功能：控制是否启用思考模式\n效果：Claude 在回答前进行内部思考，提供更深思熟虑的答案\n例子：alwaysThinkingEnabled: true 启用深度思考
+---
+[配置] 🔒 sandbox 沙箱\n功能：配置沙箱环境限制文件系统和网络访问\n效果：提高安全性，防止意外访问敏感数据\n例子：sandbox.filesystem.denyWrite 阻止写入特定目录
+---
+[CLI] 📁 --add-dir 临时目录权限\n功能：启动时通过命令行参数临时添加目录访问权限\n效果：仅本次会话生效，适合临时需求或动态场景，可与配置文件的目录合并\n例子（Windows）：claude --add-dir D:/WebProjects --add-dir E:/OtherProject\n例子（Linux/Mac）：claude --add-dir /var/www --add-dir /home/user/project
+---
+[CLI] 🩺 claude doctor 健康检查\n功能：检查 Claude Code 自动更新相关的健康状态\n效果：遇到更新异常时可先做自检，确认更新链路是否正常\n例子：claude doctor 用于排查更新失败或升级异常
+---
+[CLI] 🖨️ -p / --print 非交互输出\n功能：以非交互模式运行 Claude，直接输出结果后退出\n效果：适合脚本、管道和自动化场景，不进入交互会话\n例子：claude -p "总结这个目录结构"
+---
+[CLI] 🧾 --output-format 输出格式\n功能：配合 --print 指定输出格式，如 text、json、stream-json\n效果：便于脚本消费 Claude 输出，接入自动化流程更稳定\n例子：claude -p --output-format json "生成结构化摘要"
+---
+[CLI] ⏭️ -c / --continue 继续最近会话\n功能：继续当前目录下最近的一次对话\n效果：快速接着上次工作，不必手动选择历史会话\n例子：claude -c 直接回到这个项目最近一次会话
+---
+[CLI] ♻️ -r / --resume 按会话恢复\n功能：通过会话 ID 恢复指定会话，也可打开交互选择器\n效果：比 --continue 更精确，适合恢复较早的某个会话\n例子：claude -r 先打开会话列表，再选择要恢复的那次工作
+---
+[CLI] 🐞 --debug 调试模式\n功能：启动 Claude 时打开调试日志，可选按分类过滤\n效果：排查 hooks、API、文件处理等问题时更容易定位原因\n例子：claude --debug hooks 用来查看 hook 执行细节
+---
+[CLI] ⚙️ --settings 额外配置\n功能：启动时加载指定的 settings JSON 文件或 JSON 字符串\n效果：适合临时覆盖配置，或在脚本里注入一组会话专用设置\n例子：claude --settings local-debug-settings.json
+---
+[CLI] 🛂 --permission-mode 权限模式\n功能：启动时直接指定权限模式，如 acceptEdits、auto、plan 等\n效果：可以按任务类型快速切换交互风格，而不用先改配置文件\n例子：claude --permission-mode plan 用计划模式处理复杂改动
+---
+[CLI] 🧠 --model 指定模型\n功能：启动时为当前会话指定模型，如 sonnet、opus 或完整模型名\n效果：可以按任务复杂度切换模型，不必先改全局 settings.json\n例子：claude --model opus 用更强模型处理复杂任务
+---
+[CLI] 🎭 --agent 指定代理\n功能：启动时为当前会话指定 agent，覆盖默认 agent 配置\n效果：适合临时切换到特定工作风格，而不影响常用设置\n例子：claude --agent code-reviewer 启动一个偏代码审查的会话
+---
+[CLI] 🌿 -w / --worktree 工作树会话\n功能：启动时直接创建新的 git worktree 并在其中开始会话\n效果：适合隔离新功能或实验性改动，避免污染主工作区\n例子：claude --worktree feature-x 在新 worktree 中开始开发
+---
+[CLI] 📝 --verbose 详细模式\n功能：启动时覆盖配置中的 verbose 设置，显示更详细的会话信息\n效果：适合需要更多上下文细节时临时打开，不必改全局配置\n例子：claude --verbose 用更详细的方式启动当前会话
+---
+[CLI] 🔌 --mcp-config MCP 配置输入\n功能：启动时从指定 JSON 文件或 JSON 字符串加载 MCP 服务器配置\n效果：适合临时接入一组 MCP 服务，或在脚本里注入特定外部能力\n例子：claude --mcp-config my-mcp.json
+---
+[CLI] 🏷️ --name 会话命名\n功能：为当前会话设置显示名称\n效果：在 /resume 列表和终端标题里更容易识别这次工作的主题\n例子：claude --name "fix-auth-bug"
+---
+[CLI] 🧪 claude --help 帮助总览\n功能：查看 Claude CLI 所有参数、命令和子命令\n效果：不确定某个参数是否存在时，先用帮助信息核对最稳妥\n例子：claude --help 查看 --debug、--settings、--add-dir 的用法
+---
+[CLI] 🧩 claude mcp 管理 MCP\n功能：通过 CLI 管理和配置 MCP 服务器\n效果：便于接入或排查 GitHub、数据库、API 等外部能力\n例子：claude mcp list 查看当前已配置的 MCP 服务器
+---
+[CLI] 🔌 claude plugins 管理插件\n功能：通过 CLI 查看和管理 Claude Code 插件\n效果：适合检查插件是否安装、启用，或排查某个 skill 为什么不可用\n例子：claude plugins list 查看当前已安装的插件
+---
+[CLI] 🔐 claude auth 认证管理\n功能：通过 CLI 管理 Claude Code 的认证状态和登录方式\n效果：适合排查登录问题，或切换认证配置\n例子：claude auth status 查看当前认证状态
+---
+[CLI] ⬆️ claude update 更新 Claude Code\n功能：检查更新并安装新版 Claude Code\n效果：当你想获取新能力或修复已知问题时，可以直接升级\n例子：claude update 检查并安装最新版本
+---
+[CLI] 🤖 claude agents 代理列表\n功能：查看当前已配置的 agents 列表\n效果：适合确认有哪些可用代理，以及某个 agent 名称是否配置正确\n例子：claude agents 查看当前可用 agent 列表
+---
+[集成] 🎯 Skills 工作流程\n功能：Skills 是预定义的工作流程，让 Claude 遵循特定步骤\n效果：确保复杂任务按最佳实践执行，提高质量和一致性\n例子：/commit 调用 commit skill 确保提交流程规范
+---
+[集成] 🔌 Plugins 扩展系统\n功能：从市场安装插件扩展 Claude 的能力\n效果：获取社区贡献的技能、MCP 服务器和自定义命令\n例子：安装 superpowers 插件获取高级开发工作流
+---
+[集成] 🌐 MCP 服务器\n功能：Model Context Protocol 服务器提供外部工具集成\n效果：连接 GitHub、数据库、API 等外部系统\n例子：GitHub MCP 可以直接在对话中操作 issue 和 PR
+---
+[集成] 📝 .mcp.json 配置\n功能：在项目根目录创建 .mcp.json 配置项目级 MCP 服务器\n效果：团队共享 MCP 配置，确保开发环境一致\n例子：配置项目数据库连接，所有成员自动可用
+---
+[集成] 📦 enabledPlugins\n功能：启用特定插件，使用 name@marketplace 格式\n效果：激活插件提供的技能、命令和 MCP 服务器\n例子：enabledPlugins: {"superpowers@claude-plugins-official": true}
+---
+[工作流与自动化] 🧠 EnterPlanMode\n功能：规划复杂任务，生成详细的实施计划\n效果：分步骤执行，每步完成后检查点，降低风险\n例子：重构大型模块时先生成计划，逐步验证执行
+---
+[工作流与自动化] 🔧 update-config Skill\n功能：使用 update-config skill 修改 settings.json\n效果：安全地添加 hooks、permissions 等配置\n例子：Skill(update-config) 添加自动格式化 hook
+---
+[工作流与自动化] ⏱️ CronCreate\n功能：创建基于 cron 表达式的定时任务\n效果：在指定时间自动执行任务，支持持久化\n例子：CronCreate 每天早上9点显示技巧，支持重启后继续
+---
+[排障] 🔐 /permissions 权限管理\n功能：查看和调整当前会话的工具权限设置\n效果：当某些操作总被拦截或频繁询问时，可以更快定位权限问题\n例子：需要频繁运行命令时先看 /permissions 当前模式是否合适
+---
+[排障] 📈 /status 会话状态\n功能：查看当前 Claude Code 会话和环境状态\n效果：快速了解当前配置、模式或连接状态，适合排查“为什么行为不一样”\n例子：感觉本次会话和之前表现不同，可以先看 /status
+---
+[排障] 🔄 /cost 成本查看\n功能：查看当前会话或最近使用的成本信息\n效果：在长会话、重度使用或自动化场景里更容易感知消耗情况\n例子：长时间排查问题后用 /cost 看看这轮会话花费如何
+---
+[交互] ⚙️ /config 快速配置\n功能：打开交互式配置界面修改 settings.json\n效果：无需手动编辑 JSON，通过 UI 快速调整配置\n例子：/config 修改主题、模型、输出风格等常用设置
+---
+[交互] 🤖 /agents 代理管理\n功能：查看和管理当前可用的 agents 配置\n效果：快速了解哪些 agent 可用，每个 agent 的能力和限制\n例子：/agents 查看 code-reviewer、test-runner 等 agent
+---
+[交互] 🔌 /mcp MCP 管理\n功能：查看和管理当前连接的 MCP 服务器\n效果：检查 MCP 服务器状态、查看可用工具和资源\n例子：/mcp 查看 GitHub、数据库等 MCP 服务器连接状态
+---
+[交互] 🧩 /plugins 插件管理\n功能：查看已安装插件和可用技能\n效果：快速了解哪些插件已启用，哪些 skills 可用\n例子：/plugins 查看 superpowers、code-review 等插件状态
+---
+[交互] 🎯 /skills 技能列表\n功能：查看所有可用的 skills 及其用途\n效果：当你忘记某个 skill 名称或用法时快速查找\n例子：/skills 查看 brainstorming、tdd、debugging 等 skill
+---
+[交互] ⏸️ Ctrl+C 取消操作\n功能：中断当前正在生成的响应\n效果：当 Claude 响应方向不对时快速停止，节省时间和成本\n例子：发现 Claude 理解错误时按 Ctrl+C 立即停止
+---
+[交互] 🔍 Ctrl+R 搜索历史\n功能：搜索历史命令和会话内容\n效果：快速找到之前使用过的命令或讨论过的内容\n例子：Ctrl+R 搜索之前运行的复杂命令
+---
+[交互] ⌨️ Tab 自动补全\n功能：在输入命令时按 Tab 触发自动补全\n效果：快速输入文件路径、命令名称，减少输入错误\n例子：输入 @src/co 后按 Tab 补全文件路径
+---
+[工具] ✏️ Edit 精确编辑\n功能：通过精确匹配字符串替换来编辑文件\n效果：只修改需要变更的部分，保留其他内容不变\n例子：Edit 修改函数实现，保持格式和注释不变
+---
+[工具] 📝 Write 创建文件\n功能：创建新文件或完全重写现有文件\n效果：适合生成新代码、配置文件或文档\n例子：Write 创建新的组件文件或配置文件
+---
+[工具] 💻 Bash 命令执行\n功能：执行 shell 命令并获取输出\n效果：运行构建、测试、部署等任何命令行操作\n例子：Bash 运行 npm test 查看测试结果
+---
+[工具] 🤖 Agent 派生代理\n功能：派生子 agent 处理独立任务\n效果：并行处理多个独立任务，或隔离复杂研究工作\n例子：Agent 派生 Explore agent 搜索代码库，同时你继续主任务
+---
+[工具] 👥 TeamCreate 团队协作\n功能：创建 agent 团队协作完成复杂项目\n效果：多个 agent 分工合作，并行处理前端、后端、测试等\n例子：TeamCreate 创建团队，分配 frontend、backend、tester agent
+---
+[工具] 🌲 EnterWorktree 进入工作树\n功能：创建并进入独立的 git worktree 环境\n效果：隔离实验性改动，不影响主工作区\n例子：EnterWorktree 创建 feature-branch worktree 进行开发
+---
+[工具] 🔙 ExitWorktree 退出工作树\n功能：退出 worktree 并选择保留或删除\n效果：完成实验后清理环境，或保留工作继续使用\n例子：ExitWorktree 删除失败的实验分支
+---
+[工具] 🔍 LSP 代码智能\n功能：使用 Language Server Protocol 进行代码分析\n效果：查找定义、引用、实现，获取悬停信息\n例子：LSP 查找函数定义位置和所有调用点
+---
+[工具] 🌐 WebSearch 网络搜索\n功能：搜索网络获取最新信息\n效果：查找文档、解决方案、最新技术信息\n例子：WebSearch 查找最新的 API 文档和示例
+---
+[工具] 🌍 WebFetch 获取网页\n功能：获取并分析网页内容\n效果：读取文档、教程、API 参考等在线资源\n例子：WebFetch 获取官方文档的完整内容
+---
+[配置] 📚 Memory 自动记忆\n功能：自动记忆项目、用户偏好和反馈\n效果：跨会话保持上下文，无需重复说明背景\n例子：Memory 记住你的编码风格、项目结构、常用命令
+---
+[配置] 📂 .claude 目录结构\n功能：~/.claude 存储全局配置、插件、hooks\n效果：了解配置文件位置，便于手动调整\n例子：~/.claude/settings.json 全局配置，~/.claude/hooks 自定义 hooks
+---
+[配置] 📊 statusLine 状态栏\n功能：配置自定义状态栏显示信息\n效果：实时显示 git 状态、任务进度等信息\n例子：statusLine 显示当前分支、未提交改动数量
+---
+[配置] 🎨 theme 主题\n功能：设置 Claude Code 界面主题\n效果：选择喜欢的颜色方案，提升视觉体验\n例子：theme: "dark-ansi" 使用深色 ANSI 主题
+---
+[工作流与自动化] 🧠 Memory 工作流\n功能：使用 Memory 系统持久化项目知识\n效果：保存项目架构、决策、反馈，下次自动加载\n例子：Memory 记住"这个项目用 DDD 架构，禁用 mocks"
+---
+[工作流与自动化] 🌳 Git Worktree 工作流\n功能：用 worktree 隔离不同功能开发\n效果：同时处理多个分支，快速切换上下文\n例子：主分支修 bug，worktree 开发新功能，互不干扰
+---
+[工作流与自动化] 🤝 Agent 派生工作流\n功能：派生多个 agent 并行处理独立任务\n效果：加速开发，一个 agent 写代码，另一个写测试\n例子：Agent 派生 code-simplifier 重构，你继续新功能
+---
+[工作流与自动化] 👥 团队协作工作流\n功能：创建 agent 团队分工协作\n效果：大型项目按模块分工，提高并行度和质量\n例子：TeamCreate 分配 frontend、backend、database、test agent
+---
+[工具] 📋 TaskList 列出任务\n功能：列出当前会话的所有任务及其状态\n效果：查看待办、进行中、已完成的任务，追踪进度\n例子：TaskList 查看所有任务，选择下一个要处理的任务
+---
+[工具] 🔍 TaskGet 获取任务\n功能：获取特定任务的详细信息\n效果：查看任务的完整描述、依赖关系、阻塞状态\n例子：TaskGet(taskId="1") 查看任务详情后再开始工作
+---
+[工具] ✏️ TaskUpdate 更新任务\n功能：更新任务状态、描述、所有者、依赖关系\n效果：标记任务为进行中或已完成，设置依赖\n例子：TaskUpdate(taskId="1", status="completed") 标记完成
+---
+[工具] 📤 TaskOutput 任务输出\n功能：获取后台任务的执行输出\n效果：查看后台 agent 或 shell 任务的运行结果\n例子：TaskOutput(task_id="abc") 查看后台任务输出
+---
+[工具] ⛔ TaskStop 停止任务\n功能：停止正在运行的后台任务\n效果：终止长时间运行的后台 agent 或命令\n例子：TaskStop(task_id="abc") 停止失控的后台任务
+---
+[工具] 🗑️ TeamDelete 删除团队\n功能：删除 agent 团队及其任务列表\n效果：清理完成的团队协作环境\n例子：TeamDelete 在团队完成工作后清理资源
+---
+[工具] 🚪 ExitPlanMode 退出计划模式\n功能：完成计划并提交用户审批\n效果：将编写好的计划提交审批，用户同意后执行\n例子：ExitPlanMode 提交实施计划等待用户批准
+---
+[工具] ⏰ CronDelete 删除定时任务\n功能：删除通过 CronCreate 创建的定时任务\n效果：停止不再需要的定期执行任务\n例子：CronDelete(id="job123") 删除每日技巧提示任务
+---
+[工具] 📋 CronList 列出定时任务\n功能：列出所有活跃的 cron 定时任务\n效果：查看哪些任务在定期运行，何时触发\n例子：CronList 查看所有定时任务的状态和下次执行时间
+---
+[工具] 💬 SendMessage 发送消息\n功能：向团队中的其他 agent 发送消息\n效果：团队协作中进行 agent 间通信\n例子：SendMessage(to="tester", message="测试完成") 通知测试员
+---
+[工具] 🎯 Skill 调用技能\n功能：调用预定义的 skill 执行特定工作流\n效果：使用专家级工作流确保质量和一致性\n例子：Skill(skill="brainstorming") 在编码前进行设计头脑风暴
+---
+[工具] ❓ AskUserQuestion 询问用户\n功能：在执行过程中向用户提问并获取选择\n效果：需要用户决策时暂停并展示选项\n例子：AskUserQuestion 询问用户选择实现方案
+---
+[工具] 📓 NotebookEdit 编辑 Notebook\n功能：编辑 Jupyter Notebook (.ipynb) 文件的单元格\n效果：修改 Notebook 中的代码、Markdown 单元格\n例子：NotebookEdit 更新数据分析 Notebook 的代码单元格
+---
+[工具] ⏱️ ScheduleWakeup 动态循环\n功能：在 /loop 动态模式下安排下次唤醒时间\n效果：根据任务状态智能调整轮询间隔\n例子：ScheduleWakeup(delaySeconds=300) 5分钟后再检查
+---
+[Skill] 📖 Skills 使用指南\n功能：Skills 是预定义的专家级工作流程\n效果：确保复杂任务按最佳实践执行\n例子：通过斜杠命令（如 /tdd）或 Skill 工具调用，部分需完整名称如 Skill(skill="superpowers:brainstorming")
+---
+[Skill] 📝 writing-plans 编写计划\n功能：为多步骤任务编写详细实施计划\n效果：进入计划模式，编写结构化实施方案\n例子：大型重构前使用 writing-plans 制定详细计划
+---
+[Skill] ✅ executing-plans 执行计划\n功能：执行已批准的实施计划，带检查点\n效果：按计划逐步实施，每步完成后验证\n例子：executing-plans 执行重构计划，分步验证
+---
+[Skill] 🧪 test-driven-development TDD\n功能：测试驱动开发，先写测试再写实现\n效果：确保代码可测试性和质量\n例子：tdd 实现新功能前先编写测试用例
+---
+[Skill] 🐛 systematic-debugging 系统化调试\n功能：系统化调试流程，从症状到根因\n效果：科学定位 bug，避免盲目猜测\n例子：debugging 遇到 bug 时系统化排查原因
+---
+[Skill] 🔍 verification-before-completion 完成前验证\n功能：声称完成前强制验证和测试\n效果：防止"看起来对"但实际有问题的代码\n例子：verification 在说"完成"前必须运行测试
+---
+[Skill] 📤 requesting-code-review 请求代码审查\n功能：完成任务后请求代码审查\n效果：提交前获取反馈，提高代码质量\n例子：requesting-code-review 功能完成后请求审查
+---
+[Skill] 📥 receiving-code-review 接收代码审查\n功能：接收并响应代码审查反馈\n效果：理解反馈意图，正确实施修改建议\n例子：receiving-code-review 收到审查意见时使用
+---
+[Skill] 🏁 finishing-a-development-branch 完成分支\n功能：完成开发分支，决定如何集成\n效果：指导合并、PR、清理的最佳实践\n例子：finishing-branch 功能完成后整合到主分支
+---
+[Skill] 🚀 dispatching-parallel-agents 并行派发\n功能：将独立任务派发给多个 agent 并行处理\n效果：加速开发，多任务同时进行\n例子：parallel-agents 前端后端同时开发
+---
+[Skill] 🤖 subagent-driven-development 子代理驱动\n功能：在当前会话中派生子 agent 协作\n效果：复杂任务分解，多 agent 协同工作\n例子：subagent-driven 大型功能拆分给多个子 agent
+---
+[Skill] 🌳 using-git-worktrees 使用工作树\n功能：使用 git worktree 隔离开发环境\n效果：多分支并行开发，互不干扰\n例子：git-worktrees 同时修 bug 和开发新功能
+---
+[Skill] 👁️ code-review 代码审查\n功能：对 PR 进行全面代码审查\n效果：检查代码质量、安全性、最佳实践\n例子：code-review 审查团队成员的 PR
+---
+[Skill] 🎨 frontend-design 前端设计\n功能：创建高质量、独特的前端界面\n效果：根据需求设计并实现生产级 UI\n例子：frontend-design 设计新的用户界面
+---
+[Skill] 🧹 simplify 简化代码\n功能：审查并简化最近修改的代码\n效果：提高代码可读性、一致性、可维护性\n例子：simplify 重构后清理和简化代码
+---
+[Skill] 🔌 claude-api 构建 API 应用\n功能：构建、调试、优化 Claude API 应用\n效果：使用最佳实践开发 Claude API 应用\n例子：claude-api 开发使用 Claude 的应用
+---
+[Skill] 🔓 fewer-permission-prompts 减少权限提示\n功能：分析常用命令并配置权限白名单\n效果：减少重复的权限确认提示\n例子：fewer-permission-prompts 优化权限配置
+---
+[Skill] ⌨️ keybindings-help 快捷键配置\n功能：自定义 Claude Code 快捷键绑定\n效果：配置个性化快捷键，提高效率\n例子：keybindings-help 修改默认快捷键
+---
+[Skill] 🆕 init 初始化项目\n功能：为项目创建 CLAUDE.md 文档\n效果：初始化项目配置和指令\n例子：init 新项目初始化 Claude Code 配置
+---
+[Skill] 📋 review PR 审查\n功能：审查 Pull Request\n效果：对 PR 进行全面审查并提供反馈\n例子：review 审查待合并的 PR
+---
+[Skill] 🔒 security-review 安全审查\n功能：对当前分支进行安全审查\n效果：检查安全漏洞、敏感信息泄露\n例子：security-review 合并前进行安全检查
+---
+[MCP] 🐙 GitHub MCP 详解\n功能：通过 MCP 直接操作 GitHub\n效果：创建 PR、管理 issue、查看代码、运行检查\n例子：使用 GitHub MCP 直接在对话中创建和管理 PR
+---
+[MCP] 🎨 MasterGo MCP\n功能：连接 MasterGo 设计工具，获取设计稿数据\n效果：从设计稿生成代码，D2C 工作流\n例子：MasterGo MCP 读取设计稿并生成前端代码
+---
+[MCP] 📚 Microsoft Docs MCP\n功能：搜索和获取微软官方文档\n效果：查找最新 API 文档、代码示例、最佳实践\n例子：Microsoft Docs MCP 查询 .NET 最新文档
+---
+[MCP] 🔧 自定义 MCP 服务器\n功能：创建自己的 MCP 服务器扩展 Claude\n效果：接入数据库、内部 API、私有工具\n例子：创建 MCP 服务器连接公司内部系统
+---
+[Hook] 📨 UserPromptSubmit Hook\n功能：在用户提交消息前执行命令\n效果：预处理用户输入，如格式化或验证\n例子：UserPromptSubmit 在提交前检查敏感信息
+---
+[Hook] 🌱 WorktreeCreate Hook\n功能：在创建 worktree 时执行自定义命令\n效果：自动初始化 worktree 环境\n例子：WorktreeCreate 自动安装依赖和配置环境
+---
+[Hook] 🗑️ WorktreeRemove Hook\n功能：在删除 worktree 前执行清理命令\n效果：清理临时文件、备份数据\n例子：WorktreeRemove 删除前备份重要数据
+---
+[高级] 🔄 Background Tasks 后台任务\n功能：在后台运行长时间任务不阻塞对话\n效果：启动构建、测试、部署等长任务\n例子：run_in_background 长时间构建在后台运行
+---
+[工具] 📋 ListMcpResourcesTool 列出 MCP 资源\n功能：列出配置的 MCP 服务器的所有可用资源\n效果：查看 MCP 服务器提供的资源列表\n例子：ListMcpResourcesTool 查看 GitHub MCP 的可用资源
+---
+[工具] 📖 ReadMcpResourceTool 读取 MCP 资源\n功能：读取 MCP 服务器的特定资源内容\n效果：获取 MCP 资源的详细数据\n例子：ReadMcpResourceTool 读取 GitHub 仓库信息
+---
+[Skill] 📊 statusline-setup 状态栏配置\n功能：配置 Claude Code 状态栏显示\n效果：自定义状态栏命令和样式\n例子：statusline-setup 配置显示 git 分支和任务数
+---
+[配置] 🔧 环境变量配置\n功能：通过环境变量控制 Claude Code 行为，包括 ANTHROPIC_BASE_URL（API端点）、BASH_DEFAULT_TIMEOUT_MS（命令超时）、MAX_MCP_OUTPUT_TOKENS（MCP输出限制）等\n效果：精细控制运行时行为和资源限制\n例子：CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 减少网络流量
