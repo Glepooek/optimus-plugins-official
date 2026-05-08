@@ -30,7 +30,7 @@
     {
       "name": "unipus-frontend-plugin",
       "source": "./plugins/unipus-frontend-plugin",
-      "description": "前端开发工具集：React/Vue 开发、UI 设计规范、组件库、前端架构文档等"
+      "description": "前端开发工具集：React/Vue 开发、WPF XAML 性能优化、UI 设计规范、组件库、前端架构文档等"
     },
     {
       "name": "unipus-backend-plugin",

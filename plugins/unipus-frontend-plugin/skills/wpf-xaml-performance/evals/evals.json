@@ -1,0 +1,25 @@
+{
+  "skill_name": "wpf-xaml-performance",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我有一个 WPF 应用，MainWindow.xaml 中有一个显示 5000 条员工记录的 ListBox，滚动时非常卡顿。代码如下：\n\n```xml\n<Window x:Class=\"EmployeeApp.MainWindow\"\n        xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"\n        xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\"\n        Title=\"Employee List\" Height=\"600\" Width=\"800\">\n    <Grid>\n        <ListBox x:Name=\"EmployeeListBox\" \n                 ItemsSource=\"{Binding Employees}\"\n                 ScrollViewer.CanContentScroll=\"False\">\n            <ListBox.ItemsPanel>\n                <ItemsPanelTemplate>\n                    <StackPanel />\n                </ItemsPanelTemplate>\n            </ListBox.ItemsPanel>\n            <ListBox.ItemTemplate>\n                <DataTemplate>\n                    <Grid>\n                        <Grid.RowDefinitions>\n                            <RowDefinition />\n                            <RowDefinition />\n                        </Grid.RowDefinitions>\n                        <TextBlock Grid.Row=\"0\" Text=\"{Binding Name}\" />\n                        <TextBlock Grid.Row=\"1\" Text=\"{Binding Department}\" />\n                    </Grid>\n                </DataTemplate>\n            </ListBox.ItemTemplate>\n        </ListBox>\n    </Grid>\n</Window>\n```\n\nViewModel 代码：\n```csharp\npublic class MainViewModel\n{\n    public List<Employee> Employees { get; set; }\n    \n    public MainViewModel()\n    {\n        Employees = LoadEmployees(); // 加载 5000 条记录\n    }\n}\n```\n\n请帮我分析性能问题并提供优化建议。",
+      "expected_output": "应识别出：1) ScrollViewer.CanContentScroll=\"False\" 禁用了虚拟化；2) 使用 List 而非 ObservableCollection；3) 未启用容器回收；4) ItemTemplate 中使用 Grid 可以简化为 StackPanel",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "我的 WPF 应用启动很慢，大约需要 8-10 秒才能显示主窗口。App.xaml.cs 的启动代码如下：\n\n```csharp\npublic partial class App : Application\n{\n    protected override void OnStartup(StartupEventArgs e)\n    {
+        base.OnStartup(e);\n        \n        // 加载所有资源字典\n        LoadAllResourceDictionaries();\n        \n        // 初始化数据库连接\n        DatabaseManager.Initialize();\n        \n        // 加载用户配置\n        ConfigManager.LoadConfiguration();\n        \n        // 预加载所有模块\n        ModuleLoader.LoadAllModules();\n        \n        // 初始化日志系统\n        LogManager.Initialize();\n        \n        // 显示主窗口\n        MainWindow mainWindow = new MainWindow();\n        mainWindow.Show();\n    }\n    \n    private void LoadAllResourceDictionaries()\n    {
+        // 加载 50+ 个资源字典\n        for (int i = 0; i < 50; i++)\n        {\n            var dict = new ResourceDictionary();\n            dict.Source = new Uri($\"Resources/Theme{i}.xaml\", UriKind.Relative);\n            Resources.MergedDictionaries.Add(dict);\n        }\n    }\n}\n```\n\n如何优化启动时间？",
+      "expected_output": "应建议：1) 添加启动画面改善感知时间；2) 延迟非关键初始化（ModuleLoader, LogManager）到窗口显示后；3) 按需加载资源字典而非全部加载；4) 考虑使用 Ngen.exe；5) 异步初始化数据库连接",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "我在绘制一个复杂的图表，使用了大量的 Shape 元素，但渲染性能很差。代码片段：\n\n```xml\n<Canvas x:Name=\"ChartCanvas\" Width=\"800\" Height=\"600\">\n    <!-- 绘制 1000+ 个数据点 -->\n    <Ellipse Canvas.Left=\"10\" Canvas.Top=\"100\" Width=\"5\" Height=\"5\" Fill=\"Blue\" />\n    <Ellipse Canvas.Left=\"12\" Canvas.Top=\"105\" Width=\"5\" Height=\"5\" Fill=\"Blue\" />\n    <!-- ... 更多 Ellipse ... -->\n    \n    <!-- 连接线 -->\n    <Line X1=\"10\" Y1=\"100\" X2=\"12\" Y2=\"105\" Stroke=\"Red\" StrokeThickness=\"1\" />\n    <!-- ... 更多 Line ... -->\n</Canvas>\n```\n\n后台代码动态创建这些元素：\n```csharp\nprivate void DrawChart()\n{\n    ChartCanvas.Children.Clear();\n    \n    for (int i = 0; i < dataPoints.Count; i++)\n    {\n        var ellipse = new Ellipse\n        {\n            Width = 5,\n            Height = 5,\n            Fill = new SolidColorBrush(Colors.Blue)\n        };\n        Canvas.SetLeft(ellipse, dataPoints[i].X);\n        Canvas.SetTop(ellipse, dataPoints[i].Y);\n        ChartCanvas.Children.Add(ellipse);\n        \n        if (i > 0)\n        {\n            var line = new Line\n            {\n                X1 = dataPoints[i-1].X,\n                Y1 = dataPoints[i-1].Y,\n                X2 = dataPoints[i].X,\n                Y2 = dataPoints[i].Y,\n                Stroke = new SolidColorBrush(Colors.Red),\n                StrokeThickness = 1\n            };\n            ChartCanvas.Children.Add(line);\n        }\n    }\n}\n```\n\n如何优化渲染性能？",
+      "expected_output": "应建议：1) 使用 DrawingVisual 或 StreamGeometry 替代 Shape 元素；2) 共享 Brush 实例而非每次创建新的；3) 冻结不可变的 Brush；4) 考虑使用 GeometryDrawing 和 DrawingGroup；5) 使用 Path 和 StreamGeometry 绘制所有点和线",
+      "files": []
+    }
+  ]
+}
