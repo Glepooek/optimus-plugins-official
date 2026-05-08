@@ -14,13 +14,47 @@ description: 识别并修复 WPF/XAML 性能问题的专家级 skill。当用户
 首先确定问题范围和优先级：
 - 询问具体症状（启动慢/滚动卡顿/内存高/渲染慢）
 - 如果用户未指定文件，使用 `Glob "**/*.xaml"` 和 `Grep` 查找问题模式
-- 按优先级扫描：控件虚拟化 > 数据绑定 > 图形渲染 > 启动优化 > 其他
+- 按优先级扫描：数据绑定 > 控件虚拟化 > 图形渲染 > 启动优化 > 其他
 
 ### 2. 执行性能扫描
 
 按以下检查点依次扫描代码，找到问题立即报告。
 
-#### 检查点 1：控件虚拟化（最高优先级）
+#### 检查点 1：数据绑定优化（最高优先级）
+
+**为什么重要：** 使用 List 而非 ObservableCollection 会导致 UI 无法自动更新，强制刷新会带来巨大性能开销。正确使用可提升 **80 倍**性能（1656ms → 20ms）。
+
+**扫描模式：**
+```bash
+# 查找 ViewModel 中的集合定义
+Grep "List<.*> .*{ get" --type cs
+Grep "IEnumerable<.*> .*{ get" --type cs
+```
+
+**常见问题：**
+```csharp
+// ❌ List 不会通知 UI 更新
+public List<Employee> Employees { get; set; }
+
+// ✅ ObservableCollection 自动通知
+public ObservableCollection<Employee> Employees { get; set; }
+```
+
+```xml
+<!-- ❌ 绑定到 IEnumerable - WPF 会创建包装器 -->
+<ListBox ItemsSource="{Binding EmployeesEnumerable}" />
+
+<!-- ✅ 绑定到 IList - 直接访问 -->
+<ListBox ItemsSource="{Binding EmployeesList}" />
+
+<!-- ❌ 不必要的 TwoWay - TextBlock 只读 -->
+<TextBlock Text="{Binding Name, Mode=TwoWay}" />
+
+<!-- ✅ OneWay 即可 -->
+<TextBlock Text="{Binding Name}" />
+```
+
+#### 检查点 2：控件虚拟化（最高优先级）
 
 **为什么重要：** ListBox/ListView 处理大数据集时，未启用虚拟化会导致为所有项创建 UI 容器，造成严重卡顿和内存占用。启用虚拟化可将性能提升 **70 倍**（3210ms → 46ms）。
 
@@ -58,40 +92,6 @@ Grep "<TreeView" --glob "*.xaml" -A 3     # TreeView 默认未启用虚拟化
 <TreeView ItemsSource="{Binding TreeData}"
           VirtualizingPanel.IsVirtualizing="True"
           VirtualizingPanel.VirtualizationMode="Recycling" />
-```
-
-#### 检查点 2：数据绑定优化（最高优先级）
-
-**为什么重要：** 使用 List 而非 ObservableCollection 会导致 UI 无法自动更新，强制刷新会带来巨大性能开销。正确使用可提升 **80 倍**性能（1656ms → 20ms）。
-
-**扫描模式：**
-```bash
-# 查找 ViewModel 中的集合定义
-Grep "List<.*> .*{ get" --type cs
-Grep "IEnumerable<.*> .*{ get" --type cs
-```
-
-**常见问题：**
-```csharp
-// ❌ List 不会通知 UI 更新
-public List<Employee> Employees { get; set; }
-
-// ✅ ObservableCollection 自动通知
-public ObservableCollection<Employee> Employees { get; set; }
-```
-
-```xml
-<!-- ❌ 绑定到 IEnumerable - WPF 会创建包装器 -->
-<ListBox ItemsSource="{Binding EmployeesEnumerable}" />
-
-<!-- ✅ 绑定到 IList - 直接访问 -->
-<ListBox ItemsSource="{Binding EmployeesList}" />
-
-<!-- ❌ 不必要的 TwoWay - TextBlock 只读 -->
-<TextBlock Text="{Binding Name, Mode=TwoWay}" />
-
-<!-- ✅ OneWay 即可 -->
-<TextBlock Text="{Binding Name}" />
 ```
 
 #### 检查点 3：图形渲染优化（高优先级）
