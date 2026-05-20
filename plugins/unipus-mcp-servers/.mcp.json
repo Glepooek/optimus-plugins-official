@@ -16,6 +16,18 @@
         "--url=https://mastergo.com"
       ],
       "env": {}
+    },
+	"FeishuProjectMcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@lark-project/mcp",
+        "--domain",
+        "https://project.feishu.cn"
+      ],
+      "env": {
+        "MCP_USER_TOKEN": "${MCP_USER_TOKEN}"
+      }
     }
   }
 }

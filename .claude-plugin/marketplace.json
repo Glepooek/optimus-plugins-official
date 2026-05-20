@@ -2,7 +2,7 @@
   "name": "unipus-plugins-official",
   "displayName": "Unipus 官方插件仓库",
   "description": "Unipus 公司官方 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强（278条技巧智能轮播）、权限通知等企业级开发工具链",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "owner": {
     "name": "unipus",
     "url": "https://www.unipus.cn"
@@ -65,7 +65,7 @@
     {
       "name": "unipus-mcp-servers",
       "source": "./plugins/unipus-mcp-servers",
-      "description": "MCP 服务器集成：GitHub Copilot MCP、MasterGo 设计协作等企业级 MCP 服务"
+      "description": "MCP 服务器集成：GitHub Copilot MCP、MasterGo 设计协作、飞书项目等企业级 MCP 服务"
     }
   ]
 }
