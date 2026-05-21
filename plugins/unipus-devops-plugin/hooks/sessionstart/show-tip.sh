@@ -29,6 +29,11 @@ import json
 import os
 import random
 import sys
+import io
+
+# 修复 Windows GBK 编码问题：强制 stdout 使用 UTF-8
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 TIPS_FILE = os.environ['TIPS_FILE']
 STATE_FILE = os.environ['STATE_FILE']
