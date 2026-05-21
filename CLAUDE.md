@@ -4,89 +4,35 @@
 
 ## 仓库概览
 
-这是 **Unipus 官方 Claude Code 插件仓库**，包含 8 个领域特定插件：
+Unipus 官方 Claude Code 插件仓库，8 个领域插件提供企业级开发工具链。详细功能见 README.md。
 
-- **unipus-frontend-plugin**: React/Vue 开发、WPF XAML 性能优化、UI 设计规范
-- **unipus-backend-plugin**: API 开发、后端架构、数据库设计
-- **unipus-qa-plugin**: 测试用例设计、JMeter 脚本、UI 自动化、飞书测试管理
-- **unipus-prd-plugin**: PRD 文档创建、优化和审查
-- **unipus-feishu-plugin**: 飞书文档自动化（读取/写入/上传）
-- **unipus-office-plugin**: Word、Excel、PowerPoint、PDF 生成和处理
-- **unipus-devops-plugin**: Jenkins CI/CD、API 变更通知、应用初始化、项目分析。包含自动加载的 Hooks：SessionStart（278条技巧智能轮播）、Notification（Windows 权限通知）
-- **unipus-mcp-servers**: MCP 服务器集成（GitHub Copilot、MasterGo、飞书项目）
+**操作关键点：**
+- 插件通过 `/plugin-name:skill-name` 调用
+- unipus-devops-plugin 自动加载 SessionStart 和 Notification hooks
+- unipus-fe-dev 是唯一的复合 skill（5 阶段工作流）
 
-## 架构设计
+## 快速参考
 
-### 插件结构
+### 目录结构
 
 ```
-plugins/
-├── {plugin-name}/
-│   ├── skills/              # 领域特定技能
-│   │   └── {skill-name}/
-│   │       └── SKILL.md
-│   └── hooks/               # （可选）事件钩子
-│       └── hooks.json
+plugins/{plugin-name}/
+├── skills/{skill-name}/SKILL.md    # Skill 定义
+└── hooks/hooks.json                # Hooks 配置（可选）
 ```
 
-### Skill 命名约定
+### Skill 调用规则
 
-- **简单 skill**: `plugin-name:skill-name`（例如：`unipus:fe-dev`）
-- **复合 skill**: `plugin-name:skill-name:substep`（例如：`unipus:fe-dev:collect-inputs`）
+- 简单 skill: `/plugin-name:skill-name`
+- 复合 skill: `/plugin-name:skill-name:substep`
 
-使用**冒号分隔的命名空间**表达逻辑层次关系，而非文件路径。
+**复合 skill 参考：** `unipus:fe-dev` 是唯一的复合 skill（5 阶段工作流），详见 `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md`
 
-### 复合 Skill 模式
+### Hooks 配置
 
-**unipus-fe-dev** 是本仓库中**唯一的复合 skill**，作为参考实现。
-
-复合 skill 是一个**工作流编排器**，协调多个子 skills：
-
-```
-unipus-fe-dev/                          # 主 skill（编排器）
-├── SKILL.md                            # 入口点
-├── README.md                           # 用户指南
-├── ARCHITECTURE.md                     # 架构文档
-└── skills/                             # ⭐ 子 skills（嵌套结构）
-    ├── collect-inputs/                 # 阶段 1
-    ├── analyze-and-plan/               # 阶段 2
-    ├── generate-code/                  # 阶段 3
-    ├── generate-deliverables/          # 阶段 4
-    ├── verify-and-finish/              # 阶段 5
-    ├── coding-standards/               # 全局规范
-    ├── architecture-doc/               # 辅助工具
-    └── feishu-doc/                     # 辅助工具
-```
-
-**关键特性：**
-- 主 skill 使用**相对路径**引用子 skills：`./skills/{substep}/SKILL.md`
-- 子 skills **封装**在复合 skill 目录内
-- 整个 `unipus-fe-dev/` 目录可以作为**单一单元**移动
-- 子 skills 使用命名空间格式：`unipus:fe-dev:{substep}`
-
-**为什么使用嵌套结构？**
-- 强制独立 skills 与复合 skills 之间的清晰边界
-- 保持逻辑封装（可以复制整个目录而不破坏引用）
-- 避免用内部组件污染顶层 skills/ 命名空间
-
-**参考文档：** 详见 `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md` 了解完整的设计原理和实现细节。
-
-### Hooks 系统
-
-Hooks 在 `plugins/{plugin-name}/hooks/hooks.json` 中定义时**自动加载**：
-
-```json
-{
-  "sessionstart": ["show-tip.sh"],
-  "notification": ["notify.sh"]
-}
-```
-
-- **SessionStart hook**: 从 `tips.txt` 显示轮播技巧（278条技巧通过 `.tip-state.json` 追踪）
-- **Notification hook**: Windows 权限通知
-- Hooks 支持 **CLAUDE_PLUGIN_ROOT** 环境变量用于插件相对路径
-
-**Windows 编码注意事项：** SessionStart hook 使用 UTF-8 包装器处理 Windows GBK 系统上的 emoji。
+Hooks 自动加载自 `plugins/{plugin-name}/hooks/hooks.json`。当前启用：
+- **SessionStart**: 显示技巧（unipus-devops-plugin）
+- **Notification**: 权限通知（unipus-devops-plugin）
 
 ## 常见开发任务
 
