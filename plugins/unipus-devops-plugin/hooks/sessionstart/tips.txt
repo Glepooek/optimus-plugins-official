@@ -275,3 +275,41 @@
 [Skill] 📊 statusline-setup 状态栏配置\n功能：配置 Claude Code 状态栏显示\n效果：自定义状态栏命令和样式\n例子：statusline-setup 配置显示 git 分支和任务数
 ---
 [配置] 🔧 环境变量配置\n功能：通过环境变量控制 Claude Code 行为，包括 ANTHROPIC_BASE_URL（API端点）、BASH_DEFAULT_TIMEOUT_MS（命令超时）、MAX_MCP_OUTPUT_TOKENS（MCP输出限制）等\n效果：精细控制运行时行为和资源限制\n例子：CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 减少网络流量
+---
+[交互] 🎯 /goal 目标驱动模式\n功能：设置完成条件，Claude 跨轮次持续工作直到目标达成\n效果：适合复杂多步骤任务，Claude 会自动判断目标是否完成，无需手动监控每一步\n例子：/goal "所有测试通过且代码覆盖率 > 80%" 让 Claude 自动完成并验证
+---
+[交互] 🔍 /ultrareview 并行代码审查\n功能：启动云端多代理并行代码审查\n效果：多个专门审查代理同时检查不同方面（安全、性能、可读性），比单次审查更全面\n例子：/ultrareview 在提交重要功能前进行全面并行审查
+---
+[交互] 👁️ /focus 焦点模式\n功能：切换焦点/详细视图模式\n效果：焦点模式隐藏工具调用细节，只显示最终对话；详细模式显示所有操作\n例子：/focus 在日常对话时切换到焦点模式减少噪音
+---
+[交互] 🖥️ /tui 全屏渲染模式\n功能：切换到无闪烁全屏 TUI（终端用户界面）渲染\n效果：减少输出刷新时的屏幕闪烁，提升长时间工作的视觉体验\n例子：/tui 开启全屏模式，让输出更稳定流畅
+---
+[交互] 📋 /recap 会话回顾\n功能：手动触发当前会话的内容回顾摘要\n效果：在长对话中快速回顾已做的工作和关键决策，而不必滚动历史\n例子：/recap 长时间工作后快速了解当前进展
+---
+[交互] ↩️ /undo 撤销上一步\n功能：撤销上一次操作（/rewind 的别名）\n效果：回退最近的文件修改或操作，适合发现方向错误时快速回退\n例子：/undo 发现上一步修改有误时立即回退
+---
+[交互] ⚡ /effort 努力程度调节\n功能：交互式滑块调节响应努力程度，支持 low/medium/high/xhigh\n效果：高 effort 更深思熟虑但较慢，低 effort 快速但较浅，xhigh 是 Opus 4.7 专属超高质量模式\n例子：/effort 用箭头键选择 xhigh 处理关键架构决策
+---
+[交互] 🖱️ /scroll-speed 滚轮速度\n功能：调整终端鼠标滚轮滚动速度\n效果：根据个人习惯优化滚动体验，在长输出时快速导航\n例子：/scroll-speed 3 将滚轮速度设为 3
+---
+[CLI] 🔍 claude ultrareview 非交互审查\n功能：以非交互模式运行多代理代码审查，输出完整审查报告\n效果：适合在 CI/CD 流水线中自动执行代码审查，结果可接入其他工具\n例子：claude ultrareview --output review.md 将审查结果保存到文件
+---
+[CLI] 🏷️ claude plugin tag 发布标签\n功能：为当前插件创建发布版本的 git 标签\n效果：规范化插件版本发布流程，自动打标签并关联版本信息\n例子：claude plugin tag 在插件发布时创建版本标签
+---
+[CLI] 🧹 claude plugin prune 清理插件\n功能：移除孤立的自动安装插件依赖\n效果：清理不再使用的插件残留，保持插件环境整洁\n例子：claude plugin prune 定期清理卸载插件后的残留依赖
+---
+[Hook] 🗜️ PreCompact Hook\n功能：在会话上下文压缩前执行命令，退出码 2 可阻止压缩\n效果：在压缩前保存状态、备份信息，或在某些条件下阻止压缩\n例子：PreCompact 在压缩前将关键任务进度写入文件持久保存
+---
+[Hook] 🔁 continueOnBlock 配置\n功能：PostToolUse hook 新增 continueOnBlock 选项，控制被阻止时是否继续执行\n效果：灵活控制 hook 阻止后的行为，避免某些情况下整个流程中断\n例子：{"continueOnBlock": true} 让被阻止的验证 hook 不中断整体工作流
+---
+[Hook] 📝 args 数组形式\n功能：Hook 支持 args: string[] 直接声明执行参数，无需 shell 包装\n效果：更安全、更清晰地传递参数，避免 shell 注入风险\n例子：{"args": ["python", "validate.py", "--strict"]} 替代 command 字符串
+---
+[Hook] 📂 CLAUDE_PROJECT_DIR 环境变量\n功能：Hooks 和 MCP stdio 服务器均可获取 CLAUDE_PROJECT_DIR 环境变量\n效果：Hook 脚本可获取当前项目目录，无需手动传递路径参数\n例子：在 hook 中用 $CLAUDE_PROJECT_DIR 获取项目根目录路径
+---
+[MCP] ⚡ alwaysLoad MCP 工具\n功能：MCP 服务器工具可设置 alwaysLoad 选项，跳过延迟直接可用\n效果：常用工具无需等待懒加载，首次使用立即响应\n例子：在 MCP 配置中设置 alwaysLoad: true 让核心工具始终就绪
+---
+[配置] 🧠 Opus 4.7 与 xhigh effort\n功能：Opus 4.7 支持 xhigh 努力级别，提供超高质量推理\n效果：适合架构设计、复杂调试、关键决策等需要最高质量的场景，比 high 更深入\n例子：设置 model: "opus-4-7" 并 /effort xhigh 处理最复杂的技术问题
+---
+[交互] 📝 vim 可视化模式\n功能：全屏模式下支持 vim 可视化选择（v 字符选择，V 行选择）\n效果：在 TUI 模式中像 vim 一样精确选择和复制文本内容\n例子：/tui 后按 v 进入字符选择，V 进入行选择，复制多行输出
+---
+[交互] ⌨️ Ctrl+U 清空输入\n功能：清除整个输入缓冲区内容（已从"删除至行首"更新为"清空全部"）\n效果：输入了一长串内容想重新开始时，一键清空比反复退格更高效\n例子：输入了很长的提示词但想重新写时，按 Ctrl+U 快速清空
