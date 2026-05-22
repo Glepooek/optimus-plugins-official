@@ -148,6 +148,7 @@ git clone https://github.com/Glepooek/unipus-plugins-official ~/.claude/plugins/
 ## 📚 文档
 
 - **[CLAUDE.md](CLAUDE.md)** - Claude Code 项目指导文档（中文）
+- **[CLAUDE_WORKFLOW.md](CLAUDE_WORKFLOW.md)** - Claude Code Skill 工作流最佳实践（通用）
 - **[ARCHITECTURE.md](plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md)** - 复合 Skill 架构设计文档
 
 ## 🛠️ 开发指南
