@@ -52,7 +52,7 @@
 ---
 [配置] 📄 CLAUDE.md 项目指令\n功能：在项目根目录创建 CLAUDE.md 提供项目特定指令\n效果：自动加载到系统提示，Claude 遵循项目规范\n例子：指定代码风格、测试要求、部署流程等
 ---
-[配置] 🎨 outputStyle\n功能：控制 Claude 的响应风格\n效果：Explanatory 详细教育性，Concise 简洁专业\n例子：outputStyle: "Explanatory" 获得带说明的详细响应
+[配置] 🎨 outputStyle 输出风格\n功能：控制 Claude 的响应和交互风格，4 种模式：Default（默认简洁）、Proactive（主动行动少打断）、Explanatory（解释实现选择和代码库模式）、Learning（暂停让你动手实践）\n效果：Explanatory 会在编码前后通过 Insight 块解释实现选择和代码库模式；Proactive 更自主决策；Learning 提供指导让你自己写代码\n例子：/config 可视化切换风格，或在 settings.json 设置 outputStyle: "Explanatory"
 ---
 [配置] 🗂️ additionalDirectories 持久目录权限\n功能：在 settings.json 中配置额外目录，永久扩展权限作用域\n效果：每次启动 Claude 都可以访问这些项目外的目录，无需重复配置\n例子：{"permissions": {"additionalDirectories": ["/opt/tools", "../sibling-project"]}}
 ---
