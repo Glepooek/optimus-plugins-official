@@ -1,6 +1,6 @@
 ---
 name: unipus-commit
-description: Use when committing and pushing changes in the unipus-plugins-official repository. Handles selective staging, marketplace.json version bump decision, conventional commit message generation, and push to master.
+description: Use when the user wants to commit and push completed changes to this unipus-plugins-official plugin repository — trigger phrases include "commit", "push", "提交", "推上去", "推到 master", or when done editing any plugin, skill file, hook script, or marketplace.json. Always invoke this skill instead of a bare git workflow when a commit-push is requested in this repo.
 ---
 
 # /unipus-commit

@@ -1,0 +1,46 @@
+{
+  "skill_name": "unipus-commit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我刚在 unipus-qa-plugin 下新建了一个 skill：plugins/unipus-qa-plugin/skills/unipus-qa-automation/SKILL.md，这是一个全新的 skill（不是修改已有的）。同时也修改了 .claude-plugin/marketplace.json 添加了这个 skill 的说明。请帮我按照项目规范 commit 并推送到 master。\n\n当前 git status 如下：\n```\nOn branch master\nYour branch is up to date with 'origin/master'.\n\nChanges not staged for commit:\n  (use \"git add <file>...\" to update what will be committed)\n        modified:   .claude-plugin/marketplace.json\n\nUntracked files:\n  (use \"git add <file>...\" to include in what will be committed)\n        plugins/unipus-qa-plugin/skills/unipus-qa-automation/SKILL.md\n```\n\ngit diff .claude-plugin/marketplace.json（片段）：\n```diff\n-  \"version\": \"1.0.8\",\n+  \"version\": \"1.1.0\",\n   \"plugins\": [\n     ...\n+    {\n+      \"name\": \"unipus-qa-plugin\",\n+      \"skills\": [\"unipus-qa-automation\"]\n+    }\n   ]\n```",
+      "expected_output": "应该：1) 识别这是新增 skill，决定 minor 版本升级（x.X.x）；2) 用 git add 选择性暂存两个文件（不使用 git add -A）；3) 使用 feat(qa-plugin) 或 feat(unipus-qa-automation) 作为 commit 类型和 scope；4) commit 消息包含 Co-Authored-By；5) 执行 git push origin master",
+      "assertions": [
+        {"name": "correct_version_bump_minor", "description": "决定 minor 版本升级（x.X.x），不选 patch 或 no-bump"},
+        {"name": "selective_staging", "description": "使用选择性 git add（不使用 git add -A 或 git add .）"},
+        {"name": "correct_commit_type_feat", "description": "使用 feat 作为 commit type"},
+        {"name": "coauthored_by_present", "description": "commit 消息包含 Co-Authored-By: Claude"},
+        {"name": "push_to_master", "description": "包含 git push origin master"}
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "我修复了 plugins/unipus-devops-plugin/hooks/sessionstart/show-tip.sh 中的一个 bug：在 Windows 上运行时会报 GBK 编码错误（'gbk' codec can't encode character），我在第 34-36 行加了 UTF-8 wrapper 解决了这个问题。没有新增任何文件。请帮我 commit 并推送。\n\n当前 git status：\n```\nOn branch master\nYour branch is up to date with 'origin/master'.\n\nChanges not staged for commit:\n        modified:   plugins/unipus-devops-plugin/hooks/sessionstart/show-tip.sh\n```\n\ngit diff（片段）：\n```diff\n@@ -32,6 +32,9 @@ show_tip() {\n-    python \"$tip_script\" ...\n+    PYTHONIOENCODING=utf-8 python \"$tip_script\" ...\n```",
+      "expected_output": "应该：1) 识别这是 bug 修复，决定 patch 版本升级（x.x.X）；2) 只暂存 show-tip.sh 一个文件；3) 使用 fix(devops-hooks) 或 fix(sessionstart) 作为 commit scope；4) commit 消息描述具体修复内容（Windows GBK 编码问题）；5) 包含 Co-Authored-By；6) 执行 git push",
+      "assertions": [
+        {"name": "correct_version_bump_patch", "description": "决定 patch 版本升级（x.x.X），不选 minor 或 no-bump"},
+        {"name": "selective_staging_single_file", "description": "只暂存 show-tip.sh，不使用 git add -A"},
+        {"name": "correct_commit_type_fix", "description": "使用 fix 作为 commit type"},
+        {"name": "commit_message_mentions_encoding", "description": "commit 消息中提及编码/encoding/GBK/UTF-8 相关内容"},
+        {"name": "coauthored_by_present", "description": "commit 消息包含 Co-Authored-By: Claude"},
+        {"name": "push_to_master", "description": "包含 git push origin master"}
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "我对已有的 plugins/unipus-frontend-plugin/skills/wpf-xaml-performance/SKILL.md 做了重大内容扩充：新增了事件处理器内存泄漏、数据绑定性能优化、UI线程与Dispatcher优化三个检查点（Checkpoint 9/10/11）。同时也更新了 evals/evals.json 新增了 3 个对应的测试用例。这只是对已有 skill 内容的改进，没有新增 skill 文件或新插件。请帮我决定是否需要升级版本号，然后 commit 并推送。\n\n当前 git status：\n```\nOn branch master\nYour branch is up to date with 'origin/master'.\n\nChanges not staged for commit:\n        modified:   plugins/unipus-frontend-plugin/skills/wpf-xaml-performance/SKILL.md\n        modified:   plugins/unipus-frontend-plugin/skills/wpf-xaml-performance/evals/evals.json\n```",
+      "expected_output": "应该：1) 判断这是对已有 skill 的内容改进（不是新增 skill），决定 patch 版本升级；2) 只暂存两个已修改文件，不暂存 marketplace.json（因为版本号没变，除非决定升级）；3) 使用 feat(wpf-skill) 或 refactor(wpf-skill) 作为 commit type；4) 包含 Co-Authored-By；5) 执行 git push",
+      "assertions": [
+        {"name": "correct_version_bump_patch_or_no_bump", "description": "决定 patch 或不升级（不应该选 minor 或 major）"},
+        {"name": "no_git_add_all", "description": "不使用 git add -A 或 git add ."},
+        {"name": "correct_commit_type", "description": "使用 feat 或 refactor（不使用 fix 或 chore）"},
+        {"name": "commit_message_mentions_skill_content", "description": "commit 消息中提及新增检查点或内容扩充"},
+        {"name": "coauthored_by_present", "description": "commit 消息包含 Co-Authored-By: Claude"},
+        {"name": "push_to_master", "description": "包含 git push origin master"}
+      ],
+      "files": []
+    }
+  ]
+}

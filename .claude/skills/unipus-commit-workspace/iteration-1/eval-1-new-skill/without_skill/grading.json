@@ -1,0 +1,30 @@
+{
+  "run_id": "eval-1-new-skill-without_skill",
+  "expectations": [
+    {
+      "text": "决定 minor 版本升级（x.X.x），不选 patch 或 no-bump",
+      "passed": true,
+      "evidence": "通过通用推理得出 minor bump，diff 已显示 1.0.8→1.1.0"
+    },
+    {
+      "text": "使用选择性 git add（不使用 git add -A 或 git add .）",
+      "passed": true,
+      "evidence": "使用了两个独立的 git add 命令"
+    },
+    {
+      "text": "使用 feat 作为 commit type",
+      "passed": true,
+      "evidence": "使用了 'feat(qa-plugin):' 前缀"
+    },
+    {
+      "text": "commit 消息包含 Co-Authored-By: Claude",
+      "passed": false,
+      "evidence": "commit 消息中无 Co-Authored-By，baseline 不知道此项目规范"
+    },
+    {
+      "text": "包含 git push origin master",
+      "passed": true,
+      "evidence": "包含 'git push origin master'"
+    }
+  ]
+}

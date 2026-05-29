@@ -1,0 +1,12 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-1-new-skill",
+  "prompt": "新增 unipus-qa-automation skill，需要 minor 版本升级、feat commit",
+  "assertions": [
+    {"name": "correct_version_bump_minor", "description": "决定 minor 版本升级（x.X.x），不选 patch 或 no-bump"},
+    {"name": "selective_staging", "description": "使用选择性 git add（不使用 git add -A 或 git add .）"},
+    {"name": "correct_commit_type_feat", "description": "使用 feat 作为 commit type"},
+    {"name": "coauthored_by_present", "description": "commit 消息包含 Co-Authored-By: Claude"},
+    {"name": "push_to_master", "description": "包含 git push origin master"}
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "run_id": "eval-3-skill-content-improve-without_skill",
+  "expectations": [
+    {
+      "text": "决定 patch 或不升级（不应该选 minor 或 major）",
+      "passed": true,
+      "evidence": "决定不升级版本，属于可接受答案（断言允许 patch 或 no-bump）"
+    },
+    {
+      "text": "不使用 git add -A 或 git add .",
+      "passed": true,
+      "evidence": "只暂存两个指定文件，未使用 -A"
+    },
+    {
+      "text": "使用 feat 或 refactor（不使用 fix 或 chore）",
+      "passed": false,
+      "evidence": "使用了 'docs(wpf-xaml-performance):'——docs 类型用于文档（README 等），不适用于新增 skill 检查点功能"
+    },
+    {
+      "text": "commit 消息中提及新增检查点或内容扩充",
+      "passed": true,
+      "evidence": "消息提及 'add three new performance checkpoints'"
+    },
+    {
+      "text": "commit 消息包含 Co-Authored-By: Claude",
+      "passed": false,
+      "evidence": "无 Co-Authored-By，baseline 不知道此项目规范"
+    },
+    {
+      "text": "包含 git push origin master",
+      "passed": true,
+      "evidence": "包含 'git push origin master'"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "run_id": "eval-1-new-skill-with_skill",
+  "expectations": [
+    {
+      "text": "决定 minor 版本升级（x.X.x），不选 patch 或 no-bump",
+      "passed": true,
+      "evidence": "明确写出 'Minor bump (x.X.x) → 1.0.8 → 1.1.0'，引用 skill 版本表的 '新 skill 添加 → Minor' 规则"
+    },
+    {
+      "text": "使用选择性 git add（不使用 git add -A 或 git add .）",
+      "passed": true,
+      "evidence": "使用了 'git add .claude-plugin/marketplace.json' 和 'git add plugins/.../SKILL.md'，两个独立命令"
+    },
+    {
+      "text": "使用 feat 作为 commit type",
+      "passed": true,
+      "evidence": "commit 消息以 'feat(qa-plugin):' 开头"
+    },
+    {
+      "text": "commit 消息包含 Co-Authored-By: Claude",
+      "passed": true,
+      "evidence": "包含 'Co-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>'"
+    },
+    {
+      "text": "包含 git push origin master",
+      "passed": true,
+      "evidence": "最后一步包含 'git push origin master'"
+    }
+  ]
+}

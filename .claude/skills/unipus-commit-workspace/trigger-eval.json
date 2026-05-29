@@ -1,0 +1,22 @@
+[
+  {"query": "刚把 plugins/unipus-qa-plugin/skills/unipus-qa-automation/SKILL.md 写完了，这是这个 plugin 下第一个新 skill，帮我按项目规范 commit 推上去", "should_trigger": true},
+  {"query": "show-tip.sh 里面的 GBK 编码错误我修好了，就改了第 34-36 行，帮我 commit 然后 push 到 master", "should_trigger": true},
+  {"query": "新加了个 unipus-prd-plugin，已经写好了 SKILL.md 和 marketplace.json 里的入口，帮我保存推上去", "should_trigger": true},
+  {"query": "改完了，推到 master 吧", "should_trigger": true},
+  {"query": "这次改动差不多了，帮我做一下 commit", "should_trigger": true},
+  {"query": "wpf xaml performance skill 扩充完了，多了三个检查点，帮我 git commit 一下", "should_trigger": true},
+  {"query": "更新了 CLAUDE.md 快速参考那节，小改动，commit + push 出去吧", "should_trigger": true},
+  {"query": "notification hook 现在 Windows 上能正常弹窗了，帮我把这次修复提交上去", "should_trigger": true},
+  {"query": "加了新 plugin，版本号是不是得升级？帮我处理完然后推上去", "should_trigger": true},
+  {"query": "evals/evals.json 新加了三个测试用例，连带 SKILL.md 一起 commit 掉", "should_trigger": true},
+  {"query": "conventional commit 里 feat 和 fix 的区别是什么，我总是分不清", "should_trigger": false},
+  {"query": "我在另一个 React 项目里改了一些组件，帮我把这些代码 commit 到那个仓库", "should_trigger": false},
+  {"query": "git status 看一下，现在有什么文件改了没提交", "should_trigger": false},
+  {"query": "刚才那条 commit 写错了描述，怎么撤回重写", "should_trigger": false},
+  {"query": "我想在这个仓库开一个新分支来测试实验性 skill，怎么操作", "should_trigger": false},
+  {"query": "改完了，帮我开个 PR 让团队 review 一下，不要直接推 master", "should_trigger": false},
+  {"query": "我想了解一下 git rebase 和 merge 的区别", "should_trigger": false},
+  {"query": "把上周那个修 encoding bug 的 commit cherry-pick 到这个分支", "should_trigger": false},
+  {"query": "看一下最近三次提交都改了什么内容", "should_trigger": false},
+  {"query": "帮我把 Jenkins 构建任务触发一下，让流水线跑起来", "should_trigger": false}
+]
