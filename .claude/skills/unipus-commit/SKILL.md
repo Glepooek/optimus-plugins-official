@@ -1,13 +1,13 @@
 ---
 name: unipus-commit
-description: Use when the user wants to commit and push completed changes to this unipus-plugins-official plugin repository — trigger phrases include "commit", "push", "提交", "推上去", "推到 master", or when done editing any plugin, skill file, hook script, or marketplace.json. Always invoke this skill instead of a bare git workflow when a commit-push is requested in this repo.
+description: 在 unipus-plugins-official 插件仓库中需要提交并推送改动时使用 — 触发词包括 "commit"、"push"、"提交"、"推上去"、"推到 master"，或完成任意插件、skill 文件、hook 脚本、marketplace.json 的编辑后需要保存时。在本仓库中请始终使用此 skill 代替普通 git 工作流。
 ---
 
 # /unipus-commit
 
-Project-specific commit workflow. Handles version bumping, selective staging, and push to master in one pass.
+本仓库专用提交工作流，一次完成版本号判断、选择性暂存和推送到 master。
 
-## Step 1 — Inspect changes
+## 第一步 — 查看变更
 
 ```bash
 git status
@@ -15,58 +15,58 @@ git diff HEAD --stat
 git log --oneline -5
 ```
 
-## Step 2 — Decide version bump
+## 第二步 — 决定版本号升级
 
-Check whether `.claude-plugin/marketplace.json` needs a version bump:
+检查 `.claude-plugin/marketplace.json` 是否需要升级版本：
 
-| What changed | Bump type |
+| 变更类型 | 升级类型 |
 |---|---|
-| New plugin directory OR new skill added | **Minor** `x.X.x` |
-| Improved existing skill, fixed hook, updated docs | **Patch** `x.x.X` |
-| Architecture change, breaking API, renamed skill | **Major** `X.x.x` |
-| Config tweak, comment fix, internal refactor only | **No bump** |
+| 新增插件目录或新增 skill | **Minor** `x.X.x` |
+| 改进已有 skill、修复 hook、更新文档 | **Patch** `x.x.X` |
+| 架构变更、破坏性 API、重命名 skill | **Major** `X.x.x` |
+| 配置微调、注释修改、纯内部重构 | **不升级** |
 
-If a bump is needed, edit `.claude-plugin/marketplace.json` → increment `"version"` field, then stage it alongside other files.
+如需升级，编辑 `.claude-plugin/marketplace.json` → 递增 `"version"` 字段，然后将其与其他文件一起暂存。
 
-## Step 3 — Stage files selectively
+## 第三步 — 选择性暂存文件
 
-**Never use `git add -A`** — it risks staging `.env`, lock files, or binaries.
+**禁止使用 `git add -A`** — 可能意外暂存 `.env`、锁文件或二进制文件。
 
 ```bash
-# Stage each changed file by name
+# 逐个文件暂存
 git add .claude-plugin/marketplace.json
-git add plugins/<plugin-name>/skills/<skill-name>/SKILL.md
-# ... add only what belongs in this commit
+git add plugins/<插件名>/skills/<skill名>/SKILL.md
+# ... 只添加属于本次提交的文件
 
-# Verify before committing
+# 提交前验证
 git diff --staged --stat
 ```
 
-## Step 4 — Generate commit message
+## 第四步 — 生成提交消息
 
-Analyze `git diff --staged` to write a conventional commit. Infer scope from the plugin/skill name.
+分析 `git diff --staged`，编写 conventional commit 规范消息，从插件/skill 名称推断 scope。
 
-**Format:**
+**格式：**
 ```
-<type>(<scope>): <concise summary in Chinese or English>
+<类型>(<scope>): <简明摘要（中英文均可）>
 
-- <specific change detail>
-- <specific change detail>
+- <具体变更说明>
+- <具体变更说明>
 
 Co-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>
 ```
 
-**Type reference:**
-- `feat` — new skill, new plugin, new hook
-- `fix` — bug fix in hook script, broken config
-- `docs` — README, CLAUDE.md, tips.txt updates
-- `chore` — version bump only, dependency update
-- `refactor` — restructured skill without behavior change
-- `perf` — skill token optimization
+**类型参考：**
+- `feat` — 新 skill、新插件、新 hook
+- `fix` — hook 脚本 bug 修复、配置错误
+- `docs` — README、CLAUDE.md、tips.txt 更新
+- `chore` — 仅升级版本号、依赖更新
+- `refactor` — 重构 skill 结构但不改变行为
+- `perf` — skill token 数量优化
 
-**Scope examples:** `wpf-skill`, `devops-hooks`, `marketplace`, `office-plugin`
+**scope 示例：** `wpf-skill`、`devops-hooks`、`marketplace`、`office-plugin`
 
-Pass multi-line messages via heredoc to avoid quoting issues:
+使用 heredoc 传递多行消息，避免引号转义问题：
 ```bash
 git commit -m "$(cat <<'EOF'
 feat(wpf-skill): add event leak and async patterns
@@ -80,17 +80,17 @@ EOF
 )"
 ```
 
-## Step 5 — Push to master
+## 第五步 — 推送到 master
 
 ```bash
 git push origin master
 ```
 
-If push fails due to proxy/network reset, retry once. If it fails again, report the error to the user — do **not** force push or `--no-verify`.
+若因代理或网络重置导致推送失败，重试一次。若仍失败，向用户报告错误——**禁止** force push 或 `--no-verify`。
 
-## Common mistakes
+## 常见错误
 
-- Staging with `git add -A` — can include sensitive files
-- Forgetting version bump when a new skill is added (should be minor)
-- Using generic commit messages like "update files" — always describe the specific change
-- Bumping major for a skill content change — major is only for breaking/architectural changes
+- 使用 `git add -A` — 可能包含敏感文件
+- 新增 skill 时忘记升级版本号（应为 minor）
+- 使用 "update files" 等模糊消息 — 始终描述具体变更
+- 因 skill 内容改进就升级 major — major 仅用于破坏性或架构级变更
