@@ -1,0 +1,4 @@
+# docs/blog
+https://claude.com/blog/how-to-configure-hooks
+https://claude.com/blog/using-claude-md-files
+https://claude.com/blog/improved-web-search-with-dynamic-filtering
