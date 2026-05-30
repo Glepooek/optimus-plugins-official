@@ -2,7 +2,7 @@
 name: unipus:office:web-to-markdown
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   category: document-processing
   author: Glepooek
 description: >
@@ -136,7 +136,7 @@ https://kiro.dev/docs/api/reference/  reference.md
 
 ```
 1. 按路径推断规则确定保存路径
-2. WebFetch 抓取网页
+2. 抓取网页原始内容（见下方「抓取策略」）
 3. 清理无关元素（导航栏、页脚、侧边栏、Cookie 提示、广告）
 4. 转换为 Markdown
 5. 翻译为中文（代码块、URL、专有名词、API 名称保持原文）
@@ -148,6 +148,45 @@ https://kiro.dev/docs/api/reference/  reference.md
 ```
 ✓ docs/cli/guide.md（新建）
 ```
+
+### 抓取策略
+
+**WebFetch 会对长页面做摘要压缩，导致内容不完整。** 必须按以下优先级执行：
+
+**首选：curl + Python 提取（完整原文）**
+
+```bash
+curl -s "<URL>" -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
+| python3 -c "
+import sys, re
+html = sys.stdin.read()
+html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
+html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL)
+text = re.sub(r'<[^>]+>', ' ', html)
+text = re.sub(r'[ \t]+', ' ', text)
+text = re.sub(r'\n{3,}', '\n\n', text)
+print(text)
+"
+```
+
+若页面内容较长，分段抓取（每次偏移 8000 字符）直到内容完整：
+
+```bash
+# 第一段
+... | python3 -c "...; print(text[:8000])"
+# 第二段
+... | python3 -c "...; print(text[8000:16000])"
+# 继续直到内容结束
+```
+
+**备用：WebFetch**（仅当 Bash 工具不可用时使用）
+
+使用 `WebFetch` 时需在 prompt 中明确要求：
+> "返回页面完整原始文本，不要省略、不要总结、不要截断任何部分"
+
+即使如此，长页面仍可能被截断，需多次调用补全剩余内容。
+
+**内容完整性验证：** 抓取后检查是否包含文章结语/底部内容，若缺失则继续分段抓取。
 
 ### 批量（≥2 URL 或 `.txt` 文件）：先计划，再执行
 
@@ -203,6 +242,8 @@ https://kiro.dev/docs/api/reference/  reference.md
 |------|---------|
 | URL 无法访问（4xx/5xx） | 记录失败原因，继续下一条 |
 | 网页内容为空 | 警告并跳过，不写入空文件 |
+| curl 不可用 | 降级使用 WebFetch，告知用户内容可能不完整 |
+| 内容疑似截断（缺少结语/底部） | 继续分段抓取直至完整 |
 | 目标目录无写权限 | 报告错误，跳过该条 |
 | `.txt` 文件不存在 | 立即中止，提示用户确认路径 |
 | URL 重复（同一批次） | 跳过后续重复项，结果标注"已跳过（重复）" |
