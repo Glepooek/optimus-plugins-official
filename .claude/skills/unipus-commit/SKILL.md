@@ -17,12 +17,15 @@ git log --oneline -5
 
 ## 第二步 — 决定版本号升级
 
-检查 `.claude-plugin/marketplace.json` 是否需要升级版本：
+**首先判断变更文件路径：**
 
-| 变更类型 | 升级类型 |
+- **`.claude/` 下的任何文件**（项目级 skill、hook、配置等）→ **直接跳过本步骤，不升级**
+- **`plugins/` 下的文件** → 按下表判断是否升级 `.claude-plugin/marketplace.json`
+
+| `plugins/` 内变更类型 | 升级类型 |
 |---|---|
 | 新增插件目录或新增 skill | **Minor** `x.X.x` |
-| 改进已有 skill、修复 hook、更新文档 | **Patch** `x.x.X` |
+| 改进已有插件 skill、修复 hook、更新文档 | **Patch** `x.x.X` |
 | 架构变更、破坏性 API、重命名 skill | **Major** `X.x.x` |
 | 配置微调、注释修改、纯内部重构 | **不升级** |
 
@@ -101,6 +104,7 @@ git push origin master
 ## 常见错误
 
 - 使用 `git add -A` — 可能包含敏感文件
-- 新增 skill 时忘记升级版本号（应为 minor）
+- `.claude/` 下的改动（项目级 skill/配置）误升级版本号 — 仅 `plugins/` 下变更才需考虑升级
+- 新增插件 skill 时忘记升级版本号（应为 minor）
 - 使用 "update files" 等模糊消息 — 始终描述具体变更
 - 因 skill 内容改进就升级 major — major 仅用于破坏性或架构级变更
