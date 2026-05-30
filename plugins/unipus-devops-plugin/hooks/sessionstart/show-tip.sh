@@ -12,7 +12,8 @@ else
 fi
 
 TIPS_FILE="$HOOKS_DIR/tips.txt"
-STATE_FILE="$HOOKS_DIR/.tip-state.json"
+# 固定路径，避免随 plugin cache 版本哈希变化导致状态丢失
+STATE_FILE="$HOME/.claude/.tip-state.json"
 
 # 可配置：每次显示的技巧数量(默认2条,可通过环境变量修改)
 TIPS_COUNT=${CLAUDE_TIPS_COUNT:-2}
