@@ -1,6 +1,6 @@
 ---
 name: unipus-commit
-description: 在 unipus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"，或刚完成插件、skill 文件、hook 脚本、marketplace.json 的编辑需要保存。即使用户只说"推一下"或"存一下"也应触发。
+description: 在 unipus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户明确表达提交或推送意图，如说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"、"推一下"、"存一下"。**仅凭编辑文件本身不触发此 skill，必须有用户明确的提交指令。**
 ---
 
 # /unipus-commit
@@ -19,15 +19,21 @@ git log --oneline -5
 
 **首先判断变更文件路径：**
 
-- **`.claude/` 下的任何文件**（项目级 skill、hook、配置等）→ **直接跳过本步骤，不升级**
+- **`.claude/` 下的任何文件**（项目级 skill、配置等）→ **直接跳过本步骤，不升级**
 - **`plugins/` 下的文件** → 按下表判断是否升级 `.claude-plugin/marketplace.json`
 
-| `plugins/` 内变更类型 | 升级类型 |
-|---|---|
-| 新增插件目录或新增 skill | **Minor** `x.X.x` |
-| 改进已有插件 skill、修复 hook、更新文档 | **Patch** `x.x.X` |
-| 架构变更、破坏性 API、重命名 skill | **Major** `X.x.x` |
-| 配置微调、注释修改、纯内部重构 | **不升级** |
+`plugins/` 内容类型涵盖：skills、commands、hooks、subagents、mcp、lsp 及文档配置。
+
+| 操作 | 内容类型 | 升级类型 |
+|---|---|---|
+| **新增** | skills、commands、subagents、mcp、lsp、hooks | **Minor** `x.X.x` |
+| **新增** | 新插件目录 | **Minor** `x.X.x` |
+| **更新/修复** | 任意已有内容（skill 改进、hook 修复、文档更新等） | **Patch** `x.x.X` |
+| **删除** | 用户可感知的功能（skills、commands、subagents、mcp、lsp） | **Major** `X.x.x` |
+| **删除** | 内部实现（hook 脚本逻辑调整、辅助文件移除） | **Patch** `x.x.X` |
+| **重命名/迁移** | 任意用户可见内容 | **Major** `X.x.x` |
+| **架构变更** | 破坏性 API 或结构调整 | **Major** `X.x.x` |
+| **微调** | 配置微调、注释修改、纯内部重构 | **不升级** |
 
 如需升级，编辑 `.claude-plugin/marketplace.json` → 递增 `"version"` 字段，然后将其与其他文件一起暂存。
 
