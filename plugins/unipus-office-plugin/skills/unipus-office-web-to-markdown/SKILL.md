@@ -2,7 +2,7 @@
 name: unipus:office:web-to-markdown
 license: MIT
 metadata:
-  version: "1.0.1"
+  version: "1.0.2"
   category: document-processing
   author: Glepooek
 description: >
@@ -139,14 +139,17 @@ https://kiro.dev/docs/api/reference/  reference.md
 2. 抓取网页原始内容（见下方「抓取策略」）
 3. 清理无关元素（导航栏、页脚、侧边栏、Cookie 提示、广告）
 4. 转换为 Markdown
-5. 翻译为中文（代码块、URL、专有名词、API 名称保持原文）
+5. 翻译为中文（代码块、URL、专有名词、API 名称保持原文；术语按对照表统一）
 6. 写入文件（目录不存在则自动创建）
-7. 输出单行确认
+7. 【第一轮核对】逐段对照原始抓取内容与已写入文件，检查是否有段落、代码块、表格、列表遗漏；列出所有差异
+8. 【第二轮核对】针对第一轮发现的差异逐一补全，补全后再次扫描全文确认无遗漏，输出核对结论
+9. 输出单行确认
 ```
 
 输出示例：
 ```
 ✓ docs/cli/guide.md（新建）
+  核对：第一轮发现 1 处代码块遗漏，已在第二轮补全；内容完整。
 ```
 
 ### 抓取策略
@@ -207,11 +210,15 @@ print(text)
 
 **第二步：用户确认后逐条处理，实时输出进度**
 
+每条 URL 完成写入后，立即执行两轮核对，再处理下一条：
+- **第一轮**：逐段对照原始抓取内容与已写入文件，检查段落、代码块、表格、列表是否有遗漏
+- **第二轮**：针对差异逐一补全，补全后再次扫描确认无遗漏
+
 ```
-[1/4] ✓ docs/kiro/guide.md
-[2/4] ✓ docs/kiro/context.md
+[1/4] ✓ docs/kiro/guide.md（核对完整）
+[2/4] ✓ docs/kiro/context.md（第一轮发现 1 处表格遗漏，第二轮已补全）
 [3/4] ✗ docs/api/reference.md — 抓取失败 (403)
-[4/4] ✓ docs/api/examples.md
+[4/4] ✓ docs/api/examples.md（核对完整）
 
 完成：3 成功，1 失败
 失败项：
@@ -233,6 +240,31 @@ print(text)
 - 代码块（` ``` ` 包裹）和行内代码（`` ` `` 包裹）
 - URL 和文件路径
 - 专有名词、产品名称、API 名称
+
+**术语统一对照表**（遇到下列术语时，统一使用右侧译法，不可自行变体）：
+
+| 原文 | 统一译法 |
+|------|---------|
+| agent / Agent | 智能体 |
+| multi-agent / multi-agent system | 多智能体 / 多智能体系统 |
+| subagent / sub-agent | 子智能体 |
+| orchestrator / lead agent | 编排者 / 主智能体 |
+| context window | 上下文窗口 |
+| context pollution | 上下文污染 |
+| prompt | 提示词 |
+| system prompt | 系统提示词 |
+| token | token（保留原文） |
+| tool call | 工具调用 |
+| tool use | 工具使用 |
+| skill | Skill（产品功能名保留原文） |
+| hook | Hook（产品功能名保留原文） |
+| plugin | Plugin（产品功能名保留原文） |
+| MCP server | MCP Server（保留原文） |
+| hallucination | 幻觉 |
+| fine-tuning | 微调 |
+| inference | 推理 |
+| embedding | 嵌入 |
+| RAG | RAG（保留原文） |
 
 ---
 

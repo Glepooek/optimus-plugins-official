@@ -65,7 +65,7 @@ MCP Servers 是 Claude 连接到其他无法直接访问的内部工具、数据
 ### 子代理（Subagents）将探索与编辑分离
 
 子代理是一个独立的 Claude 实例，拥有自己的上下文窗口，接受一个任务、完成工作，然后只将最终结果返回给父代理。一旦工具链就位，一些团队会启动一个只读的子代理来梳理某个子系统，将发现写入文件，然后由主代理带着完整的信息进行编辑。
-![Claude Code 的扩展层一览](./assets/6a04aaf1c37c6196e5ee19bb_fig1-the-claude-code-harness-v1@2x.png)
+![Claude Code 的扩展层一览](../assets/6a04aaf1c37c6196e5ee19bb_fig1-the-claude-code-harness-v1@2x.png)
 
 ---
 

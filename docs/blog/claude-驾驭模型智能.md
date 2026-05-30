@@ -27,7 +27,7 @@ bash 并非为构建 Agent 而设计，但它是 Claude 知道如何使用、且
 
 到 2024 年底，Claude 3.5 Sonnet 仅凭 bash 工具和一个用于查看、创建、编辑文件的文本编辑器工具，在 SWE-bench Verified 上达到了 **49%** 的得分。
 
-![SWE-bench 得分对比](./assets/harnessing-image2.png)
+![SWE-bench 得分对比](../assets/harnessing-image2.png)
 
 我们看到 Claude 将这些通用工具组合成能解决不同问题的模式。以下三种能力均由 bash 和文本编辑器工具组合而来：
 
@@ -55,7 +55,7 @@ Agent 工具链编码了关于 Claude 自身无法完成什么的假设。随着
 
 在 BrowseComp 基准测试中，这一改进使 Opus 4.6 的准确率从 **45.3% 跃升至 61.6%**。
 
-![BrowseComp 编排效果对比](./assets/harnessing-image4.png)
+![BrowseComp 编排效果对比](../assets/harnessing-image4.png)
 
 ### 让 Claude 自主管理上下文
 
@@ -67,7 +67,7 @@ Agent 工具链编码了关于 Claude 自身无法完成什么的假设。随着
 
 **子代理（Subagents）** 让 Claude 在需要时分叉出一个新的上下文窗口，以隔离特定任务的工作，避免污染主代理的上下文窗口。使用 Opus 4.6 时，这一能力使 BrowseComp 结果比最佳单 Agent 运行提升了 **2.8%**。
 
-![上下文管理对比](./assets/harnessing-image7.png)
+![上下文管理对比](../assets/harnessing-image7.png)
 
 ### 让 Claude 自主持久化上下文
 
@@ -86,7 +86,7 @@ Compaction 的效果随模型能力的提升而显著放大。值得注意的是
 | Opus 4.6 + Compaction | **84%** |
 | Sonnet 4.5 + 记忆文件夹（BrowseComp-Plus）| 60.4% → **67.2%** |
 
-![Compaction 效果图](./assets/harnessing-image6.png)
+![Compaction 效果图](../assets/harnessing-image6.png)
 
 以宝可梦这类长周期游戏为例，可以清晰地看出记忆质量的差异。Sonnet 3.5 将记忆当作流水账，记录的是 NPC 说了什么，而不是什么真正重要。经过 14000 步后，它存了 31 个文件——包括两个关于毛毛虫宝可梦的近乎重复的笔记——而游戏进度仍停留在第二个城镇。相比之下，Opus 4.6 在同等步数时，已经有 10 个按目录组织的文件、3 枚道馆徽章，以及一个从自身失败经历中提炼出的学习笔记。
 
@@ -105,7 +105,7 @@ caterpie_weedle_info:
 - Gen 1 Bag Limit: 20 items max. Toss unneeded TMs before dungeons.
 ```
 
-![记忆质量对比](./assets/harnessing-image3.png)
+![记忆质量对比](../assets/harnessing-image3.png)
 
 ---
 
@@ -129,7 +129,7 @@ Messages API 是无状态的——Claude 无法看到之前的对话历史，因
 | **谨慎管理工具列表** | 工具位于缓存前缀中，增删任何一个工具都会使整个前缀缓存失效；使用工具搜索实现动态发现 |
 | **及时移动缓存断点** | 将断点移至最新消息位置；多轮应用使用自动缓存功能 |
 
-![缓存结构示意图](./assets/harnessing-image5.png)
+![缓存结构示意图](../assets/harnessing-image5.png)
 
 ### 使用专用工具划定 UX、可观测性或安全边界
 
@@ -143,7 +143,7 @@ Claude 发出工具调用，由工具链处理。bash 工具赋予 Claude 广泛
 
 这一决定应该被持续重新评估。随着 Claude 能力的提升，曾经需要通过工具链强制执行的限制，可能已经可以依靠模型自身的判断来实现。Claude Code 的 **auto-mode** 就是一个例子：在 bash 工具周围建立安全边界，由第二个 Claude 实例读取命令字符串，判断其是否安全。这种模式可以减少对专用工具的依赖，但仅适用于用户信任 Agent 总体方向的任务场景。即便如此，高风险操作仍可能需要专用工具。
 
-![专用工具边界示意图](./assets/harnessing-image1.png)
+![专用工具边界示意图](../assets/harnessing-image1.png)
 
 ---
 
