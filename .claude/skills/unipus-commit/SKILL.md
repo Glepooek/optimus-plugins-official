@@ -1,6 +1,6 @@
 ---
 name: unipus-commit
-description: 在 unipus-plugins-official 插件仓库中需要提交并推送改动时使用 — 触发词包括 "commit"、"push"、"提交"、"推上去"、"推到 master"，或完成任意插件、skill 文件、hook 脚本、marketplace.json 的编辑后需要保存时。在本仓库中请始终使用此 skill 代替普通 git 工作流。
+description: 在 unipus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"，或刚完成插件、skill 文件、hook 脚本、marketplace.json 的编辑需要保存。即使用户只说"推一下"或"存一下"也应触发。
 ---
 
 # /unipus-commit
@@ -80,7 +80,17 @@ EOF
 )"
 ```
 
-## 第五步 — 推送到 master
+## 第五步 — 拉取远程最新提交
+
+提交本地 commit 后，先同步远程变更，避免 push 时因远端有新提交而被拒绝：
+
+```bash
+git pull --rebase origin master
+```
+
+若出现 rebase 冲突，解决冲突后执行 `git rebase --continue`；若想放弃 rebase，执行 `git rebase --abort`，然后向用户说明情况。
+
+## 第六步 — 推送到 master
 
 ```bash
 git push origin master
