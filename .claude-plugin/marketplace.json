@@ -2,7 +2,7 @@
   "name": "unipus-plugins-official",
   "displayName": "Unipus 官方插件仓库",
   "description": "Unipus 公司官方 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强（158条技巧智能轮播）、权限通知等企业级开发工具链",
-  "version": "1.0.10",
+  "version": "1.1.0",
   "owner": {
     "name": "unipus",
     "url": "https://www.unipus.cn"
@@ -55,7 +55,7 @@
     {
       "name": "unipus-office-plugin",
       "source": "./plugins/unipus-office-plugin",
-      "description": "Office 文档处理工具集：Word、Excel、PowerPoint、PDF 文档的生成和处理"
+      "description": "Office 文档处理工具集：Word、Excel、PowerPoint、PDF 文档的生成和处理，以及网页内容抓取转 Markdown"
     },
     {
       "name": "unipus-devops-plugin",
