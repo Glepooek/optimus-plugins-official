@@ -422,4 +422,6 @@ FodyWeavers.xsd
 .claude/**/*.local.*
 .claude/memory/
 .claude/plans/
+.playwright-mcp/
+.remember/
 **/.tip-state.json
