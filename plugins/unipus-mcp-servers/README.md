@@ -4,17 +4,34 @@
 
 ## 包含的 MCP 服务器
 
-### 1. GitHub MCP Server
+### 1. Playwright MCP
+- **类型**: stdio
+- **功能**: 基于 Microsoft Playwright 的浏览器自动化，让 Claude 可直接操控浏览器
+- **浏览器**: Microsoft Edge（`msedge`）
+- **前置要求**: 已安装 Node.js（`npx` 可用）；首次运行自动下载 `@playwright/mcp`
+- **主要能力**:
+  - 🌐 **页面导航**: `browser_navigate`、`browser_navigate_back`
+  - 📸 **内容抓取**: `browser_snapshot`（accessibility tree）、`browser_take_screenshot`
+  - 🖱️ **交互操作**: `browser_click`、`browser_type`、`browser_fill_form`、`browser_select_option`
+  - ⌨️ **键盘/等待**: `browser_press_key`、`browser_wait_for`
+  - 🗂️ **标签页管理**: `browser_tabs`（list/new/close/select）
+  - 🔍 **网络监控**: `browser_network_requests`、`browser_network_request`
+  - 📊 **JavaScript**: `browser_evaluate`、`browser_run_code_unsafe`
+  - 🗃️ **文件操作**: `browser_file_upload`、`browser_drop`
+  - 📋 **控制台日志**: `browser_console_messages`
+- **典型用途**: 抓取 SPA 动态页面（Vue/React/Next.js 渲染后内容）、自动化表单填写、端到端测试
+
+### 2. GitHub MCP Server
 - **类型**: HTTP
 - **功能**: 提供 GitHub Copilot MCP API 访问
 - **环境变量**: `GITHUB_TOKEN`
 
-### 2. MasterGo Magic MCP
+### 3. MasterGo Magic MCP
 - **类型**: stdio
 - **功能**: MasterGo 设计协作工具集成
 - **环境变量**: `MASTERGO_TOKEN`
 
-### 3. 飞书项目 MCP
+### 4. 飞书项目 MCP
 - **类型**: stdio
 - **功能**: 飞书项目（Feishu Project）全功能集成
 - **环境变量**: `MCP_USER_TOKEN`
@@ -33,7 +50,11 @@
 
 ### 前置要求
 
-在全局配置文件 `~/.claude/settings.json` 中设置环境变量：
+**Playwright MCP** 无需配置 Token，但需要：
+- 已安装 Node.js（确保 `npx` 命令可用）
+- 已安装 Microsoft Edge 浏览器
+
+其余服务器在全局配置文件 `~/.claude/settings.json` 中设置环境变量：
 
 ```json
 {
@@ -61,7 +82,7 @@
    如果需要手动管理，在项目 `.claude/settings.json` 中添加：
    ```json
    {
-     "enabledMcpjsonServers": ["github", "mastergo-magic-mcp", "FeishuProjectMcp"]
+     "enabledMcpjsonServers": ["playwright", "github", "mastergo-magic-mcp", "FeishuProjectMcp"]
    }
    ```
 
