@@ -142,7 +142,7 @@ https://kiro.dev/docs/api/reference/  reference.md
 
 ### 抓取策略
 
-三级降级，按顺序执行，前一级内容有效则不进入下一级：
+三级降级，按顺序执行，前一级内容有效（不触发任何动态页面判定规则）则不进入下一级：
 
 **一级：curl（静态 / SSR 页面，默认路径）**
 
@@ -168,7 +168,7 @@ print(text)
 # 继续直到内容结束
 ```
 
-**curl 完成后执行动态页面判定**（满足任一条件 → 内容无效，进入二级）：
+**curl 完成后执行动态页面判定**（满足规则 1-4 任一 → 内容无效，进入二级；规则 5 例外，直接失败）：
 
 | # | 规则 | 说明 |
 |---|------|------|
@@ -176,7 +176,7 @@ print(text)
 | 2 | 含 SPA 框架标记且正文 < 500 字符 | `id="root"` / `id="app"` / `id="__nuxt"` / `id="__layout"` / `data-reactroot` |
 | 3 | 含 JS 数据注入标记（无论正文长短） | `__NEXT_DATA__` / `__NUXT__` / `__REDUX_STATE__` / `window.__INITIAL_STATE__` |
 | 4 | 含骨架屏 / 加载占位符特征词 | `class="skeleton"` / `loading-placeholder` / `shimmer` / `aria-busy="true"` |
-| 5 | HTTP 非 200 且非 4xx 认证错误 | 网络错误，直接失败，不触发降级 |
+| 5 | HTTP 非 200 且非 4xx 认证错误 | 网络错误（例外：不进入二级，直接标记失败） |
 
 **二级：Playwright MCP（curl 内容无效时）**
 
@@ -204,7 +204,7 @@ print(text)
 5. browser_close()
 ```
 
-**三级：WebFetch（Playwright MCP 不可用或失败时）**
+**三级：WebFetch（Playwright MCP 不可用，或抓取内容二次校验仍无效时）**
 
 在 prompt 中明确要求：「返回页面完整原始文本，不要省略、不要总结、不要截断任何部分」。长页面仍可能被截断，需多次调用补全。结果标注「WebFetch，内容可能不完整」。
 
