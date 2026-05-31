@@ -242,8 +242,14 @@ print(text)
 ```
 ✓ docs/blog/guide.md（新建，核对完整）
 ✓ docs/blog/guide.md（新建，已补全 2 处）
+✓ docs/blog/guide.md（新建，动态抓取，核对完整）
+✓ docs/blog/guide.md（新建，动态抓取，已补全 2 处）
+✓ docs/blog/guide.md（新建，WebFetch，内容可能不完整）
 ✓ docs/blog/guide.md（已存在，核对完整）
 ✓ docs/blog/guide.md（已存在，已补全 3 处）
+✓ docs/blog/guide.md（已存在，动态抓取，核对完整）
+✓ docs/blog/guide.md（已存在，动态抓取，已补全 2 处）
+✓ docs/blog/guide.md（已存在，WebFetch，内容可能不完整）
 ✗ docs/blog/guide.md — 抓取失败 (403)
 ```
 
