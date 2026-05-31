@@ -2,7 +2,7 @@
 name: unipus:office:web-to-markdown
 license: MIT
 metadata:
-  version: "1.1.1"
+  version: "1.2.0"
   category: document-processing
   author: Glepooek
 description: >
@@ -353,9 +353,10 @@ print(text)
 |------|---------|
 | URL 无法访问（4xx/5xx） | 记录失败原因，继续下一条 |
 | 网页内容为空 | 警告并跳过，不写入空文件 |
-| curl 不可用 | 降级使用 WebFetch，告知用户内容可能不完整 |
+| curl 不可用 | 跳过 curl，直接尝试 Playwright MCP；若 MCP 也不可用则降级 WebFetch |
 | 内容疑似截断（缺少结语/底部） | 继续分段抓取直至完整 |
 | 目标目录无写权限 | 报告错误，跳过该条 |
 | `.txt` 文件不存在 | 立即中止，提示用户确认路径 |
 | URL 重复（同一批次） | 跳过后续重复项，结果标注"已跳过（重复）" |
 | 文件已存在 | 不覆盖，执行存量核对流程，结果标注"已存在，核对完整/已补全 N 处" |
+| Playwright MCP 不可用或抓取内容仍为空 | 降级使用 WebFetch，结果标注「WebFetch，内容可能不完整」 |
