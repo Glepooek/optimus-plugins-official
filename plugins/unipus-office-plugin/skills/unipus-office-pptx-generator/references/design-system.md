@@ -1,190 +1,190 @@
-# Design System
+# 设计系统
 
-## Color Palette Reference
+## 配色方案参考
 
-| # | Name | Colors | Style | Use Cases | Tips |
+| # | 名称 | 颜色 | 风格 | 适用场景 | 使用技巧 |
 |---|------|--------|-------|-----------|------|
-| 1 | Modern & Wellness | `#006d77` `#83c5be` `#edf6f9` `#ffddd2` `#e29578` | Fresh, soothing | Healthcare, counseling, skincare, yoga/spa | Deep teal for titles, light pink for background |
-| 2 | Business & Authority | `#2b2d42` `#8d99ae` `#edf2f4` `#ef233c` `#d90429` | Formal, classic | Annual reports, financial analysis, corporate intro, government | Deep blue for professionalism, bright red to highlight data |
-| 3 | Nature & Outdoors | `#606c38` `#283618` `#fefae0` `#dda15e` `#bc6c25` | Grounded, earthy | Outdoor gear, environmental, agriculture, historical culture | Dark green base, cream text |
-| 4 | Vintage & Academic | `#780000` `#c1121f` `#fdf0d5` `#003049` `#669bbc` | Classic, scholarly | Academic lectures, history reviews, museums, heritage brands | Strong contrast between deep red and deep blue |
-| 5 | Soft & Creative | `#cdb4db` `#ffc8dd` `#ffafcc` `#bde0fe` `#a2d2ff` | Dreamy, candy-toned | Mother & baby, desserts, women's fashion, kindergarten | Use dark gray or black for text |
-| 6 | Bohemian | `#ccd5ae` `#e9edc9` `#fefae0` `#faedcd` `#d4a373` | Gentle, muted | Wedding planning, home decor, organic food, slow living | Cream background, green-brown accents |
-| 7 | Vibrant & Tech | `#8ecae6` `#219ebc` `#023047` `#ffb703` `#fb8500` | High energy, sporty | Sports events, gyms, startup pitches, youth education | Deep blue for stability, orange as focal accent |
-| 8 | Craft & Artisan | `#7f5539` `#a68a64` `#ede0d4` `#656d4a` `#414833` | Rustic, coffee-toned | Coffee shops, handicrafts, traditional culture, bakery | Suited for paper/leather textures |
-| 9 | Tech & Night | `#000814` `#001d3d` `#003566` `#ffc300` `#ffd60a` | Deep, luminous | Tech launches, astronomy, night economy, luxury automobiles | Must use dark mode |
-| 10 | Education & Charts | `#264653` `#2a9d8f` `#e9c46a` `#f4a261` `#e76f51` | Clear, logical | Statistical reports, education, market analysis, general business | Perfect chart color scheme |
-| 11 | Forest & Eco | `#dad7cd` `#a3b18a` `#588157` `#3a5a40` `#344e41` | Monochrome gradient, forest | Landscape design, ESG reports, environmental causes, botanical | Monochrome palette is safe and cohesive |
-| 12 | Elegant & Fashion | `#edafb8` `#f7e1d7` `#dedbd2` `#b0c4b1` `#4a5759` | Muted, Morandi tones | Haute couture, art galleries, beauty brands, magazine style | Negative space is key |
-| 13 | Art & Food | `#335c67` `#fff3b0` `#e09f3e` `#9e2a2b` `#540b0e` | Rich, vintage-poster | Food documentaries, art exhibitions, ethnic themes, vintage restaurants | Works well with large color blocks |
-| 14 | Luxury & Mysterious | `#22223b` `#4a4e69` `#9a8c98` `#c9ada7` `#f2e9e4` | Cool, purple-toned | Jewelry showcases, hotel management, high-end consulting, psychology | Purple evokes premium atmosphere |
-| 15 | Pure Tech Blue | `#03045e` `#0077b6` `#00b4d8` `#90e0ef` `#caf0f8` | Futuristic, clean | Cloud/AI, water/ocean, hospitals, clean energy | Deep ocean to sky gradient |
-| 16 | Coastal Coral | `#0081a7` `#00afb9` `#fdfcdc` `#fed9b7` `#f07167` | Refreshing, summery | Travel, summer events, beverage brands, ocean themes | Teal and coral as complementary focal colors |
-| 17 | Vibrant Orange Mint | `#ff9f1c` `#ffbf69` `#ffffff` `#cbf3f0` `#2ec4b6` | Bright, cheerful | Children's events, promotional posters, FMCG, social media | Orange grabs attention, mint feels fresh |
-| 18 | Platinum White Gold | `#0a0a0a` `#0070F3` `#D4AF37` `#f5f5f5` `#ffffff` | Premium, professional | Agent products, corporate websites, fintech, luxury brands | White-gold base, blue for action, gold for emphasis |
+| 1 | 现代与健康 | `#006d77` `#83c5be` `#edf6f9` `#ffddd2` `#e29578` | 清新、舒缓 | 医疗、咨询、护肤、瑜伽/水疗 | 深青色作标题，浅粉色作背景 |
+| 2 | 商业与权威 | `#2b2d42` `#8d99ae` `#edf2f4` `#ef233c` `#d90429` | 正式、经典 | 年报、财务分析、企业介绍、政府机构 | 深蓝彰显专业，亮红突出数据 |
+| 3 | 自然与户外 | `#606c38` `#283618` `#fefae0` `#dda15e` `#bc6c25` | 厚重、质朴 | 户外装备、环保、农业、历史文化 | 深绿底色，米色文字 |
+| 4 | 复古与学术 | `#780000` `#c1121f` `#fdf0d5` `#003049` `#669bbc` | 古典、学术 | 学术讲座、历史回顾、博物馆、传统品牌 | 深红与深蓝形成强烈对比 |
+| 5 | 柔和与创意 | `#cdb4db` `#ffc8dd` `#ffafcc` `#bde0fe` `#a2d2ff` | 梦幻、糖果色调 | 母婴、甜品、女装、幼儿园 | 文字使用深灰或黑色 |
+| 6 | 波西米亚风 | `#ccd5ae` `#e9edc9` `#fefae0` `#faedcd` `#d4a373` | 柔和、低饱和 | 婚礼策划、家居装饰、有机食品、慢生活 | 米色背景，绿棕色点缀 |
+| 7 | 活力与科技 | `#8ecae6` `#219ebc` `#023047` `#ffb703` `#fb8500` | 高能量、运动感 | 体育赛事、健身房、创业路演、青少年教育 | 深蓝稳定，橙色作点睛之笔 |
+| 8 | 工艺与匠人 | `#7f5539` `#a68a64` `#ede0d4` `#656d4a` `#414833` | 田园、咖啡色调 | 咖啡馆、手工艺、传统文化、烘焙 | 适合纸张/皮革质感 |
+| 9 | 科技与暗夜 | `#000814` `#001d3d` `#003566` `#ffc300` `#ffd60a` | 深邃、发光 | 科技发布会、天文、夜经济、豪华汽车 | 必须使用暗黑模式 |
+| 10 | 教育与图表 | `#264653` `#2a9d8f` `#e9c46a` `#f4a261` `#e76f51` | 清晰、逻辑感 | 统计报告、教育、市场分析、通用商业 | 完美的图表配色 |
+| 11 | 森林与生态 | `#dad7cd` `#a3b18a` `#588157` `#3a5a40` `#344e41` | 单色渐变、森系 | 景观设计、ESG报告、环保事业、植物学 | 单色调配色安全统一 |
+| 12 | 优雅与时尚 | `#edafb8` `#f7e1d7` `#dedbd2` `#b0c4b1` `#4a5759` | 低饱和、莫兰迪色 | 高定时装、艺术画廊、美妆品牌、杂志风 | 留白是关键 |
+| 13 | 艺术与美食 | `#335c67` `#fff3b0` `#e09f3e` `#9e2a2b` `#540b0e` | 浓郁、复古海报 | 美食纪录片、艺术展览、民族主题、复古餐厅 | 适合大色块 |
+| 14 | 奢华与神秘 | `#22223b` `#4a4e69` `#9a8c98` `#c9ada7` `#f2e9e4` | 冷调、紫色系 | 珠宝展示、酒店管理、高端咨询、心理学 | 紫色营造高端氛围 |
+| 15 | 纯净科技蓝 | `#03045e` `#0077b6` `#00b4d8` `#90e0ef` `#caf0f8` | 未来感、简洁 | 云计算/AI、水/海洋、医院、清洁能源 | 深海到天空的渐变感 |
+| 16 | 海岸珊瑚 | `#0081a7` `#00afb9` `#fdfcdc` `#fed9b7` `#f07167` | 清爽、夏日感 | 旅行、夏季活动、饮料品牌、海洋主题 | 青色与珊瑚色互补聚焦 |
+| 17 | 活力橙薄荷 | `#ff9f1c` `#ffbf69` `#ffffff` `#cbf3f0` `#2ec4b6` | 明亮、欢快 | 儿童活动、促销海报、快消品、社交媒体 | 橙色抓眼球，薄荷色清新 |
+| 18 | 铂金白金 | `#0a0a0a` `#0070F3` `#D4AF37` `#f5f5f5` `#ffffff` | 高端、专业 | 智能体产品、企业官网、金融科技、奢侈品牌 | 白金底色，蓝色引导行动，金色强调重点 |
 
 ---
 
-### Agent Design System — Full Color Scale
+### Agent 设计系统 — 完整色阶
 
-Based on the Platinum White-Gold Theme design tokens. Provides complete color scales for fine-grained design work.
+基于铂金白金主题的设计 token，提供完整色阶，用于精细化设计。
 
-#### White Scale (Backgrounds & Light Surfaces)
+#### 白色色阶（背景与浅色界面）
 
-| Token | Value | Usage |
+| Token | 值 | 用途 |
 |-------|-------|-------|
-| white-0 | `#ffffff` | Primary background |
-| white-50 | `#fefefe` | Slightly warm white |
-| white-75 | `#fcfcfc` | Near-white |
-| white-100 | `#fafafa` | Secondary background |
-| white-200 | `#f7f7f7` | Card background |
-| white-300 | `#f5f5f5` | Tertiary background |
-| white-400 | `#f0f0f0` | Separator zones |
-| white-500 | `#ebebeb` | Light border |
-| white-600 | `#e5e5e5` | Disabled background |
-| white-700 | `#e0e0e0` | Deep white-gray |
-| white-800 | `#d9d9d9` | Placeholder |
-| white-900 | `#d4d4d4` | Divider lines |
-| white-1000 | `#cccccc` | Deepest white |
+| white-0 | `#ffffff` | 主背景 |
+| white-50 | `#fefefe` | 略带暖意的白色 |
+| white-75 | `#fcfcfc` | 近白色 |
+| white-100 | `#fafafa` | 次级背景 |
+| white-200 | `#f7f7f7` | 卡片背景 |
+| white-300 | `#f5f5f5` | 三级背景 |
+| white-400 | `#f0f0f0` | 分隔区域 |
+| white-500 | `#ebebeb` | 浅色边框 |
+| white-600 | `#e5e5e5` | 禁用背景 |
+| white-700 | `#e0e0e0` | 深白灰 |
+| white-800 | `#d9d9d9` | 占位符 |
+| white-900 | `#d4d4d4` | 分割线 |
+| white-1000 | `#cccccc` | 最深白色 |
 
-#### Gold Scale (Platinum Business Accent)
+#### 金色色阶（铂金商业强调色）
 
-| Token | Value | Usage |
+| Token | 值 | 用途 |
 |-------|-------|-------|
-| gold-25 | `#FFFDF5` | Extremely light gold background |
-| gold-50 | `#FEF9E7` | Light gold background |
-| gold-75 | `#FCF3D0` | Pale gold highlight |
-| gold-100 | `#FAECB8` | Gold hover state |
-| gold-200 | `#F5DC8A` | Bright gold accent |
-| gold-300 | `#E8C860` | Gold hover |
-| gold-400 | `#D4AF37` | **Primary gold (core)** |
-| gold-500 | `#B8972E` | Gold text |
-| gold-600 | `#9A7E26` | Deep gold accent |
-| gold-700 | `#7C651E` | Dark gold border |
-| gold-800 | `#5E4C16` | Deep gold background |
-| gold-900 | `#40330F` | Very deep gold |
-| gold-1000 | `#221A08` | Black gold |
+| gold-25 | `#FFFDF5` | 极浅金色背景 |
+| gold-50 | `#FEF9E7` | 浅金色背景 |
+| gold-75 | `#FCF3D0` | 淡金色高亮 |
+| gold-100 | `#FAECB8` | 金色悬停状态 |
+| gold-200 | `#F5DC8A` | 明亮金色强调 |
+| gold-300 | `#E8C860` | 金色悬停 |
+| gold-400 | `#D4AF37` | **主金色（核心）** |
+| gold-500 | `#B8972E` | 金色文字 |
+| gold-600 | `#9A7E26` | 深金色强调 |
+| gold-700 | `#7C651E` | 深金色边框 |
+| gold-800 | `#5E4C16` | 深金色背景 |
+| gold-900 | `#40330F` | 极深金色 |
+| gold-1000 | `#221A08` | 黑金色 |
 
-#### Blue Scale (Primary Action Color)
+#### 蓝色色阶（主操作色）
 
-| Token | Value | Usage |
+| Token | 值 | 用途 |
 |-------|-------|-------|
-| blue-25 | `#F0F7FF` | Extremely light blue background |
-| blue-50 | `#E0EFFF` | Info alert background |
-| blue-75 | `#C2DFFF` | Light blue highlight |
-| blue-100 | `#A3CFFF` | Disabled blue |
-| blue-200 | `#66AFFF` | Bright blue |
-| blue-300 | `#338FFF` | Blue hover |
-| blue-400 | `#0070F3` | **Primary blue (core)** |
-| blue-500 | `#005FCC` | Blue text |
-| blue-600 | `#004FA6` | Deep blue accent |
-| blue-700 | `#003F80` | Dark blue border |
-| blue-800 | `#002F5A` | Deep blue background |
-| blue-900 | `#001F3D` | Very deep blue |
-| blue-1000 | `#001026` | Black blue |
+| blue-25 | `#F0F7FF` | 极浅蓝色背景 |
+| blue-50 | `#E0EFFF` | 信息提示背景 |
+| blue-75 | `#C2DFFF` | 浅蓝高亮 |
+| blue-100 | `#A3CFFF` | 禁用蓝色 |
+| blue-200 | `#66AFFF` | 明亮蓝色 |
+| blue-300 | `#338FFF` | 蓝色悬停 |
+| blue-400 | `#0070F3` | **主蓝色（核心）** |
+| blue-500 | `#005FCC` | 蓝色文字 |
+| blue-600 | `#004FA6` | 深蓝强调 |
+| blue-700 | `#003F80` | 深蓝边框 |
+| blue-800 | `#002F5A` | 深蓝背景 |
+| blue-900 | `#001F3D` | 极深蓝色 |
+| blue-1000 | `#001026` | 黑蓝色 |
 
-#### Gray Scale (Text & Neutral Colors)
+#### 灰色色阶（文字与中性色）
 
-| Token | Value | Usage |
+| Token | 值 | 用途 |
 |-------|-------|-------|
-| gray-0 | `#ffffff` | White |
-| gray-50 | `#fafafa` | Extremely light gray |
-| gray-75 | `#f5f5f5` | Light gray background |
-| gray-100 | `#ededed` | Light divider |
-| gray-200 | `#d4d4d4` | Light border |
-| gray-300 | `#a3a3a3` | Quaternary text |
-| gray-400 | `#737373` | Tertiary text |
-| gray-500 | `#525252` | Secondary text |
-| gray-600 | `#404040` | Dark gray |
-| gray-700 | `#2e2e2e` | Dark background |
-| gray-800 | `#1f1f1f` | Deep background |
-| gray-900 | `#141414` | Very deep background |
-| gray-1000 | `#0a0a0a` | **Primary text (core)** |
+| gray-0 | `#ffffff` | 白色 |
+| gray-50 | `#fafafa` | 极浅灰色 |
+| gray-75 | `#f5f5f5` | 浅灰背景 |
+| gray-100 | `#ededed` | 浅分割线 |
+| gray-200 | `#d4d4d4` | 浅色边框 |
+| gray-300 | `#a3a3a3` | 四级文字 |
+| gray-400 | `#737373` | 三级文字 |
+| gray-500 | `#525252` | 次级文字 |
+| gray-600 | `#404040` | 深灰色 |
+| gray-700 | `#2e2e2e` | 深色背景 |
+| gray-800 | `#1f1f1f` | 极深背景 |
+| gray-900 | `#141414` | 非常深的背景 |
+| gray-1000 | `#0a0a0a` | **主文字色（核心）** |
 
-#### Opacity Values
+#### 透明度值
 
-##### Opacity Black
+##### 黑色透明度
 
-| Opacity | Value | Usage |
+| 透明度 | 值 | 用途 |
 |---------|-------|-------|
-| 0% | `#0a0a0a00` | Fully transparent |
-| 2% | `#0a0a0a05` | Subtle overlay |
-| 4% | `#0a0a0a0a` | Secondary interactive background |
-| 8% | `#0a0a0a14` | Border / divider |
-| 15% | `#0a0a0a26` | Pressed state |
-| 20% | `#0a0a0a33` | Light overlay |
-| 25% | `#0a0a0a40` | Medium overlay |
-| 50% | `#0a0a0a80` | Semi-transparent |
-| 70% | `#0a0a0ab2` | Deep overlay |
-| 80% | `#0a0a0acc` | Hover state |
-| 90% | `#0a0a0ae5` | Tooltip |
-| 95% | `#0a0a0af2` | Modal |
+| 0% | `#0a0a0a00` | 完全透明 |
+| 2% | `#0a0a0a05` | 微妙叠加 |
+| 4% | `#0a0a0a0a` | 次级交互背景 |
+| 8% | `#0a0a0a14` | 边框/分割线 |
+| 15% | `#0a0a0a26` | 按下状态 |
+| 20% | `#0a0a0a33` | 浅色遮罩 |
+| 25% | `#0a0a0a40` | 中等遮罩 |
+| 50% | `#0a0a0a80` | 半透明 |
+| 70% | `#0a0a0ab2` | 深色遮罩 |
+| 80% | `#0a0a0acc` | 悬停状态 |
+| 90% | `#0a0a0ae5` | 工具提示 |
+| 95% | `#0a0a0af2` | 模态框 |
 
-##### Opacity White
+##### 白色透明度
 
-| Opacity | Value | Usage |
+| 透明度 | 值 | 用途 |
 |---------|-------|-------|
-| 0% | `#ffffff00` | Fully transparent |
-| 2% | `#ffffff05` | Subtle overlay |
-| 4% | `#ffffff0a` | Secondary interactive background |
-| 8% | `#ffffff12` | Border / divider |
-| 15% | `#ffffff26` | Pressed state |
-| 20% | `#ffffff33` | Light overlay |
-| 25% | `#ffffff40` | Medium overlay |
-| 50% | `#ffffff80` | Semi-transparent |
-| 70% | `#ffffffb2` | Deep overlay |
-| 80% | `#ffffffcc` | Hover state |
-| 90% | `#ffffffe5` | Tooltip |
-| 95% | `#fffffff2` | Modal |
+| 0% | `#ffffff00` | 完全透明 |
+| 2% | `#ffffff05` | 微妙叠加 |
+| 4% | `#ffffff0a` | 次级交互背景 |
+| 8% | `#ffffff12` | 边框/分割线 |
+| 15% | `#ffffff26` | 按下状态 |
+| 20% | `#ffffff33` | 浅色遮罩 |
+| 25% | `#ffffff40` | 中等遮罩 |
+| 50% | `#ffffff80` | 半透明 |
+| 70% | `#ffffffb2` | 深色遮罩 |
+| 80% | `#ffffffcc` | 悬停状态 |
+| 90% | `#ffffffe5` | 工具提示 |
+| 95% | `#fffffff2` | 模态框 |
 
 ---
 
-## Color Palette Rules (MANDATORY)
+## 配色规则（强制）
 
-### Strict Palette Adherence
+### 严格遵循调色板
 
-**Use ONLY the provided color palette. Do NOT create or modify colors.**
+**只使用提供的调色板颜色，不得创建或修改颜色。**
 
-- All colors must come from the user-provided palette
-- Do NOT use colors outside the palette
-- Do NOT modify palette colors (brightness, saturation, mixing)
-- **Only exception**: Add transparency using the `transparency` property (0-100)
+- 所有颜色必须来自用户提供的调色板
+- 不得使用调色板以外的颜色
+- 不得修改调色板颜色（亮度、饱和度、混合）
+- **唯一例外**：使用 `transparency` 属性（0-100）添加透明度
 
 ```javascript
-// Correct: Using palette colors
+// 正确：使用调色板颜色
 slide.addShape(pres.shapes.RECTANGLE, { fill: { color: theme.primary } });
 slide.addText("Title", { color: theme.accent });
 
-// Wrong: Colors outside palette
+// 错误：使用调色板以外的颜色
 slide.addShape(pres.shapes.RECTANGLE, { fill: { color: "1a1a2e" } });
 ```
 
-### No Gradients
+### 禁止渐变
 
-**Gradients are prohibited. Use solid colors only.**
+**禁止使用渐变，只允许纯色。**
 
-### No Animations
+### 禁止动画
 
-**Animations and transitions are prohibited.** All slides must be static.
+**禁止使用动画和过渡效果。** 所有幻灯片必须是静态的。
 
 ---
 
-## Font Reference
+## 字体参考
 
-### Recommended Fonts
+### 推荐字体
 
-| Language | Default Font | Alternatives |
+| 语言 | 默认字体 | 备选字体 |
 |----------|-------------|--------------|
-| **Chinese** | Microsoft YaHei | — |
-| **English** | Arial | Georgia, Calibri, Cambria, Trebuchet MS |
+| **中文** | 微软雅黑（Microsoft YaHei） | — |
+| **英文** | Arial | Georgia、Calibri、Cambria、Trebuchet MS |
 
-- For mixed Chinese-English content: use Microsoft YaHei for Chinese, the chosen font for English
-- Prefer system fonts for cross-platform compatibility
-- Titles and body text can use different font pairings (e.g. Georgia + Calibri)
+- 中英文混排内容：中文使用微软雅黑，英文使用所选字体
+- 优先使用系统字体以确保跨平台兼容性
+- 标题和正文可使用不同字体搭配（如 Georgia + Calibri）
 
-### Recommended Font Pairings
+### 推荐字体搭配
 
-| Header Font | Body Font |
+| 标题字体 | 正文字体 |
 |-------------|-----------|
 | Georgia | Calibri |
 | Arial Black | Arial |
@@ -195,127 +195,127 @@ slide.addShape(pres.shapes.RECTANGLE, { fill: { color: "1a1a2e" } });
 | Palatino | Garamond |
 | Consolas | Calibri |
 
-**Choose an interesting font pairing** — don't default to Arial for everything. Pick a header font with personality and pair it with a clean body font.
+**选择有趣的字体搭配**——不要所有内容都用 Arial。选一个有个性的标题字体，搭配干净的正文字体。
 
-### No Bold for Body Text
+### 正文文字不加粗
 
-**Plain body text and caption/legend text must NOT use bold.**
+**普通正文和说明/图例文字不得使用粗体。**
 
-- Body paragraphs, descriptions → normal weight
-- Captions, legends, footnotes → normal weight
-- Reserve bold for titles and headings only
+- 正文段落、描述性文字 → 常规字重
+- 说明文字、图例、脚注 → 常规字重
+- 粗体只用于标题和副标题
 
 ```javascript
-// Correct
-slide.addText("Main Title", { bold: true, fontSize: 36, fontFace: "Arial" });
-slide.addText("Body text here.", { bold: false, fontSize: 14, fontFace: "Arial" });
+// 正确
+slide.addText("主标题", { bold: true, fontSize: 36, fontFace: "Arial" });
+slide.addText("正文内容。", { bold: false, fontSize: 14, fontFace: "Arial" });
 
-// Wrong
-slide.addText("Body text here.", { bold: true, fontSize: 14 });
+// 错误
+slide.addText("正文内容。", { bold: true, fontSize: 14 });
 ```
 
 ---
 
-## Style Recipes
+## 样式配方
 
-The same design can be rendered in 4 distinct visual styles by adjusting corner radius (`rectRadius`) and spacing. Choose the style recipe that fits the presentation tone.
+同样的设计可以通过调整圆角半径（`rectRadius`）和间距，呈现为 4 种截然不同的视觉风格。根据演示文稿的基调选择合适的样式配方。
 
-> **Unit note**: PptxGenJS uses inches. Slide dimensions are 10" x 5.625" (LAYOUT_16x9).
+> **单位说明**：PptxGenJS 使用英寸。幻灯片尺寸为 10" x 5.625"（LAYOUT_16x9）。
 
-### Style Overview
+### 风格概览
 
-| Style | Corner Radius | Spacing | Best For |
+| 风格 | 圆角半径 | 间距 | 适合场景 |
 |-------|--------------|---------|----------|
-| **Sharp & Compact** | 0 ~ 0.05" | Tight | Data-dense, tables, professional reports |
-| **Soft & Balanced** | 0.08" ~ 0.12" | Moderate | Corporate, business presentations, general use |
-| **Rounded & Spacious** | 0.15" ~ 0.25" | Relaxed | Product intros, marketing, creative showcases |
-| **Pill & Airy** | 0.3" ~ 0.5" | Open | Brand showcases, launch events, premium presentations |
+| **锐利紧凑（Sharp & Compact）** | 0 ~ 0.05" | 紧凑 | 数据密集、表格、专业报告 |
+| **柔和均衡（Soft & Balanced）** | 0.08" ~ 0.12" | 适中 | 企业、商务演示、通用场景 |
+| **圆润宽松（Rounded & Spacious）** | 0.15" ~ 0.25" | 舒适 | 产品介绍、营销、创意展示 |
+| **胶囊通透（Pill & Airy）** | 0.3" ~ 0.5" | 开阔 | 品牌展示、发布活动、高端演示 |
 
-### Sharp & Compact
+### 锐利紧凑（Sharp & Compact）
 
-**Visual character**: Geometric, high information density, formal and serious.
+**视觉特征**：几何感强、信息密度高、正式严肃。
 
-| Category | Value (inches) | Notes |
+| 类别 | 值（英寸） | 说明 |
 |----------|---------------|-------|
-| Corner radius — small | 0" | Full right angle |
-| Corner radius — medium | 0.03" | Micro-rounded |
-| Corner radius — large | 0.05" | Slight rounding |
-| Element padding | 0.1" ~ 0.15" | Compact |
-| Element gap | 0.1" ~ 0.2" | Compact |
-| Page margin | 0.3" | Narrow |
-| Block gap | 0.25" ~ 0.35" | Compact |
+| 圆角 — 小 | 0" | 直角 |
+| 圆角 — 中 | 0.03" | 微圆角 |
+| 圆角 — 大 | 0.05" | 轻微圆角 |
+| 元素内边距 | 0.1" ~ 0.15" | 紧凑 |
+| 元素间距 | 0.1" ~ 0.2" | 紧凑 |
+| 页面边距 | 0.3" | 窄 |
+| 模块间距 | 0.25" ~ 0.35" | 紧凑 |
 
-### Soft & Balanced
+### 柔和均衡（Soft & Balanced）
 
-**Visual character**: Moderate rounding, comfortable whitespace, professional yet approachable.
+**视觉特征**：适度圆角、舒适留白、专业而不失亲和力。
 
-| Category | Value (inches) | Notes |
+| 类别 | 值（英寸） | 说明 |
 |----------|---------------|-------|
-| Corner radius — small | 0.05" | Slight rounding |
-| Corner radius — medium | 0.08" | Medium rounding |
-| Corner radius — large | 0.12" | Larger rounding |
-| Element padding | 0.15" ~ 0.2" | Moderate |
-| Element gap | 0.15" ~ 0.25" | Moderate |
-| Page margin | 0.4" | Standard |
-| Block gap | 0.35" ~ 0.5" | Moderate |
+| 圆角 — 小 | 0.05" | 轻微圆角 |
+| 圆角 — 中 | 0.08" | 中等圆角 |
+| 圆角 — 大 | 0.12" | 较大圆角 |
+| 元素内边距 | 0.15" ~ 0.2" | 适中 |
+| 元素间距 | 0.15" ~ 0.25" | 适中 |
+| 页面边距 | 0.4" | 标准 |
+| 模块间距 | 0.35" ~ 0.5" | 适中 |
 
-### Rounded & Spacious
+### 圆润宽松（Rounded & Spacious）
 
-**Visual character**: Large corners, generous whitespace, friendly and modern.
+**视觉特征**：大圆角、充足留白、友好而现代。
 
-| Category | Value (inches) | Notes |
+| 类别 | 值（英寸） | 说明 |
 |----------|---------------|-------|
-| Corner radius — small | 0.1" | Medium rounding |
-| Corner radius — medium | 0.15" | Large rounding |
-| Corner radius — large | 0.25" | Very large rounding |
-| Element padding | 0.2" ~ 0.3" | Relaxed |
-| Element gap | 0.25" ~ 0.4" | Relaxed |
-| Page margin | 0.5" | Wide |
-| Block gap | 0.5" ~ 0.7" | Relaxed |
+| 圆角 — 小 | 0.1" | 中等圆角 |
+| 圆角 — 中 | 0.15" | 大圆角 |
+| 圆角 — 大 | 0.25" | 超大圆角 |
+| 元素内边距 | 0.2" ~ 0.3" | 宽松 |
+| 元素间距 | 0.25" ~ 0.4" | 宽松 |
+| 页面边距 | 0.5" | 宽 |
+| 模块间距 | 0.5" ~ 0.7" | 宽松 |
 
-### Pill & Airy
+### 胶囊通透（Pill & Airy）
 
-**Visual character**: Full pill-shaped corners, abundant whitespace, light and open feel, strong brand presence.
+**视觉特征**：全胶囊圆角、充裕留白、轻盈开放感、强烈品牌存在感。
 
-| Category | Value (inches) | Notes |
+| 类别 | 值（英寸） | 说明 |
 |----------|---------------|-------|
-| Corner radius — small | 0.2" | Large rounding |
-| Corner radius — medium | 0.3" | Pill shape |
-| Corner radius — large | 0.5" | Full pill |
-| Element padding | 0.25" ~ 0.4" | Open |
-| Element gap | 0.3" ~ 0.5" | Open |
-| Page margin | 0.6" | Wide |
-| Block gap | 0.6" ~ 0.9" | Open |
+| 圆角 — 小 | 0.2" | 大圆角 |
+| 圆角 — 中 | 0.3" | 胶囊形 |
+| 圆角 — 大 | 0.5" | 完整胶囊 |
+| 元素内边距 | 0.25" ~ 0.4" | 开阔 |
+| 元素间距 | 0.3" ~ 0.5" | 开阔 |
+| 页面边距 | 0.6" | 宽 |
+| 模块间距 | 0.6" ~ 0.9" | 开阔 |
 
-### Component Style Mapping
+### 组件圆角对照表
 
-| Component | Sharp | Soft | Rounded | Pill |
+| 组件 | 锐利 | 柔和 | 圆润 | 胶囊 |
 |-----------|-------|------|---------|------|
-| **Button / Tag** | rectRadius: 0 | rectRadius: 0.05 | rectRadius: 0.1 | rectRadius: 0.2 |
-| **Card / Container** | rectRadius: 0.03 | rectRadius: 0.1 | rectRadius: 0.2 | rectRadius: 0.3 |
-| **Image Container** | rectRadius: 0 | rectRadius: 0.08 | rectRadius: 0.15 | rectRadius: 0.25 |
-| **Input Field** | rectRadius: 0 | rectRadius: 0.05 | rectRadius: 0.1 | rectRadius: 0.2 |
-| **Badge** | rectRadius: 0.02 | rectRadius: 0.05 | rectRadius: 0.08 | rectRadius: 0.15 |
-| **Avatar Frame** | rectRadius: 0 | rectRadius: 0.1 | rectRadius: 0.2 | rectRadius: 0.5 (circle) |
+| **按钮 / 标签** | rectRadius: 0 | rectRadius: 0.05 | rectRadius: 0.1 | rectRadius: 0.2 |
+| **卡片 / 容器** | rectRadius: 0.03 | rectRadius: 0.1 | rectRadius: 0.2 | rectRadius: 0.3 |
+| **图片容器** | rectRadius: 0 | rectRadius: 0.08 | rectRadius: 0.15 | rectRadius: 0.25 |
+| **输入框** | rectRadius: 0 | rectRadius: 0.05 | rectRadius: 0.1 | rectRadius: 0.2 |
+| **徽标** | rectRadius: 0.02 | rectRadius: 0.05 | rectRadius: 0.08 | rectRadius: 0.15 |
+| **头像框** | rectRadius: 0 | rectRadius: 0.1 | rectRadius: 0.2 | rectRadius: 0.5（圆形） |
 
-#### PptxGenJS Corner Radius Examples
+#### PptxGenJS 圆角示例
 
 ```javascript
-// Sharp style card
+// 锐利风格卡片
 slide.addShape("rect", {
   x: 0.5, y: 1, w: 4, h: 2.5,
   fill: { color: "F5F5F5" },
   rectRadius: 0.03
 });
 
-// Rounded style card
+// 圆润风格卡片
 slide.addShape("rect", {
   x: 0.5, y: 1, w: 4, h: 2.5,
   fill: { color: "F5F5F5" },
   rectRadius: 0.2
 });
 
-// Pill style button (height 0.4", rectRadius 0.2" = perfect pill)
+// 胶囊风格按钮（高度 0.4"，rectRadius 0.2" = 完美胶囊）
 slide.addShape("rect", {
   x: 3, y: 4, w: 2, h: 0.4,
   fill: { color: "4A90D9" },
@@ -323,70 +323,70 @@ slide.addShape("rect", {
 });
 ```
 
-### Mixing Rules
+### 混用规则
 
-#### 1. Outer container corner >= inner element corner
+#### 1. 外层容器圆角 >= 内层元素圆角
 
 ```javascript
-// Correct: outer > inner
+// 正确：外层 > 内层
 card:   rectRadius: 0.2
 button: rectRadius: 0.1
 
-// Wrong: inner > outer → visual overflow effect
+// 错误：内层 > 外层 → 视觉溢出效果
 card:   rectRadius: 0.1
 button: rectRadius: 0.2
 ```
 
-#### 2. Information density drives spacing
+#### 2. 信息密度决定间距
 
-| Zone Type | Recommended Style |
+| 区域类型 | 推荐风格 |
 |-----------|------------------|
-| Data display zone | Sharp / Soft (compact spacing) |
-| Content browsing zone | Rounded / Pill (relaxed spacing) |
-| Title zone | Soft / Rounded (moderate spacing) |
+| 数据展示区 | 锐利 / 柔和（紧凑间距） |
+| 内容浏览区 | 圆润 / 胶囊（宽松间距） |
+| 标题区 | 柔和 / 圆润（适中间距） |
 
-#### 3. Corner radius vs element height
+#### 3. 圆角半径与元素高度的关系
 
-| Element Height | Sharp | Soft | Rounded | Pill |
+| 元素高度 | 锐利 | 柔和 | 圆润 | 胶囊 |
 |---------------|-------|------|---------|------|
-| Small (< 0.3") | 0" | 0.03" | 0.08" | height/2 |
-| Medium (0.3" ~ 0.6") | 0.02" | 0.05" | 0.12" | height/2 |
-| Large (0.6" ~ 1.2") | 0.03" | 0.08" | 0.2" | 0.3" |
-| Extra large (> 1.2") | 0.05" | 0.12" | 0.25" | 0.4" |
+| 小（< 0.3"） | 0" | 0.03" | 0.08" | 高度/2 |
+| 中（0.3" ~ 0.6"） | 0.02" | 0.05" | 0.12" | 高度/2 |
+| 大（0.6" ~ 1.2"） | 0.03" | 0.08" | 0.2" | 0.3" |
+| 超大（> 1.2"） | 0.05" | 0.12" | 0.25" | 0.4" |
 
-> **Pill tip**: For a perfect pill shape, set `rectRadius = element height / 2`
+> **胶囊技巧**：完美胶囊形状：`rectRadius = 元素高度 / 2`
 
-### Typography Scale (PPT)
+### 字体比例（PPT）
 
-| Usage | Size (pt) | Notes |
+| 用途 | 大小（pt） | 说明 |
 |-------|-----------|-------|
-| Annotations / Sources | 10 ~ 12 | Minimum readable size |
-| Body / Description | 14 ~ 16 | Standard body |
-| Subtitle | 18 ~ 22 | Secondary heading |
-| Title | 28 ~ 36 | Page title |
-| Large Title | 44 ~ 60 | Cover / section title |
-| Data Callout | 60 ~ 96 | Key number display |
+| 注释 / 来源 | 10 ~ 12 | 最小可读尺寸 |
+| 正文 / 描述 | 14 ~ 16 | 标准正文 |
+| 副标题 | 18 ~ 22 | 次级标题 |
+| 标题 | 28 ~ 36 | 页面标题 |
+| 大标题 | 44 ~ 60 | 封面 / 章节标题 |
+| 数据展示 | 60 ~ 96 | 关键数字展示 |
 
-### Spacing Scale (PPT)
+### 间距比例（PPT）
 
-Based on 10" x 5.625" slide dimensions:
+基于 10" x 5.625" 幻灯片尺寸：
 
-| Usage | Recommended (inches) |
+| 用途 | 推荐值（英寸） |
 |-------|---------------------|
-| Icon-to-text gap | 0.08" ~ 0.15" |
-| List item spacing | 0.15" ~ 0.25" |
-| Card inner padding | 0.2" ~ 0.4" |
-| Element group gap | 0.3" ~ 0.5" |
-| Page safe margin | 0.4" ~ 0.6" |
-| Major block gap | 0.5" ~ 0.8" |
+| 图标与文字间距 | 0.08" ~ 0.15" |
+| 列表项间距 | 0.15" ~ 0.25" |
+| 卡片内边距 | 0.2" ~ 0.4" |
+| 元素组间距 | 0.3" ~ 0.5" |
+| 页面安全边距 | 0.4" ~ 0.6" |
+| 主要模块间距 | 0.5" ~ 0.8" |
 
-### Quick Selection Guide
+### 快速选择指南
 
-| Presentation Type | Recommended Style | Reason |
+| 演示文稿类型 | 推荐风格 | 原因 |
 |------------------|------------------|--------|
-| Finance / Data reports | Sharp & Compact | High density, serious and precise |
-| Corporate / Business | Soft & Balanced | Balances professionalism and approachability |
-| Product intro / Marketing | Rounded & Spacious | Modern feel, friendly |
-| Launch events / Brand | Pill & Airy | Premium feel, visual impact |
-| Training / Education | Soft / Rounded | Clear, readable, friendly |
-| Tech sharing | Sharp / Soft | Professional, information-dense |
+| 财务 / 数据报告 | 锐利紧凑 | 高密度、严肃精准 |
+| 企业 / 商务 | 柔和均衡 | 兼顾专业与亲和力 |
+| 产品介绍 / 营销 | 圆润宽松 | 现代感、友好 |
+| 发布活动 / 品牌 | 胶囊通透 | 高端感、视觉冲击 |
+| 培训 / 教育 | 柔和 / 圆润 | 清晰、易读、友好 |
+| 技术分享 | 锐利 / 柔和 | 专业、信息密集 |

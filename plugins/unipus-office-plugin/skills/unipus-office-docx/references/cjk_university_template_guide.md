@@ -1,84 +1,84 @@
-# Chinese University Thesis Template Guide (中国高校论文模板指南)
+# 中国高校论文模板指南
 
-## Why This Guide Exists
+## 本指南的意义
 
-Chinese university thesis templates (.docx) have structural patterns that differ significantly
-from Western templates. Agents that assume Western conventions (Heading1/Heading2/Normal) will
-fail repeatedly. This guide documents the ACTUAL patterns found in Chinese templates.
+中国高校论文模板（.docx）的结构模式与西方模板存在显著差异。
+假设西方惯例（Heading1/Heading2/Normal）的 Agent 将反复出错。
+本指南记录了中国模板中**实际存在**的结构模式。
 
-## Common StyleId Patterns
+## 常见 StyleId 规律
 
-### Pattern A: Numeric IDs (most common in Chinese Word templates)
+### 规律 A：数字 ID（中国 Word 模板中最常见）
 
-| Style Purpose | styleId | w:name | w:basedOn |
-|--------------|---------|--------|-----------|
-| Normal body | `a` | "Normal" | — |
-| Default paragraph font | `a0` | "Default Paragraph Font" | — |
-| Heading 1 (章标题) | `1` | "heading 1" | `a` |
-| Heading 2 (节标题) | `2` | "heading 2" | `a` |
-| Heading 3 (小节标题) | `3` | "heading 3" | `a` |
-| TOC 1 | `11` | "toc 1" | `a` |
-| TOC 2 | `21` | "toc 2" | `a` |
-| TOC 3 | `31` | "toc 3" | `a` |
-| Header | `a3` | "header" | `a` |
-| Footer | `a4` | "footer" | `a` |
-| Table of Contents heading | `10` | "TOC Heading" | `1` |
+| 样式用途 | styleId | w:name | w:basedOn |
+|---------|---------|--------|-----------|
+| 普通正文 | `a` | "Normal" | — |
+| 默认段落字体 | `a0` | "Default Paragraph Font" | — |
+| 一级标题（章标题） | `1` | "heading 1" | `a` |
+| 二级标题（节标题） | `2` | "heading 2" | `a` |
+| 三级标题（小节标题） | `3` | "heading 3" | `a` |
+| 目录一级 | `11` | "toc 1" | `a` |
+| 目录二级 | `21` | "toc 2" | `a` |
+| 目录三级 | `31` | "toc 3" | `a` |
+| 页眉 | `a3` | "header" | `a` |
+| 页脚 | `a4` | "footer" | `a` |
+| 目录标题 | `10` | "TOC Heading" | `1` |
 
-### Pattern B: English IDs (less common, usually from international templates)
-Standard Heading1/Heading2/Heading3/Normal — these follow the Western pattern.
+### 规律 B：英文 ID（较少见，通常来自国际模板）
+标准 Heading1/Heading2/Heading3/Normal——遵循西方模式。
 
-### Pattern C: Mixed (some Chinese, some English)
-Some templates define custom styles with Chinese names:
-| Style Purpose | styleId | w:name |
-|--------------|---------|--------|
+### 规律 C：混合（部分中文，部分英文）
+部分模板使用中文名称定义自定义样式：
+| 样式用途 | styleId | w:name |
+|---------|---------|--------|
 | 论文标题 | `lunwenbiaoti` | "论文标题" |
 | 章标题 | `zhangbiaoti` | "章标题" |
 | 正文 | `zhengwen` | "正文" |
 
-### How to Identify Which Pattern
+### 如何识别属于哪种规律
 
 ```bash
-# Extract all styleIds from the template
+# 从模板中提取所有 styleId
 $CLI analyze --input template.docx --styles-only
 
-# Or manually:
+# 或手动操作：
 # unzip template.docx word/styles.xml
-# Search for w:styleId= in the extracted file
+# 在提取的文件中搜索 w:styleId=
 ```
 
-Look at the first few styleIds. If you see `1`, `2`, `3`, `a`, `a0` → Pattern A.
-If you see `Heading1`, `Normal` → Pattern B.
+查看前几个 styleId。若看到 `1`、`2`、`3`、`a`、`a0` → 规律 A。
+若看到 `Heading1`、`Normal` → 规律 B。
 
-## Standard Thesis Structure
+## 标准论文结构
 
-Chinese university theses follow a highly standardized structure:
+中国高校论文遵循高度标准化的结构：
 
 ```
 ┌─────────────────────────────────────┐
-│ 封面 (Cover Page)                    │  ← Usually 1-2 pages
+│ 封面 (Cover Page)                    │  ← 通常 1-2 页
 │   - 校名、校徽                       │
 │   - 论文题目 (title)                  │
 │   - 作者、导师、院系、日期             │
 ├─────────────────────────────────────┤
-│ 学术诚信承诺书 / 独创性声明            │  ← 1 page
+│ 学术诚信承诺书 / 独创性声明            │  ← 1 页
 │   (Academic Integrity Declaration)   │
 ├─────────────────────────────────────┤
-│ 中文摘要 (Chinese Abstract)          │  ← 1-2 pages
-│   - "摘 要" heading                  │
-│   - Abstract body                    │
-│   - "关键词：" line                  │
+│ 中文摘要 (Chinese Abstract)          │  ← 1-2 页
+│   - "摘 要" 标题                     │
+│   - 摘要正文                         │
+│   - "关键词：" 行                    │
 ├─────────────────────────────────────┤
-│ 英文摘要 (English Abstract)          │  ← 1-2 pages
-│   - "ABSTRACT" heading              │
-│   - Abstract body                    │
-│   - "Keywords:" line                 │
+│ 英文摘要 (English Abstract)          │  ← 1-2 页
+│   - "ABSTRACT" 标题                  │
+│   - 摘要正文                         │
+│   - "Keywords:" 行                   │
 ├─────────────────────────────────────┤
-│ 目录 (Table of Contents)             │  ← 1-3 pages
-│   - Often inside SDT block           │
-│   - Static example entries           │
-│   - TOC field code                   │
+│ 目录 (Table of Contents)             │  ← 1-3 页
+│   - 通常包裹在 SDT 块中              │
+│   - 静态示例条目                     │
+│   - 目录域代码                       │
 ├─────────────────────────────────────┤
-│ 正文 (Body)                          │  ← Main content
+│ 正文 (Body)                          │  ← 主体内容
 │   第1章 绪论                          │
 │   1.1 研究背景                        │
 │   1.2 研究目的和意义                   │
@@ -86,28 +86,28 @@ Chinese university theses follow a highly standardized structure:
 │   ...                                │
 │   第N章 结论与展望                     │
 ├─────────────────────────────────────┤
-│ 参考文献 (References)                │  ← Styled differently
+│ 参考文献 (References)                │  ← 样式不同
 ├─────────────────────────────────────┤
-│ 致谢 (Acknowledgments)              │  ← Optional
+│ 致谢 (Acknowledgments)              │  ← 可选
 ├─────────────────────────────────────┤
-│ 附录 (Appendices)                    │  ← Optional
+│ 附录 (Appendices)                    │  ← 可选
 └─────────────────────────────────────┘
 ```
 
-## Identifying Zone Boundaries in Templates
+## 识别模板中的区域边界
 
-Templates contain EXAMPLE content that must be replaced. Here's how to find the zones:
+模板包含必须替换的**示例内容**。以下是查找各区域的方法：
 
-### Zone A (Front matter) — KEEP from template
-- Starts at: paragraph 0
-- Ends at: the paragraph BEFORE the first chapter heading
-- Contains: cover, declaration, abstracts, TOC
-- How to detect end: search for first paragraph with style `1` (or Heading1) containing "第1章" or "绪论"
+### 区域 A（前置部分）——从模板**保留**
+- 起始：第 0 个段落
+- 结束：第一个章标题的**前一个**段落
+- 包含：封面、声明、摘要、目录
+- 结束检测方法：搜索第一个样式为 `1`（或 Heading1）且包含"第1章"或"绪论"的段落
 
-### Zone B (Body content) — REPLACE with user content
-- Starts at: first chapter heading ("第1章...")
-- Ends at: "参考文献" heading (inclusive) or last body paragraph before acknowledgments
-- How to detect:
+### 区域 B（正文内容）——用用户内容**替换**
+- 起始：第一个章标题（"第1章..."）
+- 结束：含"参考文献"标题的段落（含该段）或致谢前最后一个正文段落
+- 检测方法：
   ```python
   for i, el in enumerate(body_elements):
       text = get_text(el)
@@ -118,15 +118,15 @@ Templates contain EXAMPLE content that must be replaced. Here's how to find the 
           zone_b_end = i
   ```
 
-### Zone C (Back matter) — KEEP from template (or remove)
-- Starts after: 参考文献
-- Contains: 致谢, 附录, final sectPr
+### 区域 C（后置部分）——从模板**保留**（或删除）
+- 起始：参考文献之后
+- 包含：致谢、附录、最终 sectPr
 
-## Font Expectations in Chinese Thesis Templates
+## 中国论文模板字体预期
 
-| Element | Font | Size (字号) | Size (pt) | w:sz |
-|---------|------|------------|-----------|------|
-| 论文标题 | 华文中宋 or 黑体 | 二号 or 小二 | 22pt or 18pt | 44 or 36 |
+| 元素 | 字体 | 字号 | pt 值 | w:sz |
+|------|------|------|-------|------|
+| 论文标题 | 华文中宋 或 黑体 | 二号 或 小二 | 22pt 或 18pt | 44 或 36 |
 | 章标题 (H1) | 黑体 | 三号 | 16pt | 32 |
 | 节标题 (H2) | 黑体 | 四号 | 14pt | 28 |
 | 小节标题 (H3) | 黑体 | 小四 | 12pt | 24 |
@@ -136,34 +136,34 @@ Templates contain EXAMPLE content that must be replaced. Here's how to find the 
 | 表格内容 | 宋体 | 五号 | 10.5pt | 21 |
 | 参考文献条目 | 宋体 | 五号 | 10.5pt | 21 |
 
-## RunFonts for CJK Body Text
+## CJK 正文的 RunFonts
 
 ```xml
 <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"
           w:eastAsia="宋体" w:cs="Times New Roman"/>
 ```
 
-For headings:
+标题用：
 ```xml
 <w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"
           w:eastAsia="黑体" w:cs="Times New Roman"/>
 ```
 
-IMPORTANT: When cleaning direct formatting, ALWAYS preserve w:eastAsia.
-Removing it causes Chinese text to fall back to the wrong font.
+**重要**：清理直接格式时，**务必保留** w:eastAsia。
+删除它会导致中文回退到错误字体。
 
-## Common Mistakes with Chinese Templates
+## 处理中国模板的常见错误
 
-1. **Searching for `Heading1`** — Chinese templates use `1`, not `Heading1`
-2. **Clearing all rFonts** — Must keep eastAsia font declarations
-3. **Assuming "第1章" is the first paragraph** — It's typically paragraph 100+ after cover/abstract/TOC
-4. **Ignoring SDT blocks in TOC** — The TOC is wrapped in an SDT, not just field codes
-5. **Wrong line spacing** — Chinese theses typically use fixed 20pt (line="400") or 22pt (line="440"), not the 28pt used in government documents
-6. **Missing section breaks** — Each zone (abstract, TOC, body) usually has its own sectPr for different headers/footers
+1. **搜索 `Heading1`** — 中国模板使用 `1`，不是 `Heading1`
+2. **清除所有 rFonts** — 必须保留 eastAsia 字体声明
+3. **假设"第1章"是第一个段落** — 它通常在封面/摘要/目录之后的第 100+ 个段落
+4. **忽略目录中的 SDT 块** — 目录包裹在 SDT 中，不只是域代码
+5. **行距错误** — 中国论文通常使用固定 20pt（line="400"）或 22pt（line="440"），不是政府公文的 28pt
+6. **缺少分节符** — 每个区域（摘要、目录、正文）通常有各自的 sectPr 以实现不同的页眉/页脚
 
-## Style Mapping Quick Reference
+## 样式映射快速参考
 
-When source document uses Western IDs and template uses Chinese numeric IDs:
+当源文档使用西方 ID、模板使用中国数字 ID 时：
 
 ```json
 {
@@ -181,4 +181,4 @@ When source document uses Western IDs and template uses Chinese numeric IDs:
 }
 ```
 
-When source uses Chinese numeric IDs and template uses Western IDs — reverse the mapping.
+当源文档使用中国数字 ID、模板使用西方 ID 时——反向映射即可。

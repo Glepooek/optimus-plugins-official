@@ -1,198 +1,179 @@
-# Design Principles for Document Typography
+# 文档排版设计原则
 
-WHY certain typographic choices look good -- the perceptual and psychological
-reasons behind professional document design. Use this to make judgment calls
-when exact specs are not provided.
+某些排版选择为什么看起来专业——专业文档设计背后的感知与心理学原因。
+在没有精确规格时，使用本文档做出判断。
 
-## Table of Contents
+## 目录
 
-1. [White Space & Breathing Room](#1-white-space--breathing-room)
-2. [Contrast & Scale](#2-contrast--scale)
-3. [Proximity & Grouping](#3-proximity--grouping)
-4. [Alignment & Grid](#4-alignment--grid)
-5. [Repetition & Consistency](#5-repetition--consistency)
-6. [Visual Hierarchy & Flow](#6-visual-hierarchy--flow)
+1. [留白与呼吸感](#1-留白与呼吸感)
+2. [对比与层级缩放](#2-对比与层级缩放)
+3. [亲密性与分组](#3-亲密性与分组)
+4. [对齐与网格](#4-对齐与网格)
+5. [重复与一致性](#5-重复与一致性)
+6. [视觉层级与流向](#6-视觉层级与流向)
 
 ---
 
-## 1. White Space & Breathing Room
+## 1. 留白与呼吸感
 
-### Why It Works
+### 为什么有效
 
-The human eye does not read continuously. It jumps in saccades, fixating on
-small clusters of words. White space provides landing zones for these fixations
-and gives the reader's peripheral vision a "frame" that makes each text block
-feel manageable. When a page is packed to the edges, every glance returns more
-text than working memory can buffer, triggering fatigue and avoidance.
+人眼并非连续阅读，而是通过跳视（saccades）移动，在小块文字上停留。
+留白为这些停留点提供落脚区，并给读者的外周视觉提供"边框"，使每个文字块看起来可处理。
+当页面塞满内容时，每一次瞥视都会带来超过工作记忆容量的文字，引发疲劳和回避情绪。
 
-Research on content density consistently shows:
+关于内容密度的研究一致表明：
 
-- **60-70% content coverage** feels comfortable and professional.
-- **80%+** starts to feel dense and bureaucratic.
-- **90%+** feels oppressive -- the reader unconsciously rushes or skips.
-- **Below 50%** feels wasteful or pretentious (unless intentional, like poetry).
+- **内容占比 60-70%** 感觉舒适且专业。
+- **80% 以上**开始感觉密集和官僚化。
+- **90% 以上**感觉压迫——读者会下意识地快速浏览或跳过。
+- **低于 50%** 感觉浪费或做作（除非有意为之，如诗歌排版）。
 
-Wider margins also carry cultural signals. Academic and luxury documents use
-generous margins (1.25-1.5 inches). Internal memos and drafts use narrower
-margins (0.75-1.0 inches). The margin width tells the reader how much care
-went into the document before they read a single word.
+较宽的页边距也传递文化信号。学术和高端文档使用慷慨的页边距（1.25–1.5 英寸）。
+内部备忘录和草稿使用较窄的页边距（0.75–1.0 英寸）。
+页边距宽度在读者阅读第一个字之前就告诉他们这份文档花了多少心思。
 
-Line spacing has a direct physiological basis: the eye must track back to the
-start of the next line after each line break. If lines are too close, the eye
-"slips" to the wrong line. If too far apart, the eye loses its sense of
-continuity. The sweet spot is 120-145% of the font size.
+行距有直接的生理依据：读完每行后，眼睛必须追踪回到下一行的起点。
+如果行距太近，眼睛会"滑落"到错误的行。如果太远，眼睛会失去连续感。
+最佳范围是字体大小的 120–145%。
 
-**Rule of thumb: when in doubt, add more space, not less.**
+**经验法则：拿不准时，增加间距，而不是减少。**
 
-### Good Example
+### 好的示例
 
 ```
-Margins: 1 inch (1440 twips) all sides for business documents.
-Line spacing: 1.15 (276 twips at 240 twips-per-line = 115%).
-Paragraph spacing after: 8pt (160 twips) between body paragraphs.
+页边距：商业文档四周均为 1 英寸（1440 twips）。
+行距：1.15（240 twips 每行时为 276 twips = 115%）。
+段后间距：正文段落间 8pt（160 twips）。
 ```
 
 ```xml
-<!-- Page margins: 1 inch = 1440 twips on all sides -->
+<!-- 页边距：四周均为 1 英寸 = 1440 twips -->
 <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"
          w:header="720" w:footer="720" w:gutter="0"/>
 
-<!-- Body paragraph: 1.15 line spacing, 8pt after -->
+<!-- 正文段落：行距 1.15，段后 8pt -->
 <w:pPr>
   <w:spacing w:after="160" w:line="276" w:lineRule="auto"/>
 </w:pPr>
 ```
 
-This produces a page where content occupies roughly 65% of the area. The
-reader sees clear top/bottom breathing room, and paragraphs are distinct
-without feeling disconnected.
+这样的页面内容约占 65% 的面积。读者能看到上下清晰的呼吸空间，段落分明而不失联。
 
 ```
-  Page layout (good):
+  页面布局（好）：
   +----------------------------------+
-  |           1" margin              |
+  |           1" 页边距              |
   |   +------------------------+    |
-  |   | Heading                |    |
+  |   | 标题                   |    |
   |   |                        |    |
-  |   | Body text here with    |    |
-  |   | comfortable spacing    |    |
-  |   | between lines.         |    |
-  |   |                        |    |  <- visible gap between paragraphs
-  |   | Another paragraph of   |    |
-  |   | body text follows.     |    |
+  |   | 正文内容，舒适的行距，  |    |
+  |   | 每行之间有充足的空间。  |    |
+  |   |                        |    |
+  |   | 另一个段落跟在后面。    |    |  <- 段落间有明显间隔
   |   |                        |    |
   |   +------------------------+    |
-  |           1" margin              |
+  |           1" 页边距              |
   +----------------------------------+
 ```
 
-### Bad Example
+### 坏的示例
 
 ```xml
-<!-- Cramped margins: 0.5 inch = 720 twips -->
+<!-- 拥挤的页边距：0.5 英寸 = 720 twips -->
 <w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720"
          w:header="360" w:footer="360" w:gutter="0"/>
 
-<!-- No paragraph spacing, single line spacing -->
+<!-- 无段间距，单倍行距 -->
 <w:pPr>
   <w:spacing w:after="0" w:line="240" w:lineRule="auto"/>
 </w:pPr>
 ```
 
-This fills ~85% of the page. Text runs edge-to-edge with no visual rest stops.
-The reader sees a wall of text.
+这会填满约 85% 的页面。文字从边到边，没有视觉休息点。读者面对的是一堵文字墙。
 
 ```
-  Page layout (bad):
+  页面布局（坏）：
   +----------------------------------+
-  | Heading                          |
-  | Body text crammed right up to    |
-  | the margins with no spacing      |
-  | between lines or paragraphs.     |
-  | Another paragraph starts here    |
-  | and the reader cannot tell where |
-  | one idea ends and another begins |
-  | because everything blurs into a  |
-  | single dense block of text.      |
+  | 标题                             |
+  | 正文紧贴页边距，行间距和段间距    |
+  | 都没有，另一个段落从这里开始，    |
+  | 读者无法分辨一个想法在哪里结束，  |
+  | 另一个想法在哪里开始，因为所有    |
+  | 内容都融合成一个密集的文字块。    |
   +----------------------------------+
 ```
 
-### Quick Test
+### 快速测试
 
-1. Zoom out to 50% in your document viewer. If you cannot see clear "channels"
-   of white between text blocks, the spacing is too tight.
-2. Print a test page. Hold it at arm's length. The text area should look like
-   a rectangle floating in white, not filling the page.
-3. Check: is the line spacing value at least 264 (`w:line` for 1.1x) for body
-   text? If it is 240 (single), it is too tight for anything over 10pt.
+1. 将文档缩放到 50%。如果看不到文字块之间清晰的"白色通道"，说明间距太紧。
+2. 打印一张测试页，手持距眼睛一臂远。文字区域应该看起来像漂浮在白色中的矩形，而不是填满整个页面。
+3. 检查：正文文字的行距值是否至少为 264（`w:line` 对应 1.1x）？如果是 240（单倍），对任何超过 10pt 的字体来说都太紧。
 
 ---
 
-## 2. Contrast & Scale
+## 2. 对比与层级缩放
 
-### Why It Works
+### 为什么有效
 
-The brain processes visual hierarchy through relative difference, not absolute
-size. A 20pt heading above 11pt body text creates a clear "this is important"
-signal. But if every heading is 20pt and every sub-heading is 19pt, the brain
-cannot distinguish them -- they merge into the same level.
+大脑通过**相对差异**而非绝对大小处理视觉层级。
+11pt 正文上方的 20pt 标题发出清晰的"这很重要"信号。
+但如果每个标题都是 20pt，每个小标题都是 19pt，大脑无法区分它们——它们会合并为同一层级。
 
-The key insight is **modular scale**: font sizes that grow by a consistent
-ratio. This mirrors natural proportions and feels harmonious for the same
-reason musical intervals do.
+关键洞察是**模块化比例**：字号以一致的比例增长。
+这与自然比例呼应，感觉和谐，原因与音程相同。
 
-Common scales and their character:
+常见比例及其特点：
 
-| Ratio | Name           | Character                       | Example progression (from 11pt) |
-|-------|----------------|---------------------------------|---------------------------------|
-| 1.200 | Minor third    | Subtle, refined                 | 11 → 13.2 → 15.8 → 19.0       |
-| 1.250 | Major third    | Balanced, professional          | 11 → 13.75 → 17.2 → 21.5      |
-| 1.333 | Perfect fourth | Strong, authoritative           | 11 → 14.7 → 19.5 → 26.0       |
-| 1.414 | Augmented 4th  | Dramatic, presentation-style    | 11 → 15.6 → 22.0 → 31.1       |
+| 比例 | 名称 | 特点 | 示例递进（从 11pt 起）|
+|------|------|------|---------------------|
+| 1.200 | 小三度 | 细腻，精致 | 11 → 13.2 → 15.8 → 19.0 |
+| 1.250 | 大三度 | 均衡，专业 | 11 → 13.75 → 17.2 → 21.5 |
+| 1.333 | 纯四度 | 有力，权威 | 11 → 14.7 → 19.5 → 26.0 |
+| 1.414 | 增四度 | 戏剧性，演示风格 | 11 → 15.6 → 22.0 → 31.1 |
 
-For most business documents, 1.25 (major third) works best:
+对于大多数商业文档，1.25（大三度）效果最好：
 
 ```
-Body  = 11pt  (w:sz="22")
-H3    = 13pt  (w:sz="26")   -- 11 * 1.25 ≈ 13.75, round to 13
-H2    = 16pt  (w:sz="32")   -- 13 * 1.25 ≈ 16.25, round to 16
+正文  = 11pt  (w:sz="22")
+H3    = 13pt  (w:sz="26")   -- 11 * 1.25 ≈ 13.75，取整为 13
+H2    = 16pt  (w:sz="32")   -- 13 * 1.25 ≈ 16.25，取整为 16
 H1    = 20pt  (w:sz="40")   -- 16 * 1.25 = 20
 ```
 
-Beyond size, **weight contrast** creates hierarchy without consuming vertical
-space. Regular (400) vs Bold (700) is visible at any size. Semi-bold (600) vs
-Regular is subtle and best avoided unless you also vary size or color.
+除字号外，**字重对比**在不占用垂直空间的情况下创造层级。
+常规（400）与粗体（700）在任何字号下都清晰可见。
+半粗（600）与常规很细微，最好不要单独使用，除非同时改变字号或颜色。
 
-**Color contrast** adds a third dimension. Dark blue headings (#1F3864) against
-softer dark gray body text (#333333) signals "heading" without needing a huge
-size jump. Pure black (#000000) body text is harsher than necessary on white
-backgrounds -- #333333 or #2D2D2D reduces glare without losing legibility.
+**颜色对比**增加了第三个维度。深蓝色标题（#1F3864）配上较柔和的深灰色正文（#333333），
+无需大幅字号跳跃就能传递"标题"信号。白色背景上的纯黑（#000000）正文比必要的更刺眼——
+#333333 或 #2D2D2D 可以减少眩光而不损失可读性。
 
-### Good Example
+### 好的示例
 
 ```xml
-<!-- H1: 20pt, bold, dark navy -->
+<!-- H1：20pt，粗体，深海军蓝 -->
 <w:rPr>
   <w:b/>
   <w:sz w:val="40"/>
   <w:color w:val="1F3864"/>
 </w:rPr>
 
-<!-- H2: 16pt, bold, dark navy -->
+<!-- H2：16pt，粗体，深海军蓝 -->
 <w:rPr>
   <w:b/>
   <w:sz w:val="32"/>
   <w:color w:val="1F3864"/>
 </w:rPr>
 
-<!-- H3: 13pt, bold, dark navy -->
+<!-- H3：13pt，粗体，深海军蓝 -->
 <w:rPr>
   <w:b/>
   <w:sz w:val="26"/>
   <w:color w:val="1F3864"/>
 </w:rPr>
 
-<!-- Body: 11pt, regular, dark gray -->
+<!-- 正文：11pt，常规，深灰色 -->
 <w:rPr>
   <w:sz w:val="22"/>
   <w:color w:val="333333"/>
@@ -200,108 +181,97 @@ backgrounds -- #333333 or #2D2D2D reduces glare without losing legibility.
 ```
 
 ```
-  Visual hierarchy (good):
+  视觉层级（好）：
 
-  [████████████████████]        <- H1: 20pt bold navy (clearly dominant)
-                                   (generous space)
-  [██████████████]              <- H2: 16pt bold navy (distinct step down)
-                                   (moderate space)
-  [████████████]                <- H3: 13pt bold navy (smaller but still bold)
-  [░░░░░░░░░░░░░░░░░░░░░░]    <- Body: 11pt regular gray
+  [████████████████████]        <- H1：20pt 粗体海军蓝（明显主导）
+                                   （充裕的空间）
+  [██████████████]              <- H2：16pt 粗体海军蓝（清晰的降级）
+                                   （适中的空间）
+  [████████████]                <- H3：13pt 粗体海军蓝（更小但仍粗体）
+  [░░░░░░░░░░░░░░░░░░░░░░]    <- 正文：11pt 常规灰色
   [░░░░░░░░░░░░░░░░░░░░░░]
   [░░░░░░░░░░░░░░░░░░░░░░]
 ```
 
-Each level is visually distinct from its neighbors. You can identify the
-hierarchy even in peripheral vision.
+即使在外周视觉中，每个层级也与相邻层级明显不同，可以识别层级结构。
 
-### Bad Example
+### 坏的示例
 
 ```xml
-<!-- H1: 14pt bold black -->
+<!-- H1：14pt 粗体黑色 -->
 <w:rPr>
   <w:b/>
   <w:sz w:val="28"/>
   <w:color w:val="000000"/>
 </w:rPr>
 
-<!-- H2: 13pt bold black -->
+<!-- H2：13pt 粗体黑色 -->
 <w:rPr>
   <w:b/>
   <w:sz w:val="26"/>
   <w:color w:val="000000"/>
 </w:rPr>
 
-<!-- H3: 12pt bold black -->
+<!-- H3：12pt 粗体黑色 -->
 <w:rPr>
   <w:b/>
   <w:sz w:val="24"/>
   <w:color w:val="000000"/>
 </w:rPr>
 
-<!-- Body: 12pt regular black -->
+<!-- 正文：12pt 常规黑色 -->
 <w:rPr>
   <w:sz w:val="24"/>
   <w:color w:val="000000"/>
 </w:rPr>
 ```
 
-Problems:
-- H3 (12pt bold) and body (12pt regular) differ only by weight -- too subtle.
-- H1 (14pt) to H2 (13pt) is a 1pt step -- invisible at reading distance.
-- Everything is pure black so color provides no differentiating signal.
-- The ratio between levels is ~1.07, far too flat.
+问题：
+- H3（12pt 粗体）和正文（12pt 常规）仅差字重——过于细微。
+- H1（14pt）到 H2（13pt）只差 1pt——阅读距离下不可见。
+- 全部纯黑，颜色没有提供任何区分信号。
+- 层级间比例约为 1.07，过于平缓。
 
-### Quick Test
+### 快速测试
 
-1. **The squint test**: blur your eyes or step back from the screen. Can you
-   count the number of heading levels? If two levels merge, their contrast
-   is insufficient.
-2. **Ratio check**: divide each heading size by the next smaller size. If any
-   ratio is below 1.15, the levels will look too similar.
-3. **Color check**: do headings look distinct from body text when you glance
-   at the page? If everything is the same color, you are relying solely on
-   size/weight, which limits your hierarchy to ~3 effective levels.
+1. **眯眼测试**：模糊视线或后退离屏幕远一些。能数出标题层级数吗？如果两个层级融合，说明对比不足。
+2. **比例检查**：用每个标题字号除以下一级字号。如果任何比例低于 1.15，层级会显得过于相似。
+3. **颜色检查**：浏览页面时，标题是否与正文明显不同？如果颜色都一样，仅靠字号/字重，层级最多只能有约 3 个有效级别。
 
 ---
 
-## 3. Proximity & Grouping
+## 3. 亲密性与分组
 
-### Why It Works
+### 为什么有效
 
-The Gestalt principle of proximity: items that are close together are perceived
-as belonging to the same group. In document typography, this means a heading
-must be **closer to the content it introduces** than to the content above it.
+格式塔亲密性原则：距离近的元素被感知为属于同一组。
+在文档排版中，这意味着标题必须**比它上方的内容更靠近它所引导的内容**。
 
-If a heading sits equidistant between two paragraphs, it looks orphaned -- the
-reader's eye does not know if it belongs to the text above or below. The fix
-is asymmetric spacing: **large space before the heading, small space after**.
+如果标题位于两段文字的中间等距处，它看起来像孤儿——读者的眼睛不知道它属于上方还是下方的文字。
+解决方法是非对称间距：**标题前大间距，标题后小间距**。
 
-The recommended ratio is 2:1 or 3:1 (space-before : space-after).
+推荐比例为 2:1 或 3:1（前间距:后间距）。
 
-This same principle applies to:
-- **List items**: spacing between items should be less than spacing between
-  paragraphs. Items in a list are a group and should visually cluster.
-- **Captions**: a figure caption should be close to its figure, not floating
-  in the middle between the figure and the next paragraph.
-- **Table titles**: the title sits close above the table, with more space
-  separating the title from preceding text.
+同样的原则适用于：
+- **列表项**：项目间距应小于段落间距。列表中的项目是一组，应该在视觉上聚集在一起。
+- **图注**：图注应紧靠图片，而不是浮在图片和下一段文字之间。
+- **表格标题**：标题紧贴在表格上方，与前面文字之间留有更多空间。
 
-### Good Example
+### 好的示例
 
 ```xml
-<!-- H2: 18pt before, 6pt after (3:1 ratio) -->
+<!-- H2：段前 18pt，段后 6pt（3:1 比例） -->
 <w:pPr>
   <w:pStyle w:val="Heading2"/>
   <w:spacing w:before="360" w:after="120"/>
 </w:pPr>
 
-<!-- Body paragraph: 0pt before, 8pt after -->
+<!-- 正文段落：段前 0pt，段后 8pt -->
 <w:pPr>
   <w:spacing w:before="0" w:after="160"/>
 </w:pPr>
 
-<!-- List item: 0pt before, 2pt after (tight grouping) -->
+<!-- 列表项：段前 0pt，段后 2pt（紧密分组） -->
 <w:pPr>
   <w:pStyle w:val="ListParagraph"/>
   <w:spacing w:before="0" w:after="40"/>
@@ -309,41 +279,41 @@ This same principle applies to:
 ```
 
 ```
-  Proximity (good):
+  亲密性（好）：
 
-  ...end of previous section text.
-                                        <- 18pt gap (w:before="360")
-  ## Section Heading
-                                        <- 6pt gap (w:after="120")
-  First paragraph of new section
-  continues here with content.
-                                        <- 8pt gap (w:after="160")
-  Second paragraph follows.
+  ...上一节文字结尾。
+                                        <- 18pt 间距（w:before="360"）
+  ## 节标题
+                                        <- 6pt 间距（w:after="120"）
+  新节的第一段
+  内容继续。
+                                        <- 8pt 间距（w:after="160"）
+  第二段跟随。
 
-  The heading clearly "belongs to" the text below it.
+  标题清晰地"属于"它下面的文字。
 ```
 
 ```
-  List grouping (good):
+  列表分组（好）：
 
-  Consider these factors:
-    - First item                        <- 2pt gap between items
-    - Second item                       <- items cluster as a group
-    - Third item
-                                        <- 8pt gap after list
-  The next paragraph starts here.
+  请考虑以下因素：
+    - 第一条                          <- 项目间 2pt 间距
+    - 第二条                          <- 项目聚集为一组
+    - 第三条
+                                      <- 列表后 8pt 间距
+  下一段从这里开始。
 ```
 
-### Bad Example
+### 坏的示例
 
 ```xml
-<!-- H2: 12pt before, 12pt after (1:1 ratio -- orphaned heading) -->
+<!-- H2：段前 12pt，段后 12pt（1:1 比例——孤立的标题） -->
 <w:pPr>
   <w:pStyle w:val="Heading2"/>
   <w:spacing w:before="240" w:after="240"/>
 </w:pPr>
 
-<!-- List item: same spacing as body (10pt after) -->
+<!-- 列表项：与正文相同的间距（段后 10pt） -->
 <w:pPr>
   <w:pStyle w:val="ListParagraph"/>
   <w:spacing w:before="0" w:after="200"/>
@@ -351,114 +321,99 @@ This same principle applies to:
 ```
 
 ```
-  Proximity (bad):
+  亲密性（坏）：
 
-  ...end of previous section text.
-                                        <- 12pt gap
-  ## Section Heading
-                                        <- 12pt gap (same!)
-  First paragraph of new section.
+  ...上一节文字结尾。
+                                        <- 12pt 间距
+  ## 节标题
+                                        <- 12pt 间距（相同！）
+  新节的第一段。
 
-  The heading floats between sections. It is unclear what it belongs to.
+  标题浮在两节之间，不清楚它属于哪里。
 ```
 
 ```
-  List grouping (bad):
+  列表分组（坏）：
 
-  Consider these factors:
-                                        <- 10pt gap
-    - First item
-                                        <- 10pt gap (same as paragraphs)
-    - Second item
-                                        <- 10pt gap
-    - Third item
-                                        <- 10pt gap
-  Next paragraph.
+  请考虑以下因素：
+                                        <- 10pt 间距
+    - 第一条
+                                        <- 10pt 间距（与段落相同）
+    - 第二条
+                                        <- 10pt 间距
+    - 第三条
+                                        <- 10pt 间距
+  下一段。
 
-  The list does not feel like a group. Each item looks like a
-  separate paragraph that happens to have a bullet.
+  列表没有整体感。每一条看起来像一个
+  碰巧有项目符号的独立段落。
 ```
 
-### Quick Test
+### 快速测试
 
-1. **Cover test**: cover the heading text. Looking only at the whitespace,
-   can you tell which block of text the heading belongs to? If the gaps above
-   and below are equal, the answer is "no."
-2. **Number check**: `w:before` on headings should be at least 2x `w:after`.
-   Common good values: before=360 / after=120, or before=240 / after=80.
-3. **List check**: `w:after` on list items should be less than half of
-   `w:after` on body paragraphs. If body uses 160, list items should use
-   40-60.
+1. **遮挡测试**：遮住标题文字，只看空白。能判断标题属于哪段文字吗？如果上下间距相等，答案是"不能"。
+2. **数字检查**：标题的 `w:before` 应至少是 `w:after` 的 2 倍。常见好值：before=360 / after=120，或 before=240 / after=80。
+3. **列表检查**：列表项的 `w:after` 应小于正文段落 `w:after` 的一半。如果正文用 160，列表项应用 40–60。
 
 ---
 
-## 4. Alignment & Grid
+## 4. 对齐与网格
 
-### Why It Works
+### 为什么有效
 
-Alignment creates invisible lines that the eye follows down the page. When
-elements share the same left edge, the reader perceives order and intention.
-When elements are slightly misaligned (off by a few twips), the page looks
-sloppy even if the reader cannot consciously identify why.
+对齐创造眼睛沿页面向下追踪的无形线条。
+当元素共享同一左边缘时，读者感知到秩序和意图。
+当元素略微错位（偏几个 twips）时，页面看起来很随意，即使读者无法有意识地指出原因。
 
-**Left-align vs Justify:**
+**左对齐 vs 两端对齐：**
 
-- **Left-aligned** (ragged right) is best for English and other Latin-script
-  languages. The uneven right edge actually helps reading because each line
-  has a unique silhouette, making it easier for the eye to find the next line.
-  Justified text forces uneven word spacing that creates distracting "rivers"
-  of white running vertically through paragraphs.
+- **左对齐**（右侧参差）最适合英文和其他拉丁文字语言。参差不齐的右边缘实际上有助于阅读，因为每行都有独特的轮廓，使眼睛更容易找到下一行。两端对齐的文字强制不均匀的词间距，在段落中产生分散注意力的竖向白色"河流"。
 
-- **Justified** is best for CJK text. Chinese, Japanese, and Korean characters
-  are monospaced by design -- each occupies the same cell in an invisible grid.
-  Justification preserves this grid perfectly. Ragged right in CJK text breaks
-  the grid and looks untidy.
+- **两端对齐**最适合 CJK 文字。中文、日文和韩文字符在设计上是等宽的——每个字符占据隐形网格中的同一个格子。两端对齐完美地保留了这个网格。CJK 文字中的左对齐会破坏网格，显得不整洁。
 
-**Indentation rule:** Use first-line indent OR paragraph spacing to separate
-paragraphs -- never both. They serve the same purpose (marking paragraph
-boundaries). Using both wastes space and creates visual stutter.
+**缩进规则：** 使用首行缩进**或**段落间距来分隔段落——不要两者同时使用。它们服务于相同的目的（标记段落边界）。同时使用两者会浪费空间并产生视觉抖动。
 
-- Western convention: paragraph spacing (no indent) is more modern.
-- CJK convention: first-line indent of 2 characters is standard.
-- Academic convention: first-line indent of 0.5 inch is traditional.
+- 西方惯例：段落间距（无缩进）更现代。
+- CJK 惯例：首行缩进两字符是标准。
+- 学术惯例：首行缩进 0.5 英寸是传统做法。
 
-### Good Example
+### 好的示例
 
 ```xml
-<!-- English body: left-aligned, paragraph spacing, no indent -->
+<!-- 英文正文：左对齐，段落间距，无缩进 -->
 <w:pPr>
   <w:jc w:val="left"/>
   <w:spacing w:after="160" w:line="276" w:lineRule="auto"/>
-  <!-- No w:ind firstLine -->
+  <!-- 无 w:ind firstLine -->
 </w:pPr>
 
-<!-- CJK body: justified, first-line indent 2 chars, no paragraph spacing -->
+<!-- CJK 正文：两端对齐，首行缩进两字符，无段落间距 -->
 <w:pPr>
   <w:jc w:val="both"/>
   <w:spacing w:after="0" w:line="360" w:lineRule="auto"/>
   <w:ind w:firstLineChars="200"/>
 </w:pPr>
 
-<!-- Tab stops creating aligned columns -->
+<!-- 使用制表位创建对齐列 -->
 <w:pPr>
   <w:tabs>
-    <w:tab w:val="left" w:pos="2880"/>   <!-- 2 inches -->
-    <w:tab w:val="right" w:pos="9360"/>  <!-- 6.5 inches (right margin) -->
+    <w:tab w:val="left" w:pos="2880"/>   <!-- 2 英寸 -->
+    <w:tab w:val="right" w:pos="9360"/>  <!-- 6.5 英寸（右边距） -->
   </w:tabs>
 </w:pPr>
 ```
 
 ```
-  English paragraph separation (good -- spacing, no indent):
+  英文段落分隔（好——间距，无缩进）：
 
-  This is the first paragraph with some text
-  that wraps to a second line naturally.
+  这是第一段，包含自然换行
+  到第二行的一些文字。
 
-  This is the second paragraph. The gap above
-  clearly marks the boundary.
+  这是第二段。上方的间隙
+  清晰地标记了边界。
 
 
-  CJK paragraph separation (good -- indent, no spacing):
+  CJK 段落分隔（好——缩进，无间距）：
 
   　　第一段正文内容从这里开始，使用两个字符
   的首行缩进来标记段落边界。
@@ -466,69 +421,53 @@ boundaries). Using both wastes space and creates visual stutter.
   清晰地标识了新段落的开始。
 ```
 
-### Bad Example
+### 坏的示例
 
 ```xml
-<!-- English body: justified (creates word-spacing rivers) -->
+<!-- 英文正文：两端对齐（产生词间距"河流"） -->
 <w:pPr>
   <w:jc w:val="both"/>
   <w:spacing w:after="160" w:line="276" w:lineRule="auto"/>
-  <w:ind w:firstLine="720"/>  <!-- BOTH indent AND spacing: redundant -->
+  <w:ind w:firstLine="720"/>  <!-- 同时使用缩进和间距：冗余 -->
 </w:pPr>
 
-<!-- CJK body: left-aligned (breaks character grid) -->
+<!-- CJK 正文：左对齐（破坏字符网格） -->
 <w:pPr>
   <w:jc w:val="left"/>
   <w:spacing w:after="200" w:line="276" w:lineRule="auto"/>
-  <!-- No indent, using spacing instead -- unidiomatic for CJK -->
+  <!-- 无缩进，用间距代替——对 CJK 来说不惯用 -->
 </w:pPr>
 ```
 
-Problems:
-- Justified English text with narrow columns creates uneven word gaps.
-- Using both first-line indent AND paragraph spacing is redundant.
-- Left-aligned CJK breaks the character grid that CJK readers expect.
-- CJK with spacing-based separation looks like translated western layout.
+问题：
+- 窄列中的英文两端对齐会产生不均匀的词间距。
+- 同时使用首行缩进和段落间距是冗余的。
+- 左对齐的 CJK 破坏了 CJK 读者期望的字符网格。
+- 基于间距分隔的 CJK 看起来像翻译自西方的版式。
 
-### Quick Test
+### 快速测试
 
-1. **River test**: in justified English text, squint and look for vertical
-   white streaks running through the paragraph. If you see them, switch to
-   left-align or increase the column width.
-2. **Double signal check**: does the document use BOTH first-line indent AND
-   paragraph spacing? If yes, remove one. Choose indent for CJK/academic,
-   spacing for modern western.
-3. **Tab alignment**: if you use tabs for columns, do all tab stops across
-   the document use the same positions? Inconsistent tab stops create jagged
-   invisible grid lines.
+1. **河流测试**：在两端对齐的英文文字中，眯起眼睛寻找段落中竖向的白色条纹。如果看到了，切换为左对齐或加宽列宽。
+2. **双重信号检查**：文档是否同时使用了首行缩进和段落间距？如果是，删除其中一个。CJK/学术选缩进，现代西方选间距。
+3. **制表位对齐**：如果使用制表位做列，整个文档的所有制表位位置是否一致？不一致的制表位会产生参差不齐的隐形网格线。
 
 ---
 
-## 5. Repetition & Consistency
+## 5. 重复与一致性
 
-### Why It Works
+### 为什么有效
 
-Consistency is a trust signal. When a reader sees that every H2 looks the same,
-every table follows the same pattern, and every page number sits in the same
-spot, they unconsciously trust that the document was crafted with care. A single
-inconsistency -- one H2 that is 15pt instead of 14pt, one table with different
-borders -- breaks that trust and makes the reader question the content.
+一致性是信任信号。当读者看到每个 H2 长得一样、每张表格遵循同一模式、每个页码在同一位置时，他们会下意识地相信这份文档是精心制作的。一个不一致之处——一个 H2 是 15pt 而不是 14pt，一张表格边框不同——就会破坏这种信任，让读者质疑内容。
 
-Consistency also reduces cognitive load. Once the reader learns "bold dark blue
-= section heading," they stop spending mental effort on identifying structure
-and focus entirely on content. Every inconsistency forces them to re-evaluate:
-"Is this a different kind of heading, or did someone just forget to apply the
-style?"
+一致性还降低了认知负荷。一旦读者学会"深蓝色粗体 = 节标题"，他们就不再花费精力识别结构，而是完全专注于内容。每个不一致都迫使他们重新评估："这是另一种标题，还是有人忘记应用样式了？"
 
-The implementation rule is simple: **use named styles, not direct formatting.**
-If you define Heading2 as a style and apply it everywhere, consistency is
-automatic. If you manually set font size, bold, and color on each heading
-individually, inconsistency is inevitable.
+实施规则很简单：**使用命名样式，而不是直接格式化。**
+如果将 Heading2 定义为样式并处处应用，一致性是自动的。如果在每个标题上手动设置字号、粗体和颜色，不一致是必然的。
 
-### Good Example
+### 好的示例
 
 ```xml
-<!-- Define styles once in styles.xml -->
+<!-- 在 styles.xml 中一次性定义样式 -->
 <w:style w:type="paragraph" w:styleId="Heading2">
   <w:name w:val="heading 2"/>
   <w:basedOn w:val="Normal"/>
@@ -547,30 +486,30 @@ individually, inconsistency is inevitable.
   </w:rPr>
 </w:style>
 
-<!-- Apply consistently: every H2 references the style -->
+<!-- 一致应用：每个 H2 都引用样式 -->
 <w:p>
   <w:pPr>
     <w:pStyle w:val="Heading2"/>
-    <!-- No direct formatting overrides -->
+    <!-- 无直接格式化覆盖 -->
   </w:pPr>
-  <w:r><w:t>Market Analysis</w:t></w:r>
+  <w:r><w:t>市场分析</w:t></w:r>
 </w:p>
 ```
 
-When using a table style, define it once and reference it for every table:
+使用表格样式时，定义一次并在所有表格中引用：
 
 ```xml
-<!-- All tables reference the same style -->
+<!-- 所有表格引用同一样式 -->
 <w:tblPr>
   <w:tblStyle w:val="GridTable4Accent1"/>
   <w:tblW w:w="0" w:type="auto"/>
 </w:tblPr>
 ```
 
-### Bad Example
+### 坏的示例
 
 ```xml
-<!-- First H2: manually formatted -->
+<!-- 第一个 H2：手动格式化 -->
 <w:p>
   <w:pPr>
     <w:spacing w:before="360" w:after="120"/>
@@ -581,90 +520,70 @@ When using a table style, define it once and reference it for every table:
       <w:sz w:val="32"/>
       <w:color w:val="1F3864"/>
     </w:rPr>
-    <w:t>Market Analysis</w:t>
+    <w:t>市场分析</w:t>
   </w:r>
 </w:p>
 
-<!-- Second H2: slightly different (16pt instead of 16pt?  No, 15pt!) -->
+<!-- 第二个 H2：略有不同（15pt 而不是 16pt！） -->
 <w:p>
   <w:pPr>
-    <w:spacing w:before="240" w:after="160"/>  <!-- different spacing! -->
+    <w:spacing w:before="240" w:after="160"/>  <!-- 不同的间距！ -->
   </w:pPr>
   <w:r>
     <w:rPr>
       <w:b/>
-      <w:sz w:val="30"/>   <!-- 15pt instead of 16pt! -->
-      <w:color w:val="2E74B5"/>  <!-- different shade of blue! -->
+      <w:sz w:val="30"/>   <!-- 15pt 而不是 16pt！ -->
+      <w:color w:val="2E74B5"/>  <!-- 不同的蓝色色调！ -->
     </w:rPr>
-    <w:t>Financial Overview</w:t>
+    <w:t>财务概况</w:t>
   </w:r>
 </w:p>
 ```
 
-Problems:
-- No style references -- everything is direct formatting.
-- Second H2 has different size (30 vs 32), color, and spacing.
-- If there are 20 headings, each could drift slightly differently.
-- Changing the design later means editing every heading individually.
+问题：
+- 没有样式引用——所有内容都是直接格式化。
+- 第二个 H2 的字号（30 vs 32）、颜色和间距都不同。
+- 如果有 20 个标题，每个都可能略有不同地漂移。
+- 以后修改设计意味着逐个编辑每个标题。
 
-### Quick Test
+### 快速测试
 
-1. **Style audit**: does every paragraph reference a `w:pStyle`? If you find
-   paragraphs with only direct formatting and no style, that is a consistency
-   risk.
-2. **Search for variance**: search the XML for all `w:sz` values used with
-   `w:b` (bold). If you find three different sizes for what should be the same
-   heading level, there is an inconsistency.
-3. **Table check**: do all tables in the document reference the same
-   `w:tblStyle`? If some tables have manual border definitions while others
-   use a style, the document will look patchy.
-4. **Page numbers**: check that header/footer content is defined in the
-   default section properties and inherited by all sections, not redefined
-   inconsistently in each section.
+1. **样式审计**：每个段落是否都引用了 `w:pStyle`？如果发现只有直接格式化而没有样式的段落，这是一致性风险。
+2. **查找差异**：在 XML 中搜索与 `w:b`（粗体）一起使用的所有 `w:sz` 值。如果发现三个不同的字号对应同一标题级别，就存在不一致。
+3. **表格检查**：文档中的所有表格是否引用了同一 `w:tblStyle`？如果部分表格有手动边框定义而其他使用样式，文档看起来会显得杂乱。
+4. **页码**：检查页眉/页脚内容是否在默认节属性中定义并被所有节继承，而不是在每节中不一致地重新定义。
 
 ---
 
-## 6. Visual Hierarchy & Flow
+## 6. 视觉层级与流向
 
-### Why It Works
+### 为什么有效
 
-A well-designed document guides the reader's eye in a predictable path:
-title at the top, subtitle below it, section headings as signposts, body text
-as the main content, footnotes and captions as supporting details. This flow
-mirrors reading priority -- the most important information is the most visually
-prominent.
+设计良好的文档引导读者的眼睛沿可预测的路径移动：顶部的标题、其下的副标题、节标题作为路标、正文作为主要内容、脚注和图注作为支持细节。这种流向反映了阅读优先级——最重要的信息在视觉上最突出。
 
-Each level in the hierarchy must be **distinguishable from its adjacent
-levels**. It is not enough for H1 to differ from body text; H1 must also
-clearly differ from H2, and H2 from H3. If any two adjacent levels are too
-similar, the hierarchy collapses at that point.
+层级中的每个级别必须**与相邻级别区分**。仅仅 H1 与正文不同还不够；H1 还必须与 H2 明显不同，H2 与 H3 也要如此。如果任何两个相邻级别太相似，层级就会在该点崩溃。
 
-Effective hierarchy uses **multiple simultaneous signals**:
+有效的层级使用**多个同时信号**：
 
-| Level    | Size  | Weight  | Color   | Spacing above |
-|----------|-------|---------|---------|---------------|
-| Title    | 26pt  | Bold    | #1F3864 | 0 (top)       |
-| Subtitle | 15pt  | Regular | #4472C4 | 4pt           |
-| H1       | 20pt  | Bold    | #1F3864 | 24pt          |
-| H2       | 16pt  | Bold    | #1F3864 | 18pt          |
-| H3       | 13pt  | Bold    | #1F3864 | 12pt          |
-| Body     | 11pt  | Regular | #333333 | 0pt           |
-| Caption  | 9pt   | Italic  | #666666 | 4pt           |
-| Footnote | 9pt   | Regular | #666666 | 0pt           |
+| 级别 | 字号 | 字重 | 颜色 | 上方间距 |
+|------|------|------|------|---------|
+| 文档标题 | 26pt | 粗体 | #1F3864 | 0（顶部） |
+| 副标题 | 15pt | 常规 | #4472C4 | 4pt |
+| H1 | 20pt | 粗体 | #1F3864 | 24pt |
+| H2 | 16pt | 粗体 | #1F3864 | 18pt |
+| H3 | 13pt | 粗体 | #1F3864 | 12pt |
+| 正文 | 11pt | 常规 | #333333 | 0pt |
+| 图注 | 9pt | 斜体 | #666666 | 4pt |
+| 脚注 | 9pt | 常规 | #666666 | 0pt |
 
-Notice how each level differs from its neighbors on at least two dimensions
-(size + weight, or size + color, or weight + style). Single-dimension
-differences are fragile and can be missed.
+注意每个级别如何在至少两个维度上与相邻级别不同（字号+字重，或字号+颜色，或字重+样式）。单维度差异很脆弱，容易被忽略。
 
-**Section breaks** create rhythm in long documents. A page break before each
-major section (H1) gives the reader a mental reset. Within sections, consistent
-heading + body patterns create a predictable cadence that makes long documents
-less intimidating.
+**分节符**在长文档中创造节奏。每个主要章节（H1）前的分页符给读者一次心理重置。在章节内，一致的标题+正文模式创造可预测的节奏，使长文档不那么令人望而生畏。
 
-### Good Example
+### 好的示例
 
 ```xml
-<!-- Title: large, bold, navy, centered -->
+<!-- 标题：大号，粗体，海军蓝，居中 -->
 <w:style w:type="paragraph" w:styleId="Title">
   <w:pPr>
     <w:jc w:val="center"/>
@@ -677,7 +596,7 @@ less intimidating.
   </w:rPr>
 </w:style>
 
-<!-- Subtitle: medium, regular weight, lighter blue, centered -->
+<!-- 副标题：中号，常规字重，较浅的蓝色，居中 -->
 <w:style w:type="paragraph" w:styleId="Subtitle">
   <w:pPr>
     <w:jc w:val="center"/>
@@ -689,7 +608,7 @@ less intimidating.
   </w:rPr>
 </w:style>
 
-<!-- H1: page break before, large bold navy -->
+<!-- H1：段前分页，大号粗体海军蓝 -->
 <w:style w:type="paragraph" w:styleId="Heading1">
   <w:pPr>
     <w:pageBreakBefore/>
@@ -705,7 +624,7 @@ less intimidating.
   </w:rPr>
 </w:style>
 
-<!-- Caption: small, italic, gray -->
+<!-- 图注：小号，斜体，灰色 -->
 <w:style w:type="paragraph" w:styleId="Caption">
   <w:pPr>
     <w:spacing w:before="80" w:after="200"/>
@@ -719,101 +638,90 @@ less intimidating.
 ```
 
 ```
-  Visual flow (good):
+  视觉流向（好）：
 
   +----------------------------------+
   |                                  |
-  |     ANNUAL REPORT 2025           |  <- Title: 26pt bold navy centered
-  |     Acme Corporation             |  <- Subtitle: 15pt regular blue
-  |                                  |
-  |                                  |
-  +----------------------------------+
-
-  +----------------------------------+
-  |                                  |
-  |  1. Executive Summary            |  <- H1: 20pt bold navy (page break)
-  |                                  |
-  |  Body text introducing the       |  <- Body: 11pt regular gray
-  |  main findings of the year.      |
-  |                                  |
-  |  1.1 Revenue Highlights          |  <- H2: 16pt bold navy
-  |                                  |
-  |  Revenue grew by 23% year        |  <- Body
-  |  over year, driven by...         |
-  |                                  |
-  |  Figure 1: Revenue Growth        |  <- Caption: 9pt italic gray
+  |     2025年度报告                 |  <- 标题：26pt 粗体海军蓝居中
+  |     某某公司                     |  <- 副标题：15pt 常规蓝色
   |                                  |
   +----------------------------------+
 
-  Each level is immediately identifiable. The eye flows naturally
-  from title -> heading -> body -> caption.
+  +----------------------------------+
+  |                                  |
+  |  1. 执行摘要                     |  <- H1：20pt 粗体海军蓝（分页）
+  |                                  |
+  |  介绍年度主要发现的              |  <- 正文：11pt 常规灰色
+  |  正文文字。                      |
+  |                                  |
+  |  1.1 营收亮点                    |  <- H2：16pt 粗体海军蓝
+  |                                  |
+  |  营收同比增长 23%，              |  <- 正文
+  |  主要驱动因素是...               |
+  |                                  |
+  |  图 1：营收增长                  |  <- 图注：9pt 斜体灰色
+  |                                  |
+  +----------------------------------+
+
+  每个级别即刻可识别。眼睛自然地从
+  标题 -> 章标题 -> 正文 -> 图注流动。
 ```
 
-### Bad Example
+### 坏的示例
 
 ```xml
-<!-- All headings same color as body, minimal size difference -->
+<!-- 所有标题与正文同色，字号差异最小 -->
 <w:style w:type="paragraph" w:styleId="Heading1">
   <w:rPr>
     <w:b/>
-    <w:sz w:val="28"/>       <!-- 14pt -- only 3pt above body -->
-    <w:color w:val="000000"/> <!-- same color as body -->
+    <w:sz w:val="28"/>       <!-- 14pt——仅比正文大 3pt -->
+    <w:color w:val="000000"/> <!-- 与正文同色 -->
   </w:rPr>
 </w:style>
 
-<!-- Caption same size as body, not italic -->
+<!-- 图注与正文同字号，无斜体 -->
 <w:style w:type="paragraph" w:styleId="Caption">
   <w:rPr>
-    <w:sz w:val="22"/>        <!-- same 11pt as body! -->
-    <w:color w:val="000000"/> <!-- same color as body -->
+    <w:sz w:val="22"/>        <!-- 与正文相同的 11pt！ -->
+    <w:color w:val="000000"/> <!-- 与正文同色 -->
   </w:rPr>
 </w:style>
 
-<!-- No page breaks between major sections -->
-<!-- H1 has no pageBreakBefore, keepNext, or keepLines -->
+<!-- 主要节之间无分页符 -->
+<!-- H1 无 pageBreakBefore、keepNext 或 keepLines -->
 ```
 
-Problems:
-- H1 at 14pt is too close to body at 11pt (ratio 1.27 -- acceptable in
-  isolation but with black color matching body, the hierarchy is weak).
-- Caption is indistinguishable from body text.
-- No page breaks means major sections bleed into each other with no
-  visual rhythm.
-- Everything is black, so color provides zero hierarchy signal.
+问题：
+- H1（14pt）与正文（11pt）太接近（比例 1.27——单独看勉强可以，但与同色正文匹配时层级很弱）。
+- 图注与正文无法区分。
+- 没有分页符意味着主要节混在一起，没有视觉节奏。
+- 全部黑色，颜色提供零层级信号。
 
-### Quick Test
+### 快速测试
 
-1. **The squint test**: blur your eyes while looking at a full page. You
-   should see 3-4 distinct "weight levels" of gray. If the page looks like
-   one uniform shade, the hierarchy is too flat.
-2. **The scan test**: flip through pages quickly. Can you identify section
-   boundaries in under one second per page? If yes, the visual hierarchy is
-   working. If pages blur together, you need stronger differentiation at H1.
-3. **Adjacent level test**: for each heading level, check that it differs
-   from the next level on at least 2 of: size, weight, color, style (italic).
-   Single-dimension differences get lost.
-4. **Rhythm test**: in a document over 10 pages, do major sections (H1) start
-   on new pages? If not, long documents will feel like an undifferentiated
-   stream. Add `w:pageBreakBefore` to Heading1.
+1. **眯眼测试**：模糊视线查看整页。应该看到 3–4 个不同的"灰度层级"。如果页面看起来是一种均匀的色调，层级太平缓。
+2. **扫视测试**：快速翻页。每页能在 1 秒内识别节的边界吗？如果可以，视觉层级有效。如果页面模糊在一起，H1 需要更强的区分。
+3. **相邻级别测试**：对每个标题级别，检查它与下一级别在字号、字重、颜色、样式（斜体）中的至少 2 个维度上不同。单维度差异会消失。
+4. **节奏测试**：在超过 10 页的文档中，主要节（H1）是否从新页开始？如果没有，长文档会感觉像无差别的流。给 Heading1 添加 `w:pageBreakBefore`。
 
 ---
 
-## Summary: Decision Checklist
+## 总结：决策检查清单
 
-When you are unsure about a typographic choice, run through these checks:
+不确定某个排版选择时，运行以下检查：
 
-| Principle | Question | If No... |
-|-----------|----------|----------|
-| White Space | Does the page have at least 30% white space? | Increase margins or spacing |
-| Contrast | Can I count heading levels by squinting? | Increase size ratios (target 1.25x) |
-| Proximity | Does each heading clearly belong to text below it? | Make space-before > space-after (2:1) |
-| Alignment | Is English left-aligned and CJK justified? | Switch alignment mode |
-| Repetition | Do all same-level elements use the same style? | Replace direct formatting with styles |
-| Hierarchy | Can I see the document structure at arm's length? | Add more differentiation signals |
+| 原则 | 问题 | 如果否…… |
+|------|------|---------|
+| 留白 | 页面是否有至少 30% 的白色空间？ | 增加页边距或间距 |
+| 对比 | 眯眼能数出标题级别吗？ | 增加字号比例（目标 1.25x） |
+| 亲密性 | 每个标题是否清晰地属于其下方的文字？ | 使段前间距 > 段后间距（2:1） |
+| 对齐 | 英文是否左对齐，CJK 是否两端对齐？ | 切换对齐方式 |
+| 重复 | 所有同级元素是否使用相同样式？ | 用样式替换直接格式化 |
+| 层级 | 手持一臂远能看出文档结构吗？ | 添加更多区分信号 |
 
-**When two principles conflict, prioritize in this order:**
+**当两个原则冲突时，按以下顺序优先：**
 
-1. **Readability** (white space, line spacing) -- always wins
-2. **Hierarchy** (contrast, scale) -- readers must find what they need
-3. **Consistency** (repetition) -- builds trust
-4. **Aesthetics** (alignment, grouping) -- the finishing touch
+1. **可读性**（留白、行距）——始终优先
+2. **层级**（对比、缩放）——读者必须能找到所需内容
+3. **一致性**（重复）——建立信任
+4. **美观**（对齐、分组）——最后的点睛之笔

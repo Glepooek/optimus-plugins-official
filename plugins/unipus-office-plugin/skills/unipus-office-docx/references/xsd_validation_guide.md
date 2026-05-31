@@ -1,49 +1,49 @@
-# XSD Validation Guide
+# XSD 验证指南
 
-## Running Validation
+## 运行验证
 
 ```bash
-# Validate against the WML subset schema
+# 针对 WML 子集 schema 验证
 dotnet run --project u-docx validate input.docx --xsd assets/xsd/wml-subset.xsd
 
-# Validate against business rules (REQUIRED for Scenario C gate-check)
+# 针对业务规则验证（场景 C 硬性门控必须执行）
 dotnet run --project u-docx validate input.docx --xsd assets/xsd/business-rules.xsd
 
-# Validate against both
+# 同时验证两者
 dotnet run --project u-docx validate input.docx --xsd assets/xsd/wml-subset.xsd --xsd assets/xsd/business-rules.xsd
 ```
 
 ---
 
-## What wml-subset.xsd Covers
+## wml-subset.xsd 的验证范围
 
-The subset schema validates the most common WordprocessingML elements:
+子集 schema 验证最常见的 WordprocessingML 元素：
 
-| Area | Elements Validated |
-|------|--------------------|
-| Document structure | `w:document`, `w:body`, `w:sectPr` |
-| Paragraphs | `w:p`, `w:pPr`, `w:r`, `w:rPr`, `w:t` |
-| Tables | `w:tbl`, `w:tblPr`, `w:tblGrid`, `w:tr`, `w:tc` |
-| Styles | `w:styles`, `w:style`, `w:docDefaults` |
-| Lists | `w:numbering`, `w:abstractNum`, `w:num` |
-| Headers/Footers | `w:hdr`, `w:ftr` |
-| Track Changes | `w:ins`, `w:del`, `w:rPrChange`, `w:pPrChange` |
-| Comments | `w:comment`, `w:commentRangeStart`, `w:commentRangeEnd` |
+| 区域 | 验证的元素 |
+|------|-----------|
+| 文档结构 | `w:document`、`w:body`、`w:sectPr` |
+| 段落 | `w:p`、`w:pPr`、`w:r`、`w:rPr`、`w:t` |
+| 表格 | `w:tbl`、`w:tblPr`、`w:tblGrid`、`w:tr`、`w:tc` |
+| 样式 | `w:styles`、`w:style`、`w:docDefaults` |
+| 列表 | `w:numbering`、`w:abstractNum`、`w:num` |
+| 页眉/页脚 | `w:hdr`、`w:ftr` |
+| 修订跟踪 | `w:ins`、`w:del`、`w:rPrChange`、`w:pPrChange` |
+| 批注 | `w:comment`、`w:commentRangeStart`、`w:commentRangeEnd` |
 
-### What It Does NOT Cover
+### 不覆盖的内容
 
-- DrawingML elements (`a:`, `pic:`, `wp:`) — image/shape internals
-- VML elements (`v:`, `o:`) — legacy shapes
-- Math elements (`m:`) — equations
-- Extended namespaces (`w14`, `w15`, `w16*`) — vendor extensions
-- Custom XML data parts
-- Relationship and content type validation (structural, not schema-based)
+- DrawingML 元素（`a:`、`pic:`、`wp:`）——图片/形状内部
+- VML 元素（`v:`、`o:`）——旧版形状
+- 数学元素（`m:`）——公式
+- 扩展命名空间（`w14`、`w15`、`w16*`）——厂商扩展
+- 自定义 XML 数据部件
+- 关系和内容类型验证（属于结构性验证，不基于 schema）
 
 ---
 
-## Interpreting Errors
+## 错误解读
 
-### Element Ordering Error
+### 元素顺序错误
 
 ```
 ERROR: Element 'w:jc' is not expected at this position.
@@ -51,20 +51,20 @@ Expected: w:spacing, w:ind, w:contextualSpacing, ...
 Location: /word/document.xml, line 45
 ```
 
-**Cause**: Child elements are in wrong order. See `references/openxml_element_order.md`.
-**Fix**: Reorder children to match schema sequence.
+**原因**：子元素顺序错误。参见 `references/openxml_element_order.md`。
+**修复**：重新排列子元素，使其符合 schema 顺序。
 
-### Missing Required Element
+### 缺少必需元素
 
 ```
 ERROR: Element 'w:tbl' missing required child 'w:tblPr'.
 Location: /word/document.xml, line 102
 ```
 
-**Cause**: A required child element is absent.
-**Fix**: Add the missing element. Tables require both `w:tblPr` and `w:tblGrid`.
+**原因**：缺少必要的子元素。
+**修复**：添加缺失的元素。表格需要同时包含 `w:tblPr` 和 `w:tblGrid`。
 
-### Invalid Attribute Value
+### 属性值无效
 
 ```
 ERROR: Attribute 'w:val' has invalid value 'middle'.
@@ -72,40 +72,40 @@ Expected: 'left', 'center', 'right', 'both', 'distribute'
 Location: /word/document.xml, line 78
 ```
 
-**Cause**: An attribute value is not in the allowed enumeration.
-**Fix**: Use one of the valid values listed in the error.
+**原因**：属性值不在允许的枚举值范围内。
+**修复**：使用错误信息中列出的有效值之一。
 
-### Unexpected Element
+### 意外元素
 
 ```
 ERROR: Element 'w:customTag' is not expected.
 Location: /word/document.xml, line 200
 ```
 
-**Cause**: An element not defined in the subset schema. May be a vendor extension.
-**Fix**: Check if it's a known extension (w14/w15/w16). If so, it's likely safe. If unknown, investigate or remove.
+**原因**：该元素未在子集 schema 中定义，可能是厂商扩展。
+**修复**：检查是否为已知扩展（w14/w15/w16）。如果是，通常安全。如果未知，进行调查或删除。
 
 ---
 
-## Business Rules XSD
+## 业务规则 XSD
 
-The `business-rules.xsd` schema enforces project-specific constraints beyond standard OpenXML validity:
+`business-rules.xsd` schema 在标准 OpenXML 有效性之外还强制执行项目特定约束：
 
-| Rule | What It Checks |
-|------|---------------|
-| Required styles | `Normal`, `Heading1`-`Heading3`, `TableGrid` must exist in `styles.xml` |
-| Font consistency | `w:docDefaults` fonts match expected values |
-| Margin ranges | Page margins within acceptable range (720-2160 DXA) |
-| Page size | Must be A4 or Letter |
-| Heading hierarchy | No gaps (e.g., H1 → H3 without H2) |
-| Style chain | `w:basedOn` references must resolve to existing styles |
+| 规则 | 检查内容 |
+|------|---------|
+| 必需样式 | `styles.xml` 中必须存在 `Normal`、`Heading1`–`Heading3`、`TableGrid` |
+| 字体一致性 | `w:docDefaults` 字体与预期值匹配 |
+| 页边距范围 | 页边距在可接受范围内（720–2160 DXA） |
+| 页面尺寸 | 必须是 A4 或 Letter |
+| 标题层级 | 不得跳级（如 H1 → H3 中间跳过 H2） |
+| 样式链 | `w:basedOn` 引用必须指向已存在的样式 |
 
-### Extending Business Rules
+### 扩展业务规则
 
-To add project-specific rules, add `xs:assert` or `xs:restriction` elements:
+要添加项目特定规则，添加 `xs:assert` 或 `xs:restriction` 元素：
 
 ```xml
-<!-- Require minimum 1-inch margins -->
+<!-- 要求最小 1 英寸页边距 -->
 <xs:element name="pgMar">
   <xs:complexType>
     <xs:attribute name="top" type="xs:integer">
@@ -119,40 +119,40 @@ To add project-specific rules, add `xs:assert` or `xs:restriction` elements:
 
 ---
 
-## Gate-Check: Scenario C Hard Gate
+## 门控检查：场景 C 硬性门控
 
-In Scenario C (Apply Template), the output document **MUST** pass `business-rules.xsd` validation before delivery:
+在场景 C（应用模板）中，输出文档**必须**通过 `business-rules.xsd` 验证才能交付：
 
 ```
-1. Apply template  →  output.docx
-2. Validate        →  dotnet run ... validate output.docx --xsd business-rules.xsd
-3. PASS?           →  Deliver to user
-4. FAIL?           →  Fix issues, re-validate, repeat until PASS
+1. 应用模板  →  output.docx
+2. 验证      →  dotnet run ... validate output.docx --xsd business-rules.xsd
+3. 通过？    →  交付给用户
+4. 失败？    →  修复问题，重新验证，重复直到通过
 ```
 
-**This is a hard gate.** A document that fails business-rules validation is NOT deliverable, even if it opens correctly in Word.
+**这是硬性门控。** 业务规则验证失败的文档**不可交付**，即使它在 Word 中能正常打开。
 
 ---
 
-## False Positives
+## 误报
 
-### Vendor Extensions
+### 厂商扩展
 
-Elements from extended namespaces (`w14`, `w15`, `w16*`) are not in the subset schema and may trigger warnings:
+来自扩展命名空间（`w14`、`w15`、`w16*`）的元素不在子集 schema 中，可能触发警告：
 
 ```
 WARNING: Element '{http://schemas.microsoft.com/office/word/2010/wordml}shadow' is not expected.
 ```
 
-These are generally safe to ignore — they are Microsoft extensions for newer features (e.g., advanced text effects, comment extensions).
+通常可以安全忽略——这些是 Microsoft 针对较新功能（如高级文字效果、批注扩展）的扩展。
 
-### Markup Compatibility
+### 标记兼容性
 
-Documents may contain `mc:AlternateContent` blocks with fallback content. The subset schema may not recognize the `mc:` namespace processing. These are safe if the document opens correctly in Word.
+文档可能包含带有备用内容的 `mc:AlternateContent` 块。子集 schema 可能无法识别 `mc:` 命名空间处理。如果文档在 Word 中能正常打开，这些通常是安全的。
 
-### Recommended Approach
+### 推荐处理方式
 
-1. Run validation
-2. Treat **errors** as must-fix
-3. Review **warnings** — ignore known vendor extensions, investigate unknown elements
-4. After fixing errors, re-validate to confirm
+1. 运行验证
+2. 将**错误**视为必须修复的问题
+3. 审查**警告**——忽略已知厂商扩展，调查未知元素
+4. 修复错误后，重新验证以确认

@@ -1,111 +1,111 @@
-# QA Process & Common Pitfalls
+# QA 流程与常见陷阱
 
-## QA Process
+## QA 流程
 
-**Assume there are problems. Your job is to find them.**
+**假设一定存在问题。你的工作是找出它们。**
 
-Your first render is almost never correct. Approach QA as a bug hunt, not a confirmation step. If you found zero issues on first inspection, you weren't looking hard enough.
+第一次渲染几乎不会是正确的。以找 Bug 的态度来做 QA，而不是做确认性检查。如果第一轮检查没有发现任何问题，那说明你看得不够仔细。
 
-### Content QA
+### 内容 QA
 
 ```bash
 python -m markitdown output.pptx
 ```
 
-Check for missing content, typos, wrong order.
+检查缺失内容、错别字、顺序错误。
 
-**Check for leftover placeholder text:**
+**检查残留占位文字：**
 
 ```bash
 python -m markitdown output.pptx | grep -iE "xxxx|lorem|ipsum|placeholder|this.*(page|slide).*layout"
 ```
 
-If grep returns results, fix them before declaring success.
+如果 grep 有输出，在声明成功前先修复。
 
-### Verification Loop
+### 验证循环
 
-1. Generate slides -> Extract text with `python -m markitdown output.pptx` -> Review content
-2. **List issues found** (if none found, look again more critically)
-3. Fix issues
-4. **Re-verify affected slides** — one fix often creates another problem
-5. Repeat until a full pass reveals no new issues
+1. 生成幻灯片 → 用 `python -m markitdown output.pptx` 提取文字 → 审查内容
+2. **列出发现的问题**（若未发现任何问题，再批判性地检查一遍）
+3. 修复问题
+4. **重新验证受影响的幻灯片**——一处修复经常引入另一个问题
+5. 重复直到完整检查一遍没有新问题
 
-**Do not declare success until you've completed at least one fix-and-verify cycle.**
+**在完成至少一次"修复-验证"循环之前，不得声明成功。**
 
-### Per-Slide QA (for from-scratch creation)
+### 逐张 QA（从零创建时）
 
 ```bash
 python -m markitdown slide-XX-preview.pptx
 ```
 
-Check for missing content, placeholder text, missing page number badge.
+检查缺失内容、占位文字、缺少页码徽标。
 
 ---
 
-## Common Mistakes to Avoid
+## 常见错误
 
-- **Don't repeat the same layout** — vary columns, cards, and callouts across slides
-- **Don't center body text** — left-align paragraphs and lists; center only titles
-- **Don't skimp on size contrast** — titles need 36pt+ to stand out from 14-16pt body
-- **Don't default to blue** — pick colors that reflect the specific topic
-- **Don't mix spacing randomly** — choose 0.3" or 0.5" gaps and use consistently
-- **Don't style one slide and leave the rest plain** — commit fully or keep it simple throughout
-- **Don't create text-only slides** — add images, icons, charts, or visual elements; avoid plain title + bullets
-- **Don't forget text box padding** — when aligning lines or shapes with text edges, set `margin: 0` on the text box or offset the shape to account for padding
-- **Don't use low-contrast elements** — icons AND text need strong contrast against the background
-- **NEVER use accent lines under titles** — these are a hallmark of AI-generated slides; use whitespace or background color instead
-- **NEVER use "#" with hex colors** — causes file corruption in PptxGenJS
-- **NEVER encode opacity in hex strings** — use the `opacity` property instead
-- **NEVER use async/await in createSlide()** — compile.js won't await
-- **NEVER reuse option objects across PptxGenJS calls** — PptxGenJS mutates objects in-place
+- **不要重复相同布局**——在幻灯片间变换列数、卡片和强调框
+- **不要居中对齐正文**——段落和列表左对齐，只有标题居中
+- **不要忽视字号对比**——标题需 36pt+ 才能从 14-16pt 正文中突出
+- **不要默认选蓝色**——选择能反映具体主题的颜色
+- **不要随意混用间距**——选定 0.3" 或 0.5" 的间距后保持一致
+- **不要只精心设计一张幻灯片而其余敷衍了事**——要么全力投入，要么整体保持简洁
+- **不要创建纯文字幻灯片**——添加图片、图标、图表或视觉元素；避免纯标题+要点
+- **不要忘记文本框内边距**——对齐文字边缘与形状边缘时，在文本框上设置 `margin: 0`，或偏移形状以补偿内边距
+- **不要使用低对比度元素**——图标和文字都需要与背景形成强烈对比
+- **绝不在标题下方使用强调线**——这是 AI 生成幻灯片的标志性特征；改用留白或背景色
+- **绝不在十六进制颜色中使用 "#"**——在 PptxGenJS 中会导致文件损坏
+- **绝不将透明度编码在十六进制字符串中**——使用 `opacity` 属性代替
+- **绝不在 createSlide() 中使用 async/await**——compile.js 不会 await
+- **绝不在多个 PptxGenJS 调用间复用选项对象**——PptxGenJS 会就地修改对象
 
 ---
 
-## Critical Pitfalls — PptxGenJS
+## 关键陷阱 — PptxGenJS
 
-### NEVER use async/await in createSlide()
+### 绝不在 createSlide() 中使用 async/await
 
 ```javascript
-// WRONG - compile.js won't await
+// 错误 - compile.js 不会 await
 async function createSlide(pres, theme) { ... }
 
-// CORRECT
+// 正确
 function createSlide(pres, theme) { ... }
 ```
 
-### NEVER use "#" with hex colors
+### 绝不在十六进制颜色中使用 "#"
 
 ```javascript
-color: "FF0000"      // CORRECT
-color: "#FF0000"     // CORRUPTS FILE
+color: "FF0000"      // 正确
+color: "#FF0000"     // 文件损坏
 ```
 
-### NEVER encode opacity in hex strings
+### 绝不将透明度编码在十六进制字符串中
 
 ```javascript
-shadow: { color: "00000020" }              // CORRUPTS FILE
-shadow: { color: "000000", opacity: 0.12 } // CORRECT
+shadow: { color: "00000020" }              // 文件损坏
+shadow: { color: "000000", opacity: 0.12 } // 正确
 ```
 
-### Prevent text wrapping in titles
+### 防止标题文字换行
 
 ```javascript
-// Use fit:'shrink' for long titles
+// 长标题使用 fit:'shrink'
 slide.addText("Long Title Here", {
   x: 0.5, y: 2, w: 9, h: 1,
   fontSize: 48, fit: "shrink"
 });
 ```
 
-### NEVER reuse option objects across calls
+### 绝不在多个调用间复用选项对象
 
 ```javascript
-// WRONG
+// 错误
 const shadow = { type: "outer", blur: 6, offset: 2, color: "000000", opacity: 0.15 };
 slide.addShape(pres.shapes.RECTANGLE, { shadow, ... });
 slide.addShape(pres.shapes.RECTANGLE, { shadow, ... });
 
-// CORRECT - factory function
+// 正确 - 使用工厂函数
 const makeShadow = () => ({ type: "outer", blur: 6, offset: 2, color: "000000", opacity: 0.15 });
 slide.addShape(pres.shapes.RECTANGLE, { shadow: makeShadow(), ... });
 slide.addShape(pres.shapes.RECTANGLE, { shadow: makeShadow(), ... });

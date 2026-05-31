@@ -1,95 +1,82 @@
-# Build New xlsx from Scratch
+# 从零新建 xlsx 文件
 
-Create new, production-quality xlsx files using the XML approach. NEVER use openpyxl
-for writing. NEVER hardcode Python-computed values — every derived number must be a
-live Excel formula.
+使用 XML 方式创建生产级 xlsx 文件。绝不使用 openpyxl 写入。绝不硬编码 Python 计算值——每个派生数字必须是实时 Excel 公式。
 
 ---
 
-## When to Use This Path
+## 适用场景
 
-Use this document when the user wants:
-- A brand-new Excel file that does not yet exist
-- A generated report, financial model, or data table
-- Any "create / build / generate / make" request
+以下情况使用本文档：
+- 用户需要一个尚不存在的全新 Excel 文件
+- 需要生成报告、财务模型或数据表格
+- 任何"创建/构建/生成/制作"类请求
 
-If the user provides an existing file to modify, switch to `edit.md` instead.
-
----
-
-## The Non-Negotiable Rules
-
-Before touching any file, internalize these four rules:
-
-1. **Formula-First**: Every calculated value (`SUM`, growth rate, ratio, subtotal, etc.)
-   MUST be written as `<f>SUM(B2:B9)</f>`, not as a hardcoded `<v>5000</v>`. Hardcoded
-   numbers go stale when source data changes. Only raw inputs and assumption parameters
-   may be hardcoded values.
-
-2. **No openpyxl for writing**: The entire file is built by editing XML directly. Python
-   is only allowed for reading/analysis (`pandas.read_excel()`) and for running helper
-   scripts (`xlsx_pack.py`, `formula_check.py`).
-
-3. **Style encodes meaning**: Blue font = user input/assumption. Black font = formula
-   result. Green font = cross-sheet reference. See `format.md` for the full color system
-   and style index table.
-
-4. **Validate before delivery**: Run `formula_check.py` and fix all errors before
-   handing the file to the user.
+如果用户提供了已有文件需要修改，改用 `edit.md`。
 
 ---
 
-## Complete Creation Workflow
+## 不可动摇的规则
 
-### Step 1 — Plan Before Writing
+动手操作任何文件前，先牢记这四条规则：
 
-Define the full structure on paper before touching any XML:
+1. **公式优先**：每个计算值（`SUM`、增长率、比率、小计等）都必须写为 `<f>SUM(B2:B9)</f>`，而不是硬编码的 `<v>5000</v>`。硬编码数字在源数据变化后会过期。只有原始输入和假设参数才可以是硬编码值。
 
-- **Sheets**: names, order, purpose (e.g., Assumptions / Model / Summary)
-- **Layout per sheet**: which rows are headers, inputs, formulas, totals
-- **String inventory**: collect all text labels you will need in sharedStrings
-- **Style choices**: what number format each column needs (currency, %, integer, year)
-- **Cross-sheet links**: which sheets pull data from other sheets
+2. **不使用 openpyxl 写入**：整个文件通过直接编辑 XML 构建。Python 只允许用于读取/分析（`pandas.read_excel()`）和运行辅助脚本（`xlsx_pack.py`、`formula_check.py`）。
 
-This planning step prevents the costly cycle of adding strings to sharedStrings
-mid-way and recomputing all indices.
+3. **样式编码含义**：蓝色字体 = 用户输入/假设。黑色字体 = 公式结果。绿色字体 = 跨表引用。完整配色系统和样式索引表见 `format.md`。
+
+4. **交付前验证**：运行 `formula_check.py` 并修复所有错误后再交付给用户。
 
 ---
 
-### Step 2 — Copy Minimal Template
+## 完整创建工作流
+
+### 第一步 — 动手前先规划
+
+在碰任何 XML 前，在纸上定义完整结构：
+
+- **工作表**：名称、顺序、用途（如 Assumptions/Model/Summary）
+- **每个工作表的布局**：哪些行是标题、输入、公式、合计
+- **字符串清单**：收集 sharedStrings 中需要的所有文字标签
+- **样式选择**：每列需要什么数字格式（货币、百分比、整数、年份）
+- **跨表链接**：哪些工作表从其他工作表拉取数据
+
+这个规划步骤可以避免中途向 sharedStrings 添加字符串、重新计算所有索引的高代价循环。
+
+---
+
+### 第二步 — 复制最小模板
 
 ```bash
 cp -r SKILL_DIR/templates/minimal_xlsx/ /tmp/xlsx_work/
 ```
 
-The template gives you a complete, valid 7-file xlsx skeleton:
+该模板提供一个完整有效的 7 文件 xlsx 骨架：
 
 ```
 /tmp/xlsx_work/
-├── [Content_Types].xml        ← MIME type registry
+├── [Content_Types].xml        ← MIME 类型注册表
 ├── _rels/
-│   └── .rels                  ← root relationship (points to workbook.xml)
+│   └── .rels                  ← 根关系（指向 workbook.xml）
 └── xl/
-    ├── workbook.xml            ← sheet list and calc settings
-    ├── styles.xml              ← 13 pre-built financial style slots
-    ├── sharedStrings.xml       ← text string table (starts empty)
+    ├── workbook.xml            ← 工作表列表和计算设置
+    ├── styles.xml              ← 13 个预建财务样式槽
+    ├── sharedStrings.xml       ← 文字字符串表（初始为空）
     ├── _rels/
-    │   └── workbook.xml.rels  ← maps rId → file paths
+    │   └── workbook.xml.rels  ← 将 rId 映射到文件路径
     └── worksheets/
-        └── sheet1.xml          ← one empty sheet
+        └── sheet1.xml          ← 一个空工作表
 ```
 
-After copying, rename sheets and add content. Do not create files from scratch —
-always start from the template.
+复制后重命名工作表并添加内容。不要从头创建文件——始终从模板开始。
 
 ---
 
-### Step 3 — Configure Sheet Structure
+### 第三步 — 配置工作表结构
 
-#### Single-Sheet Workbook
+#### 单工作表文档
 
-The template already has one sheet named "Sheet1". Just change the `name` attribute
-in `xl/workbook.xml`:
+模板已有一个名为"Sheet1"的工作表。只需修改 `xl/workbook.xml` 中的 `name` 属性：
 
 ```xml
 <sheets>
@@ -97,21 +84,20 @@ in `xl/workbook.xml`:
 </sheets>
 ```
 
-No other files need to change for a single-sheet workbook.
+单工作表文档无需修改其他文件。
 
-#### Multi-Sheet Workbook
+#### 多工作表文档
 
-Four files must be kept in sync. Work through them in this order:
+必须保持四个文件同步。按以下顺序操作：
 
-**IMPORTANT — rId collision rule**: In the template's `workbook.xml.rels`, the IDs
-`rId1`, `rId2`, and `rId3` are already taken:
+**重要 — rId 冲突规则**：模板的 `workbook.xml.rels` 中，`rId1`、`rId2`、`rId3` 已被占用：
 - `rId1` → `worksheets/sheet1.xml`
 - `rId2` → `styles.xml`
 - `rId3` → `sharedStrings.xml`
 
-New worksheet entries MUST start at `rId4` and count upward.
+新工作表条目必须从 `rId4` 开始向上递增。
 
-**File 1 of 4 — `xl/workbook.xml`** (sheet list):
+**文件 1/4 — `xl/workbook.xml`**（工作表列表）：
 
 ```xml
 <sheets>
@@ -121,13 +107,13 @@ New worksheet entries MUST start at `rId4` and count upward.
 </sheets>
 ```
 
-Special characters in sheet names:
-- `&` → `&amp;` in XML: `<sheet name="P&amp;L" .../>`
-- Max 31 characters
-- Forbidden: `/ \ ? * [ ] :`
-- Sheet names with spaces need single quotes in formula references: `'Q1 Data'!B5`
+工作表名称中的特殊字符：
+- `&` → XML 中用 `&amp;`：`<sheet name="P&amp;L" .../>`
+- 最多 31 个字符
+- 禁止使用：`/ \ ? * [ ] :`
+- 名称含空格时，公式引用需加单引号：`'Q1 Data'!B5`
 
-**File 2 of 4 — `xl/_rels/workbook.xml.rels`** (ID → file mapping):
+**文件 2/4 — `xl/_rels/workbook.xml.rels`**（ID → 文件路径映射）：
 
 ```xml
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
@@ -149,7 +135,7 @@ Special characters in sheet names:
 </Relationships>
 ```
 
-**File 3 of 4 — `[Content_Types].xml`** (MIME type declarations):
+**文件 3/4 — `[Content_Types].xml`**（MIME 类型声明）：
 
 ```xml
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -170,9 +156,9 @@ Special characters in sheet names:
 </Types>
 ```
 
-**File 4 of 4 — Create new worksheet XML files**
+**文件 4/4 — 创建新工作表 XML 文件**
 
-Copy `sheet1.xml` to `sheet2.xml` and `sheet3.xml`, then clear the `<sheetData>` content:
+将 `sheet1.xml` 复制为 `sheet2.xml` 和 `sheet3.xml`，然后清空 `<sheetData>` 内容：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -185,65 +171,61 @@ Copy `sheet1.xml` to `sheet2.xml` and `sheet3.xml`, then clear the `<sheetData>`
   <sheetFormatPr defaultRowHeight="15" x14ac:dyDescent="0.25"
     xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac"/>
   <sheetData>
-    <!-- Data rows go here -->
+    <!-- 数据行写在此处 -->
   </sheetData>
   <pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>
 </worksheet>
 ```
 
-**Sync checklist** — every time you add a sheet, verify all four are consistent:
+**同步检查清单** — 每次添加工作表时，验证以下四项一致：
 
-| Check | What to verify |
+| 检查项 | 验证内容 |
 |-------|---------------|
-| `workbook.xml` | New `<sheet name="..." sheetId="N" r:id="rIdX"/>` exists |
-| `workbook.xml.rels` | New `<Relationship Id="rIdX" ... Target="worksheets/sheetN.xml"/>` exists |
-| `[Content_Types].xml` | New `<Override PartName="/xl/worksheets/sheetN.xml" .../>` exists |
-| Filesystem | `xl/worksheets/sheetN.xml` file actually exists |
+| `workbook.xml` | 存在新的 `<sheet name="..." sheetId="N" r:id="rIdX"/>` |
+| `workbook.xml.rels` | 存在新的 `<Relationship Id="rIdX" ... Target="worksheets/sheetN.xml"/>` |
+| `[Content_Types].xml` | 存在新的 `<Override PartName="/xl/worksheets/sheetN.xml" .../>` |
+| 文件系统 | `xl/worksheets/sheetN.xml` 文件实际存在 |
 
 ---
 
-### Step 4 — Populate sharedStrings
+### 第四步 — 填充 sharedStrings
 
-All text values (headers, row labels, category names, any string the user will read)
-must be stored in `xl/sharedStrings.xml`. Cells reference them by 0-based index.
+所有文字值（列标题、行标签、分类名称、用户可见的任何字符串）必须存储在 `xl/sharedStrings.xml` 中。单元格通过 0 起始索引引用它们。
 
-**Recommended workflow**: collect ALL text you need first, write the complete table once,
-then fill in indices while writing worksheet XML. This avoids re-counting indices mid-way.
+**推荐工作流**：先收集所有需要的文字，一次性写完完整表格，然后在编写工作表 XML 时填入索引。这样可以避免中途重新计数索引。
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
      count="10" uniqueCount="10">
-  <si><t>Item</t></si>                  <!-- index 0 -->
-  <si><t>FY2023A</t></si>               <!-- index 1 -->
-  <si><t>FY2024E</t></si>               <!-- index 2 -->
-  <si><t>FY2025E</t></si>               <!-- index 3 -->
-  <si><t>YoY Growth</t></si>            <!-- index 4 -->
-  <si><t>Revenue</t></si>               <!-- index 5 -->
-  <si><t>Cost of Goods Sold</t></si>    <!-- index 6 -->
-  <si><t>Gross Profit</t></si>          <!-- index 7 -->
-  <si><t>EBITDA</t></si>                <!-- index 8 -->
-  <si><t>Net Income</t></si>            <!-- index 9 -->
+  <si><t>Item</t></si>                  <!-- 索引 0 -->
+  <si><t>FY2023A</t></si>               <!-- 索引 1 -->
+  <si><t>FY2024E</t></si>               <!-- 索引 2 -->
+  <si><t>FY2025E</t></si>               <!-- 索引 3 -->
+  <si><t>YoY Growth</t></si>            <!-- 索引 4 -->
+  <si><t>Revenue</t></si>               <!-- 索引 5 -->
+  <si><t>Cost of Goods Sold</t></si>    <!-- 索引 6 -->
+  <si><t>Gross Profit</t></si>          <!-- 索引 7 -->
+  <si><t>EBITDA</t></si>                <!-- 索引 8 -->
+  <si><t>Net Income</t></si>            <!-- 索引 9 -->
 </sst>
 ```
 
-**Attribute rules**:
-- `uniqueCount` = number of `<si>` elements (unique strings in the table)
-- `count` = total number of cell references to strings across the entire workbook
-  (if "Revenue" appears in 3 sheets, count is `uniqueCount + 2`)
-- For new files where each string appears once, `count == uniqueCount`
-- Both attributes MUST be accurate — wrong values trigger warnings in some Excel versions
+**属性规则**：
+- `uniqueCount` = `<si>` 元素数量（表中唯一字符串数）
+- `count` = 整个工作簿中所有工作表对字符串引用的总次数（若"Revenue"在 3 个工作表中出现，count = uniqueCount + 2）
+- 对于每个字符串只出现一次的新文件：`count == uniqueCount`
+- 两个属性必须准确——错误值在某些 Excel 版本中会触发警告
 
-**Special character escaping**:
+**特殊字符转义**：
 
 ```xml
-<si><t>R&amp;D Expenses</t></si>          <!-- & must be &amp; -->
-<si><t>Revenue &lt; Target</t></si>        <!-- < must be &lt; -->
-<si><t xml:space="preserve">  (note)  </t></si>  <!-- preserve leading/trailing spaces -->
+<si><t>R&amp;D Expenses</t></si>          <!-- & 必须写为 &amp; -->
+<si><t>Revenue &lt; Target</t></si>        <!-- < 必须写为 &lt; -->
+<si><t xml:space="preserve">  (备注)  </t></si>  <!-- 保留首尾空格 -->
 ```
 
-**Helper script**: use `shared_strings_builder.py` to generate the complete
-`sharedStrings.xml` from a plain list of strings:
+**辅助脚本**：使用 `shared_strings_builder.py` 从字符串列表生成完整的 `sharedStrings.xml`：
 
 ```bash
 python3 SKILL_DIR/scripts/shared_strings_builder.py \
@@ -251,7 +233,7 @@ python3 SKILL_DIR/scripts/shared_strings_builder.py \
   > /tmp/xlsx_work/xl/sharedStrings.xml
 ```
 
-Or interactively from a file listing one string per line:
+或从每行一个字符串的文件读取：
 
 ```bash
 python3 SKILL_DIR/scripts/shared_strings_builder.py --file strings.txt \
@@ -260,44 +242,43 @@ python3 SKILL_DIR/scripts/shared_strings_builder.py --file strings.txt \
 
 ---
 
-### Step 5 — Write Worksheet Data
+### 第五步 — 写入工作表数据
 
-Edit each `xl/worksheets/sheetN.xml`. Replace the empty `<sheetData>` with rows
-and cells.
+编辑每个 `xl/worksheets/sheetN.xml`，用行和单元格替换空的 `<sheetData>`。
 
-#### Cell XML Anatomy
+#### 单元格 XML 结构
 
 ```
 <c r="B5" t="s" s="4">
       ↑     ↑    ↑
-   address  type  style index (from cellXfs in styles.xml)
+   地址   类型  样式索引（来自 styles.xml 中的 cellXfs）
 
   <v>3</v>
      ↑
-  value (for t="s": sharedStrings index; for numbers: the number itself)
+  值（对于 t="s"：sharedStrings 索引；对于数字：数字本身）
 ```
 
-#### Data Type Reference
+#### 数据类型参考
 
-| Data | `t` attr | XML Example | Notes |
+| 数据 | `t` 属性 | XML 示例 | 说明 |
 |------|---------|-------------|-------|
-| Shared string (text) | `s` | `<c r="A1" t="s" s="4"><v>0</v></c>` | `<v>` = sharedStrings index |
-| Number | omit | `<c r="B2" s="5"><v>1000000</v></c>` | default type, `t` omitted |
-| Percentage (as decimal) | omit | `<c r="C2" s="7"><v>0.125</v></c>` | 12.5% stored as 0.125 |
-| Boolean | `b` | `<c r="D1" t="b"><v>1</v></c>` | 1=TRUE, 0=FALSE |
-| Formula | omit | `<c r="B4" s="2"><f>SUM(B2:B3)</f><v></v></c>` | `<v>` left empty |
-| Cross-sheet formula | omit | `<c r="C1" s="3"><f>Assumptions!B2</f><v></v></c>` | use s=3 (green) |
+| 共享字符串（文字） | `s` | `<c r="A1" t="s" s="4"><v>0</v></c>` | `<v>` = sharedStrings 索引 |
+| 数字 | 省略 | `<c r="B2" s="5"><v>1000000</v></c>` | 默认类型，省略 `t` |
+| 百分比（存为小数） | 省略 | `<c r="C2" s="7"><v>0.125</v></c>` | 12.5% 存为 0.125 |
+| 布尔值 | `b` | `<c r="D1" t="b"><v>1</v></c>` | 1=TRUE，0=FALSE |
+| 公式 | 省略 | `<c r="B4" s="2"><f>SUM(B2:B3)</f><v></v></c>` | `<v>` 留空 |
+| 跨表公式 | 省略 | `<c r="C1" s="3"><f>Assumptions!B2</f><v></v></c>` | 使用 s=3（绿色） |
 
-#### A Full Sheet Data Example
+#### 完整工作表数据示例
 
 ```xml
 <cols>
-  <col min="1" max="1" width="26" customWidth="1"/>   <!-- A: label column -->
-  <col min="2" max="5" width="14" customWidth="1"/>   <!-- B-E: data columns -->
+  <col min="1" max="1" width="26" customWidth="1"/>   <!-- A：标签列 -->
+  <col min="2" max="5" width="14" customWidth="1"/>   <!-- B-E：数据列 -->
 </cols>
 <sheetData>
 
-  <!-- Row 1: headers (style 4 = bold header) -->
+  <!-- 第 1 行：表头（样式 4 = 粗体表头） -->
   <row r="1" ht="18" customHeight="1">
     <c r="A1" t="s" s="4"><v>0</v></c>   <!-- "Item" -->
     <c r="B1" t="s" s="4"><v>1</v></c>   <!-- "FY2023A" -->
@@ -306,25 +287,25 @@ and cells.
     <c r="E1" t="s" s="4"><v>4</v></c>   <!-- "YoY Growth" -->
   </row>
 
-  <!-- Row 2: Revenue — actual value (input) + formula (computed) -->
+  <!-- 第 2 行：收入——实际值（输入）+ 公式（计算） -->
   <row r="2">
-    <c r="A2" t="s" s="1"><v>5</v></c>    <!-- "Revenue", blue input label -->
-    <c r="B2" s="5"><v>85000000</v></c>   <!-- FY2023A actual: $85M, currency input -->
-    <c r="C2" s="6"><f>B2*(1+Assumptions!C3)</f><v></v></c>   <!-- formula, currency -->
+    <c r="A2" t="s" s="1"><v>5</v></c>    <!-- "Revenue"，蓝色输入标签 -->
+    <c r="B2" s="5"><v>85000000</v></c>   <!-- FY2023A 实际值：$85M，货币输入 -->
+    <c r="C2" s="6"><f>B2*(1+Assumptions!C3)</f><v></v></c>   <!-- 公式，货币 -->
     <c r="D2" s="6"><f>C2*(1+Assumptions!D3)</f><v></v></c>
-    <c r="E2" s="8"><f>D2/C2-1</f><v></v></c>   <!-- YoY growth, percentage formula -->
+    <c r="E2" s="8"><f>D2/C2-1</f><v></v></c>   <!-- 同比增长，百分比公式 -->
   </row>
 
-  <!-- Row 3: Gross Profit -->
+  <!-- 第 3 行：毛利润 -->
   <row r="3">
-    <c r="A3" t="s" s="2"><v>7</v></c>    <!-- "Gross Profit", black formula label -->
+    <c r="A3" t="s" s="2"><v>7</v></c>    <!-- "Gross Profit"，黑色公式标签 -->
     <c r="B3" s="6"><f>B2*Assumptions!B4</f><v></v></c>
     <c r="C3" s="6"><f>C2*Assumptions!C4</f><v></v></c>
     <c r="D3" s="6"><f>D2*Assumptions!D4</f><v></v></c>
     <c r="E3" s="8"><f>D3/C3-1</f><v></v></c>
   </row>
 
-  <!-- Row 5: SUM total row -->
+  <!-- 第 5 行：SUM 合计行 -->
   <row r="5">
     <c r="A5" t="s" s="4"><v>8</v></c>    <!-- "EBITDA" -->
     <c r="B5" s="6"><f>SUM(B2:B4)</f><v></v></c>
@@ -336,15 +317,15 @@ and cells.
 </sheetData>
 ```
 
-#### Column Width and Freeze Pane
+#### 列宽和冻结窗格
 
-Column widths go **before** `<sheetData>`, freeze pane goes inside `<sheetView>`:
+列宽放在 `<sheetData>` **之前**，冻结窗格放在 `<sheetView>` 内：
 
 ```xml
-<!-- Inside <sheetViews><sheetView ...> — freeze the header row -->
+<!-- 在 <sheetViews><sheetView ...> 内——冻结首行 -->
 <pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>
 
-<!-- Before <sheetData> — set column widths -->
+<!-- 在 <sheetData> 之前——设置列宽 -->
 <cols>
   <col min="1" max="1" width="28" customWidth="1"/>
   <col min="2" max="8" width="14" customWidth="1"/>
@@ -353,38 +334,37 @@ Column widths go **before** `<sheetData>`, freeze pane goes inside `<sheetView>`
 
 ---
 
-### Step 6 — Apply Styles
+### 第六步 — 应用样式
 
-The template's `xl/styles.xml` has 13 pre-built semantic style slots (indices 0–12).
-**Read `format.md` for the complete style index table, color system, and how to add new styles.**
+模板的 `xl/styles.xml` 有 13 个预建语义样式槽（索引 0–12）。**完整样式索引表、配色系统和如何添加新样式，请阅读 `format.md`。**
 
-Quick reference for the most common slots:
+最常用槽的快速参考：
 
-| `s` | Role | Example |
+| `s` | 角色 | 示例 |
 |-----|------|---------|
-| 4 | Header (bold) | Column/row titles |
-| 5 / 6 | Currency input (blue) / formula (black) | `$#,##0` |
-| 7 / 8 | Percentage input / formula | `0.0%` |
-| 11 | Year (no comma) | 2024 not 2,024 |
+| 4 | 表头（粗体） | 列/行标题 |
+| 5 / 6 | 货币输入（蓝）/ 公式（黑） | `$#,##0` |
+| 7 / 8 | 百分比输入 / 公式 | `0.0%` |
+| 11 | 年份（无千分位） | 2024 而非 2,024 |
 
-Design principle: Blue = human sets this. Black = Excel computes this. Green = cross-sheet.
+设计原则：蓝色 = 人工设置。黑色 = Excel 计算。绿色 = 跨表引用。
 
-If you need a style not in the 13 pre-built slots, follow the append-only procedure in `format.md` section 3.2.
+如需 13 个预建槽以外的样式，请按 `format.md` 第 3.2 节的追加方式操作。
 
 ---
 
-### Step 7 — Formula Cookbook
+### 第七步 — 公式手册
 
-#### XML Formula Syntax Reminder
+#### XML 公式语法提醒
 
-Formulas in XML have **no leading `=`**:
+XML 中的公式**不带前导 `=`**：
 
 ```xml
-<!-- Excel UI: =SUM(B2:B9)   →   XML: -->
+<!-- Excel 界面：=SUM(B2:B9)   →   XML 中： -->
 <c r="B10" s="6"><f>SUM(B2:B9)</f><v></v></c>
 ```
 
-#### Basic Aggregations
+#### 基本聚合
 
 ```xml
 <c r="B10" s="6"><f>SUM(B2:B9)</f><v></v></c>
@@ -395,169 +375,161 @@ Formulas in XML have **no leading `=`**:
 <c r="B15" s="6"><f>MIN(B2:B9)</f><v></v></c>
 ```
 
-#### Financial Calculations
+#### 财务计算
 
 ```xml
-<!-- YoY growth rate: current / prior - 1 -->
+<!-- 同比增长率：当期 / 上期 - 1 -->
 <c r="E5" s="8"><f>D5/C5-1</f><v></v></c>
 
-<!-- Gross profit: revenue × gross margin -->
+<!-- 毛利润：收入 × 毛利率 -->
 <c r="B6" s="6"><f>B4*B3</f><v></v></c>
 
-<!-- EBITDA margin: EBITDA / Revenue -->
+<!-- EBITDA 利润率：EBITDA / 收入 -->
 <c r="B9" s="8"><f>B8/B4</f><v></v></c>
 
-<!-- Suppress #DIV/0! when denominator may be zero -->
+<!-- 当分母可能为零时，屏蔽 #DIV/0! -->
 <c r="E5" s="8"><f>IF(C5=0,0,D5/C5-1)</f><v></v></c>
 
-<!-- NPV and IRR (cash flows in B2:B7, discount rate in B1) -->
+<!-- NPV 和 IRR（现金流在 B2:B7，折现率在 B1） -->
 <c r="C1" s="6"><f>NPV(B1,B3:B7)+B2</f><v></v></c>
 <c r="C2" s="8"><f>IRR(B2:B7)</f><v></v></c>
 ```
 
-#### Cross-Sheet References
+#### 跨表引用
 
 ```xml
-<!-- No spaces in name: no quotes needed -->
+<!-- 名称无空格：无需引号 -->
 <c r="B3" s="3"><f>Assumptions!B5</f><v></v></c>
 
-<!-- Space in sheet name: single quotes required -->
+<!-- 名称有空格：需要单引号 -->
 <c r="B3" s="3"><f>'Q1 Data'!B5</f><v></v></c>
 
-<!-- Ampersand in sheet name (XML-escaped in workbook.xml, but in formula: literal &) -->
+<!-- 名称有 & 符号（workbook.xml 中 XML 转义，但公式中用字面量 &） -->
 <c r="B3" s="3"><f>'R&amp;D'!B5</f><v></v></c>
 
-<!-- Cross-sheet range: SUM of a range in another sheet -->
+<!-- 跨表范围：对另一张表中的范围求和 -->
 <c r="B10" s="6"><f>SUM(Data!C2:C1000)</f><v></v></c>
 
-<!-- 3D reference: sum same cell across multiple sheets -->
+<!-- 3D 引用：对多张表中相同单元格求和 -->
 <c r="B5" s="6"><f>SUM(Jan:Dec!B5)</f><v></v></c>
 ```
 
-Cross-sheet formula cells should use `s="3"` (green) to signal the data origin.
+跨表公式单元格应使用 `s="3"`（绿色）以标明数据来源。
 
-#### Shared Formulas (Same Pattern Repeated Down a Column)
+#### 共享公式（同一列中重复相同公式模式）
 
-When many consecutive cells share the same formula structure with only the row number
-changing, use shared formulas to keep the XML compact:
+当许多连续单元格共享相同的公式结构（仅行号不同）时，使用共享公式保持 XML 紧凑：
 
 ```xml
-<!-- D2: defines the shared group (si="0", ref="D2:D11") -->
+<!-- D2：定义共享组（si="0"，ref="D2:D11"） -->
 <c r="D2" s="8"><f t="shared" ref="D2:D11" si="0">C2/B2-1</f><v></v></c>
 
-<!-- D3 through D11: reference the same group, no formula text needed -->
+<!-- D3 到 D11：引用同一组，无需公式文本 -->
 <c r="D3" s="8"><f t="shared" si="0"/><v></v></c>
 <c r="D4" s="8"><f t="shared" si="0"/><v></v></c>
-<c r="D5" s="8"><f t="shared" si="0"/><v></v></c>
-<c r="D6" s="8"><f t="shared" si="0"/><v></v></c>
-<c r="D7" s="8"><f t="shared" si="0"/><v></v></c>
-<c r="D8" s="8"><f t="shared" si="0"/><v></v></c>
-<c r="D9" s="8"><f t="shared" si="0"/><v></v></c>
-<c r="D10" s="8"><f t="shared" si="0"/><v></v></c>
-<c r="D11" s="8"><f t="shared" si="0"/><v></v></c>
+<!-- ...以此类推... -->
 ```
 
-Excel adjusts relative references automatically (D3 computes `C3/B3-1`, etc.).
-If you have multiple shared formula groups, assign sequential `si` values (0, 1, 2, …).
+Excel 自动调整相对引用（D3 计算 `C3/B3-1` 等）。有多个共享公式组时，依次分配 `si` 值（0、1、2……）。
 
-#### Absolute References
+#### 绝对引用
 
 ```xml
-<!-- $B$2 locks to that cell when the formula is copied -->
+<!-- $B$2 在公式复制时锁定到该单元格 -->
 <c r="C5" s="8"><f>B5/$B$2</f><v></v></c>
 ```
 
-The `$` character needs no XML escaping — write it literally.
+`$` 字符无需 XML 转义，直接写字面量即可。
 
-#### Lookup Formulas
+#### 查找公式
 
 ```xml
-<!-- VLOOKUP: exact match (last arg 0) -->
+<!-- VLOOKUP：精确匹配（最后一个参数为 0） -->
 <c r="C5" s="6"><f>VLOOKUP(A5,Assumptions!A:C,2,0)</f><v></v></c>
 
-<!-- INDEX/MATCH: more flexible -->
+<!-- INDEX/MATCH：更灵活 -->
 <c r="C5" s="6"><f>INDEX(B:B,MATCH(A5,A:A,0))</f><v></v></c>
 
-<!-- XLOOKUP (Excel 2019+) -->
+<!-- XLOOKUP（Excel 2019+） -->
 <c r="C5" s="6"><f>XLOOKUP(A5,A:A,B:B)</f><v></v></c>
 ```
 
 ---
 
-### Step 8 — Pack and Validate
+### 第八步 — 打包与验证
 
-**Pack**:
+**打包**：
 
 ```bash
 python3 SKILL_DIR/scripts/xlsx_pack.py /tmp/xlsx_work/ /path/to/output.xlsx
 ```
 
-`xlsx_pack.py` will:
-1. Check that `[Content_Types].xml` exists at the root
-2. Parse every `.xml` and `.rels` file for well-formedness — abort if any fail
-3. Create the ZIP archive with correct compression
+`xlsx_pack.py` 会：
+1. 检查根目录是否存在 `[Content_Types].xml`
+2. 解析每个 `.xml` 和 `.rels` 文件的格式正确性——如有失败则中止
+3. 以正确压缩方式创建 ZIP 压缩包
 
-**Validate**:
+**验证**：
 
 ```bash
 python3 SKILL_DIR/scripts/formula_check.py /path/to/output.xlsx
 ```
 
-`formula_check.py` will:
-1. Scan every cell for `<c t="e">` entries (cached error values) — all 7 error types
-2. Extract sheet name references from every `<f>` formula
-3. Verify each referenced sheet exists in `workbook.xml`
+`formula_check.py` 会：
+1. 扫描每个单元格中的 `<c t="e">` 条目（缓存的错误值）——覆盖全部 7 种错误类型
+2. 从每个 `<f>` 公式中提取工作表名称引用
+3. 验证每个被引用的工作表是否存在于 `workbook.xml` 中
 
-Fix every reported error before delivery. Exit code 0 = safe to deliver.
-
----
-
-## Pre-Delivery Checklist
-
-Run through this list before handing the file to the user:
-
-- [ ] `formula_check.py` reports 0 errors
-- [ ] Every calculated cell has `<f>` — not just `<v>` with a number
-- [ ] `sharedStrings.xml` `count` and `uniqueCount` match actual `<si>` count
-- [ ] Every cell `s` attribute value is in range `0` to `cellXfs count - 1`
-- [ ] Every sheet in `workbook.xml` has a matching entry in `workbook.xml.rels`
-- [ ] Every `worksheets/sheetN.xml` file has a matching `<Override>` in `[Content_Types].xml`
-- [ ] Year columns use `s="11"` (format `0`, no thousands separator)
-- [ ] Cross-sheet reference formulas use `s="3"` (green font)
-- [ ] Assumption inputs use `s="1"` or `s="5"` or `s="7"` (blue font)
+修复每个报告的错误后再交付。退出代码 0 = 可以安全交付。
 
 ---
 
-## Common Mistakes and Fixes
+## 交付前检查清单
 
-| Mistake | Symptom | Fix |
+交付给用户前逐项检查：
+
+- [ ] `formula_check.py` 报告 0 个错误
+- [ ] 每个计算单元格都有 `<f>` — 而不只是带数字的 `<v>`
+- [ ] `sharedStrings.xml` 的 `count` 和 `uniqueCount` 与实际 `<si>` 数量匹配
+- [ ] 每个单元格的 `s` 属性值在 `0` 到 `cellXfs count - 1` 范围内
+- [ ] `workbook.xml` 中的每个工作表在 `workbook.xml.rels` 中都有对应条目
+- [ ] 每个 `worksheets/sheetN.xml` 文件在 `[Content_Types].xml` 中都有对应的 `<Override>`
+- [ ] 年份列使用 `s="11"`（格式 `0`，无千分位分隔符）
+- [ ] 跨表引用公式使用 `s="3"`（绿色字体）
+- [ ] 假设输入使用 `s="1"` 或 `s="5"` 或 `s="7"`（蓝色字体）
+
+---
+
+## 常见错误与修复
+
+| 错误 | 症状 | 修复方法 |
 |---------|---------|-----|
-| Formula has leading `=` | Cell shows `=SUM(...)` as text | Remove `=` from `<f>` content |
-| sharedStrings `count` not updated | Excel warning or blank cells | Count `<si>` elements, update both `count` and `uniqueCount` |
-| Style index out of range | File corruption / Excel repair | Ensure `s` < `cellXfs count`; append new `<xf>` if needed |
-| New sheet rId conflicts with styles/sharedStrings rId | Sheet missing or styles lost | New sheets use rId4, rId5, … (rId1-3 are reserved in template) |
-| Sheet name has `&` unescaped in XML | XML parse error | Use `&amp;` in `workbook.xml` name attribute |
-| Cross-sheet ref to sheet with space, no quotes | `#REF!` error | Wrap sheet name in single quotes: `'Sheet Name'!B5` |
-| Cross-sheet ref to non-existent sheet | `#REF!` error | Check `workbook.xml` sheet list vs formula |
-| Number stored as text (`t="s"`) | Left-aligned, can't sum | Remove `t` attribute from number cells |
-| Year displayed as `2,024` | Readability issue | Use `s="11"` (numFmtId=1, format `0`) |
-| Hardcoded Python result instead of formula | "Dead table" — won't update | Replace `<v>N</v>` with `<f>formula</f><v></v>` |
+| 公式有前导 `=` | 单元格显示 `=SUM(...)` 文本 | 从 `<f>` 内容中删除 `=` |
+| sharedStrings `count` 未更新 | Excel 警告或空白单元格 | 计数 `<si>` 元素，同时更新 `count` 和 `uniqueCount` |
+| 样式索引越界 | 文件损坏 / Excel 修复 | 确保 `s` < `cellXfs count`；如需新样式则追加 `<xf>` |
+| 新工作表 rId 与 styles/sharedStrings 的 rId 冲突 | 工作表丢失或样式丢失 | 新工作表使用 rId4、rId5……（rId1-3 为模板保留） |
+| 工作表名称中的 `&` 在 XML 中未转义 | XML 解析错误 | 在 `workbook.xml` 的 name 属性中使用 `&amp;` |
+| 跨表引用含空格的工作表名称时未加引号 | `#REF!` 错误 | 将工作表名称用单引号括起来：`'Sheet Name'!B5` |
+| 跨表引用不存在的工作表 | `#REF!` 错误 | 核对 `workbook.xml` 中的工作表列表与公式 |
+| 数字以文字形式存储（`t="s"`） | 左对齐，无法求和 | 从数字单元格移除 `t` 属性 |
+| 年份显示为 `2,024` | 可读性问题 | 使用 `s="11"`（numFmtId=1，格式 `0`） |
+| 硬编码 Python 结果而非公式 | "死表格"——不会更新 | 用 `<f>公式</f><v></v>` 替换 `<v>N</v>` |
 
 ---
 
-## Column Letter Reference
+## 列字母参考
 
-| Col # | Letter | Col # | Letter | Col # | Letter |
+| 列号 | 字母 | 列号 | 字母 | 列号 | 字母 |
 |-------|--------|-------|--------|-------|--------|
 | 1 | A | 26 | Z | 27 | AA |
 | 28 | AB | 52 | AZ | 53 | BA |
 | 54 | BB | 78 | BZ | 79 | CA |
 
-Python conversion (use when building formulas programmatically):
+Python 转换（编程构建公式时使用）：
 
 ```python
 def col_letter(n: int) -> str:
-    """Convert 1-based column number to Excel letter (A, B, ..., Z, AA, AB, ...)."""
+    """将 1 起始的列号转换为 Excel 字母（A、B、...、Z、AA、AB……）"""
     result = ""
     while n > 0:
         n, rem = divmod(n - 1, 26)
@@ -565,7 +537,7 @@ def col_letter(n: int) -> str:
     return result
 
 def col_number(s: str) -> int:
-    """Convert Excel column letter to 1-based number."""
+    """将 Excel 列字母转换为 1 起始的数字"""
     n = 0
     for c in s.upper():
         n = n * 26 + (ord(c) - 64)
@@ -574,14 +546,14 @@ def col_number(s: str) -> int:
 
 ---
 
-## Typical Scenario Walkthroughs
+## 典型场景演练
 
-### Scenario A — Three-Year Financial Model (Single Sheet)
+### 场景 A — 三年财务模型（单工作表）
 
-Layout: rows 1-12 = Assumptions (blue inputs) / rows 14-30 = Model (black formulas).
+布局：第 1-12 行 = 假设区（蓝色输入）/ 第 14-30 行 = 模型区（黑色公式）。
 
 ```xml
-<!-- sharedStrings.xml (excerpt) -->
+<!-- sharedStrings.xml（节选） -->
 <sst count="8" uniqueCount="8">
   <si><t>Metric</t></si>           <!-- 0 -->
   <si><t>FY2023A</t></si>          <!-- 1 -->
@@ -593,37 +565,37 @@ Layout: rows 1-12 = Assumptions (blue inputs) / rows 14-30 = Model (black formul
   <si><t>Gross Profit</t></si>     <!-- 7 -->
 </sst>
 
-<!-- sheet1.xml (excerpt) -->
+<!-- sheet1.xml（节选） -->
 <sheetData>
-  <!-- Header -->
+  <!-- 表头 -->
   <row r="1">
     <c r="A1" t="s" s="4"><v>0</v></c>
     <c r="B1" t="s" s="4"><v>1</v></c>
     <c r="C1" t="s" s="4"><v>2</v></c>
     <c r="D1" t="s" s="4"><v>3</v></c>
   </row>
-  <!-- Assumptions (rows 2-3) -->
+  <!-- 假设区（第 2-3 行） -->
   <row r="2">
-    <c r="A2" t="s" s="1"><v>4</v></c>    <!-- "Revenue Growth", blue -->
-    <c r="B2" s="7"><v>0</v></c>          <!-- FY2023A: n/a, 0% placeholder -->
-    <c r="C2" s="7"><v>0.12</v></c>       <!-- FY2024E: 12.0% input -->
-    <c r="D2" s="7"><v>0.15</v></c>       <!-- FY2025E: 15.0% input -->
+    <c r="A2" t="s" s="1"><v>4</v></c>    <!-- "Revenue Growth"，蓝色 -->
+    <c r="B2" s="7"><v>0</v></c>          <!-- FY2023A：n/a，0% 占位 -->
+    <c r="C2" s="7"><v>0.12</v></c>       <!-- FY2024E：12.0% 输入 -->
+    <c r="D2" s="7"><v>0.15</v></c>       <!-- FY2025E：15.0% 输入 -->
   </row>
   <row r="3">
-    <c r="A3" t="s" s="1"><v>5</v></c>    <!-- "Gross Margin", blue -->
+    <c r="A3" t="s" s="1"><v>5</v></c>    <!-- "Gross Margin"，蓝色 -->
     <c r="B3" s="7"><v>0.45</v></c>
     <c r="C3" s="7"><v>0.46</v></c>
     <c r="D3" s="7"><v>0.47</v></c>
   </row>
-  <!-- Model (rows 14-15) -->
+  <!-- 模型区（第 14-15 行） -->
   <row r="14">
-    <c r="A14" t="s" s="2"><v>6</v></c>      <!-- "Revenue", black -->
-    <c r="B14" s="5"><v>85000000</v></c>     <!-- actual, currency input -->
+    <c r="A14" t="s" s="2"><v>6</v></c>      <!-- "Revenue"，黑色 -->
+    <c r="B14" s="5"><v>85000000</v></c>     <!-- 实际值，货币输入 -->
     <c r="C14" s="6"><f>B14*(1+C2)</f><v></v></c>
     <c r="D14" s="6"><f>C14*(1+D2)</f><v></v></c>
   </row>
   <row r="15">
-    <c r="A15" t="s" s="2"><v>7</v></c>      <!-- "Gross Profit", black -->
+    <c r="A15" t="s" s="2"><v>7</v></c>      <!-- "Gross Profit"，黑色 -->
     <c r="B15" s="6"><f>B14*B3</f><v></v></c>
     <c r="C15" s="6"><f>C14*C3</f><v></v></c>
     <c r="D15" s="6"><f>D14*D3</f><v></v></c>
@@ -631,12 +603,12 @@ Layout: rows 1-12 = Assumptions (blue inputs) / rows 14-30 = Model (black formul
 </sheetData>
 ```
 
-### Scenario B — Data + Summary (Two Sheets)
+### 场景 B — 数据+汇总（两张工作表）
 
-The `Summary` sheet pulls from `Data` using cross-sheet formulas (green, `s="3"`):
+`Summary` 工作表使用跨表公式（绿色，`s="3"`）从 `Data` 拉取数据：
 
 ```xml
-<!-- Summary/sheet2.xml sheetData excerpt -->
+<!-- Summary/sheet2.xml sheetData 节选 -->
 <sheetData>
   <row r="1">
     <c r="A1" t="s" s="4"><v>0</v></c>   <!-- "Metric" -->
@@ -657,35 +629,14 @@ The `Summary` sheet pulls from `Data` using cross-sheet formulas (green, `s="3"`
 </sheetData>
 ```
 
-### Scenario C — Multi-Department Consolidation
-
-`Consolidated` sheet sums the same cells from multiple department sheets:
-
-```xml
-<!-- Consolidated/sheet4.xml — summing across Dept_Eng and Dept_Mkt -->
-<sheetData>
-  <row r="5">
-    <c r="A5" t="s" s="2"><v>0</v></c>
-    <!-- No spaces in sheet names → no quotes needed -->
-    <c r="B5" s="3"><f>Dept_Engineering!B5+Dept_Marketing!B5</f><v></v></c>
-  </row>
-  <row r="6">
-    <c r="A6" t="s" s="2"><v>1</v></c>
-    <c r="B6" s="3"><f>SUM(Dept_Engineering!B6,Dept_Marketing!B6)</f><v></v></c>
-  </row>
-</sheetData>
-```
-
 ---
 
-## What You Must NOT Do
+## 绝对禁止
 
-- Do NOT use openpyxl or any Python library to write the final xlsx file
-- Do NOT hardcode any calculated value — use `<f>` formulas for every derived number
-- Do NOT deliver without running `formula_check.py` first
-- Do NOT set a cell's `s` attribute to a value >= `cellXfs count`
-- Do NOT modify an existing `<xf>` entry in `styles.xml` — only append new ones
-- Do NOT add a new sheet without updating all four sync points (workbook.xml,
-  workbook.xml.rels, [Content_Types].xml, actual .xml file)
-- Do NOT assign new worksheet rIds that overlap with rId1, rId2, or rId3 (reserved
-  for sheet1, styles, sharedStrings in the template)
+- 不得使用 openpyxl 或任何 Python 库写入最终 xlsx 文件
+- 不得硬编码任何计算值——每个派生数字都使用 `<f>` 公式
+- 不得未运行 `formula_check.py` 就交付
+- 不得将单元格的 `s` 属性设置为 >= `cellXfs count` 的值
+- 不得修改 `styles.xml` 中已有的 `<xf>` 条目——只能追加新条目
+- 不得在未更新全部四个同步点的情况下添加新工作表（workbook.xml、workbook.xml.rels、[Content_Types].xml、实际 .xml 文件）
+- 不得为新工作表分配与 rId1、rId2、rId3 重叠的 rId（模板中这三个 ID 已被 sheet1、styles、sharedStrings 保留）

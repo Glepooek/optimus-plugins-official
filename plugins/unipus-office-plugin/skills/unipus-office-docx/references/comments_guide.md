@@ -1,16 +1,16 @@
-# Comments System Guide (4-File Architecture)
+# 批注系统指南（四文件架构）
 
-## Overview
+## 概述
 
-Word comments require coordination across **four XML files** plus references in `document.xml`, `[Content_Types].xml`, and `document.xml.rels`.
+Word 批注需要协调**四个 XML 文件**，以及 `document.xml`、`[Content_Types].xml` 和 `document.xml.rels` 中的引用。
 
 ---
 
-## The Four Comment Files
+## 四个批注文件
 
-### 1. `word/comments.xml` — Main Comment Content
+### 1. `word/comments.xml` — 批注主内容
 
-Contains the actual comment text:
+包含批注的实际文字：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -24,18 +24,18 @@ Contains the actual comment text:
         <w:annotationRef />
       </w:r>
       <w:r>
-        <w:t>This needs clarification.</w:t>
+        <w:t>此处需要说明。</w:t>
       </w:r>
     </w:p>
   </w:comment>
 </w:comments>
 ```
 
-Key attributes: `w:id` (unique integer), `w:author`, `w:date` (ISO 8601), `w:initials`.
+关键属性：`w:id`（唯一整数）、`w:author`、`w:date`（ISO 8601）、`w:initials`。
 
-### 2. `word/commentsExtended.xml` — W15 Extensions
+### 2. `word/commentsExtended.xml` — W15 扩展
 
-Links comments to paragraphs and tracks resolved status:
+将批注链接到段落并跟踪已解决状态：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -44,12 +44,12 @@ Links comments to paragraphs and tracks resolved status:
 </w15:commentsEx>
 ```
 
-- `w15:paraId` — matches the `w14:paraId` of the comment's paragraph in `comments.xml`
-- `w15:done` — `"0"` = open, `"1"` = resolved
+- `w15:paraId` — 与 `comments.xml` 中批注段落的 `w14:paraId` 匹配
+- `w15:done` — `"0"` = 未解决，`"1"` = 已解决
 
-### 3. `word/commentsIds.xml` — Persistent ID Mapping
+### 3. `word/commentsIds.xml` — 持久 ID 映射
 
-Provides durable IDs that survive copy/paste across documents:
+提供在文档间复制粘贴后仍有效的持久 ID：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -58,12 +58,12 @@ Provides durable IDs that survive copy/paste across documents:
 </w16cid:commentsIds>
 ```
 
-- `w16cid:paraId` — same as `w15:paraId`
-- `w16cid:durableId` — globally unique identifier (8-digit hex)
+- `w16cid:paraId` — 与 `w15:paraId` 相同
+- `w16cid:durableId` — 全局唯一标识符（8 位十六进制）
 
-### 4. `word/commentsExtensible.xml` — W16 Extensions
+### 4. `word/commentsExtensible.xml` — W16 扩展
 
-Modern comment extensions (used in newer Word versions):
+现代批注扩展（新版 Word 使用）：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -74,14 +74,14 @@ Modern comment extensions (used in newer Word versions):
 
 ---
 
-## Document.xml References
+## document.xml 中的引用
 
-Comments are anchored in document content using three elements:
+批注通过三个元素锚定到文档内容：
 
 ```xml
 <w:p>
   <w:commentRangeStart w:id="1" />
-  <w:r><w:t>This text has a comment.</w:t></w:r>
+  <w:r><w:t>此文本有批注。</w:t></w:r>
   <w:commentRangeEnd w:id="1" />
   <w:r>
     <w:rPr><w:rStyle w:val="CommentReference" /></w:rPr>
@@ -90,17 +90,17 @@ Comments are anchored in document content using three elements:
 </w:p>
 ```
 
-- `w:commentRangeStart` — marks where the commented text begins
-- `w:commentRangeEnd` — marks where the commented text ends
-- `w:commentReference` — the visible comment marker (superscript number), placed in a run after the range end
+- `w:commentRangeStart` — 标记被批注文本的起始位置
+- `w:commentRangeEnd` — 标记被批注文本的结束位置
+- `w:commentReference` — 可见的批注标记（上标数字），放在范围结束后的 run 中
 
-The `w:id` on all three must match the `w:id` in `comments.xml`.
+三者的 `w:id` 必须与 `comments.xml` 中的 `w:id` 匹配。
 
 ---
 
-## Content Types Registration
+## 内容类型注册
 
-Add to `[Content_Types].xml`:
+添加到 `[Content_Types].xml`：
 
 ```xml
 <Override PartName="/word/comments.xml"
@@ -115,9 +115,9 @@ Add to `[Content_Types].xml`:
 
 ---
 
-## Relationship Registration
+## 关系注册
 
-Add to `word/_rels/document.xml.rels`:
+添加到 `word/_rels/document.xml.rels`：
 
 ```xml
 <Relationship Id="rId20" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments"
@@ -132,60 +132,60 @@ Add to `word/_rels/document.xml.rels`:
 
 ---
 
-## Step-by-Step: Adding a New Comment
+## 分步操作：添加新批注
 
-1. **Choose a unique comment ID** (scan existing `w:id` values, use max + 1)
-2. **Generate a paraId** (8-character hex, e.g., `"1A2B3C4D"`) and durableId (8-digit hex)
-3. **Add to `comments.xml`**: Create `w:comment` element with content
-4. **Add to `commentsExtended.xml`**: Create `w15:commentEx` with `paraId`, `done="0"`
-5. **Add to `commentsIds.xml`**: Create `w16cid:commentId` with `paraId` and `durableId`
-6. **Add to `commentsExtensible.xml`**: Create `w16cex:commentExtensible` with `durableId` and `dateUtc`
-7. **Add to `document.xml`**: Insert `w:commentRangeStart`, `w:commentRangeEnd`, and `w:commentReference` around target text
-8. **Verify `[Content_Types].xml`** and `document.xml.rels` have entries for all 4 files
+1. **选择唯一批注 ID**（扫描现有 `w:id` 值，取最大值 + 1）
+2. **生成 paraId**（8 位十六进制，如 `"1A2B3C4D"`）和 durableId（8 位十六进制）
+3. **添加到 `comments.xml`**：创建包含内容的 `w:comment` 元素
+4. **添加到 `commentsExtended.xml`**：创建带 `paraId`、`done="0"` 的 `w15:commentEx`
+5. **添加到 `commentsIds.xml`**：创建带 `paraId` 和 `durableId` 的 `w16cid:commentId`
+6. **添加到 `commentsExtensible.xml`**：创建带 `durableId` 和 `dateUtc` 的 `w16cex:commentExtensible`
+7. **添加到 `document.xml`**：在目标文本周围插入 `w:commentRangeStart`、`w:commentRangeEnd` 和 `w:commentReference`
+8. **验证 `[Content_Types].xml`** 和 `document.xml.rels` 中包含全部 4 个文件的条目
 
 ---
 
-## Step-by-Step: Adding a Reply
+## 分步操作：添加回复
 
-Replies are comments whose paragraph's `w14:paraId` links to a parent comment:
+回复是段落的 `w14:paraId` 链接到父批注的批注：
 
-1. Create a new `w:comment` in `comments.xml` with a new `w:id`
-2. In `commentsExtended.xml`, add `w15:commentEx` with:
-   - `w15:paraId` = new paragraph ID
-   - `w15:paraIdParent` = the `paraId` of the comment being replied to
+1. 在 `comments.xml` 中创建新 `w:comment`，使用新的 `w:id`
+2. 在 `commentsExtended.xml` 中添加 `w15:commentEx`，包含：
+   - `w15:paraId` = 新段落 ID
+   - `w15:paraIdParent` = 被回复批注的 `paraId`
    - `w15:done="0"`
-3. Add entries in `commentsIds.xml` and `commentsExtensible.xml`
-4. In `document.xml`, the reply does NOT need its own range markers — it shares the parent's range
+3. 在 `commentsIds.xml` 和 `commentsExtensible.xml` 中添加条目
+4. 在 `document.xml` 中，回复**不需要**自己的范围标记——它共享父批注的范围
 
 ```xml
-<!-- In commentsExtended.xml -->
+<!-- 在 commentsExtended.xml 中 -->
 <w15:commentEx w15:paraId="5E6F7A8B" w15:paraIdParent="1A2B3C4D" w15:done="0" />
 ```
 
 ---
 
-## Step-by-Step: Resolving a Comment
+## 分步操作：解决批注
 
-Set `w15:done="1"` on the comment's `w15:commentEx` entry:
+在批注的 `w15:commentEx` 条目中设置 `w15:done="1"`：
 
 ```xml
-<!-- Before -->
+<!-- 修改前 -->
 <w15:commentEx w15:paraId="1A2B3C4D" w15:done="0" />
 
-<!-- After -->
+<!-- 修改后 -->
 <w15:commentEx w15:paraId="1A2B3C4D" w15:done="1" />
 ```
 
-This marks the comment (and all its replies) as resolved. The comment remains visible but appears grayed out in Word.
+这会将该批注（及其所有回复）标记为已解决。批注仍然可见，但在 Word 中显示为灰色。
 
 ---
 
-## Minimum Viable Comment
+## 最小可用批注
 
-At minimum, a working comment requires:
-1. `comments.xml` with the `w:comment` element
-2. `document.xml` with range markers and reference
-3. Relationship in `document.xml.rels`
-4. Content type in `[Content_Types].xml`
+最低限度，一个有效批注需要：
+1. `comments.xml` 中的 `w:comment` 元素
+2. `document.xml` 中的范围标记和引用
+3. `document.xml.rels` 中的关系
+4. `[Content_Types].xml` 中的内容类型
 
-The extended files (`commentsExtended`, `commentsIds`, `commentsExtensible`) are optional but recommended for full compatibility with modern Word.
+扩展文件（`commentsExtended`、`commentsIds`、`commentsExtensible`）为可选项，但推荐添加以确保与现代 Word 完全兼容。
