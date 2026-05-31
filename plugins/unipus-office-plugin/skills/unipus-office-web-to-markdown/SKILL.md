@@ -142,9 +142,9 @@ https://kiro.dev/docs/api/reference/  reference.md
 
 ### 抓取策略
 
-**WebFetch 会对长页面做摘要压缩，导致内容不完整。** 必须按以下优先级执行：
+三级降级，按顺序执行，前一级内容有效则不进入下一级：
 
-**首选：curl + Python 提取（完整原文）**
+**一级：curl（静态 / SSR 页面，默认路径）**
 
 ```bash
 curl -s "<URL>" -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
@@ -168,9 +168,45 @@ print(text)
 # 继续直到内容结束
 ```
 
-**备用：WebFetch**（仅当 Bash 工具不可用时使用）
+**curl 完成后执行动态页面判定**（满足任一条件 → 内容无效，进入二级）：
 
-在 prompt 中明确要求：「返回页面完整原始文本，不要省略、不要总结、不要截断任何部分」。长页面仍可能被截断，需多次调用补全。
+| # | 规则 | 说明 |
+|---|------|------|
+| 1 | 正文字符数 < 200 | 基本空壳 |
+| 2 | 含 SPA 框架标记且正文 < 500 字符 | `id="root"` / `id="app"` / `id="__nuxt"` / `id="__layout"` / `data-reactroot` |
+| 3 | 含 JS 数据注入标记（无论正文长短） | `__NEXT_DATA__` / `__NUXT__` / `__REDUX_STATE__` / `window.__INITIAL_STATE__` |
+| 4 | 含骨架屏 / 加载占位符特征词 | `class="skeleton"` / `loading-placeholder` / `shimmer` / `aria-busy="true"` |
+| 5 | HTTP 非 200 且非 4xx 认证错误 | 网络错误，直接失败，不触发降级 |
+
+**二级：Playwright MCP（curl 内容无效时）**
+
+```
+1. browser_navigate(url=<URL>)
+
+2. 等待策略（三层兜底）：
+   a. browser_wait_for_load_state(state="networkidle", timeout=8000)
+      超时 → 进入 b
+   b. browser_wait_for_selector(
+        selector="main, article, [role='main'], #main-content, .content",
+        timeout=5000
+      )
+      超时 → 进入 c
+   c. browser_wait(milliseconds=2000)
+
+3. browser_snapshot()
+   → 返回 accessibility tree（渲染后语义文本，无 JS/CSS 噪音）
+
+4. 内容有效性二次校验（同判定规则 1-4）
+   无效 → 进入三级，结果标注「Playwright 抓取内容仍为空，降级 WebFetch」
+   有效 → 进入清理 / 转换 / 翻译流程（与静态路径相同）
+   结果标注「动态抓取」
+
+5. browser_close()
+```
+
+**三级：WebFetch（Playwright MCP 不可用或失败时）**
+
+在 prompt 中明确要求：「返回页面完整原始文本，不要省略、不要总结、不要截断任何部分」。长页面仍可能被截断，需多次调用补全。结果标注「WebFetch，内容可能不完整」。
 
 **内容完整性验证：** 抓取后检查是否包含文章结语/底部内容，若缺失则继续分段抓取。
 
