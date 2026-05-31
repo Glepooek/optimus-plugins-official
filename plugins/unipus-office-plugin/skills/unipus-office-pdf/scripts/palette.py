@@ -9,13 +9,53 @@ Usage:
 
 Outputs tokens.json consumed by all downstream scripts.
 Cover fonts are loaded via Google Fonts @import in the cover HTML (no local caching).
-Body fonts always use ReportLab system fonts (Times-Bold / Helvetica).
+Body pages use ReportLab; if a CJK font (NotoSansSC, YaHei, SimHei, etc.) is detected
+on the system it is automatically injected into all body font tokens so that
+Chinese/Japanese/Korean text renders correctly.
 Exit codes: 0 success, 1 bad args, 3 write error
 """
 
 import argparse
 import json
 import sys
+import os
+import glob
+
+# ── CJK font detection ────────────────────────────────────────────────────────
+def detect_cjk_font():
+    """Return (regular_path, bold_path, name) for the best available CJK font, or None."""
+    candidates = [
+        # Noto Sans SC (variable font — use for both regular and bold)
+        ("NotoSansSC-VF.ttf",  "NotoSansSC-VF.ttf",  "NotoSansSC"),
+        # Microsoft YaHei (most complete CJK coverage on Windows)
+        ("msyh.ttc",           "msyhbd.ttc",          "MicrosoftYaHei"),
+        # SimHei (bold-only but widely available)
+        ("simhei.ttf",         "simhei.ttf",          "SimHei"),
+        # SimKai / SimSun fallback
+        ("simkai.ttf",         "simhei.ttf",          "SimKai"),
+    ]
+    search_dirs = [
+        # Windows system and user font directories
+        "C:/Windows/Fonts/",
+        os.path.expanduser("~/AppData/Local/Microsoft/Windows/Fonts/"),
+        os.path.expanduser("~/AppData/Roaming/Microsoft/Windows/Fonts/"),
+        # Linux
+        "/usr/share/fonts/",
+        "/usr/local/share/fonts/",
+        os.path.expanduser("~/.fonts/"),
+        os.path.expanduser("~/.local/share/fonts/"),
+        # macOS
+        "/System/Library/Fonts/",
+        "/Library/Fonts/",
+        os.path.expanduser("~/Library/Fonts/"),
+    ]
+    for reg_name, bold_name, font_id in candidates:
+        for d in search_dirs:
+            reg_path  = os.path.join(d, reg_name)
+            bold_path = os.path.join(d, bold_name)
+            if os.path.exists(reg_path):
+                return reg_path, bold_path if os.path.exists(bold_path) else reg_path, font_id
+    return None
 
 # ── Palette library ────────────────────────────────────────────────────────────
 # Each entry: cover colors + cover_pattern + mood
@@ -79,8 +119,8 @@ PALETTES = {
         "accent_lt":  "#E6EBF4",
         "text_light": "#FFFFFF",
         "page_bg":    "#F5F4F0",
-        "dark":       "#1A1A28",
-        "body_text":  "#1E1E2A",
+        "dark":       "#2C2C3A",
+        "body_text":  "#383845",
         "muted":      "#686877",
         "cover_pattern": "typographic",
         "mood": "scholarly",
@@ -435,6 +475,7 @@ def build_tokens(
         "gfonts_import":    font_pair["gfonts_import"],
 
         # Typography — ReportLab system font names for body pages
+        # Auto-detect CJK font so Chinese/Japanese/Korean text renders correctly
         "font_display_rl":  font_pair["display_rl"],
         "font_body_rl":     font_pair["body_rl"],
         "font_body_b_rl":   font_pair["body_b_rl"],
@@ -462,6 +503,19 @@ def build_tokens(
         "para_gap":      8,
         "line_gap":      17,
     }
+
+    # Override with CJK fonts if available — replaces all body font references
+    cjk = detect_cjk_font()
+    if cjk:
+        reg_path, bold_path, font_id = cjk
+        bold_id = font_id + "-Bold"
+        tokens["font_paths"]      = {font_id: reg_path, bold_id: bold_path}
+        tokens["font_display_rl"] = font_id
+        tokens["font_body_rl"]    = font_id
+        tokens["font_body_b_rl"]  = bold_id
+        tokens["font_heading"]    = font_id
+        tokens["font_body_b"]     = bold_id
+
     return tokens
 
 

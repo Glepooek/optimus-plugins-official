@@ -44,31 +44,31 @@ function loadPlaywright() {
   console.error(JSON.stringify({
     status: "error",
     error: "playwright not found",
-    hint: "Run: npm install -g playwright && npx playwright install chromium"
+    hint: "Run: npm install -g playwright && npx playwright install msedge"
   }));
   process.exit(2);
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 (async () => {
-  const { chromium } = loadPlaywright();
+  const { chromium: msedge } = loadPlaywright();
 
   let browser;
   try {
-    browser = await chromium.launch();
+    browser = await msedge.launch({ channel: "msedge" });
   } catch (e) {
-    // Chromium binary missing — try installing
+    // Edge binary missing — try installing
     const { spawnSync } = require("child_process");
-    const r = spawnSync("npx", ["playwright", "install", "chromium"], { stdio: "inherit", shell: true });
+    const r = spawnSync("npx", ["playwright", "install", "msedge"], { stdio: "inherit", shell: true });
     if (r.status !== 0) {
       console.error(JSON.stringify({
         status: "error",
-        error: "Chromium not installed and auto-install failed",
-        hint: "Run: npx playwright install chromium"
+        error: "Microsoft Edge not installed and auto-install failed",
+        hint: "Run: npx playwright install msedge"
       }));
       process.exit(2);
     }
-    browser = await chromium.launch();
+    browser = await msedge.launch({ channel: "msedge" });
   }
 
   try {

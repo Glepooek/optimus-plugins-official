@@ -62,6 +62,100 @@ from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 
+# ── Module-level CJK font cache ───────────────────────────────────────────────
+# Resolved once at first use; avoids per-line font lookup inside draw().
+_CJK_FONT_CACHE: str | None = "UNRESOLVED"
+
+def _get_cjk_font() -> str | None:
+    """Return the name of the first registered CJK font, or None."""
+    global _CJK_FONT_CACHE
+    if _CJK_FONT_CACHE != "UNRESOLVED":
+        return _CJK_FONT_CACHE
+    for fname in ("NotoSansSC", "MicrosoftYaHei", "SimHei", "SimKai"):
+        try:
+            pdfmetrics.getFont(fname)
+            _CJK_FONT_CACHE = fname
+            return fname
+        except Exception:
+            pass
+    _CJK_FONT_CACHE = None
+    return None
+
+
+def _has_cjk(text: str) -> bool:
+    """Return True if text contains any CJK unified ideograph characters."""
+    return any('一' <= ch <= '鿿' or
+               '　' <= ch <= '〿' or
+               '＀' <= ch <= '￯'
+               for ch in text)
+
+
+class _CodeBlock(Flowable):
+    """
+    Page-safe code block: accent left-border + tinted background.
+    Pre-chunked by _add_code so each instance fits within one page frame.
+    CJK lines are rendered with the registered CJK font (resolved once via
+    _get_cjk_font() at module level, not per line).
+    """
+    def __init__(self, lines, style, usable_w, acc, acc_lt, mu,
+                 pad_l=14, pad_r=10, pad_tb=8, line_h=None):
+        Flowable.__init__(self)
+        self.lines    = lines
+        self.style    = style
+        self.usable_w = usable_w
+        self._acc_str  = acc
+        self._aclt_str = acc_lt
+        self._mu_str   = mu
+        self.acc      = HexColor(acc)
+        self.acc_lt   = HexColor(acc_lt)
+        self.mu       = HexColor(mu)
+        self.pad_l    = pad_l
+        self.pad_r    = pad_r
+        self.pad_tb   = pad_tb
+        lh = getattr(style, 'leading', None)
+        self.line_h   = line_h or (lh if lh else style.fontSize * 1.3)
+        self.width    = usable_w
+        self.height   = self.pad_tb * 2 + len(self.lines) * self.line_h
+
+    def wrap(self, aw, ah):
+        return self.usable_w, self.height
+
+    def split(self, aw, ah):
+        # Pre-chunked blocks should never need splitting.
+        # If ReportLab calls split anyway (e.g., after a KeepTogether),
+        # return a PageBreak + self so the block moves to the next page intact.
+        if ah >= self.height:
+            return [self]
+        return [PageBreak(), self]
+
+    def draw(self):
+        c = self.canv
+        w, h = self.usable_w, self.height
+        # Background
+        c.setFillColor(self.acc_lt)
+        c.rect(0, 0, w, h, fill=1, stroke=0)
+        # Outer box
+        c.setStrokeColor(self.mu)
+        c.setLineWidth(0.5)
+        c.rect(0, 0, w, h, fill=0, stroke=1)
+        # Left accent bar
+        c.setFillColor(self.acc)
+        c.rect(0, 0, 3, h, fill=1, stroke=0)
+
+        c.setFillColor(HexColor("#2C2C3A"))
+        font_name = self.style.fontName
+        font_size = self.style.fontSize
+        cjk_font  = _get_cjk_font()   # module-level cache — O(1) after first call
+
+        y = h - self.pad_tb - font_size
+        for raw_line in self.lines:
+            if cjk_font and _has_cjk(raw_line):
+                c.setFont(cjk_font, font_size + 0.5)
+            else:
+                c.setFont(font_name, font_size)
+            c.drawString(self.pad_l, y, raw_line)
+            y -= self.line_h
+
 
 # ── Font registration ──────────────────────────────────────────────────────────
 def register_fonts(tokens: dict):
@@ -124,7 +218,9 @@ class BibliographyItem(Flowable):
     def draw(self):
         c = self.canv
         c.setFillColor(self._dark)
-        c.setFont("Helvetica-Bold", 8.5)
+        # Use CJK font if available so reference IDs/labels render correctly
+        cjk = _get_cjk_font()
+        c.setFont(cjk if cjk else "Helvetica-Bold", 8.5)
         c.drawString(0, self._h - 12, f"[{self._id}]")
         self._para.drawOn(c, self.LABEL_W, 2)
 
@@ -732,22 +828,69 @@ def _add_code(story: list, item: dict, ctx: dict):
     mu     = ctx["mu"]
     uw     = ctx["usable_w"]
     lang   = item.get("language", "")
+    text   = item.get("text", "")
+    style  = ctx["styles"]["code"]
 
-    pre = Preformatted(item.get("text", ""), ctx["styles"]["code"])
-    tbl = Table([[pre]], colWidths=[uw])
-    tbl.setStyle(TableStyle([
-        ("BACKGROUND",    (0, 0), (-1, -1), HexColor(acc_lt)),
-        ("LINEBEFORE",    (0, 0), ( 0, -1), 3,   HexColor(acc)),
-        ("BOX",           (0, 0), (-1, -1), 0.5, HexColor(mu)),
-        ("LEFTPADDING",   (0, 0), (-1, -1), 14),
-        ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
-        ("TOPPADDING",    (0, 0), (-1, -1), 8),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-    ]))
+    lh     = getattr(style, 'leading', None) or style.fontSize * 1.3
+    pad_tb = 8
+    pad_l  = 14
+    pad_r  = 10
+    font_name = style.fontName
+    font_size = style.fontSize
+    max_draw_w = uw - pad_l - pad_r
+    cont_indent = "    "  # continuation line indent (4 spaces)
+
+    def _wrap_line(line):
+        """Break a single source line into multiple display lines if too wide."""
+        result = []
+        current = line
+        is_continuation = False
+        while True:
+            prefix = cont_indent if is_continuation else ""
+            candidate = prefix + current
+            try:
+                w = pdfmetrics.stringWidth(candidate, font_name, font_size)
+            except Exception:
+                w = len(candidate) * font_size * 0.6  # rough fallback
+            if w <= max_draw_w or len(current) == 0:
+                result.append(candidate)
+                break
+            # Binary-search the cut point
+            lo, hi = 1, len(current)
+            while lo < hi:
+                mid = (lo + hi + 1) // 2
+                try:
+                    tw = pdfmetrics.stringWidth(prefix + current[:mid], font_name, font_size)
+                except Exception:
+                    tw = len(prefix + current[:mid]) * font_size * 0.6
+                if tw <= max_draw_w:
+                    lo = mid
+                else:
+                    hi = mid - 1
+            result.append(prefix + current[:lo])
+            current = current[lo:]
+            is_continuation = True
+        return result
+
+    # Wrap each source line, building the final display line list
+    all_lines = []
+    for src_line in text.split("\n"):
+        all_lines.extend(_wrap_line(src_line))
+
+    # Body frame height (A4 minus margins and header/footer bands)
+    frame_h = 841.89 - 79 - 71 - 60  # ≈ 632pt
+    max_lines_per_chunk = max(1, int((frame_h - 2 * pad_tb) / lh))
+
     story.append(Spacer(1, 6))
     if lang:
         story.append(Paragraph(lang.upper(), ctx["styles"]["code_lang"]))
-    story.append(tbl)
+
+    # Split into page-safe chunks
+    for i in range(0, len(all_lines), max_lines_per_chunk):
+        chunk = all_lines[i:i + max_lines_per_chunk]
+        story.append(_CodeBlock(chunk, style, uw, acc, acc_lt, mu,
+                                pad_tb=pad_tb, line_h=lh))
+
     story.append(Spacer(1, 6))
 
 
