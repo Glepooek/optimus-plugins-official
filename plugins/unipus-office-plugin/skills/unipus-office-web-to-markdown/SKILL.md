@@ -181,6 +181,7 @@ print(text)
 **二级：Playwright MCP（curl 内容无效时）**
 
 ```
+0. 若 Playwright MCP 工具不可用（工具调用失败或 MCP 未挂载），直接跳至三级
 1. browser_navigate(url=<URL>)
 
 2. 等待策略（三层兜底）：
@@ -197,7 +198,7 @@ print(text)
    → 返回 accessibility tree（渲染后语义文本，无 JS/CSS 噪音）
 
 4. 内容有效性二次校验（同判定规则 1-4）
-   无效 → 进入三级，结果标注「Playwright 抓取内容仍为空，降级 WebFetch」
+   无效 → 进入三级（结果最终标注「WebFetch，内容可能不完整」）
    有效 → 进入清理 / 转换 / 翻译流程（与静态路径相同）
    结果标注「动态抓取」
 
