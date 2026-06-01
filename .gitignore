@@ -424,4 +424,5 @@ FodyWeavers.xsd
 .claude/plans/
 .playwright-mcp/
 .remember/
+.codegraph/
 **/.tip-state.json
