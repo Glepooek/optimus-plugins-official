@@ -4,34 +4,17 @@
 
 ## 包含的 MCP 服务器
 
-### 1. Playwright MCP
-- **类型**: stdio
-- **功能**: 基于 Microsoft Playwright 的浏览器自动化，让 Claude 可直接操控浏览器
-- **浏览器**: Microsoft Edge（`msedge`）
-- **前置要求**: 已安装 Node.js（`npx` 可用）；首次运行自动下载 `@playwright/mcp`
-- **主要能力**:
-  - 🌐 **页面导航**: `browser_navigate`、`browser_navigate_back`
-  - 📸 **内容抓取**: `browser_snapshot`（accessibility tree）、`browser_take_screenshot`
-  - 🖱️ **交互操作**: `browser_click`、`browser_type`、`browser_fill_form`、`browser_select_option`
-  - ⌨️ **键盘/等待**: `browser_press_key`、`browser_wait_for`
-  - 🗂️ **标签页管理**: `browser_tabs`（list/new/close/select）
-  - 🔍 **网络监控**: `browser_network_requests`、`browser_network_request`
-  - 📊 **JavaScript**: `browser_evaluate`、`browser_run_code_unsafe`
-  - 🗃️ **文件操作**: `browser_file_upload`、`browser_drop`
-  - 📋 **控制台日志**: `browser_console_messages`
-- **典型用途**: 抓取 SPA 动态页面（Vue/React/Next.js 渲染后内容）、自动化表单填写、端到端测试
-
-### 2. GitHub MCP Server
+### 1. GitHub MCP Server
 - **类型**: HTTP
 - **功能**: 提供 GitHub Copilot MCP API 访问
 - **环境变量**: `GITHUB_TOKEN`
 
-### 3. MasterGo Magic MCP
+### 2. MasterGo Magic MCP
 - **类型**: stdio
 - **功能**: MasterGo 设计协作工具集成
 - **环境变量**: `MASTERGO_TOKEN`
 
-### 4. 飞书项目 MCP
+### 3. 飞书项目 MCP
 - **类型**: stdio
 - **功能**: 飞书项目（Feishu Project）全功能集成
 - **环境变量**: `MCP_USER_TOKEN`
@@ -50,11 +33,7 @@
 
 ### 前置要求
 
-**Playwright MCP** 无需配置 Token，但需要：
-- 已安装 Node.js（确保 `npx` 命令可用）
-- 已安装 Microsoft Edge 浏览器
-
-其余服务器在全局配置文件 `~/.claude/settings.json` 中设置环境变量：
+在全局配置文件 `~/.claude/settings.json` 中设置环境变量：
 
 ```json
 {
@@ -82,7 +61,7 @@
    如果需要手动管理，在项目 `.claude/settings.json` 中添加：
    ```json
    {
-     "enabledMcpjsonServers": ["playwright", "github", "mastergo-magic-mcp", "FeishuProjectMcp"]
+     "enabledMcpjsonServers": ["github", "mastergo-magic-mcp", "FeishuProjectMcp"]
    }
    ```
 
@@ -104,6 +83,49 @@
 3. 复制 `user_token` 的值（注意：可能需要定期更新）
 
 > **提示**: 飞书项目 Token 使用 user_token，建议定期检查是否过期。
+
+
+## 浏览器自动化推荐：Playwright CLI
+
+本插件不再包含 Playwright MCP 配置。对于浏览器自动化需求（如抓取 SPA 动态页面、自动化测试），推荐使用 **Playwright CLI**。
+
+### 为什么推荐 Playwright CLI
+
+| 对比项 | Playwright CLI | Playwright MCP |
+|--------|----------------|----------------|
+| **安装方式** | `npm install -g @playwright/cli@latest` 无需其他配置 | 需要配置 MCP 服务器，首次运行自动下载 |
+| **使用门槛** | 低，直接在终端执行命令 | 中，需要理解 MCP 协议 |
+| **交互性** | 高，支持实时查看浏览器状态 | 低，通过 Claude 间接调用 |
+| **调试体验** | 可视化浏览器窗口，方便调试 | 无头模式，调试困难 |
+| **功能灵活性** | 支持截图、PDF、点击、输入、滚动等完整操作 | 仅支持预设的工具调用 |
+| **会话管理** | 支持持久化会话（cookies、localStorage） | 每次调用独立 |
+| **Token消耗** | 较低 | 较高 |
+
+### 快速上手
+
+```bash
+# 打开网页（无头模式）
+npx @playwright/cli open "https://example.com"
+
+# 提取页面文本
+npx @playwright/cli eval "document.body.innerText"
+
+# 截图保存
+npx @playwright/cli screenshot --filename=page.png
+
+# 保存为 PDF
+npx @playwright/cli pdf --filename=page.pdf
+
+# 关闭浏览器
+npx @playwright/cli close
+```
+
+### 典型用例
+
+- **抓取 SPA 动态页面**：Vue/React/Next.js 渲染后的完整内容
+- **自动化表单填写**：点击、输入、选择、提交
+- **端到端测试**：模拟用户操作流程
+- **页面截图/PDF**：生成报告或存档
 
 ## 许可证
 

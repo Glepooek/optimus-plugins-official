@@ -2,7 +2,7 @@
 name: unipus:office:web-to-markdown
 license: MIT
 metadata:
-  version: "1.2.0"
+  version: "1.4.0"
   category: document-processing
   author: Glepooek
 description: >
@@ -25,6 +25,18 @@ triggers:
   - web to markdown
   - scrape
   - crawl
+dependencies:
+  - name: curl
+    description: 用于抓取静态网页内容
+    required: true
+    check_command: curl --version
+    install_url: https://curl.se/download.html
+  - name: Playwright CLI
+    description: 用于抓取动态网页内容（SPA、React、Vue 等）
+    required: false
+    check_command: npx @playwright/cli --version
+    install_command: npm install -g @playwright/cli@latest
+    install_url: https://github.com/microsoft/playwright-cli
 ---
 
 # unipus-office-web-to-markdown
@@ -178,34 +190,101 @@ print(text)
 | 4 | 含骨架屏 / 加载占位符特征词 | `class="skeleton"` / `loading-placeholder` / `shimmer` / `aria-busy="true"` |
 | 5 | HTTP 非 200 且非 4xx 认证错误 | 网络错误（例外：不进入二级，直接标记失败） |
 
-**二级：Playwright MCP（curl 内容无效时）**
+**二级：Playwright CLI（curl 内容无效时）**
+
+使用 Playwright CLI 抓取动态页面内容。Playwright CLI 是微软官方提供的命令行工具，无需预先安装 Playwright 库，通过 npx 即可直接使用。
+
+**核心命令：**
+
+```bash
+# 1. 打开网页（无头模式，等待页面加载完成）
+npx @playwright/cli open "<URL>"
+
+# 2. 获取页面快照（等待动态内容加载）
+npx @playwright/cli snapshot
+
+# 3. 提取页面纯文本内容
+npx @playwright/cli eval "document.body.innerText"
+
+# 4. 关闭浏览器会话
+npx @playwright/cli close
+```
+
+**执行流程：**
 
 ```
-0. 若 Playwright MCP 工具不可用（工具调用失败或 MCP 未挂载），直接跳至三级
-1. browser_navigate(url=<URL>)
+1. 打开网页：
+   npx @playwright/cli open "<URL>"
+   - 自动启动无头浏览器（Chromium）
+   - 导航到目标 URL
+   - 等待页面加载完成
+   - 返回页面标题和 URL
 
-2. 等待策略（三层兜底）：
-   a. browser_wait_for_load_state(state="networkidle", timeout=8000)
-      超时 → 进入 b
-   b. browser_wait_for_selector(
-        selector="main, article, [role='main'], #main-content, .content",
-        timeout=5000
-      )
-      超时 → 进入 c
-   c. browser_wait(milliseconds=2000)
+2. 获取页面快照（可选，用于检查页面状态）：
+   npx @playwright/cli snapshot
+   - 返回页面结构快照（YAML 格式）
+   - 包含页面元素层级和引用 ID
+   - 可用于定位交互元素
 
-3. browser_snapshot()
-   → 返回 accessibility tree（渲染后语义文本，无 JS/CSS 噪音）
+3. 提取页面文本：
+   npx @playwright/cli eval "document.body.innerText"
+   - 执行 JavaScript 表达式
+   - 返回页面渲染后的纯文本内容
+   - 自动去除 JS/CSS 噪音，保留语义结构
 
-4. 内容有效性二次校验（同判定规则 1-4）
+4. 关闭浏览器：
+   npx @playwright/cli close
+   - 释放浏览器资源
+
+5. 内容有效性校验（同判定规则 1-4）
    无效 → 进入三级（结果最终标注「WebFetch，内容可能不完整」）
    有效 → 进入清理 / 转换 / 翻译流程（与静态路径相同）
    结果标注「动态抓取」
-
-5. browser_close()
 ```
 
-**三级：WebFetch（Playwright MCP 不可用，或抓取内容二次校验仍无效时）**
+**高级用法：**
+
+```bash
+# 有头模式（可见浏览器窗口，用于调试）
+npx @playwright/cli open "<URL>" --headed
+
+# 等待特定元素出现后提取内容
+npx @playwright/cli open "<URL>"
+npx @playwright/cli click "button.load-more"  # 点击加载更多
+npx @playwright/cli eval "document.body.innerText"
+
+# 截图保存
+npx @playwright/cli screenshot --filename=page.png
+
+# 保存为 PDF
+npx @playwright/cli pdf --filename=page.pdf
+
+# 使用持久化会话（保留 cookies 和 storage）
+npx @playwright/cli open "<URL>" --persistent
+```
+
+**会话管理：**
+
+```bash
+# 列出所有浏览器会话
+npx @playwright/cli list
+
+# 关闭所有浏览器
+npx @playwright/cli close-all
+
+# 强制终止所有浏览器进程
+npx @playwright/cli kill-all
+```
+
+**优势：**
+
+- 无需预安装：通过 `npx @playwright/cli` 直接使用
+- 自动管理浏览器：首次运行时自动下载 Chromium
+- 支持所有动态页面：SPA、React、Vue、Angular 等
+- 保留会话状态：cookies、localStorage 在会话中持久化
+- 可交互操作：支持点击、输入、滚动等操作
+
+**三级：WebFetch（Playwright CLI 不可用，或抓取内容二次校验仍无效时）**
 
 在 prompt 中明确要求：「返回页面完整原始文本，不要省略、不要总结、不要截断任何部分」。长页面仍可能被截断，需多次调用补全。结果标注「WebFetch，内容可能不完整」。
 
@@ -354,10 +433,10 @@ print(text)
 |------|---------|
 | URL 无法访问（4xx/5xx） | 记录失败原因，继续下一条 |
 | 网页内容为空 | 警告并跳过，不写入空文件 |
-| curl 不可用 | 跳过 curl，直接尝试 Playwright MCP；若 MCP 也不可用则降级 WebFetch |
+| curl 不可用 | 跳过 curl，直接尝试 Playwright CLI；若 Playwright CLI 也不可用则降级 WebFetch |
 | 内容疑似截断（缺少结语/底部） | 继续分段抓取直至完整 |
 | 目标目录无写权限 | 报告错误，跳过该条 |
 | `.txt` 文件不存在 | 立即中止，提示用户确认路径 |
 | URL 重复（同一批次） | 跳过后续重复项，结果标注"已跳过（重复）" |
 | 文件已存在 | 不覆盖，执行存量核对流程，结果标注"已存在，核对完整/已补全 N 处" |
-| Playwright MCP 不可用或抓取内容仍为空 | 降级使用 WebFetch，结果标注「WebFetch，内容可能不完整」 |
+| Playwright CLI 不可用或抓取内容仍为空 | 降级使用 WebFetch，结果标注「WebFetch，内容可能不完整」 |
