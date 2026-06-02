@@ -107,7 +107,6 @@ feat(wpf-skill): add event leak and async patterns
 - 新增检查点 10: 数据绑定性能优化（OneTime/OneWay）
 - 新增检查点 11: UI线程与Dispatcher优化
 
-Co-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
