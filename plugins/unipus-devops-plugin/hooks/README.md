@@ -22,9 +22,9 @@
 - **智能轮播**: 确保所有技巧都展示完毕后才开始下一轮
 - **随机顺序**: 每轮技巧按随机顺序展示，避免单调
 - **可配置数量**: 默认每次显示 2 条技巧，可通过环境变量调整（1-3 条）
-- **进度追踪**: 显示当前轮次和展示进度（如：📚 第 1 轮 · 1-2/278）
+- **进度追踪**: 显示当前轮次和展示进度（如：📚 第 1 轮 · 1-2/334）
 - **状态持久化**: 使用 JSON 文件记录展示状态，跨会话保持
-- **智能检测**: 自动检测技巧文件变化，变化时重置状态
+- **智能检测**: 自动检测技巧数量变化，变化时重置展示状态
 
 ### 文件结构
 
@@ -32,12 +32,12 @@
 sessionstart/
 ├── show-tip.sh          # 主脚本
 ├── tips.txt             # 技巧内容文件
-└── .tip-state.json      # 状态文件（自动生成）
+└── .tip-state.json      # 状态文件（自动生成于 ~/.claude/.tip-state.json）
 ```
 
 ### 技巧分类
 
-tips.txt 包含 278 条技巧，涵盖以下分类：
+tips.txt 包含 334 条技巧，涵盖以下分类：
 
 - **[交互]** - 基本交互命令和快捷键
 - **[工具]** - Claude Code 内置工具使用
@@ -227,16 +227,6 @@ Copy-Item -Recurse -Force .\plugins\unipus-devops-plugin\hooks\notification $env
 3. **重启 Claude Code**
 
 重新启动 Claude Code 使配置生效。
-
-### 方法 2: 使用 update-config Skill
-
-使用 Claude Code 的 update-config skill 自动配置：
-
-```
-使用 update-config skill 添加以下 hooks：
-1. SessionStart hook: bash ~/.claude/hooks/sessionstart/show-tip.sh
-2. Notification hook: powershell -ExecutionPolicy Bypass -File ~/.claude/hooks/notification/permission-notify.ps1 (async, matcher: permission_prompt)
-```
 
 ---
 

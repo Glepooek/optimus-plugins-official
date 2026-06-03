@@ -106,7 +106,7 @@
 ---
 [CLI] ⬆️ claude update 更新 Claude Code\n功能：检查更新并安装新版 Claude Code\n效果：当你想获取新能力或修复已知问题时，可以直接升级\n例子：claude update 检查并安装最新版本
 ---
-[CLI] 🤖 claude agents 代理列表\n功能：查看当前已配置的 agents 列表\n效果：适合确认有哪些可用代理，以及某个 agent 名称是否配置正确\n例子：claude agents 查看当前可用 agent 列表
+[CLI] 🤖 claude agents 后台会话管理\n功能：查看所有 Claude Code 后台会话（运行中/等待/已完成），不是 agent 配置列表\n效果：统一管理多个并行会话，了解各会话进度，适合多任务并行开发\n例子：claude agents 查看所有后台会话；←← 两次左箭头可在会话内直接进入会话视图
 ---
 [集成] 🎯 Skills 工作流程\n功能：Skills 是预定义的工作流程，让 Claude 遵循特定步骤\n效果：确保复杂任务按最佳实践执行，提高质量和一致性\n例子：/commit 调用 commit skill 确保提交流程规范
 ---
@@ -288,7 +288,7 @@
 ---
 [交互] ↩️ /undo 撤销上一步\n功能：撤销上一次操作（/rewind 的别名）\n效果：回退最近的文件修改或操作，适合发现方向错误时快速回退\n例子：/undo 发现上一步修改有误时立即回退
 ---
-[交互] ⚡ /effort 努力程度调节\n功能：交互式滑块调节响应努力程度，支持 low/medium/high/xhigh\n效果：高 effort 更深思熟虑但较慢，低 effort 快速但较浅，xhigh 是 Opus 4.7 专属超高质量模式\n例子：/effort 用箭头键选择 xhigh 处理关键架构决策
+[交互] ⚡ /effort 努力程度调节\n功能：交互式滑块调节响应努力程度，标签为 Faster/Smarter，支持 low/medium/high/xhigh\n效果：high/xhigh 更深思熟虑但较慢；low/medium 快速响应；/effort ultracode 触发动态工作流模式\n例子：/effort 用箭头键选择 xhigh 处理关键架构决策；/effort ultracode 启动多 agent 并行工作流
 ---
 [交互] 🖱️ /scroll-speed 滚轮速度\n功能：调整终端鼠标滚轮滚动速度\n效果：根据个人习惯优化滚动体验，在长输出时快速导航\n例子：/scroll-speed 3 将滚轮速度设为 3
 ---
@@ -300,7 +300,7 @@
 ---
 [Hook] 🗜️ PreCompact Hook\n功能：在会话上下文压缩前执行命令，退出码 2 可阻止压缩\n效果：在压缩前保存状态、备份信息，或在某些条件下阻止压缩\n例子：PreCompact 在压缩前将关键任务进度写入文件持久保存
 ---
-[Hook] 🔁 continueOnBlock 配置\n功能：PostToolUse hook 新增 continueOnBlock 选项，控制被阻止时是否继续执行\n效果：灵活控制 hook 阻止后的行为，避免某些情况下整个流程中断\n例子：{"continueOnBlock": true} 让被阻止的验证 hook 不中断整体工作流
+[Hook] 🔁 continueOnBlock 配置\n功能：PostToolUse hook 新增 continueOnBlock 选项，拒绝后将原因反馈给 Claude 继续运行\n效果：Claude 会看到拒绝内容并自主调整行为，而非直接中断，适合验证类 hook\n例子：{"continueOnBlock": true} 让 hook 拒绝某个危险命令时，Claude 能收到原因并换一种方式完成任务
 ---
 [Hook] 📝 args 数组形式\n功能：Hook 支持 args: string[] 直接声明执行参数，无需 shell 包装\n效果：更安全、更清晰地传递参数，避免 shell 注入风险\n例子：{"args": ["python", "validate.py", "--strict"]} 替代 command 字符串
 ---
@@ -308,8 +308,44 @@
 ---
 [MCP] ⚡ alwaysLoad MCP 工具\n功能：MCP 服务器工具可设置 alwaysLoad 选项，跳过延迟直接可用\n效果：常用工具无需等待懒加载，首次使用立即响应\n例子：在 MCP 配置中设置 alwaysLoad: true 让核心工具始终就绪
 ---
-[配置] 🧠 Opus 4.7 与 xhigh effort\n功能：Opus 4.7 支持 xhigh 努力级别，提供超高质量推理\n效果：适合架构设计、复杂调试、关键决策等需要最高质量的场景，比 high 更深入\n例子：设置 model: "opus-4-7" 并 /effort xhigh 处理最复杂的技术问题
+[配置] 🧠 Opus 4.8 旗舰模型\n功能：Opus 4.8 是当前旗舰模型，默认高 effort；fast 模式下 2.5x 速度\n效果：复杂架构决策、多步推理等高质量场景首选；fast 模式适合快速迭代\n例子：claude --model opus 启动 Opus 4.8 会话；配合 /effort xhigh 获得最深度推理
 ---
 [交互] 📝 vim 可视化模式\n功能：全屏模式下支持 vim 可视化选择（v 字符选择，V 行选择）\n效果：在 TUI 模式中像 vim 一样精确选择和复制文本内容\n例子：/tui 后按 v 进入字符选择，V 进入行选择，复制多行输出
 ---
 [交互] ⌨️ Ctrl+U 清空输入\n功能：清除整个输入缓冲区内容（已从"删除至行首"更新为"清空全部"）\n效果：输入了一长串内容想重新开始时，一键清空比反复退格更高效\n例子：输入了很长的提示词但想重新写时，按 Ctrl+U 快速清空
+---
+[交互] ⬅️ ←← 进入后台会话视图\n功能：在会话内连按两次左箭头，直接进入 claude agents 后台会话管理视图\n效果：快速切换查看所有并行会话的状态，无需退出当前会话再单独运行命令\n例子：开启多个并行任务后，←← 切到视图统一查看各任务进度
+---
+[交互] 📌 Ctrl+T 固定后台会话\n功能：在后台会话视图中按 Ctrl+T 固定某个会话\n效果：固定的会话优先更新、最后被内存压力淘汰，适合长时间运行的重要任务\n例子：Ctrl+T 固定正在执行大型重构的后台会话，防止被系统回收
+---
+[CLI] 🔧 claude --bg --exec 后台命令\n功能：以后台会话模式运行指定 shell 命令\n效果：命令在后台 agent 会话中执行，不阻塞当前对话，完成后可在会话视图查看结果\n例子：claude --bg --exec 'npm run build' 在后台执行构建，继续当前工作
+---
+[CLI] 🏗️ claude plugin init 插件脚手架\n功能：在 .claude/skills/ 中为新插件生成标准脚手架\n效果：自动创建符合规范的目录结构和 SKILL.md 模板，快速开始插件开发\n例子：claude plugin init my-skill 一键生成插件目录和初始模板文件
+---
+[CLI] ✅ claude plugin validate 插件验证\n功能：验证插件配置的格式、frontmatter 和结构是否符合规范\n效果：在发布前发现配置错误，避免 skill 加载失败或触发异常\n例子：claude plugin validate 检查当前插件配置，输出详细的验证报告
+---
+[交互] 🔄 /reload-skills 热重载技能\n功能：重新扫描 skill 目录，立即生效，无需重启 Claude Code 会话\n效果：修改 SKILL.md 后无需退出会话，/reload-skills 直接加载新版本\n例子：调整 skill 内容后用 /reload-skills 验证效果，比重启快得多
+---
+[Skill] 🚫 disallowed-tools frontmatter\n功能：在 SKILL.md frontmatter 中声明 disallowed-tools，skill 激活时自动禁用指定工具\n效果：限制 skill 的工具使用范围，提高安全性，防止 skill 执行超出预期的操作\n例子：disallowed-tools: [Bash, WebSearch] 让该 skill 只能读写文件，不能执行命令或搜索网络
+---
+[Skill] ⚡ effort frontmatter\n功能：在 SKILL.md frontmatter 中声明 effort 级别，skill 激活时自动切换努力程度\n效果：高复杂度 skill 自动使用更深度推理，轻量 skill 保持快速响应，无需用户手动设置\n例子：effort: high 让代码审查 skill 每次激活时自动进入高质量推理模式
+---
+[Hook] 🔁 reloadSkills SessionStart 输出\n功能：SessionStart hook 返回值中设置 reloadSkills: true，hook 安装的 skill 立即可用\n效果：hook 动态安装或修改 skill 后，无需用户手动 /reload-skills，自动完成热重载\n例子：{"hookSpecificOutput": {"reloadSkills": true}} 让 SessionStart hook 安装完 skill 后立即生效
+---
+[Hook] 💬 MessageDisplay Hook\n功能：新增 MessageDisplay Hook 事件，可拦截并转换助手消息文本\n效果：对 Claude 的输出做后处理，如翻译、格式化、过滤敏感信息等\n例子：MessageDisplay hook 将英文输出自动翻译为中文，或给特定关键词添加高亮标记
+---
+[Hook] 🔔 terminalSequence Hook 输出\n功能：Hook 返回值支持 terminalSequence 字段，发送桌面通知、窗口标题或终端铃声\n效果：任务完成时主动提醒用户，无需盯着终端等待，适合长时间运行的任务\n例子：PostToolUse hook 在构建完成后通过 terminalSequence 发送系统桌面通知
+---
+[交互] 🔀 /workflows 工作流记录\n功能：查看 ultracode 动态工作流的运行记录和实时进度\n效果：了解多 agent 并行工作流各阶段的执行状态、耗时和结果\n例子：/workflows 在 ultracode 运行期间查看各子 agent 的执行进度
+---
+[Skill] 🔍 /code-review --fix / --comment\n功能：/code-review 支持 --fix 自动应用修复，--comment 将审查意见发为 GitHub PR 内联评论\n效果：审查不止于建议，--fix 直接修代码，--comment 让团队在 PR 中看到详细意见\n例子：/code-review --comment 在提 PR 前将审查意见同步为 GitHub 内联评论
+---
+[交互] 📊 /usage 分类明细\n功能：/usage 按 skills/subagents/plugins/MCP 服务器分类展示 token 消耗明细\n效果：精准定位哪类操作消耗最多，优化高消耗工作流\n例子：/usage 查看本次会话中哪个 skill 或 MCP 服务器消耗了最多 token
+---
+[配置] 👁️ skillOverrides 可见度控制\n功能：在 settings.json 中配置 skillOverrides，控制每个 skill 对 Claude 的可见度\n效果：off 完全隐藏、user-invocable-only 仅用户可调用、name-only 只知道名称不知详情\n例子：{"skillOverrides": {"my-skill": "off"}} 临时禁用某个 skill 而不卸载插件
+---
+[配置] 🌿 worktree.baseRef 基准分支\n功能：设置新建 worktree 的基准分支：fresh 基于远程最新，head 基于本地 HEAD\n效果：fresh 确保新功能基于最新代码；head 在本地提交上继续，适合离线开发\n例子：{"worktree": {"baseRef": "fresh"}} 每次创建 worktree 都从远程 master 最新状态开始
+---
+[CLI] 🔀 --fallback-model 降级模型\n功能：启动时指定备用模型，主模型不可用时自动切换\n效果：提高会话可用性，避免主模型限流或故障时整个会话失败\n例子：claude --fallback-model sonnet 主模型不可用时自动降级到 Sonnet 继续工作
+---
+[CLI] 🗑️ claude project purge 清理项目状态\n功能：删除项目所有 Claude Code 状态，包括转录记录、任务列表、文件历史\n效果：彻底清理项目积累的历史数据，释放空间或重置为干净状态\n例子：claude project purge --dry-run 先预览要删除的内容，确认后再执行清理
