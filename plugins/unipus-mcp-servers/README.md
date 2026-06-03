@@ -93,7 +93,7 @@
 
 | 对比项 | Playwright CLI | Playwright MCP |
 |--------|----------------|----------------|
-| **安装方式** | `npm install -g @playwright/cli@latest` 无需其他配置 | 需要配置 MCP 服务器，首次运行自动下载 |
+| **安装方式** | `npx @playwright/cli` 即开即用，包和浏览器均自动缓存 | 需要配置 MCP 服务器 |
 | **使用门槛** | 低，直接在终端执行命令 | 中，需要理解 MCP 协议 |
 | **交互性** | 高，支持实时查看浏览器状态 | 低，通过 Claude 间接调用 |
 | **调试体验** | 可视化浏览器窗口，方便调试 | 无头模式，调试困难 |
@@ -104,20 +104,20 @@
 ### 快速上手
 
 ```bash
-# 打开网页（无头模式）
-npx @playwright/cli open "https://example.com"
+# 打开网页（优先用系统 Edge，零下载；也可改 chrome；省略则自动下载 Chromium）
+npx @playwright/cli -s=demo open --browser=msedge "https://example.com"
 
-# 提取页面文本
-npx @playwright/cli eval "document.body.innerText"
+# 提取页面文本（eval 接受函数形式）
+npx @playwright/cli -s=demo eval "() => document.body.innerText"
 
-# 截图保存
-npx @playwright/cli screenshot --filename=page.png
+# 截图（接受可选元素 ref）
+npx @playwright/cli -s=demo screenshot
 
-# 保存为 PDF
-npx @playwright/cli pdf --filename=page.pdf
+# 保存快照到文件（--filename 是 snapshot 的参数）
+npx @playwright/cli -s=demo snapshot --filename=page.yaml
 
 # 关闭浏览器
-npx @playwright/cli close
+npx @playwright/cli -s=demo close
 ```
 
 ### 典型用例
