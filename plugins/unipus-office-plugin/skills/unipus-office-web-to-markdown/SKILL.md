@@ -31,6 +31,12 @@ dependencies:
     required: true
     check_command: curl --version
     install_url: https://curl.se/download.html
+  - name: markitdown
+    description: HTML/URL 转 Markdown（缺失时回退到 regex 清理路径）
+    required: false
+    check_command: python -m markitdown --version
+    install_url: https://github.com/microsoft/markitdown
+    install_command: pip install markitdown
 ---
 
 # unipus-office-web-to-markdown
@@ -104,10 +110,39 @@ https://kiro.dev/docs/api/reference/
   └─ 是 → 存量核对流程
 ```
 
+### 零级路径：特殊 URL（markitdown 直接处理）
+
+在进入三级降级流程前，先检查 URL 是否属于以下特殊类型。若匹配且 markitdown 可用，直接调用 markitdown，跳过后续所有降级步骤：
+
+| URL 特征 | markitdown 转换器 | 优势 |
+|----------|------------------|------|
+| `youtube.com` / `youtu.be` | YouTube 转换器 | 提取字幕而非页面文本 |
+| `wikipedia.org` | Wikipedia 转换器 | 提取干净正文，去除模板噪音 |
+| URL 以 `.rss` / `.atom` 结尾，或 Content-Type 含 `application/rss+xml` | RSS 转换器 | 结构化条目提取 |
+
+**检测 markitdown 是否可用：**
+```bash
+python -m markitdown --version
+```
+不可用时跳过零级路径，直接进入三级降级流程。
+
+**执行方式（命令行调用）：**
+```bash
+python -m markitdown "<URL>"
+```
+输出即为 Markdown 文本，直接进入翻译规则步骤，无需进一步清理。
+
 ### 抓取策略（三级降级）
 
-**一级：curl**（静态 / SSR 页面，默认路径）
+**一级：curl + markitdown**（静态 / SSR 页面，默认路径）
 
+**若 markitdown 可用：**
+```bash
+python -m markitdown "<URL>"
+```
+直接输出 Markdown，无需额外清理步骤。
+
+**若 markitdown 不可用（回退）：**
 ```bash
 curl -s "<URL>" -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
 | python3 -c "
@@ -123,6 +158,8 @@ print(text)
 ```
 
 内容较长时分段抓取（每次偏移 8000 字符）直到完整。
+
+> 注：使用 markitdown 时，若返回内容 < 200 字符仍视为无效，进入二级。
 
 **curl 后执行动态页面判定**（满足任一 → 内容无效，进入二级；规则 5 直接失败）：
 
@@ -153,6 +190,19 @@ npx @playwright/cli -s=fetch eval "() => document.body.innerText"
 ```
 
 调试时加 `--headed` 可见浏览器窗口；`snapshot --filename=snap.yaml` 可将页面结构写入文件辅助定位元素。
+
+**若 markitdown 可用，将 HTML 写入临时文件后转换（保留结构优于纯文本）：**
+```bash
+# 先获取完整 HTML（而非 innerText）
+npx @playwright/cli -s=fetch eval "() => document.documentElement.outerHTML" > /tmp/page.html
+python -m markitdown /tmp/page.html
+rm /tmp/page.html
+```
+
+**若 markitdown 不可用，保持原有 innerText 方式：**
+```bash
+npx @playwright/cli -s=fetch eval "() => document.body.innerText"
+```
 
 抓取后同样执行动态页面判定（规则 1-4）：有效 → 继续处理，标注「动态抓取」；无效 → 进入三级。
 
