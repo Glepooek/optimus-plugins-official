@@ -31,7 +31,7 @@ plugins/{plugin-name}/
 - 简单 skill: `/plugin-name:skill-name`
 - 复合 skill: `/plugin-name:skill-name:substep`
 
-**复合 skill 参考：** `unipus:fe-dev` 是唯一的复合 skill（5 阶段工作流），详见 `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md`
+**复合 skill 参考：** `unipus-fe-dev` 是唯一的复合 skill（5 阶段工作流），详见 `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md`
 
 ### Hooks 配置
 

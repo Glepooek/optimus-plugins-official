@@ -1,5 +1,5 @@
 ---
-name: unipus:qa:ui-scripts
+name: unipus-qa-ui-scripts
 description: 快速初始化 Midscene + Playwright UI 自动化测试项目，生成完整的项目结构、配置文件和测试模板；也支持将测试用例文档转换为 UI 自动化脚本并补全缺失的项目文件。当用户说"创建 Midscene 测试项目"、"初始化 UI 自动化框架"、"搭建 Playwright + Midscene 项目"、"快速启动 UI 自动化项目"、"将测试用例转换为自动化脚本"、"把用例转成 UI 脚本"、"补全项目文件"时触发。
 creator：yinxuan@unipus.cn
 ---

@@ -1,5 +1,5 @@
 ---
-name: unipus:qa:jmeter-scripts
+name: unipus-qa-jmeter-scripts
 description: 根据 OpenAPI 文档自动生成具备完整接口依赖关系的 JMeter JMX 性能测试脚本。当用户需要：(1) 根据 API 文档生成 JMeter JMX 脚本；(2) 生成带认证、CRUD 串联、数据流依赖的接口测试脚本；(3) 生成包含业务断言、数据一致性验证、枚举值全覆盖的测试脚本时触发。需用户提供 JMeter 版本号（如 5.5、5.6.3）。
 creator：yinxuan@unipus.cn
 ---

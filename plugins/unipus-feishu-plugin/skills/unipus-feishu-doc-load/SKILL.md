@@ -1,5 +1,5 @@
 ---
-name: unipus:feishu:doc-load
+name: unipus-feishu-doc-load
 description: 从飞书研发数字化资产文档库加载指定项目/版本的文档到本地 doc/ 目录，供当前会话使用。支持按角色选择性加载（PRD/设计/后端/前端/测试）。触发词：加载项目文档、load project docs、读取飞书项目文档、拉取文档库
 triggers:
   - 加载项目文档
@@ -10,9 +10,9 @@ triggers:
   - 从飞书加载
 ---
 
-# unipus:feishu:doc-load
+# unipus-feishu-doc-load
 
-宣告：**正在使用 unipus:feishu:doc-load v1.0**
+宣告：**正在使用 unipus-feishu-doc-load v1.0**
 
 ## 职责
 
@@ -190,7 +190,7 @@ mkdir -p ./doc
 - ./doc/V2.0_用户中心_前端组件文档.md
 
 提示：文档已就绪，当前会话可直接引用 ./doc/ 中的内容。
-如需更新文档到飞书，使用 unipus:feishu:doc-sync
+如需更新文档到飞书，使用 unipus-feishu-doc-sync
 ```
 
 ## Red Flags

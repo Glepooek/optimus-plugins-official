@@ -1,4 +1,4 @@
-# unipus:fe-dev - 复合 Skill 架构设计
+# unipus-fe-dev - 复合 Skill 架构设计
 
 > **Version:** 1.1.0  
 > **Last Updated:** 2026-05-08  
@@ -8,7 +8,7 @@
 
 ## 概述
 
-`unipus:fe-dev` 是一个**复合 skill**（Composite Skill），它不同于普通的单一功能 skill，而是一个**工作流编排器**（Workflow Orchestrator），通过协调多个子 skills 来完成复杂的前端全流程开发任务。
+`unipus-fe-dev` 是一个**复合 skill**（Composite Skill），它不同于普通的单一功能 skill，而是一个**工作流编排器**（Workflow Orchestrator），通过协调多个子 skills 来完成复杂的前端全流程开发任务。
 
 ### 什么是复合 Skill？
 
@@ -100,12 +100,12 @@ unipus-fe-dev/                          # 复合 skill 根目录
 
 | Skill 路径 | 命名空间 | 类型 | 说明 |
 |-----------|---------|------|------|
-| `./SKILL.md` | `unipus:fe-dev` | 主 skill | 工作流编排器 |
-| `./skills/collect-inputs/SKILL.md` | `unipus:fe-dev:collect-inputs` | 子 skill | 阶段 1 |
-| `./skills/analyze-and-plan/SKILL.md` | `unipus:fe-dev:analyze-and-plan` | 子 skill | 阶段 2 |
-| `./skills/generate-code/SKILL.md` | `unipus:fe-dev:generate-code` | 子 skill | 阶段 3 |
-| `./skills/coding-standards/SKILL.md` | `unipus:fe-dev:coding-standards` | 基础规范 | 全局生效 |
-| `./skills/architecture-doc/SKILL.md` | `unipus:fe-dev:architecture-doc` | 前置工具 | 按需调用 |
+| `./SKILL.md` | `unipus-fe-dev` | 主 skill | 工作流编排器 |
+| `./skills/collect-inputs/SKILL.md` | `unipus-fe-dev-collect-inputs` | 子 skill | 阶段 1 |
+| `./skills/analyze-and-plan/SKILL.md` | `unipus-fe-dev-analyze-and-plan` | 子 skill | 阶段 2 |
+| `./skills/generate-code/SKILL.md` | `unipus-fe-dev-generate-code` | 子 skill | 阶段 3 |
+| `./skills/coding-standards/SKILL.md` | `unipus-fe-dev-coding-standards` | 基础规范 | 全局生效 |
+| `./skills/architecture-doc/SKILL.md` | `unipus-fe-dev-architecture-doc` | 前置工具 | 按需调用 |
 
 **命名空间规则：**
 - 使用冒号 `:` 而非斜杠 `/` 表示逻辑从属关系
@@ -115,7 +115,7 @@ unipus-fe-dev/                          # 复合 skill 根目录
 
 **为什么使用冒号？**
 ```
-✅ 命名空间：unipus:fe-dev:collect-inputs
+✅ 命名空间：unipus-fe-dev-collect-inputs
    - 表示逻辑从属关系（collect-inputs 属于 fe-dev）
    - 可以映射到任意文件路径
    - 便于重构和移动
@@ -135,9 +135,9 @@ unipus-fe-dev/                          # 复合 skill 根目录
 
 | 阶段 | 子 Skill | 版本 | 路径 |
 |------|---------|------|------|
-| 基础规范 | `unipus:fe-dev:coding-standards` | 1.0.0 | `./skills/coding-standards/SKILL.md` |
-| 1. 收集输入 | `unipus:fe-dev:collect-inputs` | 1.0.0 | `./skills/collect-inputs/SKILL.md` |
-| 2. 分析规划 | `unipus:fe-dev:analyze-and-plan` | 1.0.0 | `./skills/analyze-and-plan/SKILL.md` |
+| 基础规范 | `unipus-fe-dev-coding-standards` | 1.0.0 | `./skills/coding-standards/SKILL.md` |
+| 1. 收集输入 | `unipus-fe-dev-collect-inputs` | 1.0.0 | `./skills/collect-inputs/SKILL.md` |
+| 2. 分析规划 | `unipus-fe-dev-analyze-and-plan` | 1.0.0 | `./skills/analyze-and-plan/SKILL.md` |
 ```
 
 **相对路径的优势：**
@@ -154,7 +154,7 @@ unipus-fe-dev/                          # 复合 skill 根目录
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  unipus:fe-dev (主 skill)                               │
+│  unipus-fe-dev (主 skill)                               │
 │  职责：工作流编排、状态管理、用户交互                       │
 │  文件：./SKILL.md                                        │
 └─────────────────────────────────────────────────────────┘
@@ -355,7 +355,7 @@ plugins/unipus-frontend-plugin/skills/
 2. **逻辑封装**：unipus-fe-dev 是一个完整的单元，可以整体移动、复制、版本化
 3. **相对引用**：`./skills/xxx/SKILL.md` 简洁且不依赖外部路径
 4. **易于扩展**：添加新阶段只需在 skills/ 下新增目录
-5. **命名空间清晰**：子 skills 使用 `unipus:fe-dev:xxx` 命名空间
+5. **命名空间清晰**：子 skills 使用 `unipus-fe-dev:xxx` 命名空间
 6. **复用模板**：其他复杂 skill 可以参考这个模式
 
 ### 真实场景验证
@@ -369,7 +369,7 @@ cd plugins/unipus-frontend-plugin/skills/unipus-fe-dev/skills
 mkdir new-stage && cd new-stage
 cat > SKILL.md <<EOF
 ---
-name: unipus:fe-dev:new-stage
+name: unipus-fe-dev:new-stage
 ---
 EOF
 ```
@@ -574,7 +574,7 @@ plugins/unipus-frontend-plugin/skills/
 ### 添加新阶段
 
 1. 在 `skills/` 下创建新目录
-2. 编写 `SKILL.md`，命名空间遵循 `unipus:fe-dev:new-stage`
+2. 编写 `SKILL.md`，命名空间遵循 `unipus-fe-dev:new-stage`
 3. 在主 `SKILL.md` 的"子 Skill 引用"表格中添加条目
 4. 更新工作流图
 5. 更新本 ARCHITECTURE.md
@@ -624,7 +624,7 @@ plugins/unipus-frontend-plugin/skills/
 
 - [Superpowers: Subagent-Driven Development](../../../../../../.claude/superpowers/subagent-driven-development.md)
 - [Claude Code 插件开发指南](https://docs.anthropic.com/claude/docs/claude-code-plugins)
-- [unipus:fe-dev 用户手册](./README.md)
+- [unipus-fe-dev 用户手册](./README.md)
 
 ---
 

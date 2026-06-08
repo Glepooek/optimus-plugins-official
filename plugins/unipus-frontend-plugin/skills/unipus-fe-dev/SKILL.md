@@ -1,5 +1,5 @@
 ---
-name: unipus:fe-dev
+name: unipus-fe-dev
 version: 1.1.0
 description: 通用前端开发技能。空项目时引导创建；现有项目时自动探测技术栈。基于 Sketch 设计稿（Sketch MCP）或 Figma 设计稿（Figma MCP）+ 组件库还原页面，基于 Swagger / Markdown 接口文档生成 API 层代码（含完整数据模型定义），基于 PRD 需求文档生成完整页面功能（含类型、接口、页面、交互、埋点），任务完成后生成面向测试的标准化交付物（功能说明书、接口清单、状态清单、Mock 数据）。所有产出代码风格匹配当前项目。
 triggers:
@@ -33,18 +33,18 @@ triggers:
   - 数据埋点
 ---
 
-> **unipus:fe-dev v1.1.0** | 子 skill 8 个 | 最后更新 2026-04-07
+> **unipus-fe-dev v1.1.0** | 子 skill 8 个 | 最后更新 2026-04-07
 
 你是一个资深前端工程师。你通过收集 4 种输入文档，驱动完整的前端开发流程：从需求分析到代码生成，再到测试交付物输出。所有生成的代码自动包含符合规范的埋点实现（神策SDK）。
 
-**宣告：** "我正在使用 unipus:fe-dev v1.1.0 技能来执行前端全流程开发。"
+**宣告：** "我正在使用 unipus-fe-dev v1.1.0 技能来执行前端全流程开发。"
 
 <HARD-GATE>
 在进入代码生成阶段之前，必须收集并验证全部 4 种必填输入 + 提示 1 种可选输入：
 
 必填（缺一不可）：
 1. PRD 需求文档（链接）
-2. 前端架构设计文档（链接）— 如用户没有，先调用 `unipus:fe-dev:architecture-doc` 根据 PRD 生成
+2. 前端架构设计文档（链接）— 如用户没有，先调用 `unipus-fe-dev-architecture-doc` 根据 PRD 生成
 3. 设计稿（通过 Figma MCP 或 Sketch MCP）
 4. API 接口文档（链接）
 
@@ -53,7 +53,7 @@ triggers:
 
 **向用户索取缺失输入时，必须同时提示第 5 项可选输入。** 不可只列必填项。
 
-**飞书链接自动识别：** 当用户提供的文档链接包含 `feishu.cn` 或 `larksuite.com` 时，自动调用 `unipus:fe-dev:feishu-doc` 替代 `WebFetch` 获取内容。
+**飞书链接自动识别：** 当用户提供的文档链接包含 `feishu.cn` 或 `larksuite.com` 时，自动调用 `unipus-fe-dev-feishu-doc` 替代 `WebFetch` 获取内容。
 </HARD-GATE>
 
 ## 工作流总览
@@ -62,14 +62,14 @@ triggers:
 digraph fe_workflow {
     rankdir=TB;
 
-    collect [label="阶段 1：收集 4 种输入\nunipus:fe-dev:collect-inputs", shape=box];
+    collect [label="阶段 1：收集 4 种输入\nunipus-fe-dev-collect-inputs", shape=box];
     gate [label="4 种输入全部就绪？", shape=diamond];
     ask [label="向用户索取缺失输入", shape=box];
-    analyze [label="阶段 2：分析 + 探测技术栈 + 规划\nunipus:fe-dev:analyze-and-plan", shape=box];
+    analyze [label="阶段 2：分析 + 探测技术栈 + 规划\nunipus-fe-dev-analyze-and-plan", shape=box];
     user_confirm [label="用户确认实施计划？", shape=diamond];
-    generate [label="阶段 3：Subagent 驱动代码生成\nunipus:fe-dev:generate-code", shape=box];
-    deliverables [label="阶段 4：生成测试交付物\nunipus:fe-dev:generate-deliverables", shape=box];
-    verify [label="阶段 5：验证 + 完成\nunipus:fe-dev:verify-and-finish", shape=box];
+    generate [label="阶段 3：Subagent 驱动代码生成\nunipus-fe-dev-generate-code", shape=box];
+    deliverables [label="阶段 4：生成测试交付物\nunipus-fe-dev-generate-deliverables", shape=box];
+    verify [label="阶段 5：验证 + 完成\nunipus-fe-dev-verify-and-finish", shape=box];
     done [label="完成", shape=doublecircle];
 
     collect -> gate;
@@ -89,31 +89,31 @@ digraph fe_workflow {
 
 你必须为以下每个步骤创建任务并按序完成：
 
-1. **收集输入** — 使用 `unipus:fe-dev:collect-inputs` 收集并验证 4 种输入
-2. **分析与规划** — 使用 `unipus:fe-dev:analyze-and-plan` 解析文档、探测技术栈、生成实施计划
+1. **收集输入** — 使用 `unipus-fe-dev-collect-inputs` 收集并验证 4 种输入
+2. **分析与规划** — 使用 `unipus-fe-dev-analyze-and-plan` 解析文档、探测技术栈、生成实施计划
 3. **用户确认** — 将实施计划（文件清单 + 任务拆分）呈现给用户，等待确认
-4. **代码生成** — 使用 `unipus:fe-dev:generate-code` 以 subagent 驱动方式逐任务生成代码
-5. **生成交付物** — 使用 `unipus:fe-dev:generate-deliverables` 生成面向测试的标准化交付物
-6. **验证完成** — 使用 `unipus:fe-dev:verify-and-finish` 综合验证并完成开发
+4. **代码生成** — 使用 `unipus-fe-dev-generate-code` 以 subagent 驱动方式逐任务生成代码
+5. **生成交付物** — 使用 `unipus-fe-dev-generate-deliverables` 生成面向测试的标准化交付物
+6. **验证完成** — 使用 `unipus-fe-dev-verify-and-finish` 综合验证并完成开发
 
 ## 子 Skill 引用
 
 | 阶段 | 子 Skill | 版本 | 路径 |
 |------|---------|------|------|
-| 基础规范 | `unipus:fe-dev:coding-standards` | 1.0.0 | `./skills/coding-standards/SKILL.md` |
-| 前置工具 | `unipus:fe-dev:architecture-doc` | 1.0.0 | `./skills/architecture-doc/SKILL.md` |
-| 前置工具 | `unipus:fe-dev:feishu-doc` | 1.0.0 | `./skills/feishu-doc/SKILL.md` |
-| 1. 收集输入 | `unipus:fe-dev:collect-inputs` | 1.0.0 | `./skills/collect-inputs/SKILL.md` |
-| 2. 分析规划 | `unipus:fe-dev:analyze-and-plan` | 1.0.0 | `./skills/analyze-and-plan/SKILL.md` |
-| 3. 代码生成 | `unipus:fe-dev:generate-code` | 1.0.0 | `./skills/generate-code/SKILL.md` |
-| 4. 生成交付物 | `unipus:fe-dev:generate-deliverables` | 1.0.0 | `./skills/generate-deliverables/SKILL.md` |
-| 5. 验证完成 | `unipus:fe-dev:verify-and-finish` | 1.0.0 | `./skills/verify-and-finish/SKILL.md` |
+| 基础规范 | `unipus-fe-dev-coding-standards` | 1.0.0 | `./skills/coding-standards/SKILL.md` |
+| 前置工具 | `unipus-fe-dev-architecture-doc` | 1.0.0 | `./skills/architecture-doc/SKILL.md` |
+| 前置工具 | `unipus-fe-dev-feishu-doc` | 1.0.0 | `./skills/feishu-doc/SKILL.md` |
+| 1. 收集输入 | `unipus-fe-dev-collect-inputs` | 1.0.0 | `./skills/collect-inputs/SKILL.md` |
+| 2. 分析规划 | `unipus-fe-dev-analyze-and-plan` | 1.0.0 | `./skills/analyze-and-plan/SKILL.md` |
+| 3. 代码生成 | `unipus-fe-dev-generate-code` | 1.0.0 | `./skills/generate-code/SKILL.md` |
+| 4. 生成交付物 | `unipus-fe-dev-generate-deliverables` | 1.0.0 | `./skills/generate-deliverables/SKILL.md` |
+| 5. 验证完成 | `unipus-fe-dev-verify-and-finish` | 1.0.0 | `./skills/verify-and-finish/SKILL.md` |
 
-> **`unipus:fe-dev:coding-standards` 是全局生效的基础规范**，阶段 3 代码生成时所有 subagent 必须遵循。涵盖 9 个分层：主程序、全局 CSS、页面、组件、接口层、数据层、类型层、工具层、埋点规范（神策SDK）。
+> **`unipus-fe-dev-coding-standards` 是全局生效的基础规范**，阶段 3 代码生成时所有 subagent 必须遵循。涵盖 9 个分层：主程序、全局 CSS、页面、组件、接口层、数据层、类型层、工具层、埋点规范（神策SDK）。
 >
-> **`unipus:fe-dev:architecture-doc` 是前置工具**，用于根据 PRD 生成前端架构设计文档，其产出物是主流程 4 种必填输入之一。当用户没有架构文档时，先调用此 skill 生成。架构文档包含 11 个章节，第 10 章为埋点方案设计。
+> **`unipus-fe-dev-architecture-doc` 是前置工具**，用于根据 PRD 生成前端架构设计文档，其产出物是主流程 4 种必填输入之一。当用户没有架构文档时，先调用此 skill 生成。架构文档包含 11 个章节，第 10 章为埋点方案设计。
 >
-> **`unipus:fe-dev:feishu-doc` 是前置工具**，通过 lark-cli 读写飞书文档。当用户提供飞书链接时自动替代 WebFetch。
+> **`unipus-fe-dev-feishu-doc` 是前置工具**，通过 lark-cli 读写飞书文档。当用户提供飞书链接时自动替代 WebFetch。
 
 ## Superpowers 集成
 
@@ -133,7 +133,7 @@ digraph fe_workflow {
 6. **最小改动** — 只生成与任务直接相关的代码，不做额外重构
 7. **先探索再生成** — 生成前检查是否已有相关文件/类型/组件，避免重复
 8. **文件放置** — 严格遵循项目已有目录结构
-9. **埋点自动集成** — 页面浏览、关键点击、表单提交、错误捕获等必须自动集成埋点，遵循 `unipus:fe-dev:coding-standards` 第 9 章规范
+9. **埋点自动集成** — 页面浏览、关键点击、表单提交、错误捕获等必须自动集成埋点，遵循 `unipus-fe-dev-coding-standards` 第 9 章规范
 
 ## Red Flags
 
@@ -151,7 +151,7 @@ digraph fe_workflow {
 
 当用户触发本技能时：
 
-1. 宣告使用 unipus:fe-dev 技能
+1. 宣告使用 unipus-fe-dev 技能
 2. 检查用户是否已提供 4 种输入
 3. 缺少的输入立即向用户索取
 4. 全部就绪后按 Checklist 顺序执行

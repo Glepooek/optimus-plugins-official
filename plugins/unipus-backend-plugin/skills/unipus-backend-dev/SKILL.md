@@ -1,7 +1,7 @@
 ---
-name: unipus:backend-dev
+name: unipus-backend-dev
 version: 1.0.0
-description: 后端开发技能。基于 superpowers 工作流驱动完整的后端开发流程：需求分析、方案设计、代码实现、文档生成。涉及第三方 API 对接时优先检查公司已有服务（unipus:backend:api-connect）。开发完成后自动生成架构设计文档和后端 API 接口文档，可选上传至飞书云空间。
+description: 后端开发技能。基于 superpowers 工作流驱动完整的后端开发流程：需求分析、方案设计、代码实现、文档生成。涉及第三方 API 对接时优先检查公司已有服务（unipus-backend-api-connect）。开发完成后自动生成架构设计文档和后端 API 接口文档，可选上传至飞书云空间。
 triggers:
   - 后端开发
   - backend
@@ -21,11 +21,11 @@ triggers:
   - 服务端开发
 ---
 
-> **unipus:backend-dev v1.0.0** | 最后更新 2026-04-10
+> **unipus-backend-dev v1.0.0** | 最后更新 2026-04-10
 
 你是一个资深后端工程师。你通过收集需求文档和项目信息，驱动完整的后端开发流程：从需求探索到方案设计、代码实现、文档生成。涉及第三方 API 对接时优先检查公司已有服务能力。
 
-**宣告：** "我正在使用 unipus:backend-dev v1.0.0 技能来执行后端开发流程。"
+**宣告：** "我正在使用 unipus-backend-dev v1.0.0 技能来执行后端开发流程。"
 
 ---
 
@@ -69,7 +69,7 @@ digraph backend_workflow {
     user_confirm [label="用户确认方案？", shape=diamond];
 
     api_check [label="涉及第三方\nAPI 对接？", shape=diamond];
-    api_connect [label="阶段 4：API 服务检查\nunipus:backend:api-connect", shape=box, style=filled, fillcolor="#ffe0cc"];
+    api_connect [label="阶段 4：API 服务检查\nunipus-backend-api-connect", shape=box, style=filled, fillcolor="#ffe0cc"];
     use_company [label="使用公司\n已有服务？", shape=diamond];
 
     implement [label="阶段 5：代码实现\nsuperpowers:subagent-driven-development", shape=box, style=filled, fillcolor="#cce5ff"];
@@ -80,7 +80,7 @@ digraph backend_workflow {
 
     verify [label="阶段 7：验证与完成\nverification + finishing", shape=box, style=filled, fillcolor="#cce5ff"];
     feishu_ask [label="是否上传到\n飞书云空间？", shape=diamond];
-    feishu_upload [label="阶段 8：飞书上传\nunipus:feishu:upload-doc", shape=box, style=filled, fillcolor="#ffe0cc"];
+    feishu_upload [label="阶段 8：飞书上传\nunipus-feishu-upload-doc", shape=box, style=filled, fillcolor="#ffe0cc"];
     done [label="完成", shape=doublecircle, style=filled, fillcolor="#ccffcc"];
 
     gate -> gate_check;
@@ -118,11 +118,11 @@ digraph backend_workflow {
 2. **收集需求** — 获取需求文档、项目信息、技术栈偏好
 3. **需求探索** — 使用 `superpowers:brainstorming` 探索需求细节和方案选项
 4. **方案规划** — 使用 `superpowers:writing-plans` 制定实施计划，呈现给用户确认
-5. **API 服务检查** — 若涉及第三方 API 对接，使用 `unipus:backend:api-connect` 检查公司已有服务
+5. **API 服务检查** — 若涉及第三方 API 对接，使用 `unipus-backend-api-connect` 检查公司已有服务
 6. **代码实现** — 使用 `superpowers:subagent-driven-development` 按计划执行开发
 7. **文档生成** — 生成架构设计文档和后端 API 接口文档，放入 `docs/` 目录
 8. **验证与完成** — 使用 `superpowers:verification-before-completion` + `superpowers:finishing-a-development-branch`
-9. **飞书上传（可选）** — 询问用户后决定是否调用 `unipus:feishu:upload-doc` 上传文档
+9. **飞书上传（可选）** — 询问用户后决定是否调用 `unipus-feishu-upload-doc` 上传文档
 
 ---
 
@@ -183,7 +183,7 @@ digraph backend_workflow {
    我将先检查公司是否已有对应的服务接口，优先对接已有服务。是否继续？
    ```
 
-2. 调用 `unipus:backend:api-connect`，在公司服务注册表中搜索匹配的服务
+2. 调用 `unipus-backend-api-connect`，在公司服务注册表中搜索匹配的服务
 
 3. **找到匹配服务时**，向用户展示并询问：
    ```
@@ -281,7 +281,7 @@ docs/V1.0_统一认证平台_后端API接口文档.md
 是否需要将文档上传到飞书统一云空间？
 ```
 
-用户选择「是」时，对每份文档调用 `unipus:feishu:upload-doc` 执行规范化上传。
+用户选择「是」时，对每份文档调用 `unipus-feishu-upload-doc` 执行规范化上传。
 
 ---
 
@@ -301,8 +301,8 @@ docs/V1.0_统一认证平台_后端API接口文档.md
 
 | 技能 | 使用阶段 | 触发条件 |
 |---|---|---|
-| `unipus:backend:api-connect` | 阶段 4 | 涉及第三方 API 对接时 |
-| `unipus:feishu:upload-doc` | 阶段 8 | 用户选择上传到飞书时 |
+| `unipus-backend-api-connect` | 阶段 4 | 涉及第三方 API 对接时 |
+| `unipus-feishu-upload-doc` | 阶段 8 | 用户选择上传到飞书时 |
 
 ---
 
@@ -337,7 +337,7 @@ docs/V1.0_统一认证平台_后端API接口文档.md
 
 当用户触发本技能时：
 
-1. 宣告使用 unipus:backend-dev 技能
+1. 宣告使用 unipus-backend-dev 技能
 2. 执行 HARD-GATE 检查 superpowers 是否可用
 3. 按 Checklist 顺序收集需求信息
 4. 全部信息就绪后按阶段顺序执行

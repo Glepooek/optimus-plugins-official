@@ -1,5 +1,5 @@
 ---
-name: unipus:office:pdf
+name: unipus-office-pdf
 description: >
   当视觉质量和设计感很重要时使用此 Skill，输出达到印刷品质的 PDF。
   CREATE（从零生成）——触发词：生成PDF、生成报告、写提案、制作简历、

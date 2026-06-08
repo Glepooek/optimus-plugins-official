@@ -1,5 +1,5 @@
 ---
-name: unipus:office:docx
+name: unipus-office-docx
 license: MIT
 metadata:
   version: "1.0.0"

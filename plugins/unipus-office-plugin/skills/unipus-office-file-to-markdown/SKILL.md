@@ -1,5 +1,5 @@
 ---
-name: unipus:office:file-to-markdown
+name: unipus-office-file-to-markdown
 license: MIT
 metadata:
   version: "1.1.0"

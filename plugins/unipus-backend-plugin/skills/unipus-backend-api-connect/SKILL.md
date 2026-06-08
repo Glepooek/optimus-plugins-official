@@ -1,5 +1,5 @@
 ---
-name: unipus:backend:api-connect
+name: unipus-backend-api-connect
 description: 根据服务注册表自动对接后端 API，生成对接代码
 globs:
   - "**/*"

@@ -1,5 +1,5 @@
 ---
-name: unipus:project:analyze
+name: unipus-project-analyze
 description: 对公司内部GitHub项目进行全面分析，输出功能、技术栈、架构、目录结构、数据模型、API 接口、部署方式、内部依赖等专业概览报告。触发词：快速了解一个内部项目，评估项目技术选型和架构质量，为新成员生成项目入门文档，梳理内部服务依赖关系，分析这个项目，项目概览，了解这个仓库。
 ---
 

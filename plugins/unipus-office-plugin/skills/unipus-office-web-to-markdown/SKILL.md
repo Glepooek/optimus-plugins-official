@@ -1,5 +1,5 @@
 ---
-name: unipus:office:web-to-markdown
+name: unipus-office-web-to-markdown
 license: MIT
 metadata:
   version: "1.5.0"

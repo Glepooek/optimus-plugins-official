@@ -1,5 +1,5 @@
 ---
-name: unipus:ci:notify-api-change
+name: unipus-ci-notify-api-change
 description: 构建完成后，分析 git commit 记录判断是否涉及 API 接口变动，若有则读取 TEAM.md 解析飞书群组和前端/测试人员信息，通过 lark-cli 向项目群组发送通知并 @ 相关人员
 ---
 

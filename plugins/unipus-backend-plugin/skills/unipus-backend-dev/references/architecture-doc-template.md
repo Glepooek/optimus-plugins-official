@@ -194,7 +194,7 @@ erDiagram
 
 ### 7.1 公司内部服务
 
-<!-- 通过 unipus:backend:api-connect 对接的公司已有服务 -->
+<!-- 通过 unipus-backend-api-connect 对接的公司已有服务 -->
 
 | 服务名称 | 用途 | 对接方式 | 文档链接 |
 |---|---|---|---|

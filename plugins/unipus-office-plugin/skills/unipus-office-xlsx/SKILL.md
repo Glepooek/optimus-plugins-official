@@ -1,5 +1,5 @@
 ---
-name: unipus:office:xlsx
+name: unipus-office-xlsx
 description: "打开、创建、读取、分析、编辑或验证 Excel/电子表格文件（.xlsx、.xlsm、.csv、.tsv）。当用户要求创建、构建、修改、分析、读取、验证或格式化任何 Excel 电子表格、财务模型、数据透视表或表格数据文件时使用。涵盖：从零创建新 xlsx、读取分析已有文件、零格式损失编辑已有 xlsx、公式计算与验证，以及应用专业财务格式标准。触发词：电子表格、Excel、.xlsx、.csv、数据透视表、财务模型、公式，或任何要求以 Excel 格式输出表格数据的请求。"
 license: MIT
 metadata:

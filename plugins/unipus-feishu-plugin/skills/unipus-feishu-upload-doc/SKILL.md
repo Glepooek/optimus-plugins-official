@@ -1,9 +1,9 @@
 ---
-name: unipus:feishu:upload-doc
+name: unipus-feishu-upload-doc
 description: 按部门规范上传文档到飞书统一云空间，自动管理目录结构和文件命名，触发词：上传文档到飞书、飞书规范上传、upload to feishu drive、飞书云空间上传
 ---
 
-# unipus:feishu:upload-doc
+# unipus-feishu-upload-doc
 
 按公司规范上传文档到飞书统一云空间，自动管理子目录创建和文件命名规范。
 

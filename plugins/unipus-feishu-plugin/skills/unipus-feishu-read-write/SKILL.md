@@ -1,9 +1,9 @@
 ---
-name: unipus:feishu:read-write
+name: unipus-feishu-read-write
 description: 飞书文档读写通用工具，支持读取文档/表格、上传文件、导出文档，触发词：飞书读取、飞书上传、飞书导出、fetch feishu、read feishu doc
 ---
 
-# unipus:feishu:read-write
+# unipus-feishu-read-write
 
 飞书文档读写通用工具，整合 lark-cli 能力，支持读取、上传、导出飞书云文档。
 

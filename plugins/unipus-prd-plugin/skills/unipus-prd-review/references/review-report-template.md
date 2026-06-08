@@ -71,4 +71,4 @@
 ## 后续行动
 
 优化后目标分数：> 80/100
-建议：使用 `unipus:prd:optimize` 进行文档优化。
+建议：使用 `unipus-prd-optimize` 进行文档优化。

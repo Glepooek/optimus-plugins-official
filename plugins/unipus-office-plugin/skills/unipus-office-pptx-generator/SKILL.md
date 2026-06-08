@@ -1,5 +1,5 @@
 ---
-name: unipus:office:pptx-generator
+name: unipus-office-pptx-generator
 description: "生成、编辑和读取 PowerPoint 演示文稿。使用 PptxGenJS 从零创建（封面、目录、内容、分节页、总结页），通过 XML 工作流编辑已有 PPTX，或使用 markitdown 提取文字。触发词：PPT、PPTX、PowerPoint、演示文稿、幻灯片、slide、deck。"
 license: MIT
 metadata:
