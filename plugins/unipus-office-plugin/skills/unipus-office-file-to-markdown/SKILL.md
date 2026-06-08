@@ -2,14 +2,16 @@
 name: unipus:office:file-to-markdown
 license: MIT
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   category: document-processing
   author: Glepooek
 description: >
-  将本地文件转换为 Markdown 并保存到 docs/ 目录，支持 Word、PDF、PPT、CSV、JSON、XML、TXT 格式。
+  将本地文件转换为 Markdown 并保存到 docs/ 目录，支持 Word、PDF、PPT、Excel、CSV、JSON、XML、HTML、TXT 格式。
   自动检测语言，英文内容翻译为中文，中文内容直接输出。
-  MUST use this skill whenever the user provides a local file path and wants to convert it to Markdown —
-  including "把这个文件转成 Markdown"、"file to markdown"、"转换文档"、"本地文件转 Markdown"。
+  只要用户提供了本地文件路径并有转换、保存或提取文档内容的意图，就必须使用此 skill——
+  包括"把这个文件转成 Markdown"、"file to markdown"、"转换文档"、"本地文件转 Markdown"、
+  "把这个 Word/PDF/Excel 存成 md"、"文档内容提取"、"把文件内容整理到 docs 里"等场景。
+  即使用户没有明确说"Markdown"，只要意图是把本地文档内容转存为文本，也应使用此 skill。
 triggers:
   - 文件转Markdown
   - 本地文件转换
@@ -18,7 +20,9 @@ triggers:
   - convert file
   - docx转markdown
   - pdf转markdown
-  - pptx转markdown
+  - xlsx转markdown
+  - excel转markdown
+  - 文档内容提取
 dependencies:
   - name: markitdown
     description: 文件格式转 Markdown 核心工具（硬依赖，缺失时立即中断）
@@ -41,6 +45,11 @@ dependencies:
     required: false
     check_command: python -c "import pptx"
     install_command: pip install 'markitdown[pptx]'
+  - name: markitdown[xlsx]
+    description: Excel 文档支持
+    required: false
+    check_command: python -c "import openpyxl"
+    install_command: pip install 'markitdown[xlsx]'
 ---
 
 # unipus-office-file-to-markdown
@@ -56,24 +65,26 @@ dependencies:
 | Word | `.docx` | `markitdown[docx]` |
 | PDF | `.pdf` | `markitdown[pdf]` |
 | PowerPoint | `.pptx` | `markitdown[pptx]` |
+| Excel | `.xlsx` | `markitdown[xlsx]` |
 | CSV | `.csv` | 核心包即可 |
 | JSON | `.json` | 核心包即可 |
 | XML | `.xml` | 核心包即可 |
+| HTML | `.html` / `.htm` | 核心包即可 |
 | 纯文本 | `.txt` | 核心包即可 |
 
 ---
 
 ## 二、依赖检查
 
-执行前必须完成依赖检查。
+执行转换前完成两步检查，任一失败立即中断。
 
-**第一步：检查 markitdown 核心包**
+**核心包：**
 
 ```bash
 python -m markitdown --version
 ```
 
-失败则立即中断，输出：
+失败时输出：
 
 ```
 ✗ 缺少依赖：markitdown
@@ -81,16 +92,15 @@ python -m markitdown --version
   安装完成后重新运行此 skill
 ```
 
-**第二步：按文件格式检查子依赖**
+**格式子依赖（按输入文件类型）：**
 
-| 输入扩展名 | 检查命令 | 缺失时提示 |
-|-----------|----------|-----------|
+| 扩展名 | 检查命令 | 缺失时安装 |
+|--------|----------|-----------|
 | `.docx` | `python -c "import mammoth"` | `pip install 'markitdown[docx]'` |
 | `.pdf` | `python -c "import pdfminer"` | `pip install 'markitdown[pdf]'` |
 | `.pptx` | `python -c "import pptx"` | `pip install 'markitdown[pptx]'` |
-| `.csv` `.json` `.xml` `.txt` | 无需额外检查 | — |
-
-子依赖缺失时同样立即中断，不尝试继续。
+| `.xlsx` | `python -c "import openpyxl"` | `pip install 'markitdown[xlsx]'` |
+| `.csv` `.json` `.xml` `.html` `.txt` | 无需额外检查 | — |
 
 ---
 
@@ -98,7 +108,7 @@ python -m markitdown --version
 
 ```
 1. 依赖检查（见第二节）
-2. 解析输入文件路径，确认文件存在
+2. 确认文件存在
 3. 推断输出路径（见第四节）
 4. 检查目标文件是否已存在：
    ├─ 否 → 新建流程
@@ -107,32 +117,26 @@ python -m markitdown --version
 
 ### 新建流程
 
-```
-1. python -m markitdown "<文件路径>" → Markdown 文本
-2. 语言检测 → 必要时翻译（见第五节）
-3. 写入目标路径（目录不存在则自动创建）
+1. 运行转换命令，将文件内容提取为 Markdown：
+   ```bash
+   python -m markitdown "/path/to/file.docx"
+   ```
+2. 对输出内容进行语言检测（见第五节），必要时翻译为中文
+3. 写入目标路径，目录不存在则自动创建
 4. 输出确认行
-```
-
-**执行命令：**
-```bash
-python -m markitdown "/path/to/file.docx"
-```
 
 ### 存量核对流程（文件已存在）
 
-```
-1. python -m markitdown "<文件路径>" → 新 Markdown 文本
-2. 读取本地已有文件
-3. 逐段对照差异 → 补全 → 确认无遗漏
-4. 输出确认行
-```
+1. 运行转换命令，获取最新 Markdown 文本
+2. 读取已有本地文件
+3. 逐节比对：检查新文本中是否有本地文件缺少的内容（新增段落、更新数据等）；将差异部分补写到文件末尾，或根据语义替换对应段落
+4. 输出确认行，说明补全了多少处
 
 ---
 
 ## 四、输出路径规则
 
-**默认路径：** 文件名转 kebab-case → `docs/<文件名>.md`
+**默认路径：** 文件名去扩展名 → 转 kebab-case → `docs/<文件名>.md`
 
 ```
 report-Q1.docx     → docs/report-q1.md
@@ -162,12 +166,14 @@ meeting notes.txt  → docs/meeting-notes.md
 - **占比 ≥ 15%** → 判定为中文，直接输出，不翻译
 - **占比 < 15%** → 判定为非中文，翻译为中文后输出
 
+> 15% 的阈值来自实践：纯中文文本 CJK 占比通常 ≥ 60%，中英混排也往往超过 20%；低于 15% 基本可确认为英文或代码主导文档，翻译是合理的。
+
 **翻译保护规则（以下内容保持原文不变）：**
 
 - 代码块与行内代码
 - URL 和文件路径
 - 专有名词、产品名、API 名称
-- CSV / JSON / XML 的键名（key 不翻译，value 中的自然语言内容按语言判断）
+- CSV / JSON / XML 的键名（value 中的自然语言内容按语言判断）
 
 ---
 
