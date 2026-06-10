@@ -44,9 +44,9 @@
 ---
 [交互] 📊 /hooks 管理界面\n功能：打开 hooks 管理界面查看和配置所有 hooks\n效果：查看、启用或调整当前 hook 配置的入口\n例子：/hooks 查看当前激活的 SessionStart 和 PostToolUse hooks
 ---
-[配置] 🛡️ permissions.allow\n功能：在 settings.json 中配置自动允许的命令模式\n效果：匹配的命令无需确认，提高开发效率\n例子：allow: ["Bash(npm:*)"] 自动允许所有 npm 命令
+[配置] 🛡️ permissions.allow\n功能：在 settings.json 中配置自动允许的命令模式，语法：工具名(glob模式)，用空格分隔命令和模式\n效果：匹配的命令无需确认，提高开发效率\n例子：allow: ["Bash(npm *)"] 自动允许所有 npm 命令；allow: ["Bash(git log *)", "Read"] 允许 git 查询和文件读取
 ---
-[配置] 🚫 permissions.deny\n功能：配置明确禁止的危险操作\n效果：防止误操作导致数据丢失或系统损坏\n例子：deny: ["Bash(rm -rf:*)"] 阻止递归删除操作
+[配置] 🚫 permissions.deny\n功能：配置明确禁止的危险操作，语法与 allow 相同；裸工具名（如 "Edit"）从模型上下文完全移除；"*" 拒绝所有工具\n效果：防止误操作导致数据丢失或系统损坏\n例子：deny: ["Bash(rm -rf *)"] 阻止递归删除；deny: ["Bash(git push --force *)"] 禁止强制推送
 ---
 [配置] 🎛️ defaultMode 权限模式\n功能：控制操作确认策略，支持 acceptEdits（自动接受编辑）、auto（智能判断）、plan（计划审批）等模式\n效果：平衡开发效率和安全性，可按任务类型切换\n例子：日常开发用 acceptEdits，复杂重构用 plan 模式
 ---
@@ -66,37 +66,37 @@
 ---
 [配置] 🔒 sandbox 沙箱\n功能：配置沙箱环境限制文件系统和网络访问\n效果：提高安全性，防止意外访问敏感数据\n例子：sandbox.filesystem.denyWrite 阻止写入特定目录
 ---
-[CLI] 📁 --add-dir 临时目录权限\n功能：启动时通过命令行参数临时添加目录访问权限\n效果：仅本次会话生效，适合临时需求或动态场景，可与配置文件的目录合并\n例子（Windows）：claude --add-dir D:/WebProjects --add-dir E:/OtherProject\n例子（Linux/Mac）：claude --add-dir /var/www --add-dir /home/user/project
+[CLI] 📁 --add-dir 临时目录权限\n功能：添加额外工作目录让 Claude 读写文件，可同时指定多个；仅授予文件访问权限，不从这些目录加载 .claude/ 配置；永久化需在 settings.json 的 permissions.additionalDirectories 配置\n效果：本次会话可跨目录工作；适合临时需求，不改全局配置\n例子（Windows）：claude --add-dir D:/WebProjects --add-dir E:/OtherProject\n例子（Linux/Mac）：claude --add-dir /var/www --add-dir /home/user/project
 ---
-[CLI] 🩺 claude doctor 健康检查\n功能：检查 Claude Code 自动更新相关的健康状态\n效果：遇到更新异常时可先做自检，确认更新链路是否正常\n例子：claude doctor 用于排查更新失败或升级异常
+[CLI] 🩺 claude daemon status 后台服务诊断\n功能：claude daemon status 查看后台 supervisor 状态（版本、socket 目录、worker 数），退出码 1 表示 supervisor 未运行；claude daemon stop --any 停止 supervisor 和所有后台会话，加 --keep-workers 仅重启 supervisor 保留会话\n效果：排查"background service did not respond"等后台服务异常；更新 Claude Code 后用 --keep-workers 重启 supervisor 不杀任务\n例子：claude daemon status 诊断 supervisor 状态；claude daemon stop --any --keep-workers 重启 supervisor 同时保留所有后台会话
 ---
-[CLI] 🖨️ -p / --print 非交互输出\n功能：以非交互模式运行 Claude，直接输出结果后退出\n效果：适合脚本、管道和自动化场景，不进入交互会话\n例子：claude -p "总结这个目录结构"
+[CLI] 🖨️ -p / --print 非交互输出\n功能：以非交互模式运行 Claude，输出结果后退出；可配合 -c 续写上次会话；可用管道传入内容；支持 --max-turns 限制轮次、--max-budget-usd 控制花费上限（仅 -p 模式有效）\n效果：适合脚本、管道和自动化场景，不进入交互会话\n例子：claude -p "总结这个目录结构"；cat logs.txt | claude -p "分析错误"；claude -p --max-turns 3 --max-budget-usd 1.00 "生成报告"
 ---
-[CLI] 🧾 --output-format 输出格式\n功能：配合 --print 指定输出格式，如 text、json、stream-json\n效果：便于脚本消费 Claude 输出，接入自动化流程更稳定\n例子：claude -p --output-format json "生成结构化摘要"
+[CLI] 🧾 --output-format 输出格式\n功能：配合 -p 指定输出格式：text（纯文本）、json（完整结构化）、stream-json（实时流式 JSON，配合 --verbose 可包含工具调用详情）\n效果：便于脚本消费 Claude 输出；stream-json + --verbose + --include-hook-events 可完整捕获所有事件流\n例子：claude -p "生成摘要" --output-format json；claude -p --output-format stream-json --verbose --include-hook-events "query"
 ---
-[CLI] ⏭️ -c / --continue 继续最近会话\n功能：继续当前目录下最近的一次对话\n效果：快速接着上次工作，不必手动选择历史会话\n例子：claude -c 直接回到这个项目最近一次会话
+[CLI] ⏭️ -c / --continue 继续最近会话\n功能：继续当前目录下最近的一次对话，包含用过 /add-dir 添加过此目录的会话；可配合 -p 以非交互模式续写：claude -c -p "检查类型错误"\n效果：快速接着上次工作，不必手动选择历史会话\n例子：claude -c 直接回到这个项目最近一次会话；claude -c -p "继续刚才的重构" 以脚本模式续写
 ---
-[CLI] ♻️ -r / --resume 按会话恢复\n功能：通过会话 ID 恢复指定会话，也可打开交互选择器\n效果：比 --continue 更精确，适合恢复较早的某个会话\n例子：claude -r 先打开会话列表，再选择要恢复的那次工作
+[CLI] ♻️ -r / --resume 按会话恢复\n功能：通过会话 ID 或名称恢复指定会话，也可打开交互选择器；背景会话在选择器中标注 bg；加 --fork-session 可从历史会话派生新 ID 而不覆盖原会话\n效果：比 --continue 更精确，适合恢复较早的某个会话或从同一历史派生多个分支\n例子：claude -r auth-refactor "完成这个 PR"；claude -r --fork-session 从旧会话派生新线程
 ---
-[CLI] 🐞 --debug 调试模式\n功能：启动 Claude 时打开调试日志，可选按分类过滤\n效果：排查 hooks、API、文件处理等问题时更容易定位原因\n例子：claude --debug hooks 用来查看 hook 执行细节
+[CLI] 🐞 --debug 调试模式\n功能：启动时打开调试日志，支持分类过滤（如 "api,hooks" 只看这两类；"!statsig,!file" 排除这两类）；--debug-file <路径> 将日志写入文件，隐式启用 debug 模式\n效果：排查 hooks 执行细节、API 响应、MCP 连接问题时精准定位原因\n例子：claude --debug "api,mcp" 只看 API 和 MCP 日志；claude --debug-file /tmp/claude.log 将所有调试日志写入文件
 ---
-[CLI] ⚙️ --settings 额外配置\n功能：启动时加载指定的 settings JSON 文件或 JSON 字符串\n效果：适合临时覆盖配置，或在脚本里注入一组会话专用设置\n例子：claude --settings local-debug-settings.json
+[CLI] ⚙️ --settings 额外配置\n功能：加载指定 settings JSON 文件或 JSON 字符串，此处设置的值覆盖 settings.json 中相同的键，未设置的键保持文件中的值；可配合 --setting-sources user,project 控制加载哪些来源\n效果：适合临时覆盖配置、在 CI 脚本中注入一次性配置，而不修改全局文件\n例子：claude --settings ./ci-settings.json；claude --settings '{"model":"haiku"}' 临时降级模型；claude --setting-sources user --settings extra.json 只加载用户配置和额外覆盖
 ---
-[CLI] 🛂 --permission-mode 权限模式\n功能：启动时直接指定权限模式，如 acceptEdits、auto、plan 等\n效果：可以按任务类型快速切换交互风格，而不用先改配置文件\n例子：claude --permission-mode plan 用计划模式处理复杂改动
+[CLI] 🛂 --permission-mode 权限模式\n功能：启动时直接指定权限模式，选项：default（默认询问）、acceptEdits（自动接受文件编辑）、plan（只规划不执行）、auto（智能自动模式）、dontAsk（不询问）、bypassPermissions（跳过所有检查）；覆盖 settings.json 的 defaultMode\n效果：可以按任务类型快速切换交互风格，而不用先改配置文件\n例子：claude --permission-mode plan 用计划模式审批改动；claude --permission-mode acceptEdits 自动接受所有文件修改；claude --permission-mode auto 启用智能自动判断
 ---
-[CLI] 🧠 --model 指定模型\n功能：启动时为当前会话指定模型，如 sonnet、opus 或完整模型名\n效果：可以按任务复杂度切换模型，不必先改全局 settings.json\n例子：claude --model opus 用更强模型处理复杂任务
+[CLI] 🧠 --model 指定模型\n功能：为当前会话指定模型，支持别名（sonnet、opus、haiku、fable）或完整 model ID，覆盖 settings.json 的 model 设置和 ANTHROPIC_MODEL 环境变量\n效果：可以按任务复杂度切换模型，不必先改全局配置\n例子：claude --model fable 使用最新旗舰模型；claude --model claude-sonnet-4-6 指定精确版本；claude --model haiku 处理轻量任务节省费用
 ---
-[CLI] 🎭 --agent 指定代理\n功能：启动时为当前会话指定 agent，覆盖默认 agent 配置\n效果：适合临时切换到特定工作风格，而不影响常用设置\n例子：claude --agent code-reviewer 启动一个偏代码审查的会话
+[CLI] 🎭 --agent 指定代理\n功能：为当前会话指定 agent（覆盖 settings.json 的 agent 配置）；--agents 支持传入 JSON 动态定义临时 subagent，字段与 subagent frontmatter 相同，额外加 prompt 字段\n效果：临时切换到特定工作风格，或在命令行中即时定义专用代理\n例子：claude --agent code-reviewer 启动代码审查会话；claude --agents '{"reviewer":{"description":"专注审查","prompt":"你是代码审查专家"}}' 动态注入临时 agent
 ---
-[CLI] 🌿 -w / --worktree 工作树会话\n功能：启动时直接创建新的 git worktree 并在其中开始会话\n效果：适合隔离新功能或实验性改动，避免污染主工作区\n例子：claude --worktree feature-x 在新 worktree 中开始开发
+[CLI] 🌿 -w / --worktree 工作树会话\n功能：启动时在 <repo>/.claude/worktrees/<name> 创建独立 git worktree 并进入；不指定 name 则自动生成；传 #<PR号> 或 GitHub PR URL 可直接检出该 PR 分支；配合 --tmux 自动创建 tmux 会话（iTerm2 用原生 pane，加 --tmux=classic 用传统 tmux）\n效果：隔离实验性改动，适合同时处理多个功能分支\n例子：claude -w feature-auth 创建 feature-auth worktree；claude -w "#1234" 检出 PR#1234 并进入其 worktree；claude -w new-feature --tmux 创建 worktree 并启动 tmux 会话
 ---
-[CLI] 📝 --verbose 详细模式\n功能：启动时覆盖配置中的 verbose 设置，显示更详细的会话信息\n效果：适合需要更多上下文细节时临时打开，不必改全局配置\n例子：claude --verbose 用更详细的方式启动当前会话
+[CLI] 📝 --verbose 详细模式\n功能：启用详细日志，显示逐 turn 完整输出，覆盖 settings.json 的 viewMode 设置；配合 --output-format stream-json 和 --include-hook-events 可完整捕获所有事件\n效果：调试工具调用流程、验证 hook 是否生效、分析多 turn 对话时非常有用\n例子：claude --verbose 启动详细模式；claude -p --verbose --output-format stream-json "query" 获取完整结构化日志
 ---
-[CLI] 🔌 --mcp-config MCP 配置输入\n功能：启动时从指定 JSON 文件或 JSON 字符串加载 MCP 服务器配置\n效果：适合临时接入一组 MCP 服务，或在脚本里注入特定外部能力\n例子：claude --mcp-config my-mcp.json
+[CLI] 🔌 --mcp-config MCP 配置输入\n功能：从 JSON 文件或 JSON 字符串加载 MCP 服务器（空格分隔可传多个）；配合 --strict-mcp-config 可只加载此处指定的 MCP，忽略所有其他 MCP 配置\n效果：适合临时接入一组 MCP 服务，或在脚本里注入特定外部能力；strict 模式用于完全控制工具集\n例子：claude --mcp-config my-mcp.json；claude --strict-mcp-config --mcp-config ./mcp.json 只使用指定的 MCP 服务
 ---
-[CLI] 🏷️ --name 会话命名\n功能：为当前会话设置显示名称\n效果：在 /resume 列表和终端标题里更容易识别这次工作的主题\n例子：claude --name "fix-auth-bug"
+[CLI] 🏷️ --name / -n 会话命名\n功能：为当前会话设置显示名称，在 /resume 列表和终端标题中显示；命名后可通过 claude --resume <名称> 直接恢复；会话内用 /rename 随时改名\n效果：在多项目并行开发时快速识别和恢复特定会话\n例子：claude -n "fix-auth-bug" 命名本次会话；claude --resume fix-auth-bug 之后按名称精确恢复
 ---
-[CLI] 🧪 claude --help 帮助总览\n功能：查看 Claude CLI 所有参数、命令和子命令\n效果：不确定某个参数是否存在时，先用帮助信息核对最稳妥\n例子：claude --help 查看 --debug、--settings、--add-dir 的用法
+[CLI] 🧪 claude --help 帮助总览\n功能：查看 Claude CLI 子命令和常见参数；注意：--help 不会列出所有 flag，部分高级 flag 仅在官方文档中记载\n效果：快速了解基本用法；需要完整 flag 列表请查阅官方 CLI 参考文档\n例子：claude --help 查看基本用法；claude agents --help 查看 agents 子命令的参数
 ---
 [CLI] 🧩 claude mcp 管理 MCP\n功能：通过 CLI 管理和配置 MCP 服务器\n效果：便于接入或排查 GitHub、数据库、API 等外部能力\n例子：claude mcp list 查看当前已配置的 MCP 服务器
 ---
@@ -106,7 +106,7 @@
 ---
 [CLI] ⬆️ claude update 更新 Claude Code\n功能：检查更新并安装新版 Claude Code\n效果：当你想获取新能力或修复已知问题时，可以直接升级\n例子：claude update 检查并安装最新版本
 ---
-[CLI] 🤖 claude agents 后台会话管理\n功能：查看所有 Claude Code 后台会话（运行中/等待/已完成），不是 agent 配置列表\n效果：统一管理多个并行会话，了解各会话进度，适合多任务并行开发\n例子：claude agents 查看所有后台会话；←← 两次左箭头可在会话内直接进入会话视图
+[CLI] 🤖 claude agents 后台会话管理\n功能：查看所有 Claude Code 后台会话（运行中/等待/已完成），行内展示 done/total 扇出进度；--json 输出含 id、state、waitingFor 字段，加 --all 可查看全部历史\n效果：统一管理多个并行会话，了解各会话进度，适合多任务并行开发\n例子：claude agents 查看进度；claude agents --json --all 获取完整结构化列表；←← 在会话内直接进入视图
 ---
 [集成] 🎯 Skills 工作流程\n功能：Skills 是预定义的工作流程，让 Claude 遵循特定步骤\n效果：确保复杂任务按最佳实践执行，提高质量和一致性\n例子：/commit 调用 commit skill 确保提交流程规范
 ---
@@ -156,7 +156,7 @@
 ---
 [工具] 👥 TeamCreate 团队协作\n功能：创建 agent 团队协作完成复杂项目\n效果：多个 agent 分工合作，并行处理前端、后端、测试等\n例子：TeamCreate 创建团队，分配 frontend、backend、tester agent
 ---
-[工具] 🌲 EnterWorktree 进入工作树\n功能：创建并进入独立的 git worktree 环境\n效果：隔离实验性改动，不影响主工作区\n例子：EnterWorktree 创建 feature-branch worktree 进行开发
+[工具] 🌲 EnterWorktree 进入工作树\n功能：创建并进入独立的 git worktree 环境；v2.1.157+ 支持在同一会话内切换到已有的 Claude 托管 worktree（传 path 参数）\n效果：隔离实验性改动，不影响主工作区；多 worktree 并行开发可在会话内直接切换\n例子：EnterWorktree(name="feature-x") 创建新 worktree；EnterWorktree(path=".claude/worktrees/existing") 切换到已有 worktree
 ---
 [工具] 🔙 ExitWorktree 退出工作树\n功能：退出 worktree 并选择保留或删除\n效果：完成实验后清理环境，或保留工作继续使用\n例子：ExitWorktree 删除失败的实验分支
 ---
@@ -288,11 +288,11 @@
 ---
 [交互] ↩️ /undo 撤销上一步\n功能：撤销上一次操作（/rewind 的别名）\n效果：回退最近的文件修改或操作，适合发现方向错误时快速回退\n例子：/undo 发现上一步修改有误时立即回退
 ---
-[交互] ⚡ /effort 努力程度调节\n功能：交互式滑块调节响应努力程度，标签为 Faster/Smarter，支持 low/medium/high/xhigh\n效果：high/xhigh 更深思熟虑但较慢；low/medium 快速响应；/effort ultracode 触发动态工作流模式\n例子：/effort 用箭头键选择 xhigh 处理关键架构决策；/effort ultracode 启动多 agent 并行工作流
+[交互] ⚡ /effort 努力程度调节\n功能：交互式滑块调节响应努力程度，标签为 Faster/Smarter，支持 low/medium/high/xhigh/max 五个级别\n效果：high/xhigh/max 更深思熟虑但较慢；low/medium 快速响应；/effort ultracode 触发动态工作流模式\n例子：/effort 用箭头键选择 xhigh 处理关键架构决策；/effort max 获取最高质量输出；/effort ultracode 启动多 agent 并行工作流
 ---
 [交互] 🖱️ /scroll-speed 滚轮速度\n功能：调整终端鼠标滚轮滚动速度\n效果：根据个人习惯优化滚动体验，在长输出时快速导航\n例子：/scroll-speed 3 将滚轮速度设为 3
 ---
-[CLI] 🔍 claude ultrareview 非交互审查\n功能：以非交互模式运行多代理代码审查，输出完整审查报告\n效果：适合在 CI/CD 流水线中自动执行代码审查，结果可接入其他工具\n例子：claude ultrareview --output review.md 将审查结果保存到文件
+[CLI] 🔍 claude ultrareview 非交互审查\n功能：claude ultrareview [目标] 以非交互模式运行多代理代码审查，打印结果到 stdout；支持 --json 获取原始 JSON payload、--timeout <分钟> 覆盖默认 30 分钟超时\n效果：适合在 CI/CD 流水线中自动执行代码审查，退出码 0 表示成功，1 表示失败\n例子：claude ultrareview 1234 审查 PR#1234；claude ultrareview --json > review.json 保存结构化结果
 ---
 [CLI] 🏷️ claude plugin tag 发布标签\n功能：为当前插件创建发布版本的 git 标签\n效果：规范化插件版本发布流程，自动打标签并关联版本信息\n例子：claude plugin tag 在插件发布时创建版本标签
 ---
@@ -308,7 +308,7 @@
 ---
 [MCP] ⚡ alwaysLoad MCP 工具\n功能：MCP 服务器工具可设置 alwaysLoad 选项，跳过延迟直接可用\n效果：常用工具无需等待懒加载，首次使用立即响应\n例子：在 MCP 配置中设置 alwaysLoad: true 让核心工具始终就绪
 ---
-[配置] 🧠 Opus 4.8 旗舰模型\n功能：Opus 4.8 是当前旗舰模型，默认高 effort；fast 模式下 2.5x 速度\n效果：复杂架构决策、多步推理等高质量场景首选；fast 模式适合快速迭代\n例子：claude --model opus 启动 Opus 4.8 会话；配合 /effort xhigh 获得最深度推理
+[配置] 🧠 Fable 5 旗舰模型\n功能：Fable 5（Mythos 级）是 v2.1.170 引入的最新旗舰模型，能力超越此前所有可用模型；Opus 4.8 仍可用\n效果：最复杂的架构决策、长链推理、需要最高质量输出的场景首选 Fable 5\n例子：claude --model fable 启动 Fable 5 会话；配合 /effort xhigh 获得最深度推理
 ---
 [交互] 📝 vim 可视化模式\n功能：全屏模式下支持 vim 可视化选择（v 字符选择，V 行选择）\n效果：在 TUI 模式中像 vim 一样精确选择和复制文本内容\n例子：/tui 后按 v 进入字符选择，V 进入行选择，复制多行输出
 ---
@@ -317,8 +317,6 @@
 [交互] ⬅️ ←← 进入后台会话视图\n功能：在会话内连按两次左箭头，直接进入 claude agents 后台会话管理视图\n效果：快速切换查看所有并行会话的状态，无需退出当前会话再单独运行命令\n例子：开启多个并行任务后，←← 切到视图统一查看各任务进度
 ---
 [交互] 📌 Ctrl+T 固定后台会话\n功能：在后台会话视图中按 Ctrl+T 固定某个会话\n效果：固定的会话优先更新、最后被内存压力淘汰，适合长时间运行的重要任务\n例子：Ctrl+T 固定正在执行大型重构的后台会话，防止被系统回收
----
-[CLI] 🔧 claude --bg --exec 后台命令\n功能：以后台会话模式运行指定 shell 命令\n效果：命令在后台 agent 会话中执行，不阻塞当前对话，完成后可在会话视图查看结果\n例子：claude --bg --exec 'npm run build' 在后台执行构建，继续当前工作
 ---
 [CLI] 🏗️ claude plugin init 插件脚手架\n功能：在 .claude/skills/ 中为新插件生成标准脚手架\n效果：自动创建符合规范的目录结构和 SKILL.md 模板，快速开始插件开发\n例子：claude plugin init my-skill 一键生成插件目录和初始模板文件
 ---
@@ -346,6 +344,58 @@
 ---
 [配置] 🌿 worktree.baseRef 基准分支\n功能：设置新建 worktree 的基准分支：fresh 基于远程最新，head 基于本地 HEAD\n效果：fresh 确保新功能基于最新代码；head 在本地提交上继续，适合离线开发\n例子：{"worktree": {"baseRef": "fresh"}} 每次创建 worktree 都从远程 master 最新状态开始
 ---
-[CLI] 🔀 --fallback-model 降级模型\n功能：启动时指定备用模型，主模型不可用时自动切换\n效果：提高会话可用性，避免主模型限流或故障时整个会话失败\n例子：claude --fallback-model sonnet 主模型不可用时自动降级到 Sonnet 继续工作
+[CLI] 🔀 --fallback-model 降级模型\n功能：启动时指定备用模型，主模型不可用时自动切换；settings.json 中的 fallbackModel 支持最多 3 个备选按序尝试\n效果：提高会话可用性，避免主模型限流或故障时整个会话失败\n例子：claude --fallback-model sonnet 临时指定降级；settings.json 中配置 fallbackModel 数组实现多级容灾
 ---
 [CLI] 🗑️ claude project purge 清理项目状态\n功能：删除项目所有 Claude Code 状态，包括转录记录、任务列表、文件历史\n效果：彻底清理项目积累的历史数据，释放空间或重置为干净状态\n例子：claude project purge --dry-run 先预览要删除的内容，确认后再执行清理
+---
+[交互] 📁 /cd 切换工作目录\n功能：在会话内用 /cd <路径> 切换工作目录，不会中断 prompt cache\n效果：无需退出重开会话，直接切换到另一个项目目录继续工作，已有上下文全部保留\n例子：/cd ../another-project 切换到邻近项目目录继续任务
+---
+[CLI] 🛡️ --safe-mode 安全模式\n功能：启动参数 --safe-mode 或环境变量 CLAUDE_CODE_SAFE_MODE=1 禁用所有自定义配置（hooks、plugins、MCP 等）\n效果：排障时隔离自定义配置干扰，确认问题是否由配置引起\n例子：claude --safe-mode 用干净环境启动，排查 hook 或 MCP 异常
+---
+[配置] 🙈 disableBundledSkills 隐藏内置技能\n功能：settings.json 中设置 disableBundledSkills: true，隐藏内置 skills、workflows 和 slash commands\n效果：极简模式只保留自定义 skill，防止内置 skill 干扰自定义工作流或被误调用\n例子：{"disableBundledSkills": true} 让 Claude 只能看到你自己定义的技能
+---
+[配置] 🚫 Deny 规则通配符\n功能：settings.json 的 deny 规则 tool-name 位置支持 Glob 通配符，"*" 拒绝所有工具\n效果：可以先用 "*" 全部拦截，再用 allow 精确放行，实现白名单安全模型\n例子：{"deny": [{"tool": "*"}]} 拦截所有工具，再用 allow 配置白名单
+---
+[CLI] 🤔 --thinking disabled 关闭思考\n功能：--thinking disabled 或 MAX_THINKING_TOKENS=0 可关闭默认开启思考的模型的内部推理\n效果：减少延迟和 token 消耗，适合对速度要求高、不需要深度推理的任务\n例子：claude --thinking disabled 以关闭思考模式启动，加快响应速度
+---
+[配置] 📌 requiredMinimumVersion 版本锁定\n功能：settings.json 中配置 requiredMinimumVersion/requiredMaximumVersion，强制用户使用特定版本范围\n效果：团队或企业环境中统一 Claude Code 版本，防止因版本差异导致行为不一致\n例子：{"requiredMinimumVersion": "2.1.163"} 确保所有成员使用不低于该版本
+---
+[交互] 🔌 /plugin list 插件过滤\n功能：/plugin list 查看插件列表，支持 --enabled/--disabled 过滤\n效果：快速定位已启用或已禁用的插件，排查 skill 未加载的原因\n例子：/plugin list --disabled 查看哪些插件被禁用，找出未生效的原因
+---
+[Hook] ➕ Stop Hook additionalContext\n功能：Stop/SubagentStop hook 现在可在返回值中附加 additionalContext，让当前 turn 在 hook 介入后继续运行\n效果：hook 可以向 Claude 补充信息（如检查结果、外部状态），而不是直接结束 turn\n例子：Stop hook 检测到测试未通过，返回 additionalContext 告知 Claude 错误详情，Claude 自动继续修复
+---
+[配置] ☁️ Bedrock/Vertex Auto 模式\n功能：Bedrock、Vertex、Foundry 上的 Opus 4.7/4.8 现支持 Auto 模式，通过 CLAUDE_CODE_ENABLE_AUTO_MODE=1 开启\n效果：云端部署场景也能享受 Auto 自动调配推理资源，按任务复杂度动态分配算力\n例子：CLAUDE_CODE_ENABLE_AUTO_MODE=1 claude 在 Bedrock/Vertex 上启用 Auto 模式
+---
+[CLI] ⚠️ --dangerously-skip-permissions 跳过所有权限检查\n功能：claude --dangerously-skip-permissions 完全跳过所有权限提示，等价于 --permission-mode bypassPermissions；注意：仍然尊重 deny 规则，不会绕过 managed 策略，也不绕过沙盒。与 --allow-dangerously-skip-permissions 不同：后者只是把 bypassPermissions 加入 Shift+Tab 循环而不立即启用\n效果：全自动化执行、CI 脚本、无人值守任务的终极提速手段，代价是放弃所有安全确认\n例子：claude --dangerously-skip-permissions "自动修复所有 lint 错误并提交"；claude --permission-mode plan --allow-dangerously-skip-permissions 先从 plan 模式开始，需要时再 Shift+Tab 切换到 bypass
+---
+[CLI] 🪶 --bare 极简模式\n功能：claude --bare 跳过 hooks、skills、plugins、MCP、自动记忆、CLAUDE.md 的发现和加载，只保留 Bash/Read/Edit 工具；设置 CLAUDE_CODE_SIMPLE 环境变量；常与 -p 配合用于脚本\n效果：启动更快，工具集最小，适合对工具集有明确要求的自动化脚本或性能敏感场景；注意 --safe-mode 保留认证/模型/权限逻辑，--bare 连这些也精简\n例子：claude --bare -p "统计这个目录下 ts 文件数量" 极速无配置执行
+---
+[CLI] 🔍 --advisor 顾问模型\n功能：claude --advisor <模型别名或 ID> 为本次会话启用服务端顾问工具，别名支持 opus、sonnet、fable；覆盖 settings.json 中的 advisorModel 设置\n效果：在当前会话中激活第二个顾问模型辅助决策，适合需要多模型协同的复杂场景\n例子：claude --advisor opus 以 Opus 作为顾问辅助本次会话；claude --advisor fable 用最新旗舰模型作为顾问
+---
+[CLI] 💰 --max-budget-usd 花费上限\n功能：claude -p --max-budget-usd <金额> 设置本次 API 调用的最大花费（仅 -p 模式），超出上限自动停止\n效果：防止自动化脚本或长任务意外消耗大量费用，设定安全边界\n例子：claude -p --max-budget-usd 2.00 "完整分析这个代码库" 花费不超过 2 美元；claude -p --max-budget-usd 0.50 --max-turns 5 "生成报告" 双重约束
+---
+[CLI] 🔄 --max-turns 限制轮次\n功能：claude -p --max-turns <数字> 限制 agentic 轮次，超出后以错误退出（仅 -p 模式），默认无限制\n效果：防止任务失控循环；配合 --max-budget-usd 双重保护自动化任务\n例子：claude -p --max-turns 10 "自动修复所有测试失败" 最多尝试 10 轮
+---
+[CLI] 🧪 --betas beta 功能\n功能：claude --betas <header名> 在 API 请求中加入 beta header，仅适用于 API key 用户；可开启实验性功能如 interleaved-thinking\n效果：抢先体验尚未正式发布的模型能力\n例子：claude --betas interleaved-thinking 开启交叉思考模式
+---
+[CLI] 🌐 --remote 创建云端会话\n功能：claude --remote "任务描述" 在 claude.ai 上创建新的 web 会话；--teleport 将云端 web 会话迁移回本地终端继续\n效果：在浏览器端开始任务，之后用 --teleport 拉回终端处理，或反向将本地任务推到云端协作\n例子：claude --remote "调查这个内存泄漏问题"；claude --teleport 将 web 会话拉回本地终端
+---
+[CLI] 🖥️ --remote-control 远程控制\n功能：claude --remote-control 启动支持远程控制的交互会话，可从 claude.ai 或 Claude App 控制本地 Claude Code；--remote-control-session-name-prefix 设置自动生成名称的前缀\n效果：手机/平板/另一台电脑通过 Claude App 远程指挥本地终端的 Claude Code 执行任务\n例子：claude --remote-control "My Project"；claude remote-control --remote-control-session-name-prefix dev-box 生成 dev-box-xxx 格式名称
+---
+[CLI] 🔗 --from-pr 从 PR 恢复\n功能：claude --from-pr <PR号或URL> 恢复与指定 PR 关联的会话，支持 GitHub/GitLab/Bitbucket；Claude 创建 PR 时自动建立关联\n效果：直接从 PR 上下文恢复工作，无需手动查找会话 ID\n例子：claude --from-pr 1234 恢复关联 PR#1234 的会话；claude --from-pr https://github.com/org/repo/pull/1234
+---
+[CLI] 🛠️ --tools / --disallowed-tools 工具控制\n功能：--tools "Bash,Edit,Read" 限制 Claude 只能用这些内置工具（"" 禁用所有，"default" 允许全部）；--disallowed-tools 粒度更细：裸工具名从模型上下文移除，作用域规则如 Bash(rm *) 仅拒绝匹配调用，"mcp__*" 移除所有 MCP 工具\n效果：最小权限原则，精确控制 Claude 能用的工具集\n例子：claude --tools "Read,Glob,Grep" 只读工作流；claude --disallowed-tools "Bash(rm *)" "Bash(git push *)" 禁止危险操作；claude --tools "" --disallowed-tools "mcp__*" 纯对话模式
+---
+[CLI] 📎 --allowed-tools 预授权工具\n功能：--allowed-tools "Bash(git log *)" "Read" 让指定工具无需询问直接执行；语法与 settings.json 的 permissions.allow 相同；仅授权，不禁用未列出的工具\n效果：对常用只读操作预授权，减少中断，同时保留对其他工具的询问\n例子：claude --allowed-tools "Bash(git *)" "Read" "Glob" 让所有 git 命令和文件读取免询问
+---
+[CLI] 📋 --json-schema 结构化输出\n功能：claude -p --json-schema '<JSON Schema>' "query" agent 完成后输出符合 schema 的验证 JSON（仅 -p 模式）；适合接入 Agent SDK 的结构化工作流\n效果：无需在提示词里写"返回 JSON"，直接在工具层面强制约束输出结构\n例子：claude -p --json-schema '{"type":"object","properties":{"bugs":{"type":"array"}}}' "找出所有 bug"
+---
+[CLI] 🔌 --plugin-dir / --plugin-url 临时插件\n功能：--plugin-dir <路径或zip> 从本地目录或压缩包加载插件（仅本次会话）；--plugin-url <URL> 从远程 URL 下载 zip 插件；可重复使用加载多个\n效果：测试未发布的插件、在 CI 环境临时注入专用工具集，不影响全局安装\n例子：claude --plugin-dir ./my-plugin-dev 本地开发测试；claude --plugin-url https://example.com/plugin.zip 临时加载远程插件
+---
+[CLI] 🖥️ --chrome / --no-chrome 浏览器集成\n功能：--chrome 启用 Chrome 浏览器集成，支持 Web 自动化和测试；--no-chrome 本次会话禁用\n效果：让 Claude 直接操作浏览器、执行 Playwright 测试、分析页面内容\n例子：claude --chrome 启动带浏览器控制能力的会话；claude --no-chrome 在不需要浏览器时禁用避免干扰
+---
+[CLI] 🔧 --bg --exec 后台命令\n功能：claude --bg --exec 'shell命令' 以后台 agent 会话方式运行 shell 命令，立即返回打印会话 ID，不阻塞当前终端；用 claude attach <id> 挂载查看输出，claude logs <id> 查看日志\n效果：把长时间运行的构建/测试/部署放到后台，主终端继续工作\n例子：claude --bg --exec 'npm run build' 后台构建；claude --bg --exec 'pytest -x' 后台测试；claude attach <id> 挂载到后台任务查看实时输出
+---
+[CLI] 🔄 claude respawn / attach / rm 后台会话管理\n功能：claude respawn <id> 重启会话（保留对话历史），--all 重启所有会话；claude attach <id> 挂载后台会话到当前终端；claude rm <id> 从列表移除会话（transcript 仍保留在本地可通过 --resume 恢复）；claude stop <id> 停止会话\n效果：精细管理多个后台 agent 的生命周期\n例子：claude respawn --all 升级 Claude Code 后批量重启所有后台会话；claude attach 7c5dcf5d 进入某个后台任务查看进度
+---
+[CLI] 🔑 claude setup-token 长期 token\n功能：claude setup-token 为 CI 和脚本生成长期 OAuth token，打印到终端不保存（需要 Claude 订阅）；用于自动化环境认证\n效果：避免在 CI 中使用短期 token 或 API key，长期 token 更适合持久化自动化\n例子：claude setup-token 生成后复制到 CI 环境变量 ANTHROPIC_AUTH_TOKEN
