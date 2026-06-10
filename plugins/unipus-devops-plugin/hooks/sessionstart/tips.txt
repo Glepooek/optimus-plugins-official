@@ -399,3 +399,7 @@
 [CLI] 🔄 claude respawn / attach / rm 后台会话管理\n功能：claude respawn <id> 重启会话（保留对话历史），--all 重启所有会话；claude attach <id> 挂载后台会话到当前终端；claude rm <id> 从列表移除会话（transcript 仍保留在本地可通过 --resume 恢复）；claude stop <id> 停止会话\n效果：精细管理多个后台 agent 的生命周期\n例子：claude respawn --all 升级 Claude Code 后批量重启所有后台会话；claude attach 7c5dcf5d 进入某个后台任务查看进度
 ---
 [CLI] 🔑 claude setup-token 长期 token\n功能：claude setup-token 为 CI 和脚本生成长期 OAuth token，打印到终端不保存（需要 Claude 订阅）；用于自动化环境认证\n效果：避免在 CI 中使用短期 token 或 API key，长期 token 更适合持久化自动化\n例子：claude setup-token 生成后复制到 CI 环境变量 ANTHROPIC_AUTH_TOKEN
+---
+[交互] 🎯 高质量提问框架\n功能：精确提问让 Claude 输出质量显著提升，三要素：检查维度 + 操作范围 + 成功标准\n效果：避免"帮我看看"类模糊指令导致的方向偏差，一次到位减少来回\n例子：❌ "核对一下" → ✅ "核对所有条目，重点检查：命令语法、重复条目、分类标签是否准确，不符合官方文档的直接修正"
+---
+[交互] 📐 提问维度补全技巧\n功能：在模糊问题上补充三个维度：操作对象（对什么）、操作动作（做什么）、验收标准（什么算完成）\n效果：Claude 获得足够上下文后一次性给出完整答案，而不是来回澄清\n例子：❌ "优化一下" → ✅ "优化 tips.txt 中的 CLI 类条目，目标：例子中的命令都是完整可执行形式，无语法错误"
