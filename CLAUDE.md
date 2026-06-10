@@ -1,17 +1,40 @@
 # CLAUDE.md
 
-本文件为 Claude Code (claude.ai/code) 在此仓库中工作时提供指导。
+本文件为 Claude Code 在此仓库中工作时提供指导。
+
+## 提问质量引导
+
+当用户问题属于以下情况时，**回答前**先给出精准化版本并询问是否按此继续：
+
+| 模糊信号 | 缺失维度 | 引导方向 |
+|---|---|---|
+| "看看"、"核对"、"检查" | 检查维度不明 | 补充：具体检查哪些方面 |
+| "改改"、"优化"、"整理" | 优化目标不明 | 补充：改进方向 |
+| "帮我弄一下"、"搞一下" | 操作范围不明 | 补充：操作对象和期望结果 |
+| 问题少于 15 字且无具体对象 | 成功标准不明 | 补充：什么状态算完成 |
+
+引导格式：`建议更精准的提问：「…」按此继续，还是你有其他侧重？`
+
+**不触发**：已含明确对象和验收标准；上下文已足够清晰；用户说"你看着办"。
+
+---
 
 ## 仓库概览
 
-Unipus 官方 Claude Code 插件仓库，8 个领域插件提供企业级开发工具链。详细功能见 README.md。
+Unipus 官方 Claude Code 插件仓库，8 个领域插件提供企业级开发工具链。**这是插件集合仓库，没有构建/测试命令。**
 
-**操作关键点：**
-- 插件通过 `/plugin-name:skill-name` 调用
-- unipus-devops-plugin 自动加载 SessionStart 和 Notification hooks
-- unipus-fe-dev 是唯一的复合 skill（5 阶段工作流）
+### 插件职责速查
 
-## 快速参考
+| 插件 | 职责 |
+|---|---|
+| `unipus-frontend-plugin` | React/Vue/WPF 前端开发、UI 设计规范 |
+| `unipus-backend-plugin` | API 开发、后端架构、数据库设计 |
+| `unipus-qa-plugin` | 测试用例、JMeter、UI 自动化 |
+| `unipus-prd-plugin` | PRD 文档创建、审查、需求管理 |
+| `unipus-feishu-plugin` | 飞书文档读写、上传、自动化 |
+| `unipus-office-plugin` | Word/Excel/PPT/PDF 生成与处理 |
+| `unipus-devops-plugin` | Jenkins CI/CD、项目分析；内置 SessionStart + Notification hooks |
+| `unipus-mcp-servers` | GitHub Copilot MCP、MasterGo、飞书项目等 MCP 集成 |
 
 ### 目录结构
 
@@ -26,176 +49,55 @@ plugins/{plugin-name}/
 .claude/skills/{skill-name}/SKILL.md  # 项目级 skill（本仓库工作流专用，不进 marketplace）
 ```
 
+---
+
+## 工作流规则
+
+### 提交与推送（强制）
+
+**必须**使用 `unipus-commit` skill，禁止手动执行 git 工作流。说"提交"或"推上去"即可触发。
+
+### 版本管理规则
+
+| 变更路径 | 操作类型 | 版本升级 |
+|---|---|---|
+| `.claude/` 下任何文件 | 任意 | **不升级** |
+| `plugins/` 下新增 skill/hook/command | 新增 | **Minor** `x.X.x` |
+| `plugins/` 下更新/修复已有内容 | 更新 | **Patch** `x.x.X` |
+| `plugins/` 下删除/重命名用户可见功能 | 删除 | **Major** `X.x.x` |
+
+升级时编辑 `.claude-plugin/marketplace.json` 的 `version` 字段，随本次提交一并推送。
+
 ### Skill 调用规则
 
-- 简单 skill: `/plugin-name:skill-name`
-- 复合 skill: `/plugin-name:skill-name:substep`
+- 简单 skill：`/plugin-name:skill-name`
+- 复合 skill：`/plugin-name:skill-name:substep`
+- `unipus-fe-dev` 是唯一的复合 skill（5 阶段工作流），详见 `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md`
 
-**复合 skill 参考：** `unipus-fe-dev` 是唯一的复合 skill（5 阶段工作流），详见 `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md`
-
-### Hooks 配置
+### Hooks
 
 Hooks 自动加载自 `plugins/{plugin-name}/hooks/hooks.json`。当前启用：
-- **SessionStart**: 显示技巧（unipus-devops-plugin）
-- **Notification**: 权限通知（unipus-devops-plugin）
+- **SessionStart**：tips.txt 技巧轮播（unipus-devops-plugin）
+- **Notification**：Windows 权限通知（unipus-devops-plugin）
 
-## 常见开发任务
+> Windows 注意：show-tip.sh 若出现 GBK 编码错误，已在脚本第 34-36 行内置 UTF-8 包装器修复。
 
-这是一个插件集合仓库，不是可构建的项目。仓库层面没有构建/测试命令。
-
-### 提交与推送
-
-本仓库统一使用 `unipus-commit` skill（`.claude/skills/unipus-commit/`）完成提交流程，包含版本号判断、选择性暂存、pull --rebase 和推送。直接说"提交"或"推上去"即可触发。**禁止绕过此 skill 手动执行 git 工作流。**
-
-### 插件开发
-
-创建或修改插件时：
-
-1. **简单 skill**: 在 `plugins/{plugin}/skills/{skill-name}/` 中添加 `SKILL.md`
-2. **复合 skill**: 遵循 `unipus-fe-dev` 模式创建嵌套结构（参见 ARCHITECTURE.md）
-3. **Hooks**: 在 `hooks/hooks.json` 中定义，并在 `hooks/{event}/` 中添加可执行脚本
-
-### 测试与验证
-
-**测试 Skill 是否正确加载：**
-```bash
-# 在 Claude Code 中调用 skill 测试
-/your-plugin:skill-name
-
-# 检查 skill 文件语法（确保 frontmatter 正确）
-head -20 plugins/{plugin-name}/skills/{skill-name}/SKILL.md
-```
-
-**验证 Hooks 配置：**
-```bash
-# 检查 hooks.json 配置
-cat plugins/{plugin-name}/hooks/hooks.json
-
-# 手动测试 SessionStart hook
-bash plugins/unipus-devops-plugin/hooks/sessionstart/show-tip.sh
-
-# 检查 hook 脚本权限（Linux/Mac）
-ls -l plugins/unipus-devops-plugin/hooks/sessionstart/show-tip.sh
-```
-
-**验证 Marketplace 配置：**
-```bash
-# 检查 JSON 格式是否正确
-cat .claude-plugin/marketplace.json | python -m json.tool
-
-# 查看当前版本
-grep '"version"' .claude-plugin/marketplace.json
-```
-
-### Marketplace 配置
-
-插件元数据在 `.claude-plugin/marketplace.json` 中定义：
-
-- 更改时更新 `version` 字段
-- 将新插件添加到 `plugins[]` 数组
-- 包含清晰的 `description` 突出关键特性（尤其是 hooks）
-
-**版本管理规范**详见 `.claude/skills/unipus-commit/SKILL.md` 第二步。关键规则：
-- `.claude/` 下改动不升版本（项目级工具，不发布给用户）
-- `plugins/` 下新增内容 → Minor；更新/修复 → Patch；删除或重命名用户可见内容 → Major
-
-更新版本号后暂存 `.claude-plugin/marketplace.json` 并随本次提交一并推送。
+---
 
 ## 关键文件
 
-- `.claude-plugin/marketplace.json`: 插件仓库元数据和插件列表
-- `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md`: 复合 skill 模式文档（参考实现）
-- `plugins/unipus-devops-plugin/hooks/sessionstart/show-tip.sh`: SessionStart hook 实现（包含 Windows 编码修复）
+| 文件 | 用途 |
+|---|---|
+| `.claude-plugin/marketplace.json` | 插件仓库元数据和版本号 |
+| `.claude/skills/unipus-commit/SKILL.md` | 提交流程 skill（含详细版本规则） |
+| `.claude/skills/update-tips/SKILL.md` | tips.txt 自动更新 skill |
+| `plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt` | 203 条 Claude Code 使用技巧 |
+| `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md` | 复合 skill 模式参考实现 |
 
-## 故障排查
+---
 
-### Hooks 调试
+## 重要约束
 
-**SessionStart hook 失败诊断：**
-
-1. **检查环境变量：**
-   ```bash
-   # 确认 CLAUDE_PLUGIN_ROOT 是否设置
-   echo $CLAUDE_PLUGIN_ROOT
-   ```
-
-2. **手动运行 hook 查看错误：**
-   ```bash
-   cd plugins/unipus-devops-plugin/hooks/sessionstart
-   bash show-tip.sh
-   ```
-
-3. **Windows 编码问题：**
-   - 症状：`'gbk' codec can't encode character` 错误
-   - 原因：Windows 默认使用 GBK 编码，无法处理 emoji
-   - 解决：已在 show-tip.sh 中添加 UTF-8 包装器（第 34-36 行）
-
-4. **检查 tips.txt 和状态文件：**
-   ```bash
-   # 确认 tips.txt 存在
-   ls -l plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
-   
-   # 查看状态文件（如果存在）
-   cat plugins/unipus-devops-plugin/hooks/sessionstart/.tip-state.json
-   ```
-
-**Hooks 未加载：**
-
-1. **检查 hooks.json 配置：**
-   ```bash
-   cat plugins/unipus-devops-plugin/hooks/hooks.json
-   # 确保 JSON 格式正确，事件名小写
-   ```
-
-2. **检查脚本执行权限（Linux/Mac）：**
-   ```bash
-   chmod +x plugins/unipus-devops-plugin/hooks/sessionstart/show-tip.sh
-   ```
-
-### Skill 加载失败
-
-**常见原因：**
-
-1. **Frontmatter 格式错误：**
-   ```bash
-   # 检查 SKILL.md 前几行
-   head -10 plugins/{plugin}/skills/{skill-name}/SKILL.md
-   # 确保有 --- 包裹的 YAML frontmatter
-   ```
-
-2. **命名空间不匹配：**
-   - 确保 skill 名称与文件路径一致
-   - 简单 skill：`plugin:skill-name`
-   - 复合 skill：`plugin:skill-name:substep`
-
-3. **相对路径引用错误：**
-   - 检查主 skill 中的子 skill 引用路径
-   - 例如：`./skills/collect-inputs/SKILL.md`
-
-## 重要说明
-
-- **跨插件无重复 skills**: 每个插件专注于特定领域
-- **Hooks 是可选的**: 目前仅 unipus-devops-plugin 使用 hooks
-- **Skills 可以相互引用**: 封装的子 skills 使用相对路径，跨插件引用使用绝对命名空间
-- **复合 skills 很少见**: 仅在有复杂多阶段工作流时使用（3个以上阶段，每个阶段 >200 行）
-
-## 提问质量引导
-
-当用户的问题属于以下任一情况时，**在回答前**先给出一个更精准的提问版本，询问是否按此继续：
-
-| 模糊信号 | 缺失维度 | 引导方向 |
-|---|---|---|
-| "看看"、"核对"、"检查" | 检查维度不明 | 补充：具体检查哪些方面（语法/逻辑/重复/分类等） |
-| "改改"、"优化"、"整理" | 优化目标不明 | 补充：改进方向（可读性/性能/正确性/风格） |
-| "帮我弄一下"、"搞一下" | 操作范围不明 | 补充：操作对象和期望结果 |
-| 问题少于 15 字且无具体对象 | 成功标准不明 | 补充：什么状态算完成 |
-
-**引导格式（简洁，不打断流畅度）：**
-
-> 建议更精准的提问：「[具体化后的问题]」
-> 按此继续，还是你有其他侧重？
-
-**不触发引导的情况：**
-- 已包含明确操作对象和验收标准的问题
-- 对话上下文已足够清晰（如接续上一轮工作）
-- 用户明确说"随便"或"你看着办"
+- **跨插件无重复 skills**：每个插件专注特定领域，新功能前先确认无跨插件重叠
+- **Skills 可相互引用**：子 skill 用相对路径，跨插件用绝对命名空间
+- **复合 skills 很少见**：仅在 3 个以上阶段且每阶段 >200 行时使用
