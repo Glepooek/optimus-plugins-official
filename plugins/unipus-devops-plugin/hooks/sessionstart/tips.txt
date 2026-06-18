@@ -130,7 +130,7 @@
 ---
 [排障] 🔄 /cost 成本查看\n功能：查看当前会话或最近使用的成本信息\n效果：在长会话、重度使用或自动化场景里更容易感知消耗情况\n例子：长时间排查问题后用 /cost 看看这轮会话花费如何
 ---
-[交互] ⚙️ /config 快速配置\n功能：打开交互式配置界面修改 settings.json\n效果：无需手动编辑 JSON，通过 UI 快速调整配置\n例子：/config 修改主题、模型、输出风格等常用设置
+[交互] ⚙️ /config 快速配置\n功能：打开交互式配置界面修改 settings.json，或直接用 /config key=value 语法设置单个配置项（支持 interactive、-p 和 Remote Control 模式）\n效果：无需手动编辑 JSON，通过 UI 快速调整配置；直接写 key=value 更快\n例子：/config 修改主题、模型、输出风格等常用设置；/config outputStyle=Explanatory 直接设置输出风格
 ---
 [交互] 🤖 /agents 代理管理\n功能：查看和管理当前可用的 agents 配置\n效果：快速了解哪些 agent 可用，每个 agent 的能力和限制\n例子：/agents 查看 code-reviewer、test-runner 等 agent
 ---
@@ -403,3 +403,23 @@
 [交互] 🎯 高质量提问框架\n功能：精确提问让 Claude 输出质量显著提升，三要素：检查维度 + 操作范围 + 成功标准\n效果：避免"帮我看看"类模糊指令导致的方向偏差，一次到位减少来回\n例子：❌ "核对一下" → ✅ "核对所有条目，重点检查：命令语法、重复条目、分类标签是否准确，不符合官方文档的直接修正"
 ---
 [交互] 📐 提问维度补全技巧\n功能：在模糊问题上补充三个维度：操作对象（对什么）、操作动作（做什么）、验收标准（什么算完成）\n效果：Claude 获得足够上下文后一次性给出完整答案，而不是来回澄清\n例子：❌ "优化一下" → ✅ "优化 tips.txt 中的 CLI 类条目，目标：例子中的命令都是完整可执行形式，无语法错误"
+---
+[配置] 🔒 Tool(param:value) 权限参数匹配\n功能：settings.json 的 allow/deny 规则支持 Tool(param:value) 语法匹配工具输入参数，支持 * 通配符\n效果：可以按参数值精细控制工具权限，如按模型名阻止特定子代理\n例子：deny: ["Agent(model:opus)"] 阻止使用 Opus 模型的子代理；allow: ["Read(src/**)"] 只允许读取 src 目录
+---
+[配置] 📱 CLAUDE_CLIENT_PRESENCE_FILE 环境变量\n功能：设置 CLAUDE_CLIENT_PRESENCE_FILE 指向一个标记文件，Claude 检测到文件存在时抑制移动端推送通知\n效果：在电脑前工作时避免手机收到重复通知，离席时自动恢复推送\n例子：CLAUDE_CLIENT_PRESENCE_FILE=~/.claude-present claude 启动时创建标记文件
+---
+[配置] 🔗 footerLinksRegexes 底部链接匹配\n功能：settings.json 中配置 footerLinksRegexes 正则表达式数组，用于在 footer 行匹配链接徽章\n效果：自定义 footer 显示的链接内容，由用户或托管设置配置\n例子：{"footerLinksRegexes": ["https://jira\\.company\\.com/.*"]} 在 footer 显示 Jira 链接徽章
+---
+[配置] 🛡️ enforceAvailableModels 托管模型限制\n功能：托管设置 enforceAvailableModels 启用后，availableModels 白名单也约束 Default 模型；用户或项目设置无法扩大托管列表\n效果：企业环境中强制执行模型白名单，防止用户绕过限制\n例子：{"enforceAvailableModels": true, "availableModels": ["sonnet", "haiku"]} 只允许使用这两个模型
+---
+[配置] 🖱️ wheelScrollAccelerationEnabled 滚轮加速\n功能：settings.json 中设置 wheelScrollAccelerationEnabled: false 禁用全屏模式下鼠标滚轮滚动加速\n效果：获得线性滚动体验，避免加速导致滚动过快难以定位\n例子：{"wheelScrollAccelerationEnabled": false} 禁用滚轮加速，适合精确浏览长输出
+---
+[配置] 🏖️ sandbox.allowAppleEvents 沙箱 Apple Events\n功能：settings.json 中设置 sandbox.allowAppleEvents: true 允许沙箱命令在 macOS 上发送 Apple Events\n效果：沙箱内的脚本可以与其他 macOS 应用交互（如自动化 AppleScript）\n例子：{"sandbox": {"allowAppleEvents": true}} 允许沙箱内执行 AppleScript 自动化
+---
+[高级] 🪆 子代理嵌套生成\n功能：子代理现在可以生成自己的子代理，最多支持 5 层嵌套深度\n效果：复杂任务可以递归分解，每层子代理专注于子任务，实现更精细的分工\n例子：Agent 派生一个研究 agent，该 agent 再派生多个搜索 agent 并行收集信息
+---
+[交互] 🔍 /plugin 搜索栏\n功能：/plugin 浏览 marketplace 插件时新增搜索栏\n效果：快速过滤和查找需要的插件，无需滚动浏览完整列表\n例子：/plugin marketplace 后输入关键词搜索相关插件
+---
+[集成] 🔗 post-session 生命周期钩子\n功能：Self-hosted runner 新增 post-session 钩子，会话结束后、工作区删除前运行；子进程 SIGTERM→SIGKILL 窗口可配置（默认 5s）\n效果：快照未提交工作、导出日志、清理资源等后处理任务\n例子：post-session 钩子在会话结束时自动备份工作区或导出执行日志
+---
+[配置] 💬 会话标题语言适配\n功能：会话标题现在根据对话语言自动生成，可通过 language 设置固定语言\n效果：中文对话生成中文标题，英文对话生成英文标题，更易识别会话内容\n例子：language: "chinese" 确保所有会话标题都是中文
