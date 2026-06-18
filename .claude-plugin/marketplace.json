@@ -61,7 +61,7 @@
     {
       "name": "unipus-devops-plugin",
       "source": "./plugins/unipus-devops-plugin",
-      "description": "DevOps 工具集：Jenkins CI/CD、API 变更通知、应用初始化、项目分析、工作周报转写。内置 Hooks：SessionStart（213条技巧智能轮播）、Notification（Windows权限通知）"
+      "description": "DevOps 工具集：Jenkins CI/CD、API 变更通知、应用初始化、项目分析、工作周报转写。内置 Hooks：SessionStart（425条技巧智能轮播）、Notification（Windows权限通知）"
     },
     {
       "name": "unipus-mcp-servers",

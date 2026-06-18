@@ -4,7 +4,7 @@
 
 ## 仓库概览
 
-Unipus 官方 Claude Code 插件仓库，8 个领域插件提供企业级开发工具链。**这是插件集合仓库，没有构建/测试命令。**
+Unipus 官方 Claude Code 插件仓库，8 个领域插件提供企业级开发工具链。
 
 ### 插件职责速查
 
@@ -34,13 +34,45 @@ plugins/{plugin-name}/
 
 ---
 
-## 工作流规则
+## 重要约束
 
-### 提交与推送（强制）
+- **跨插件无重复 skills**：每个插件专注特定领域，新功能前先确认无跨插件重叠
+- **Skills 可相互引用**：子 skill 用相对路径，跨插件用绝对命名空间
+- **复合 skills 很少见**：仅在 3 个以上阶段且每阶段 >200 行时使用
 
-**必须**使用 `unipus-commit` skill，禁止手动执行 git 工作流。说"提交"或"推上去"即可触发。
+---
 
-### 版本管理规则
+## 开发规范
+
+### Skill 调用规则
+
+- 简单 skill：`/plugin-name:skill-name`
+- 复合 skill：`/plugin-name:skill-name:substep`
+- `unipus-fe-dev` 是唯一的复合 skill（5 阶段工作流），触发词：`/unipus-frontend-plugin:unipus-fe-dev`，详见 `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md`
+
+### Hooks
+
+Hooks 自动加载自 `plugins/{plugin-name}/hooks/hooks.json`，当前配置见 `plugins/unipus-devops-plugin/hooks/hooks.json`。
+
+---
+
+## 本地测试
+
+修改任何 skill / hook / command 后，用 `--plugin-dir` 加载本仓库进行测试：
+
+```bash
+# 加载本仓库所有插件（推荐用于完整测试）
+claude --plugin-dir "E:\ProjectxPlex\unipus-plugins-official"
+
+# 也可以只加载单个插件目录
+claude --plugin-dir "E:\ProjectxPlex\unipus-plugins-official\plugins\unipus-devops-plugin"
+```
+
+启动新会话后，直接输入触发词验证行为（无需重启、无需重新安装）。文件改动立即生效。
+
+---
+
+## 版本管理规则
 
 | 变更路径 | 操作类型 | 版本升级 |
 |---|---|---|
@@ -51,19 +83,11 @@ plugins/{plugin-name}/
 
 升级时编辑 `.claude-plugin/marketplace.json` 的 `version` 字段，随本次提交一并推送。
 
-### Skill 调用规则
+---
 
-- 简单 skill：`/plugin-name:skill-name`
-- 复合 skill：`/plugin-name:skill-name:substep`
-- `unipus-fe-dev` 是唯一的复合 skill（5 阶段工作流），详见 `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md`
+## 提交与推送（强制）
 
-### Hooks
-
-Hooks 自动加载自 `plugins/{plugin-name}/hooks/hooks.json`。当前启用：
-- **SessionStart**：tips.txt 技巧轮播（unipus-devops-plugin）
-- **Notification**：Windows 权限通知（unipus-devops-plugin）
-
-> Windows 注意：show-tip.sh 若出现 GBK 编码错误，已在脚本第 34-36 行内置 UTF-8 包装器修复。
+**必须**使用 `unipus-commit` skill，禁止手动执行 git 工作流。说"提交"或"推上去"即可触发。
 
 ---
 
@@ -74,13 +98,5 @@ Hooks 自动加载自 `plugins/{plugin-name}/hooks/hooks.json`。当前启用：
 | `.claude-plugin/marketplace.json` | 插件仓库元数据和版本号 |
 | `.claude/skills/unipus-commit/SKILL.md` | 提交流程 skill（含详细版本规则） |
 | `.claude/skills/update-tips/SKILL.md` | tips.txt 自动更新 skill |
-| `plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt` | 203 条 Claude Code 使用技巧 |
+| `plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt` | 425 条 Claude Code 使用技巧 |
 | `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md` | 复合 skill 模式参考实现 |
-
----
-
-## 重要约束
-
-- **跨插件无重复 skills**：每个插件专注特定领域，新功能前先确认无跨插件重叠
-- **Skills 可相互引用**：子 skill 用相对路径，跨插件用绝对命名空间
-- **复合 skills 很少见**：仅在 3 个以上阶段且每阶段 >200 行时使用
