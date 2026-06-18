@@ -67,13 +67,14 @@
 
 ### 7. [unipus-devops-plugin](plugins/unipus-devops-plugin) - DevOps 工具集
 
-**功能：** Jenkins CI/CD、API 变更通知、应用初始化、项目分析
+**功能：** Jenkins CI/CD、API 变更通知、应用初始化、项目分析、工作周报转写
 
 **核心 Skills：**
 - Jenkins 流水线配置
 - CI/CD 自动化
 - 应用初始化脚手架
 - 项目结构分析
+- **工作周报转写** - 从对话、日志、git 提交中自动提取工作内容，生成标准四段式周报
 
 **内置 Hooks（自动加载）：**
 - **SessionStart Hook** - 会话启动时展示技巧（213条技巧智能轮播，带进度追踪）
