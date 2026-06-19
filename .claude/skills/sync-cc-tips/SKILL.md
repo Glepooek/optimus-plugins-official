@@ -1,20 +1,32 @@
 ---
-name: update-tips
-description: 从 Claude Code 最新 changelog 自动更新 tips.txt：新增未覆盖条目、修正过时内容、删除已废弃功能，同步所有文档数字，最后调用 unipus-commit 提交。触发场景：用户说 "/update-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"。可附带版本数量参数，如 "/update-tips 5" 表示只看最近5个版本。
+name: sync-cc-tips
+description: 从 Claude Code 最新 changelog 自动同步 tips.txt：新增未覆盖条目、修正过时内容、删除已废弃功能，同步所有文档数字，最后调用 unipus-commit 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 ---
 
-# /update-tips
+# /sync-cc-tips
 
-从 Claude Code 最新 changelog 全自动更新 tips.txt，无需人工干预，完成后展示摘要并提交。
+从 Claude Code 最新 changelog 全自动同步 tips.txt，无需人工干预，完成后展示摘要并提交。
 
 ## 第一步 — 抓取 changelog
 
+**优先使用 Playwright CLI**（JS 渲染，内容更完整）：
+
+调用 `playwright-cli` skill，执行以下步骤：
+1. 导航至 `https://github.com/anthropics/claude-code/releases`
+2. 等待页面加载完成（等待 `.release-entry` 或 `[data-hpc]` 元素出现）
+3. 提取每个 release 的版本号和正文内容（展开所有折叠块）
+
+**降级条件**：若 playwright-cli skill 不可用、浏览器启动失败或抓取结果为空，则：
+> ⚠️ Playwright CLI 不可用，降级为 WebFetch（静态 HTML，部分版本 body 可能不完整）
+
+改用：
 ```
 WebFetch: https://github.com/anthropics/claude-code/releases
 ```
 
+**无论使用哪种方式：**
 - 默认提取最近 **10 个版本**的更新内容
-- 若用户指定数量（如 `/update-tips 5`），按指定数量提取
+- 若用户指定数量（如 `/sync-cc-tips 5`），按指定数量提取
 - 记录版本范围（如 v2.1.160 → v2.1.170），用于摘要展示
 
 ## 第二步 — 读取现有 tips.txt
@@ -94,7 +106,7 @@ Edit: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 按以下格式输出执行摘要：
 
 ```
-✅ update-tips 完成 · v{起始版本} → v{最新版本}
+✅ sync-cc-tips 完成 · v{起始版本} → v{最新版本}
 
 📥 新增  N 条
   · [分类] 条目标题

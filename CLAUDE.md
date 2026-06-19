@@ -97,6 +97,6 @@ claude --plugin-dir "E:\ProjectxPlex\unipus-plugins-official\plugins\unipus-devo
 |---|---|
 | `.claude-plugin/marketplace.json` | 插件仓库元数据和版本号 |
 | `.claude/skills/unipus-commit/SKILL.md` | 提交流程 skill（含详细版本规则） |
-| `.claude/skills/update-tips/SKILL.md` | tips.txt 自动更新 skill |
+| `.claude/skills/sync-cc-tips/SKILL.md` | tips.txt 自动同步 skill（从 CC changelog 同步） |
 | `plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt` | 425 条 Claude Code 使用技巧 |
 | `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md` | 复合 skill 模式参考实现 |
