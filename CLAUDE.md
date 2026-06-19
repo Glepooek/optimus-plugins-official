@@ -87,7 +87,7 @@ claude --plugin-dir "E:\ProjectxPlex\unipus-plugins-official\plugins\unipus-devo
 
 ## 提交与推送（强制）
 
-**必须**使用 `publish-cc-plugin` skill，禁止手动执行 git 工作流。说"提交"或"推上去"即可触发。
+**必须**使用 `commit-cc-plugin` skill，禁止手动执行 git 工作流。说"提交"或"推上去"即可触发。
 
 ---
 
@@ -96,7 +96,7 @@ claude --plugin-dir "E:\ProjectxPlex\unipus-plugins-official\plugins\unipus-devo
 | 文件 | 用途 |
 |---|---|
 | `.claude-plugin/marketplace.json` | 插件仓库元数据和版本号 |
-| `.claude/skills/publish-cc-plugin/SKILL.md` | 提交发布 skill（含版本决策规则） |
+| `.claude/skills/commit-cc-plugin/SKILL.md` | 提交发布 skill（含版本决策规则） |
 | `.claude/skills/sync-cc-tips/SKILL.md` | tips.txt 自动同步 skill（从 CC changelog 同步） |
 | `plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt` | 425 条 Claude Code 使用技巧 |
 | `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md` | 复合 skill 模式参考实现 |

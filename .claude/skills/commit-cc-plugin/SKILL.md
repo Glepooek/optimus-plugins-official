@@ -1,9 +1,10 @@
 ---
-name: publish-cc-plugin
-description: 在 unipus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户明确表达提交或推送意图，如说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"、"推一下"、"存一下"。**仅凭编辑文件本身不触发此 skill，必须有用户明确的提交指令。**
+name: commit-cc-plugin
+description: 在 unipus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户明确表达提交或推送意图，如说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"、"推一下"、"存一下"。
+disable-model-invocation:true
 ---
 
-# /publish-cc-plugin
+# /commit-cc-plugin
 
 本仓库专用发布工作流，完成版本决策、选择性暂存、提交和推送到 master。
 
