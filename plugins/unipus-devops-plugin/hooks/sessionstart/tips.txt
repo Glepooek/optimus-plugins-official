@@ -130,7 +130,7 @@
 ---
 [排障] 🔄 /cost 成本查看\n功能：查看当前会话或最近使用的成本信息\n效果：在长会话、重度使用或自动化场景里更容易感知消耗情况\n例子：长时间排查问题后用 /cost 看看这轮会话花费如何
 ---
-[交互] ⚙️ /config 快速配置\n功能：打开交互式配置界面修改 settings.json，或直接用 /config key=value 语法设置单个配置项（支持 interactive、-p 和 Remote Control 模式）\n效果：无需手动编辑 JSON，通过 UI 快速调整配置；直接写 key=value 更快\n例子：/config 修改主题、模型、输出风格等常用设置；/config outputStyle=Explanatory 直接设置输出风格
+[交互] ⚙️ /config 快速配置\n功能：打开交互式配置界面修改 settings.json，或直接用 /config key=value 语法设置单个配置项（支持 interactive、-p 和 Remote Control 模式）；/config --help 列出所有可用的 key=value 简写键\n效果：无需手动编辑 JSON，通过 UI 快速调整配置；直接写 key=value 更快\n例子：/config 修改主题、模型等常用设置；/config outputStyle=Explanatory 直接设置；/config --help 查看所有可设置项
 ---
 [交互] 🤖 /agents 代理管理\n功能：查看和管理当前可用的 agents 配置\n效果：快速了解哪些 agent 可用，每个 agent 的能力和限制\n例子：/agents 查看 code-reviewer、test-runner 等 agent
 ---
@@ -423,3 +423,9 @@
 [集成] 🔗 post-session 生命周期钩子\n功能：Self-hosted runner 新增 post-session 钩子，会话结束后、工作区删除前运行；子进程 SIGTERM→SIGKILL 窗口可配置（默认 5s）\n效果：快照未提交工作、导出日志、清理资源等后处理任务\n例子：post-session 钩子在会话结束时自动备份工作区或导出执行日志
 ---
 [配置] 💬 会话标题语言适配\n功能：会话标题现在根据对话语言自动生成，可通过 language 设置固定语言\n效果：中文对话生成中文标题，英文对话生成英文标题，更易识别会话内容\n例子：language: "chinese" 确保所有会话标题都是中文
+---
+[高级] 🛡️ Auto 模式破坏性命令防护\n功能：Auto 模式自动拦截破坏性 git 命令：git reset --hard、git checkout -- .、git clean -fd、git stash drop、git commit --amend（当前会话非 agent 创建时）；以及 terraform/pulumi/cdk destroy（未指定 stack 时）\n效果：防止自动化脚本误执行不可逆操作，保护代码和基础设施安全\n例子：Auto 模式下 Claude 发起 git reset --hard 会被自动拦截，需要用户手动确认或改用其他方式
+---
+[配置] 🔗 attribution.sessionUrl 链接控制\n功能：settings.json 中设置 attribution.sessionUrl: false，在 web/Remote Control 会话的提交和 PR 中省略 claude.ai 链接\n效果：企业或私有化部署场景中不希望代码含有 claude.ai 链接时使用\n例子：{"attribution": {"sessionUrl": false}} 使提交信息不含 claude.ai 会话链接
+---
+[集成] 📂 嵌套 .claude/skills 目录支持\n功能：嵌套的 .claude/skills 目录现在支持加载；名称冲突时显示为 <dir>:<name>；嵌套 .claude/ 目录中，距离最近的 agent/workflow/output-style 配置优先\n效果：子目录可以有自己的 skills 配置，方便 monorepo 场景按子项目隔离 skill 集\n例子：projects/frontend/.claude/skills/my-skill 会以 frontend:my-skill 形式加载
