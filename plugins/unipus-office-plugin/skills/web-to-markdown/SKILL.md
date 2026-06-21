@@ -1,5 +1,5 @@
 ---
-name: unipus-office-web-to-markdown
+name: web-to-markdown
 license: MIT
 metadata:
   version: "1.9.0"
@@ -37,7 +37,7 @@ dependencies:
     check_command: curl --version
 ---
 
-# unipus-office-web-to-markdown
+# web-to-markdown
 
 给定一个或多个 URL，将网页内容以 Markdown 格式保存到 `docs/` 目录，自动翻译为中文。
 
@@ -167,7 +167,7 @@ python -m markitdown /tmp/page.html > docs/.raw-<filename>.md && rm /tmp/page.ht
 
 ```javascript
 Workflow({
-  scriptPath: "plugins/unipus-office-plugin/skills/unipus-office-web-to-markdown/scripts/translate_workflow.js",
+  scriptPath: "plugins/unipus-office-plugin/skills/web-to-markdown/scripts/translate_workflow.js",
   args: {
     raw:    "<绝对路径>/docs/.raw-<filename>.md",
     out:    "<绝对路径>/docs/<path>/<filename>.md",

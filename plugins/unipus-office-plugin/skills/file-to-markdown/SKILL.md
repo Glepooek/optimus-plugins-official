@@ -1,5 +1,5 @@
 ---
-name: unipus-office-file-to-markdown
+name: file-to-markdown
 license: MIT
 metadata:
   version: "1.1.0"
@@ -52,7 +52,7 @@ dependencies:
     install_command: pip install 'markitdown[xlsx]'
 ---
 
-# unipus-office-file-to-markdown
+# file-to-markdown
 
 将单个本地文件转换为 Markdown，保存到 `docs/` 目录，自动翻译英文内容为中文。
 

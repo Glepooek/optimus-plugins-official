@@ -1,5 +1,5 @@
 ---
-name: unipus-office-docx
+name: docx-writer
 license: MIT
 metadata:
   version: "1.0.0"
@@ -30,7 +30,7 @@ triggers:
   - 套模板
 ---
 
-# unipus-office-docx
+# docx-writer
 
 通过 CLI 工具或基于 OpenXML SDK（.NET）构建的 C# 脚本来创建、编辑和排版 DOCX 文档。
 
