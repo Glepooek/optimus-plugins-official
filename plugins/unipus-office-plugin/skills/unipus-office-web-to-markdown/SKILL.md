@@ -89,21 +89,25 @@ https://kiro.dev/docs/cli/context/
 ```
 1. 确定保存路径
 2. 抓取原文，落盘为 docs/.raw-<filename>.md，记录行数
-3. 扫描原文图片 URL，下载内容图片到 docs/assets/
+3. 扫描原文图片 URL，下载内容图片到 docs/assets/（见媒体处理规则）
 4. 翻译并写入目标文件（行数 ≤ 300 → 直接翻译；> 300 → Workflow 分段翻译）
 5. 运行后处理：python scripts/post_process.py <out> [--base-url <BASE_URL>]
-6. 运行核对：python scripts/verify.py docs/.raw-<filename>.md <out>
-7. 差值非零则补全，重跑步骤 6 直至归零；通过后删除临时文件
-8. 输出单行确认
+6. 【第一轮核对】结构数量：python scripts/verify.py docs/.raw-<filename>.md <out>
+   差值非零则补全，重跑直至归零
+7. 【第二轮核对】内容质量：python scripts/verify_quality.py docs/.raw-<filename>.md <out>
+   有问题则补全修正，重跑直至通过
+8. 两轮通过后删除临时文件，输出单行确认
 ```
 
 ### 存量核对流程
 
 ```
 1. 抓取最新原文，落盘为 docs/.raw-<filename>.md
-2. 运行核对：python scripts/verify.py docs/.raw-<filename>.md <out>
-3. 差值非零则补全，重跑步骤 2 直至归零；通过后删除临时文件
-4. 输出单行确认
+2. 【第一轮核对】结构数量：python scripts/verify.py docs/.raw-<filename>.md <out>
+   差值非零则补全，重跑直至归零
+3. 【第二轮核对】内容质量：python scripts/verify_quality.py docs/.raw-<filename>.md <out>
+   有问题则补全修正，重跑直至通过
+4. 两轮通过后删除临时文件，输出单行确认
 ```
 
 ---
@@ -222,7 +226,38 @@ Workflow({
 
 ---
 
-## 八、输出与错误
+## 八、核对脚本
+
+### 第一轮：结构数量核对
+
+见 [`scripts/verify.py`](scripts/verify.py)
+
+```bash
+python scripts/verify.py docs/.raw-<filename>.md docs/<path>/<filename>.md
+```
+
+对比标题数、代码块数、表格行数、列表项数，差值全零退出码 0；任意非零退出码 1。
+
+### 第二轮：内容质量核对
+
+见 [`scripts/verify_quality.py`](scripts/verify_quality.py)
+
+```bash
+python scripts/verify_quality.py docs/.raw-<filename>.md docs/<path>/<filename>.md [--base-url <BASE_URL>]
+```
+
+检查以下四项，任意失败退出码 1：
+
+| 检查项 | 说明 |
+| :--- | :--- |
+| 段落完整性 | 按章节位置顺序对比段落数，译文段落数不得少于原文 |
+| 图片引用 | 原文每张内容图片在译文中均有对应的本地路径引用 |
+| 链接可达性 | 译文中所有 `](http` 链接返回 2xx/3xx（HEAD 请求，超时 5s，失败标注不终止） |
+| 视频保留 | 原文每个 YouTube embed 在译文中均有 `watch?v=` 格式的链接 |
+
+---
+
+## 九、输出与错误
 
 **输出格式：**
 ```
