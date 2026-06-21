@@ -2,7 +2,7 @@
 name: unipus-office-web-to-markdown
 license: MIT
 metadata:
-  version: "1.6.0"
+  version: "1.9.0"
   category: document-processing
   author: Glepooek
 description: >
@@ -26,17 +26,15 @@ triggers:
   - scrape
   - crawl
 dependencies:
-  - name: curl
-    description: 用于抓取静态网页内容
-    required: true
-    check_command: curl --version
-    install_url: https://curl.se/download.html
   - name: markitdown
-    description: HTML/URL 转 Markdown（缺失时回退到 regex 清理路径）
+    description: HTML/URL 转 Markdown
     required: false
     check_command: python -m markitdown --version
-    install_url: https://github.com/microsoft/markitdown
     install_command: pip install markitdown
+  - name: curl
+    description: markitdown 不可用时的回退抓取工具
+    required: false
+    check_command: curl --version
 ---
 
 # unipus-office-web-to-markdown
@@ -47,62 +45,38 @@ dependencies:
 
 ## 一、输入格式
 
-### 单个 URL
-```
-https://kiro.dev/docs/cli/guide/
-把 https://kiro.dev/docs/cli/guide/ 存到 docs/kiro/
-```
+**单个 URL：** 直接粘贴，或附带目录说明。
 
-### 对话内多 URL（内联批量）
+**内联批量：** 用 `# 目录` 分组，每行一个 URL：
 ```
 # docs/kiro
 https://kiro.dev/docs/cli/guide/
 https://kiro.dev/docs/cli/context/
-
-# docs/api
-https://kiro.dev/docs/api/reference/
 ```
 
-### `.txt` 列表文件
-
-格式与内联批量一致，支持 `URL 文件名.md` 两段格式，文件名可省略。
-运行 `python scripts/batch_fetch.py <file.txt>` 解析，得到任务列表后进入批量执行流程。
-
-**子目录语法：**
-- `# 路径` 声明后续 URL 的完整保存目录，如 `# docs/kiro` → 存到 `docs/kiro/`
-- 无 `#` 声明时，按下节路径推断规则自动确定目录
+**`.txt` 列表文件：** 格式同内联批量，支持 `URL 文件名.md` 两段格式（文件名可省略）。
+运行 `python scripts/batch_fetch.py <file.txt>` 解析后进入批量执行流程。
 
 ---
 
-## 二、路径推断规则
+## 二、路径推断
 
 保存路径 = `<目录>/<文件名>.md`
 
-**目录（二选一）：**
-1. 有 `#` 声明 → 直接使用声明值
-2. 无声明 → 取 URL 路径去掉 host 和开头通用前缀（`/docs/`、`/help/`），其余层级映射到 `docs/` 下
+**目录：** 有 `#` 声明则直接使用；否则取 URL 路径去掉 host 和开头通用前缀（`/docs/`、`/help/`），映射到 `docs/` 下。
 
-**文件名优先级：**
-1. 用户明确指定 → 直接使用
-2. URL 末段非通用词 → 取末段
-3. URL 末段为通用词或空 → 抓取后取 `<title>` 转 kebab-case
+**文件名：** 用户指定 > URL 末段（非通用词）> 抓取后取 `<title>` 转 kebab-case。
+通用词：`index` `docs` `page` `home` `overview` `default` `main`
 
-通用词：`index`、`docs`、`page`、`home`、`overview`、`default`、`main`
-
-**示例：**
-
-| 用户输入 | 保存路径 |
-|---------|---------|
+| 示例输入 | 保存路径 |
+| :--- | :--- |
 | `https://kiro.dev/docs/cli/guide/` | `docs/cli/guide.md` |
 | 同上 + `# docs/kiro` | `docs/kiro/guide.md` |
-| 同上，存为 `my-guide.md` | `docs/my-guide.md` |
-| `https://kiro.dev/docs/`（通用词末段） | `docs/<title-kebab>.md` |
+| `https://kiro.dev/docs/` | `docs/<title-kebab>.md` |
 
 ---
 
 ## 三、执行流程
-
-每条 URL 先判断目标文件是否存在，走不同分支：
 
 ```
 目标文件存在？
@@ -110,234 +84,165 @@ https://kiro.dev/docs/api/reference/
   └─ 是 → 存量核对流程
 ```
 
-### 零级路径：特殊 URL（markitdown 直接处理）
-
-在进入三级降级流程前，先检查 URL 是否属于以下特殊类型。若匹配且 markitdown 可用，直接调用 markitdown，跳过后续所有降级步骤：
-
-| URL 特征 | markitdown 转换器 | 优势 |
-|----------|------------------|------|
-| `youtube.com` / `youtu.be` | YouTube 转换器 | 提取字幕而非页面文本 |
-| `wikipedia.org` | Wikipedia 转换器 | 提取干净正文，去除模板噪音 |
-| URL 以 `.rss` / `.atom` 结尾，或 Content-Type 含 `application/rss+xml` | RSS 转换器 | 结构化条目提取 |
-
-**检测 markitdown 是否可用：**
-```bash
-python -m markitdown --version
-```
-不可用时跳过零级路径，直接进入三级降级流程。
-
-**执行方式（命令行调用）：**
-```bash
-python -m markitdown "<URL>"
-```
-输出即为 Markdown 文本，直接进入翻译规则步骤，无需进一步清理。
-
-### 抓取策略（三级降级）
-
-**一级：curl + markitdown**（静态 / SSR 页面，默认路径）
-
-**若 markitdown 可用：**
-```bash
-python -m markitdown "<URL>"
-```
-直接输出 Markdown，无需额外清理步骤。
-
-**若 markitdown 不可用（回退）：**
-```bash
-curl -s "<URL>" -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
-| python3 -c "
-import sys, re
-html = sys.stdin.read()
-html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
-html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL)
-text = re.sub(r'<[^>]+>', ' ', html)
-text = re.sub(r'[ \t]+', ' ', text)
-text = re.sub(r'\n{3,}', '\n\n', text)
-print(text)
-"
-```
-
-内容较长时分段抓取（每次偏移 8000 字符）直到完整。
-
-> 注：使用 markitdown 时，若返回内容 < 200 字符仍视为无效，进入二级。
-
-**curl 后执行动态页面判定**（满足任一 → 内容无效，进入二级；规则 5 直接失败）：
-
-| # | 规则 | 说明 |
-|---|------|------|
-| 1 | 正文字符数 < 200 | 基本空壳 |
-| 2 | 含 SPA 框架标记且正文 < 500 字符 | `id="root"` / `id="app"` / `id="__nuxt"` / `data-reactroot` |
-| 3 | 含 JS 数据注入标记（无论正文长短） | `__NEXT_DATA__` / `__NUXT__` / `window.__INITIAL_STATE__` |
-| 4 | 含骨架屏特征词 | `class="skeleton"` / `loading-placeholder` / `shimmer` |
-| 5 | HTTP 非 200 且非 4xx | 网络错误，直接标记失败 |
-
-**二级：Playwright CLI**（curl 内容无效时）
-
-通过 `npx @playwright/cli` 启动无头浏览器抓取动态页面。用 `-s=fetch` 绑定会话名，确保多次调用共享同一浏览器进程。
-
-默认使用 `--browser=msedge`（调用系统已安装的 Edge，零下载）；若系统无 Edge 则改用 `--browser=chrome`；两者均不可用时省略 `--browser` 参数（会触发 Chromium 自动下载并缓存）：
-
-```bash
-npx @playwright/cli -s=fetch open --browser=msedge "<URL>"
-npx @playwright/cli -s=fetch eval "() => document.body.innerText"
-npx @playwright/cli -s=fetch close
-```
-
-需要交互（如点击加载更多）时：
-```bash
-npx @playwright/cli -s=fetch click "button.load-more"
-npx @playwright/cli -s=fetch eval "() => document.body.innerText"
-```
-
-调试时加 `--headed` 可见浏览器窗口；`snapshot --filename=snap.yaml` 可将页面结构写入文件辅助定位元素。
-
-**若 markitdown 可用，将 HTML 写入临时文件后转换（保留结构优于纯文本）：**
-```bash
-# 先获取完整 HTML（而非 innerText）
-npx @playwright/cli -s=fetch eval "() => document.documentElement.outerHTML" > /tmp/page.html
-python -m markitdown /tmp/page.html
-rm /tmp/page.html
-```
-
-**若 markitdown 不可用，保持原有 innerText 方式：**
-```bash
-npx @playwright/cli -s=fetch eval "() => document.body.innerText"
-```
-
-抓取后同样执行动态页面判定（规则 1-4）：有效 → 继续处理，标注「动态抓取」；无效 → 进入三级。
-
-**三级：WebFetch**（Playwright CLI 不可用或内容仍无效）
-
-调用时明确要求：「返回页面完整原始文本，不要省略、不要总结、不要截断任何部分」。长页面需多次调用补全，结果标注「WebFetch，内容可能不完整」。
-
 ### 新建流程
 
 ```
-1. 按路径推断规则确定保存路径
-2. 抓取网页原始内容（见抓取策略）
-3. 清理无关元素（导航栏、页脚、侧边栏、Cookie 提示、广告）
-4. 【媒体前置】扫描原文所有图片，按媒体处理规则下载内容图片到 docs/assets/，
-   确认每张图片的本地路径后再进入下一步——不得推迟到核对阶段补救
-5. 转换为 Markdown，翻译为中文（见翻译规则）
-6. 文档结构：副标题紧跟主标题，元信息（来源/日期/分类）在副标题之后
-7. 写入文件（目录不存在则自动创建）
-8. 【两轮核对】执行下方核对规程
-9. 输出单行确认
+1. 确定保存路径
+2. 抓取原文，落盘为 docs/.raw-<filename>.md，记录行数
+3. 扫描原文图片 URL，下载内容图片到 docs/assets/
+4. 翻译并写入目标文件（行数 ≤ 300 → 直接翻译；> 300 → Workflow 分段翻译）
+5. 运行后处理：python scripts/post_process.py <out> [--base-url <BASE_URL>]
+6. 运行核对：python scripts/verify.py docs/.raw-<filename>.md <out>
+7. 差值非零则补全，重跑步骤 6 直至归零；通过后删除临时文件
+8. 输出单行确认
 ```
 
-### 核对规程（新建 & 存量共用）
-
-**第一轮：逐段落逐句比对**
-
-按以下顺序逐项检查，每项确认后再进入下一项：
-
-1. **段落计数**：统计原文段落数（以空行为分隔），与文件段落数对比；数字不一致立即定位差异段落
-2. **每节最后一段/最后一句**：重点比对，这是最容易遗漏的位置
-3. **列表项计数**：原文每个无序/有序列表的项数，与文件完全一致
-4. **表格行列数**：每张表格行数和列数均与原文匹配
-5. **代码块数量与完整性**：代码块个数一致，内容无截断
-6. **段落内补充说明**：段落中间的括号注释、版本说明、例外情况均完整保留
-7. **图片引用**：每张已下载的内容图片在文件中均有正确的本地路径引用
-
-**第二轮：补全后复查**
-
-第一轮发现的所有差异补全后，针对每处补全位置重新对比原文，确认无遗漏。
-
-### 存量核对流程（文件已存在）
+### 存量核对流程
 
 ```
-1. 抓取网页原始内容
-2. 读取本地文件
-3. 执行上方【核对规程】两轮核对
+1. 抓取最新原文，落盘为 docs/.raw-<filename>.md
+2. 运行核对：python scripts/verify.py docs/.raw-<filename>.md <out>
+3. 差值非零则补全，重跑步骤 2 直至归零；通过后删除临时文件
 4. 输出单行确认
 ```
 
-### 输出格式
+---
 
+## 四、抓取策略（三级降级）
+
+**原则：抓取结果必须落盘，不直接读进对话上下文。**
+
+### 一级：markitdown（默认）
+
+```bash
+python -m markitdown "<URL>" > docs/.raw-<filename>.md
+wc -l docs/.raw-<filename>.md
 ```
-✓ docs/cli/guide.md（新建，核对完整）
-✓ docs/cli/guide.md（新建，已补全 2 处）
-✓ docs/cli/guide.md（新建，动态抓取，核对完整）
-✓ docs/cli/guide.md（已存在，已补全 3 处）
-✓ docs/cli/guide.md（新建，WebFetch，内容可能不完整）
-✗ docs/api/ref.md — 抓取失败 (403)
+
+markitdown 自动识别 YouTube、Wikipedia、RSS 等特殊类型。
+输出 < 200 字符 → 进入二级。
+
+### 二级：Playwright CLI（一级失败时）
+
+```bash
+npx @playwright/cli -s=fetch open --browser=msedge "<URL>"
+# msedge 不可用改 chrome；两者都没有则省略 --browser（触发 Chromium 下载）
+npx @playwright/cli -s=fetch eval "() => document.documentElement.outerHTML" > /tmp/page.html
+npx @playwright/cli -s=fetch close
+python -m markitdown /tmp/page.html > docs/.raw-<filename>.md && rm /tmp/page.html
+# markitdown 不可用时改用：eval "() => document.body.innerText" > docs/.raw-<filename>.md
 ```
 
-### 执行模式
+以下任一条件成立 → 内容无效，进入三级（HTTP 非 200 且非 4xx 则直接失败）：
 
-**单 URL**：零交互直接执行，完成后输出单行确认。
+| 规则 | 判定 |
+| :--- | :--- |
+| 正文字符数 < 200 | 无效 |
+| 含 SPA 框架标记（`id="root"` / `id="__nuxt"` / `data-reactroot`）且正文 < 500 字符 | 无效 |
+| 含 JS 注入标记（`__NEXT_DATA__` / `__NUXT__` / `window.__INITIAL_STATE__`） | 无效 |
+| 含骨架屏特征词（`class="skeleton"` / `loading-placeholder` / `shimmer`） | 无效 |
 
-**批量（≥2 URL 或 `.txt` 文件）**：先展示计划表等待确认，再逐条处理并实时输出进度：
+### 三级：WebFetch（二级失败时）
 
-```
-准备处理以下 3 个页面：
-  docs/kiro/guide.md    [新建]   ← https://kiro.dev/docs/cli/guide/
-  docs/kiro/context.md  [已存在] ← https://kiro.dev/docs/cli/context/
-  docs/api/reference.md [新建]   ← https://kiro.dev/docs/api/reference/
-确认执行？
-
-[1/3] ✓ docs/kiro/guide.md（新建，核对完整）
-[2/3] ✓ docs/kiro/context.md（已存在，已补全 1 处）
-[3/3] ✗ docs/api/reference.md — 抓取失败 (403)
-完成：2 成功，1 失败
-```
+调用 WebFetch 时要求：「返回完整原始文本，不要省略、不要总结、不要截断」。
+结果写入 `docs/.raw-<filename>.md`，标注「WebFetch，内容可能不完整」。
 
 ---
 
-## 四、媒体处理规则
+## 五、翻译
 
-**图片：**
-- 内容图片（文件名含语义词）→ 下载到 `docs/assets/`，插入 `![alt](../assets/文件名)`
-- 装饰图标（纯哈希文件名、含 `icon`/`logo` 或 `.svg`）→ 跳过
-- `<figcaption>` 存在时，图片下方插入：`*说明文字（中文）*`
-- 文件名去掉哈希前缀（`69937fbb_diagram.png` → `diagram.png`）
-- `alt` 为空时根据上下文拟写中文 alt
+### 直接翻译（≤ 300 行）
 
-**视频：**
-- 仅保存链接，不嵌入不下载
-- YouTube embed `/embed/ID` → `https://www.youtube.com/watch?v=ID`
-- 插入格式：`> 🎬 视频：[标题](URL)`，标题取 `<iframe title="">`，为空则用 URL
+用 Read 工具读取临时文件，翻译后用 Write 工具写入目标文件，不在响应中回显内容。
+
+### Workflow 分段翻译（> 300 行）
+
+> 单次响应输出 > 300 行必然截断，Workflow + 文件落盘是唯一可靠方案。
+
+见 [`scripts/translate_workflow.js`](scripts/translate_workflow.js)，调用方式：
+
+```javascript
+Workflow({
+  scriptPath: "plugins/unipus-office-plugin/skills/unipus-office-web-to-markdown/scripts/translate_workflow.js",
+  args: {
+    raw:    "<绝对路径>/docs/.raw-<filename>.md",
+    out:    "<绝对路径>/docs/<path>/<filename>.md",
+    tmp:    "<绝对路径>/docs/.tmp-seg",
+    source: "<原始 URL>",
+    segSize: 90,   // 可选，默认 90 行/段
+    terms:  "",    // 可选，追加术语对照
+  }
+})
+```
+
+断点续跑：`resumeFromRunId` 让已完成的翻译段从缓存取回，只重跑失败的阶段。
 
 ---
 
-## 五、翻译规则
+## 六、翻译规则
 
-**保持原文不变：** 代码块、行内代码、URL、文件路径、专有名词、产品名称、API 名称。
+**不翻译：** 代码块、行内代码、URL、文件路径、专有名词、产品名称、API 名称。
 
-**术语统一对照表：**
+**HTML 组件转换：**
+- `<Note>...</Note>` → `> **注意：** ...` 引用块
+- `<Step title="X">` → `**步骤 N：X**` 加粗标题
+- `<img ...>` → 标准 Markdown 图片，路径替换为本地 `../assets/` 路径
 
-| 原文 | 统一译法 |
-|------|---------|
-| harness / agent harness | 工具链 |
+**术语对照：**
+
+| 原文 | 译法 |
+| :--- | :--- |
 | agent / Agent | 智能体 |
-| multi-agent / multi-agent system | 多智能体 / 多智能体系统 |
 | subagent / sub-agent | 子智能体 |
+| multi-agent | 多智能体 |
 | orchestrator / lead agent | 编排者 / 主智能体 |
+| harness / agent harness | 工具链 |
 | context window | 上下文窗口 |
 | context pollution | 上下文污染 |
 | prompt | 提示词 |
 | system prompt | 系统提示词 |
-| token | token（保留） |
-| tool call / tool use | 工具调用 / 工具使用 |
-| skill / hook / plugin / MCP server | 保留原文 |
+| tool call / tool use | 工具调用 |
 | hallucination | 幻觉 |
 | fine-tuning | 微调 |
 | inference | 推理 |
 | embedding | 嵌入 |
-| RAG | RAG（保留） |
+| token / RAG / skill / hook / plugin / MCP server | 保留原文 |
 
 ---
 
-## 六、错误处理
+## 七、媒体处理
 
-| 情况 | 处理方式 |
-|------|---------|
-| URL 无法访问（4xx/5xx） | 记录失败原因，继续下一条 |
-| 网页内容为空 | 警告并跳过，不写入空文件 |
-| curl 不可用 | 直接尝试 Playwright CLI；仍不可用则降级 WebFetch |
-| Playwright CLI 不可用或内容仍无效 | 降级 WebFetch，标注「内容可能不完整」 |
-| 内容疑似截断 | 继续分段抓取直至完整 |
-| 目标目录无写权限 | 报告错误，跳过该条 |
-| `.txt` 文件不存在 | 立即中止，提示用户确认路径 |
-| URL 重复（同一批次） | 跳过后续重复项，标注「已跳过（重复）」 |
+**图片：**
+- 内容图片（文件名含语义词）→ 下载到 `docs/assets/`，插入 `![中文 alt](../assets/文件名)`
+- 装饰图标（纯哈希名、含 `icon`/`logo`、`.svg`）→ 跳过
+- `<figcaption>` 存在时图片下方插入 `*说明文字（中文）*`
+- 文件名去掉哈希前缀（`69937fbb_diagram.png` → `diagram.png`）
+
+**视频：** 仅保存链接，格式：`> 🎬 视频：[标题](URL)`，YouTube embed 转为 `watch?v=ID`。
+
+---
+
+## 八、输出与错误
+
+**输出格式：**
+```
+✓ docs/cli/guide.md（新建，核对完整）
+✓ docs/cli/guide.md（新建，Workflow 翻译，核对完整）
+✓ docs/cli/guide.md（新建，已补全 2 处）
+✓ docs/cli/guide.md（已存在，核对完整）
+✗ docs/api/ref.md — 抓取失败 (403)
+```
+
+**执行模式：** 单 URL 零交互直接执行；批量（≥2 URL 或 `.txt`）先展示计划表等待确认再逐条处理。
+
+**错误处理：**
+
+| 情况 | 处理 |
+| :--- | :--- |
+| URL 无法访问（4xx/5xx） | 记录原因，继续下一条 |
+| 三级均无效 | 标记失败，跳过 |
+| 目标目录无写权限 | 报告错误，跳过 |
+| `.txt` 文件不存在 | 立即中止，提示确认路径 |
+| URL 重复（同批次） | 跳过，标注「已跳过（重复）」 |
 | 文件已存在 | 不覆盖，执行存量核对流程 |
+| Workflow 翻译中断 | resumeFromRunId 断点续跑 |
