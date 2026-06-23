@@ -22,7 +22,7 @@
 ---
 [交互] 📎 @ 符号快速引用\n功能：在输入框中使用 @ 符号可以快速引用文件、文件夹或工具输出\n效果：Claude 会自动读取内容并理解上下文，无需手动复制粘贴\n例子：输入 @src/main.ts 可以让 Claude 分析该文件的代码结构
 ---
-[交互] ⚡ ! 命令前缀\n功能：在输入框中使用 ! 前缀可以直接运行 shell 命令\n效果：命令输出会自动进入对话上下文，Claude 可以看到结果并基于此给出建议\n例子：! git status 可以让 Claude 看到当前 git 状态并提供操作建议
+[交互] ⚡ ! 命令前缀\n功能：在输入框中使用 ! 前缀可以直接运行 shell 命令，命令完成后 Claude 自动回应输出内容；在 settings.json 中设置 "respondToBashCommands": false 可恢复旧行为（仅追加上下文不自动回应）\n效果：命令输出自动触发 Claude 分析并给出建议，适合快速调试；关闭后输出仅加入上下文供下次对话使用\n例子：! git status 让 Claude 自动分析并给出操作建议；"respondToBashCommands": false 关闭自动回应恢复旧行为
 ---
 [交互] 🖼️ 拖拽图片\n功能：直接拖拽图片文件到对话框\n效果：Claude 自动识别图片内容并提供分析\n例子：拖拽 UI 设计图，Claude 帮你分析并生成实现初稿
 ---
@@ -334,7 +334,7 @@
 ---
 [Hook] 🔔 terminalSequence Hook 输出\n功能：Hook 返回值支持 terminalSequence 字段，发送桌面通知、窗口标题或终端铃声\n效果：任务完成时主动提醒用户，无需盯着终端等待，适合长时间运行的任务\n例子：PostToolUse hook 在构建完成后通过 terminalSequence 发送系统桌面通知
 ---
-[交互] 🔀 /workflows 工作流记录\n功能：查看 ultracode 动态工作流的运行记录和实时进度\n效果：了解多 agent 并行工作流各阶段的执行状态、耗时和结果\n例子：/workflows 在 ultracode 运行期间查看各子 agent 的执行进度
+[交互] 🔀 /workflows 工作流记录\n功能：查看 ultracode 动态工作流的运行记录和实时进度；在工作流 agent 详情视图中按 f 键可按状态过滤 agent 列表\n效果：了解多 agent 并行工作流各阶段的执行状态、耗时和结果；按 f 筛选运行中/完成/等待中的 agent\n例子：/workflows 在 ultracode 运行期间查看各子 agent 的执行进度；进入 agent 详情后按 f 只看失败的 agent
 ---
 [Skill] 🔍 /code-review --fix / --comment\n功能：/code-review 支持 --fix 自动应用修复，--comment 将审查意见发为 GitHub PR 内联评论\n效果：审查不止于建议，--fix 直接修代码，--comment 让团队在 PR 中看到详细意见\n例子：/code-review --comment 在提 PR 前将审查意见同步为 GitHub 内联评论
 ---
@@ -429,3 +429,7 @@
 [配置] 🔗 attribution.sessionUrl 链接控制\n功能：settings.json 中设置 attribution.sessionUrl: false，在 web/Remote Control 会话的提交和 PR 中省略 claude.ai 链接\n效果：企业或私有化部署场景中不希望代码含有 claude.ai 链接时使用\n例子：{"attribution": {"sessionUrl": false}} 使提交信息不含 claude.ai 会话链接
 ---
 [集成] 📂 嵌套 .claude/skills 目录支持\n功能：嵌套的 .claude/skills 目录现在支持加载；名称冲突时显示为 <dir>:<name>；嵌套 .claude/ 目录中，距离最近的 agent/workflow/output-style 配置优先\n效果：子目录可以有自己的 skills 配置，方便 monorepo 场景按子项目隔离 skill 集\n例子：projects/frontend/.claude/skills/my-skill 会以 frontend:my-skill 形式加载
+---
+[CLI] 🔑 claude mcp login/logout MCP 认证\n功能：claude mcp login <名称> 和 claude mcp logout <名称> 直接在 CLI 中完成 MCP 服务器认证，无需打开交互式 /mcp 菜单；支持 --no-browser 将认证重定向到 stdin，适合 SSH 远程环境\n效果：CI/CD 流水线或 SSH 会话中也能完成 MCP OAuth 认证，不依赖图形界面\n例子：claude mcp login github 在 CLI 认证 GitHub MCP；claude mcp login jira --no-browser 在 SSH 中通过 stdin 完成认证
+---
+[配置] 🖥️ teammateMode iterm2 设置\n功能：settings.json 中设置 teammateMode: "iterm2" 使用 iTerm2 原生 pane 运行 teammate；当自动模式找不到 it2 CLI 时显示警告\n效果：在 iTerm2 上获得更原生的多 pane 体验，比 tmux 启动更快集成更紧密\n例子：{"teammateMode": "iterm2"} 在 iTerm2 中启用原生 pane 模式；找不到 it2 CLI 时按提示安装 iTerm2 Shell Integration
