@@ -130,7 +130,7 @@
 ---
 [排障] 🔄 /cost 成本查看\n功能：查看当前会话或最近使用的成本信息\n效果：在长会话、重度使用或自动化场景里更容易感知消耗情况\n例子：长时间排查问题后用 /cost 看看这轮会话花费如何
 ---
-[交互] ⚙️ /config 快速配置\n功能：打开交互式配置界面修改 settings.json，或直接用 /config key=value 语法设置单个配置项（支持 interactive、-p 和 Remote Control 模式）；/config --help 列出所有可用的 key=value 简写键\n效果：无需手动编辑 JSON，通过 UI 快速调整配置；直接写 key=value 更快\n例子：/config 修改主题、模型等常用设置；/config outputStyle=Explanatory 直接设置；/config --help 查看所有可设置项
+[交互] ⚙️ /config 快速配置\n功能：打开交互式配置界面修改 settings.json，或直接用 /config key=value 语法设置单个配置项（支持 interactive、-p 和 Remote Control 模式）；/config --help 列出所有可用的 key=value 简写键；Enter 和 Space 均可更改选项，Esc 保存并关闭\n效果：无需手动编辑 JSON，通过 UI 快速调整配置；直接写 key=value 更快\n例子：/config 修改主题、模型等常用设置；/config thinking=false 直接关闭思考；/config --help 查看所有可设置项
 ---
 [交互] 🤖 /agents 代理管理\n功能：查看和管理当前可用的 agents 配置\n效果：快速了解哪些 agent 可用，每个 agent 的能力和限制\n例子：/agents 查看 code-reviewer、test-runner 等 agent
 ---
@@ -410,7 +410,7 @@
 ---
 [配置] 🔗 footerLinksRegexes 底部链接匹配\n功能：settings.json 中配置 footerLinksRegexes 正则表达式数组，用于在 footer 行匹配链接徽章\n效果：自定义 footer 显示的链接内容，由用户或托管设置配置\n例子：{"footerLinksRegexes": ["https://jira\\.company\\.com/.*"]} 在 footer 显示 Jira 链接徽章
 ---
-[配置] 🛡️ enforceAvailableModels 托管模型限制\n功能：托管设置 enforceAvailableModels 启用后，availableModels 白名单也约束 Default 模型；用户或项目设置无法扩大托管列表\n效果：企业环境中强制执行模型白名单，防止用户绕过限制\n例子：{"enforceAvailableModels": true, "availableModels": ["sonnet", "haiku"]} 只允许使用这两个模型
+[配置] 🛡️ enforceAvailableModels 托管模型限制\n功能：托管设置 enforceAvailableModels 启用后，availableModels 白名单也约束 Default 模型，用户或项目设置无法扩大托管列表；org 配置的限制同时作用于模型选择器、--model、/model 和 ANTHROPIC_MODEL，选择受限模型时显示"restricted by your organization's settings"提示\n效果：企业环境中强制执行模型白名单，防止用户绕过限制，并在各入口给出明确反馈\n例子：{"enforceAvailableModels": true, "availableModels": ["sonnet", "haiku"]} 只允许使用这两个模型；用户尝试用 --model opus 时收到组织限制提示
 ---
 [配置] 🖱️ wheelScrollAccelerationEnabled 滚轮加速\n功能：settings.json 中设置 wheelScrollAccelerationEnabled: false 禁用全屏模式下鼠标滚轮滚动加速\n效果：获得线性滚动体验，避免加速导致滚动过快难以定位\n例子：{"wheelScrollAccelerationEnabled": false} 禁用滚轮加速，适合精确浏览长输出
 ---
@@ -433,3 +433,11 @@
 [CLI] 🔑 claude mcp login/logout MCP 认证\n功能：claude mcp login <名称> 和 claude mcp logout <名称> 直接在 CLI 中完成 MCP 服务器认证，无需打开交互式 /mcp 菜单；支持 --no-browser 将认证重定向到 stdin，适合 SSH 远程环境\n效果：CI/CD 流水线或 SSH 会话中也能完成 MCP OAuth 认证，不依赖图形界面\n例子：claude mcp login github 在 CLI 认证 GitHub MCP；claude mcp login jira --no-browser 在 SSH 中通过 stdin 完成认证
 ---
 [配置] 🖥️ teammateMode iterm2 设置\n功能：settings.json 中设置 teammateMode: "iterm2" 使用 iTerm2 原生 pane 运行 teammate；当自动模式找不到 it2 CLI 时显示警告\n效果：在 iTerm2 上获得更原生的多 pane 体验，比 tmux 启动更快集成更紧密\n例子：{"teammateMode": "iterm2"} 在 iTerm2 中启用原生 pane 模式；找不到 it2 CLI 时按提示安装 iTerm2 Shell Integration
+---
+[配置] 🔒 sandbox.credentials 凭证保护\n功能：settings.json 中设置 sandbox.credentials: false，阻止沙箱命令读取凭证文件（如 ~/.netrc、~/.aws/credentials）和含密钥的环境变量\n效果：沙箱模式下进一步隔离敏感信息，防止代码执行期间意外泄露 API key 或凭证文件\n例子：{"sandbox": {"credentials": false}} 禁止沙箱命令访问凭证文件和密钥环境变量
+---
+[交互] 💬 /btw 侧边追问\n功能：/btw 发送非主流程的附带问题，Claude 给出简短答复；支持 ←/→ 方向键翻看历史答复\n效果：在主任务进行中随时问"顺便问一下"的问题，不打断当前工作流；方向键快速回顾所有历史 /btw 答复\n例子：/btw 这个函数的时间复杂度是多少？ 获得简短确认而不影响主任务进度
+---
+[高级] 👁️ 后台子代理权限提示冒泡\n功能：后台子代理需要权限时，提示窗口出现在主会话界面（而非自动拒绝）；对话框显示哪个代理在请求，按 Esc 仅拒绝该工具调用\n效果：后台任务遇到权限问题时可实时干预，避免整个任务因一个权限自动拒绝而中断\n例子：后台代理请求写文件权限时，主会话弹出提示；选择允许继续，或按 Esc 仅拒绝这一次调用
+---
+[Skill] 🏷️ frontmatter 命名格式兼容\n功能：SKILL.md frontmatter 中的 display-name、default-enabled、fallback、metadata.* 等键名支持 kebab-case、snake_case 和 camelCase 三种写法\n效果：skill 开发者无需死记字段命名格式，三种风格均可被正确解析，降低 frontmatter 配置出错概率\n例子：display-name / display_name / displayName 均有效；default-enabled / default_enabled / defaultEnabled 均有效
