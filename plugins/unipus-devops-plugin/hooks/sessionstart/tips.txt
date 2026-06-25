@@ -286,7 +286,7 @@
 ---
 [交互] 📋 /recap 会话回顾\n功能：手动触发当前会话的内容回顾摘要\n效果：在长对话中快速回顾已做的工作和关键决策，而不必滚动历史\n例子：/recap 长时间工作后快速了解当前进展
 ---
-[交互] ↩️ /undo 撤销上一步\n功能：撤销上一次操作（/rewind 的别名）\n效果：回退最近的文件修改或操作，适合发现方向错误时快速回退\n例子：/undo 发现上一步修改有误时立即回退
+[交互] ↩️ /undo / /rewind 撤销与恢复\n功能：/undo 是 /rewind 的别名，撤销上一次操作；/rewind 还支持恢复到 /clear 之前的对话内容（v2.1.191+）\n效果：回退最近文件改动；或在 /clear 清空上下文后反悔时，用 /rewind 找回清除前的对话历史\n例子：/undo 撤销上一步文件修改；/clear 后反悔用 /rewind 恢复清除前的完整对话
 ---
 [交互] ⚡ /effort 努力程度调节\n功能：交互式滑块调节响应努力程度，标签为 Faster/Smarter，支持 low/medium/high/xhigh/max 五个级别\n效果：high/xhigh/max 更深思熟虑但较慢；low/medium 快速响应；/effort ultracode 触发动态工作流模式\n例子：/effort 用箭头键选择 xhigh 处理关键架构决策；/effort max 获取最高质量输出；/effort ultracode 启动多 agent 并行工作流
 ---
@@ -441,3 +441,9 @@
 [高级] 👁️ 后台子代理权限提示冒泡\n功能：后台子代理需要权限时，提示窗口出现在主会话界面（而非自动拒绝）；对话框显示哪个代理在请求，按 Esc 仅拒绝该工具调用\n效果：后台任务遇到权限问题时可实时干预，避免整个任务因一个权限自动拒绝而中断\n例子：后台代理请求写文件权限时，主会话弹出提示；选择允许继续，或按 Esc 仅拒绝这一次调用
 ---
 [Skill] 🏷️ frontmatter 命名格式兼容\n功能：SKILL.md frontmatter 中的 display-name、default-enabled、fallback、metadata.* 等键名支持 kebab-case、snake_case 和 camelCase 三种写法\n效果：skill 开发者无需死记字段命名格式，三种风格均可被正确解析，降低 frontmatter 配置出错概率\n例子：display-name / display_name / displayName 均有效；default-enabled / default_enabled / defaultEnabled 均有效
+---
+[配置] ⏱️ CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT MCP 工具超时\n功能：环境变量 CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT 覆盖远程 MCP 工具调用的默认超时（v2.1.187+ 默认 5 分钟无响应后中止）\n效果：防止远程 MCP 工具调用无响应时永久阻塞会话；在低延迟网络或耗时较长的 MCP 工具场景可按需调大\n例子：CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT=600000 claude 将超时调为 10 分钟，避免长耗时工具被提前终止
+---
+[配置] 🔁 CLAUDE_CODE_RETRY_WATCHDOG 无人值守重试\n功能：环境变量 CLAUDE_CODE_RETRY_WATCHDOG 为无人值守（非交互）会话设置重试看门狗，替代已上限为 15 的 CLAUDE_CODE_MAX_RETRIES\n效果：自动化脚本或 CI 场景中，API 错误时按看门狗策略持续重试而不受 15 次硬上限约束\n例子：CLAUDE_CODE_RETRY_WATCHDOG=3600 claude -p "长任务" 允许看门狗在 1 小时内持续重试
+---
+[交互] 🧩 /plugin Skills 区域\n功能：/plugin 已安装插件标签页新增 Skills 区域，展示插件提供的所有技能，并可通过 /plugin 发现最近未使用过的插件以便清理\n效果：快速核查某插件有哪些 skills 可用；定期用 /plugin 清理不再需要的历史插件\n例子：/plugin 进入已安装标签页，查看 Skills 区域确认技能已加载；发现长期未用插件时直接卸载
