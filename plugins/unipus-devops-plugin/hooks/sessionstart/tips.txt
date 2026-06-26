@@ -447,3 +447,13 @@
 [配置] 🔁 CLAUDE_CODE_RETRY_WATCHDOG 无人值守重试\n功能：环境变量 CLAUDE_CODE_RETRY_WATCHDOG 为无人值守（非交互）会话设置重试看门狗，替代已上限为 15 的 CLAUDE_CODE_MAX_RETRIES\n效果：自动化脚本或 CI 场景中，API 错误时按看门狗策略持续重试而不受 15 次硬上限约束\n例子：CLAUDE_CODE_RETRY_WATCHDOG=3600 claude -p "长任务" 允许看门狗在 1 小时内持续重试
 ---
 [交互] 🧩 /plugin Skills 区域\n功能：/plugin 已安装插件标签页新增 Skills 区域，展示插件提供的所有技能，并可通过 /plugin 发现最近未使用过的插件以便清理\n效果：快速核查某插件有哪些 skills 可用；定期用 /plugin 清理不再需要的历史插件\n例子：/plugin 进入已安装标签页，查看 Skills 区域确认技能已加载；发现长期未用插件时直接卸载
+---
+[配置] 🔀 autoMode.classifyAllShell 全命令分类\n功能：settings.json 中设置 autoMode.classifyAllShell: true，将所有 Bash/PowerShell 命令（而非只有任意代码执行模式）都通过 auto-mode 分类器路由\n效果：在严格 auto-mode 环境中对所有 shell 命令统一做安全分类，减少意外执行风险\n例子：{"autoMode": {"classifyAllShell": true}} 让 auto-mode 分类器覆盖全部 shell 命令，不只是高风险模式
+---
+[配置] 📡 OTEL_LOG_ASSISTANT_RESPONSES 响应内容遥测\n功能：环境变量 OTEL_LOG_ASSISTANT_RESPONSES=1 将模型响应文本写入 claude_code.assistant_response OpenTelemetry 日志事件；未设置时跟随 OTEL_LOG_USER_PROMPTS 的值；设为 0 可在已启用 prompt 日志时单独关闭响应日志\n效果：企业可观测性场景中按需记录完整对话内容，也可精确控制"只记录提问不记录回复"\n例子：OTEL_LOG_ASSISTANT_RESPONSES=0 claude 在已开启 prompt 日志的部署中仅记录用户提问，不记录模型响应
+---
+[配置] 🧹 CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP 禁用后台回收\n功能：环境变量 CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP=1 禁用在内存压力下自动回收空闲后台 shell 命令的机制（v2.1.193+ 默认开启）\n效果：在内存充足或需要保持所有后台 shell 长期存活的场景下，防止空闲 shell 被自动清理\n例子：CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP=1 claude 禁止自动回收空闲后台 shell，适合长时间保持多个后台任务的工作流
+---
+[配置] 🚫 auto-mode 拒绝原因可见\n功能：auto-mode 拒绝某操作时，拒绝原因同步写入 transcript、拒绝 toast 提示，以及 /permissions 的"最近拒绝"标签页\n效果：可追溯每次自动拒绝的具体原因，方便调整 auto-mode 规则或授权策略\n例子：/permissions 进入最近拒绝标签页，查看每条被拒命令的拒绝原因；批准某条后拒绝记录立即生效
+---
+[CLI] 📁 bash 模式实时路径补全\n功能：在输入框使用 ! 前缀进入 bash 模式时，支持实时文件路径自动补全\n效果：输入 ! 命令时按 Tab 可补全文件和目录路径，减少手动输入长路径的错误\n例子：! cat ./src/comp<Tab> 自动补全为 ! cat ./src/components/Button.tsx，无需记忆完整路径
