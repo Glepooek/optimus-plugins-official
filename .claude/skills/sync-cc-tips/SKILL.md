@@ -36,7 +36,16 @@ WebFetch: https://github.com/anthropics/claude-code/releases
 Read: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 ```
 
-逐条扫描 tips.txt，提取每条涉及的功能名称、CLI flag、子命令、settings.json 键名，构建「已覆盖功能集」，用于第三步的差异识别。
+逐条扫描 tips.txt 的**完整内容**（每条是单行压缩格式，包含标题、功能、效果、例子字段），从中提取所有出现的标识符，构建「已覆盖标识符集」：
+
+- `--[a-z-]+` 形式的 CLI flag（如 `--safe-mode`）
+- `/[a-z-]+` 形式的交互命令（如 `/cd`、`/btw`）
+- `CLAUDE_CODE_[A-Z_]+` 或 `OTEL_[A-Z_]+` 形式的环境变量
+- settings.json 键名（camelCase 标识符，如 `respondToBashCommands`、`autoMode.classifyAllShell`）
+- 子命令名（如 `daemon`、`attach`、`mcp login`）
+- 条目标题中的功能主名
+
+**覆盖判断基准**：一个 changelog 功能点的任意一个主标识符在已覆盖标识符集中命中 → 视为已覆盖，不新增。
 
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
@@ -48,13 +57,14 @@ Read: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 依次对 changelog 中每个功能点做判断：
 
 ### 🆕 新增条件
-以下情况生成新条目：
-- 新 CLI flag（如 `--safe-mode`、`--advisor`）
-- 新子命令（如 `claude daemon`、`claude attach`）
-- 新 Hook 事件（如 `MessageDisplay`、`PreCompact`）
-- 新 settings.json 设置项（如 `fallbackModel`、`disableBundledSkills`）
-- 新交互命令（如 `/cd`、`/plugin list`）
-- tips.txt 中**无任何条目**覆盖该功能
+满足以下**全部条件**才生成新条目：
+- 属于对用户操作有实质影响的功能（新 CLI flag、新子命令、新 Hook 事件、新 settings.json 设置项、新交互命令）
+- 在 tips.txt **全文**中，该功能点的所有主标识符（flag 名、设置项名、命令名、环境变量名）均未命中
+
+**识别流程**：
+1. 提取该功能点的主标识符列表（如 `respondToBashCommands`、`!命令`）
+2. 在已覆盖标识符集中逐一查找
+3. **任一命中 → 跳过，不新增**；全部未命中 → 标记为新增
 
 生成格式：
 ```
@@ -161,6 +171,7 @@ Edit: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 | 反模式 | 原因 | 替代做法 |
 |---|---|---|
 | 把 changelog 里所有更新项都加入 tips.txt | tips 面向用户实用技巧，不是版本记录——内部重构、bug fix、依赖升级不应出现 | 只加对用户操作有实质影响的功能（新 flag、新命令、新设置项） |
+| 只用条目标题判断是否已覆盖 | tips.txt 每条包含完整正文，次级功能点只出现在功能/效果/例子字段而非标题 | 必须扫描 tips.txt **全文**，用主标识符（flag 名/设置项名/命令名）做精确匹配 |
 | 0变化时仍然提交 | 产生无意义 commit，污染 git 历史 | 检测到 0新增/0修改/0删除 → 输出提示并退出，不调用 commit-cc-plugin |
 | 修改 show-tip.sh 脚本逻辑 | 脚本逻辑不在本 skill 职责范围内 | 只修改 tips.txt 数据文件 |
 | 删除旧功能条目，但该功能仍可用（只是有了替代方案） | 用户可能仍在用旧方式 | 仅在 changelog 明确标注 Removed/Deprecated 时删除 |
