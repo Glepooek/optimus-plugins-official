@@ -104,7 +104,10 @@ https://kiro.dev/docs/cli/context/
 ```
 1. 抓取最新原文，落盘为 docs/.raw-<filename>.md
 2. 【第一轮核对】结构数量：python scripts/verify.py docs/.raw-<filename>.md <out>
-   差值非零则补全，重跑直至归零
+   差值非零 → 判断是否因网页内容更新所致：
+     - verify.py 差值 ≤ 5%：视为翻译遗漏，原地补全缺失结构，重跑直至归零
+     - verify.py 差值 > 5% 或章节结构发生变化：视为网页大幅更新，
+       提示用户「原文结构变化较大，建议重新翻译」，等待确认后执行新建流程
 3. 【第二轮核对】内容质量：python scripts/verify_quality.py docs/.raw-<filename>.md <out>
    有问题则补全修正，重跑直至通过
 4. 两轮通过后删除临时文件，输出单行确认
