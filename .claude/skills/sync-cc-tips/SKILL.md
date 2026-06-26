@@ -38,6 +38,11 @@ Read: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 
 建立已覆盖功能的语义索引：遍历所有条目，提取每条涉及的功能名称、命令、flag、设置项，作为后续差异识别的对比基准。
 
+| 触发条件 | 一线处理 | 仍失败兜底 |
+|---|---|---|
+| 文件不存在 / Read 报错 | 确认路径 `plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt` 是否正确 | 停止整个流程，报告路径错误，不做任何修改 |
+| 文件存在但内容为空 | 提示用户确认是否为全新初始化场景 | 若用户确认，继续（视为无旧条目）；否则停止 |
+
 ## 第三步 — 三类差异识别
 
 依次对 changelog 中每个功能点做判断：
@@ -144,7 +149,21 @@ Edit: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 
 摘要展示完毕后，立即调用 `commit-cc-plugin` skill 完成提交推送。
 
-## 注意事项
+| 触发条件 | 一线处理 | 仍失败兜底 |
+|---|---|---|
+| `commit-cc-plugin` skill 不可用 | 提示用户手动执行：`git add` → `git commit` → `git push` | 输出待提交的完整 diff 供用户参考 |
+| 提交被 hook 拦截（pre-commit 失败） | 报告 hook 输出，不强制绕过 | 停止，提示用户修复后手动重试提交 |
+
+## ⛔ 不要做什么（反例黑名单）
+
+| 反模式 | 原因 | 替代做法 |
+|---|---|---|
+| 把 changelog 里所有更新项都加入 tips.txt | tips 面向用户实用技巧，不是版本记录——内部重构、bug fix、依赖升级不应出现 | 只加对用户操作有实质影响的功能（新 flag、新命令、新设置项） |
+| 0变化时仍然提交 | 产生无意义 commit，污染 git 历史 | 检测到 0新增/0修改/0删除 → 输出提示并退出，不调用 commit-cc-plugin |
+| 修改 show-tip.sh 脚本逻辑 | 脚本逻辑不在本 skill 职责范围内 | 只修改 tips.txt 数据文件 |
+| 删除旧功能条目，但该功能仍可用（只是有了替代方案） | 用户可能仍在用旧方式 | 仅在 changelog 明确标注 Removed/Deprecated 时删除 |
+| 用估算数字代替实际计数更新文档 | 估算不准会导致文档与实际不符 | 必须先 Read tips.txt 计算实际 `---` 数量再更新 |
+| 抓取失败后继续执行后续步骤 | 基于空数据的操作可能误删现有条目 | 第一步失败 → 立即停止，不执行任何写入操作 |
 
 - `.claude/` 下的 skill 文件本身不触发版本号升级（遵循 CLAUDE.md 规范）
 - 若 changelog 抓取失败，报告错误并停止，不对 tips.txt 做任何修改
