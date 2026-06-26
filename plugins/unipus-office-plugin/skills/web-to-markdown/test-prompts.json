@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "保存这个网页 https://kiro.dev/docs/cli/guide/",
+    "expected": "单URL零交互直接执行：路径推断→markitdown抓取→翻译→两轮核对→输出单行确认 ✓ docs/cli/guide.md"
+  },
+  {
+    "id": 2,
+    "prompt": "批量保存这些文档：https://kiro.dev/docs/cli/guide/ 和 https://kiro.dev/docs/cli/context/",
+    "expected": "先展示计划表等待用户确认，确认后逐条处理，每条输出一行结果"
+  },
+  {
+    "id": 3,
+    "prompt": "再次抓取 https://kiro.dev/docs/cli/guide/（docs/cli/guide.md 已存在）",
+    "expected": "触发存量核对流程（不覆盖），重跑两轮核对，输出「已存在，核对完整」"
+  }
+]
