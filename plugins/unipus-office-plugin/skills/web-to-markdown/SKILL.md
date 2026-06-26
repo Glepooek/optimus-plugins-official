@@ -268,7 +268,9 @@ python scripts/verify_quality.py docs/.raw-<filename>.md docs/<path>/<filename>.
 ✗ docs/api/ref.md — 抓取失败 (403)
 ```
 
-**执行模式：** 单 URL 零交互直接执行；批量（≥2 URL 或 `.txt`）先展示计划表等待确认再逐条处理。
+**执行模式：** 单 URL 零交互直接执行；批量（≥2 URL 或 `.txt`）执行以下检查点：
+
+> 🔴 **CHECKPOINT**：展示计划表（目标路径 / 操作类型 / 是否已存在），等待用户确认后再逐条处理。用户回复 `n`/`no`/任何否定 → 立即停止，不执行任何写入。
 
 **错误处理：**
 
