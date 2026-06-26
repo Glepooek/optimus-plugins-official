@@ -71,10 +71,12 @@ Read: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 - **不修改**：仅措辞差异、风格调整、无实质差异的改动
 
 ### 🗑️ 删除条件
-以下情况直接删除对应条目，**无需询问**：
+以下情况直接删除对应条目：
 - changelog 明确标注 `Removed`、`Deprecated`、`no longer available`
 - 功能已被完全移除（不是"有了更好的替代"，而是彻底消失）
 - **不删除**：changelog 只是新增了替代功能，旧功能仍可用
+
+> 🔴 **CHECKPOINT**：若本轮有任何删除操作，在第六步摘要展示后、调用 commit-cc-plugin 前，列出所有待删条目标题，等待用户确认（输入 y/yes 或继续）后再提交。
 
 ### 格式校验（每条写入前执行）
 - 必须包含"功能："、"效果："、"例子："三个字段
