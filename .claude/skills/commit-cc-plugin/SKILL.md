@@ -112,3 +112,5 @@ git push origin master
 | 新增 skill 忘记升级版本 | 新增内容 → Minor |
 | 提交消息过于模糊（"update files"） | 描述具体变更内容 |
 | skill 内容改进就升级 Major | Major 仅用于破坏性变更 |
+| `git push --force` 或 `git push -f` | 禁止 force push；push 失败先排查原因，最多重试一次 |
+| `git commit --no-verify` 绕过 hook | 禁止跳过 hook；hook 报错必须修复后重试 |
