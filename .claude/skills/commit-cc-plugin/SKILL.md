@@ -16,7 +16,7 @@ git diff HEAD --stat
 git log --oneline -5
 ```
 
-**⚠️ 遗留暂存文件处理（继续前必须完成）：**
+🔴 **CHECKPOINT — 遗留暂存文件处理（继续前必须完成）：**
 
 若 `git status` 存在 `Changes to be committed`，对每个文件做显式决策：
 
@@ -53,7 +53,7 @@ git add plugins/<插件名>/skills/<skill名>/SKILL.md
 git diff --staged --stat   # 确认暂存内容
 ```
 
-暂存后自查三问——任何一问答"否"先修正暂存区：
+暂存后 🔴 **CHECKPOINT — 原子性自查三问**（任何一问答"否"先修正暂存区再继续）：
 
 1. staged 内容是否都属于**同一逻辑任务**？
 2. 同目录是否有同任务的关联文件**未暂存**（untracked 或 modified）？
