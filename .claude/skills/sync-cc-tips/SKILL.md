@@ -36,7 +36,7 @@ WebFetch: https://github.com/anthropics/claude-code/releases
 Read: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 ```
 
-建立已覆盖功能的语义索引：遍历所有条目，提取每条涉及的功能名称、命令、flag、设置项，作为后续差异识别的对比基准。
+逐条扫描 tips.txt，提取每条涉及的功能名称、CLI flag、子命令、settings.json 键名，构建「已覆盖功能集」，用于第三步的差异识别。
 
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
@@ -106,12 +106,6 @@ Edit: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 
 批量更新以下 5 处数字，将旧数字替换为新总数：
 
-| 触发条件 | 一线处理 | 仍失败兜底 |
-|---|---|---|
-| 某处文件不存在（如 README.md 路径错误） | 跳过该处，继续更新其余文件 | 在摘要中列出"未同步"文件，不阻断提交 |
-| 数字 pattern 在文件中找不到 | 搜索邻近上下文确认格式是否变更 | 跳过并在摘要注明，不修改该文件 |
-| 更新后数字不一致（多处数字不同） | 以 tips.txt 实际 `---` 计数为准 | 报告具体不一致位置，等用户确认后提交 |
-
 | 文件 | 位置 |
 |---|---|
 | `.claude-plugin/marketplace.json` | 顶层 `description` 中的 `N条技巧智能轮播` |
@@ -121,6 +115,12 @@ Edit: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 | `plugins/unipus-devops-plugin/hooks/README.md` | `tips.txt 包含 N 条技巧` |
 
 同时将 `.claude-plugin/marketplace.json` 的 `version` 做 **Patch 升级**（`x.x.X`），因为这是已有内容的更新/修复，符合版本管理规范。
+
+| 触发条件 | 一线处理 | 仍失败兜底 |
+|---|---|---|
+| 某处文件不存在（如 README.md 路径错误） | 跳过该处，继续更新其余文件 | 在摘要中列出"未同步"文件，不阻断提交 |
+| 数字 pattern 在文件中找不到 | 搜索邻近上下文确认格式是否变更 | 跳过并在摘要注明，不修改该文件 |
+| 更新后数字不一致（多处数字不同） | 以 tips.txt 实际 `---` 计数为准 | 报告具体不一致位置，等用户确认后提交 |
 
 ## 第六步 — 展示摘要并提交
 
@@ -167,7 +167,4 @@ Edit: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 | 用估算数字代替实际计数更新文档 | 估算不准会导致文档与实际不符 | 必须先 Read tips.txt 计算实际 `---` 数量再更新 |
 | 抓取失败后继续执行后续步骤 | 基于空数据的操作可能误删现有条目 | 第一步失败 → 立即停止，不执行任何写入操作 |
 
-- `.claude/` 下的 skill 文件本身不触发版本号升级（遵循 CLAUDE.md 规范）
-- 若 changelog 抓取失败，报告错误并停止，不对 tips.txt 做任何修改
-- 若本次 changelog 范围内无任何变化（0新增/0修改/0删除），输出提示并退出，不提交
-- 不修改 `show-tip.sh` 脚本逻辑
+> `.claude/` 下的 skill 文件本身不触发版本号升级（遵循 CLAUDE.md 规范）
