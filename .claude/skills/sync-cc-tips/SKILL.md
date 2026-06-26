@@ -94,7 +94,11 @@ Read: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 
 ## 第四步 — 写入 tips.txt
 
-> 🔴 **CHECKPOINT**：写入前展示变更预览——列出「📥 新增 N 条 / ✏️ 修改 N 条 / 🗑️ 删除 N 条」及每条标题，等待用户确认（输入 y/yes 或按 Enter）后再执行写入和第五步数字同步。若变更数为 0，跳过此检查点直接退出。
+> 🔴 **CHECKPOINT**：写入前展示变更预览——列出「📥 新增 N 条 / ✏️ 修改 N 条 / 🗑️ 删除 N 条」及每条标题，等待用户确认：
+> - 输入 `y` / `yes` / 按 Enter → 继续执行写入和第五步数字同步
+> - 输入 `n` / `no` / 任何其他内容 → **立即停止**，输出「操作已取消，tips.txt 未修改」，不执行任何写入或提交
+>
+> 若变更数为 0，跳过此检查点直接退出。
 
 ```
 Edit: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt

@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "/sync-cc-tips",
+    "expected": "完整执行六步：抓 changelog → 读 tips.txt → 差异识别 → 展示变更预览（CHECKPOINT）→ 同步数字 → 提交"
+  },
+  {
+    "id": 2,
+    "prompt": "/sync-cc-tips 3",
+    "expected": "只提取最近 3 个版本，其余流程相同；摘要版本范围缩小，参数正确传递到 Step 1"
+  },
+  {
+    "id": 3,
+    "prompt": "用户在 Step 4 CHECKPOINT 回复 n 拒绝写入",
+    "expected": "正确停止，不执行写入和后续步骤，输出明确的'操作已取消，tips.txt 未修改'提示"
+  }
+]
