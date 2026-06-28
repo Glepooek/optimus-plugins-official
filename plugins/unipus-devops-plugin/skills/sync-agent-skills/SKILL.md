@@ -30,7 +30,10 @@ try {
 } catch {
     Write-Host "❌ 无法创建符号链接。请开启 Windows 开发者模式（设置 → 隐私和安全 → 开发者选项），或以管理员身份运行终端。" -ForegroundColor Red
 }
-if (-not $canSymlink) { exit 1 }
+if (-not $canSymlink) {
+    Write-Host "⛔ 权限检测失败，操作已终止。请解决权限问题后重新运行本 skill。" -ForegroundColor Red
+    return
+}
 ```
 
 macOS/Linux 无需此步骤，直接进入 Step 1。
@@ -127,7 +130,8 @@ foreach ($target in $targets) {
             Write-Host "⚠️  已存在，跳过: $skill ($target)"
             $skipped++
         } else {
-            Write-Host "⚠️  警告: $dest 已存在且非符号链接，请手动处理"
+            Write-Host "⚠️  警告: $dest 已存在且非符号链接，无法自动同步。" -ForegroundColor Yellow
+            Write-Host "    → 解决方法：手动执行 Remove-Item '$dest' -Recurse -Force，再重新运行本 skill。"
             $warned++
         }
     }
@@ -159,7 +163,8 @@ for target in "${targets[@]}"; do
             echo "⚠️  已存在，跳过: $skill ($target)"
             ((skipped++))
         else
-            echo "⚠️  警告: $dest 已存在且非符号链接，请手动处理"
+            echo "⚠️  警告: $dest 已存在且非符号链接，无法自动同步。"
+            echo "    → 解决方法：手动执行 rm -rf '$dest'，再重新运行本 skill。"
             ((warned++))
         fi
     done
@@ -206,6 +211,8 @@ done
 ──────────────────────────────────────────
 汇总: 新建 N 条，跳过 N 条，警告 N 条，失效 N 条
 ```
+
+若 `dangling` 为空，打印：`✅ 未检测到失效链接`
 
 若 `dangling` 非空，列出所有失效链接后进入 CHECKPOINT：
 
