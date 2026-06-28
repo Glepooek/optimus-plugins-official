@@ -39,17 +39,51 @@ macOS/Linux 无需此步骤，直接进入 Step 1。
 
 ## Step 1 — 扫描源目录
 
+**Windows PowerShell：**
+
 ```powershell
 # Windows
 $source = "$env:USERPROFILE\.agents\skills"
+
+# 源目录不存在 → 终止并提示
+if (-not (Test-Path $source)) {
+    Write-Host "❌ 源目录不存在: $source" -ForegroundColor Red
+    Write-Host "   请先创建该目录，并在其中放置 skill 子目录，再运行本 skill。"
+    return
+}
+
 $skills = Get-ChildItem -Path $source -Directory | Select-Object -ExpandProperty Name
+
+# 源目录为空 → 提示并终止
+if ($skills.Count -eq 0) {
+    Write-Host "⚠️  $source 中没有发现任何 skill 子目录，无需同步。"
+    return
+}
+
 Write-Host "🔍 发现 $($skills.Count) 个 skill: $($skills -join ', ')"
 ```
+
+**macOS/Linux Bash：**
 
 ```bash
 # macOS/Linux
 source="$HOME/.agents/skills"
+
+# 源目录不存在 → 终止并提示
+if [ ! -d "$source" ]; then
+    echo "❌ 源目录不存在: $source"
+    echo "   请先创建该目录，并在其中放置 skill 子目录，再运行本 skill。"
+    return 1
+fi
+
 skills=($(ls -d "$source"/*/  2>/dev/null | xargs -I{} basename {}))
+
+# 源目录为空 → 提示并终止
+if [ ${#skills[@]} -eq 0 ]; then
+    echo "⚠️  $source 中没有发现任何 skill 子目录，无需同步。"
+    return 0
+fi
+
 echo "🔍 发现 ${#skills[@]} 个 skill: ${skills[*]}"
 ```
 
@@ -201,3 +235,18 @@ done
 ```
 
 - 若用户回复 `n`：打印 `ℹ️  已跳过，失效链接仍保留，请稍后手动处理`
+
+---
+
+## ⛔ 反例与黑名单
+
+以下操作会导致 skill 失败、数据丢失或产生难以排查的问题，**绝对不要做**：
+
+| # | 禁止行为 | 后果 | 正确做法 |
+|---|---------|------|---------|
+| 1 | 在 `~/.agents/skills/` 中直接放置文件（非子目录） | skill 不识别，会被 `ls -d */` 跳过，但可能引起路径歧义 | 每个 skill 必须是独立子目录，如 `my-skill/SKILL.md` |
+| 2 | 在目标目录（`~/.claude/skills/` 等）手动创建与 skill 同名的普通目录 | skill 检测为"非符号链接"，打印警告跳过，永远无法自动同步 | 先手动删除该目录，再运行 skill |
+| 3 | 在 Windows 未开启开发者模式也未以管理员身份运行时强行执行 | Step 0 权限检测失败，skill 终止 | 开启设置 → 隐私和安全 → 开发者选项，或右键以管理员身份运行终端 |
+| 4 | 手动修改已创建的符号链接指向 | 下次运行 skill 时该链接显示"已存在，跳过"，不会被修正 | 先删除错误的符号链接，再运行 skill 重新创建 |
+| 5 | 在 `~/.agents/skills/` 被删除后不处理仍运行 skill | Step 1 源目录不存在检测会终止，但目标目录中的失效链接不会自动清除 | 先运行 skill 触发 CHECKPOINT，选 `y` 清除失效链接 |
+| 6 | 对 `~/.claude/skills/` 中非本 skill 管理的符号链接执行失效检测 | Step 3 会检测所有符号链接，包括你手动创建或其他工具创建的链接，可能误列为"失效" | 在 CHECKPOINT 仔细核对列表再选 `y`，不确定则选 `n` |
