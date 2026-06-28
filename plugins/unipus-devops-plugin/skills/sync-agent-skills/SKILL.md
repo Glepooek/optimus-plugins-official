@@ -30,7 +30,10 @@ try {
 } catch {
     Write-Host "❌ 无法创建符号链接。请开启 Windows 开发者模式（设置 → 隐私和安全 → 开发者选项），或以管理员身份运行终端。" -ForegroundColor Red
 }
-if (-not $canSymlink) { exit 1 }
+if (-not $canSymlink) {
+    Write-Host "⛔ 权限检测失败，操作终止。解决权限后重新运行本 skill。" -ForegroundColor Red
+    return
+}
 ```
 
 macOS/Linux 无需此步骤，直接进入 Step 1。
@@ -127,7 +130,8 @@ foreach ($target in $targets) {
             Write-Host "⚠️  已存在，跳过: $skill ($target)"
             $skipped++
         } else {
-            Write-Host "⚠️  警告: $dest 已存在且非符号链接，请手动处理"
+            Write-Host "⚠️  警告: $dest 已存在且非符号链接，自动同步失败。" -ForegroundColor Yellow
+            Write-Host "    修复：执行 Remove-Item '$dest' -Recurse -Force，再重新运行本 skill。"
             $warned++
         }
     }
@@ -159,7 +163,8 @@ for target in "${targets[@]}"; do
             echo "⚠️  已存在，跳过: $skill ($target)"
             ((skipped++))
         else
-            echo "⚠️  警告: $dest 已存在且非符号链接，请手动处理"
+            echo "⚠️  警告: $dest 已存在且非符号链接，自动同步失败。"
+            echo "    修复：执行 rm -rf '$dest'，再重新运行本 skill。"
             ((warned++))
         fi
     done
@@ -196,15 +201,44 @@ for target in "${targets[@]}"; do
 done
 ```
 
+检测完成后输出结果：
+
+**Windows：**
+```powershell
+if ($dangling.Count -eq 0) {
+    Write-Host "✅ 未检测到失效链接"
+} else {
+    Write-Host "⚠️  检测到 $($dangling.Count) 条失效链接："
+    $dangling | ForEach-Object { Write-Host "   $($_.Path) → $($_.Target)" }
+}
+```
+
+**macOS/Linux：**
+```bash
+if [ ${#dangling[@]} -eq 0 ]; then
+    echo "✅ 未检测到失效链接"
+else
+    echo "⚠️  检测到 ${#dangling[@]} 条失效链接："
+    for link in "${dangling[@]}"; do echo "   $link"; done
+fi
+```
+
 ---
 
 ## Step 4 — 汇总输出 & CHECKPOINT 处理失效链接
 
 先打印汇总：
 
+**Windows：**
+```powershell
+Write-Host "──────────────────────────────────────────"
+Write-Host "汇总: 新建 $created 条，跳过 $skipped 条，警告 $warned 条，失效 $($dangling.Count) 条"
 ```
-──────────────────────────────────────────
-汇总: 新建 N 条，跳过 N 条，警告 N 条，失效 N 条
+
+**macOS/Linux：**
+```bash
+echo "──────────────────────────────────────────"
+echo "汇总: 新建 $created 条，跳过 $skipped 条，警告 $warned 条，失效 ${#dangling[@]} 条"
 ```
 
 若 `dangling` 非空，列出所有失效链接后进入 CHECKPOINT：
@@ -234,7 +268,7 @@ for link in "${dangling[@]}"; do
 done
 ```
 
-- 若用户回复 `n`：打印 `ℹ️  已跳过，失效链接仍保留，请稍后手动处理`
+- 若用户回复 `n`：打印 `ℹ️  已跳过，失效链接保留在原位置。如需清理：Windows 执行 Remove-Item <path> -Force；macOS/Linux 执行 rm <path>`
 
 ---
 
