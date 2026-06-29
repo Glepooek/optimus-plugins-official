@@ -1,6 +1,0 @@
-timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
-2026-06-26T20:20	baseline	sync-cc-tips	-	70.7	baseline	-	初始评估：dim4最弱(2.4),dim9(3.0),dim3(7.2)	dry_run
-2026-06-26T20:25	b95a361	sync-cc-tips	70.7	71.9	keep	dim3	补Step4/5 if-then三段式fallback表	dry_run
-2026-06-26T20:30	4bb43f0	sync-cc-tips	71.9	77.3	keep	dim3+dim9	dim3(6→9),dim9(5→10)；添加⛔反例黑名单章节，补Step2/Step6失败分支	dry_run
-2026-06-26T20:35	8e0f02a	sync-cc-tips	77.3	79.1	keep	dim4	dim4(4→7)；删除操作前加🔴CHECKPOINT	dry_run
-2026-06-26T20:42	d979953	sync-cc-tips	79.1	79.7	keep	dim4	dim4(7→8)；Step4写入前加变更预览CHECKPOINT；修复双检查点逻辑冲突	dry_run

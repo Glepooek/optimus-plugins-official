@@ -6,17 +6,22 @@ Jenkins Build CLI
   python main.py zk-api BRANCH=main     # 触发带参数的 job
 """
 
+import os
 import sys
 import yaml
 from jenkins_build import JenkinsBuildSkill
 
 
 def load_config(path: str = "config.yaml") -> dict:
+    if not os.path.exists(path):
+        print(f"[✗] 未找到配置文件 {os.path.abspath(path)}")
+        print("    请参考 config.yaml.example 创建配置文件")
+        sys.exit(1)
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
-def parse_args(args: list[str]) -> tuple[str | None, dict]:
+def parse_args(args):
     """解析命令行参数，返回 (job_name, params)"""
     job_name = None
     params = {}
@@ -52,11 +57,19 @@ def main():
         sys.exit(1)
 
     job_path = jobs[job_name]["path"]
+    default_params = jobs[job_name].get("default_params", {})
+    merged_params = {**default_params, **params}  # 命令行参数覆盖默认值
     print(f"[→] 触发 job: {job_name}  path: {job_path}")
-    if params:
-        print(f"    参数: {params}")
+    if merged_params:
+        print(f"    参数: {merged_params}")
 
-    result, commits = skill.run(job_path, params=params or None)
+    result, commits = skill.run(job_path, params=merged_params or None)
+
+    if commits:
+        print(f"[i] 本次构建涉及 {len(commits)} 条提交：")
+        for msg in commits:
+            print(f"    - {msg}")
+
     sys.exit(0 if result == "SUCCESS" else 1)
 
 

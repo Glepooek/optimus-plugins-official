@@ -3,7 +3,7 @@ name: unipus-ci-jenkins-build
 description: 触发 Jenkins 构建并等待结果的自动化工具，支持指定 job 名称和构建参数
 globs:
   - "jenkins_build/**"
-alwaysApply: false
+disable-model-invocation: true
 ---
 
 # Jenkins 构建触发工具
@@ -35,11 +35,16 @@ jenkins:
   # password: "your_password"   # 无 api_token 时使用密码
 
 jobs:
-  zk-api:
-    path: "view/aigc%E5%90%8E%E5%8F%B0%E7%9B%B8%E5%85%B3/job/zk-api"
-  # 添加更多 job：
-  # my-service:
-  #   path: "job/my-service"
+  lms-api-test:
+    path: "view/mid/job/lms-api-test"
+  # 添加更多job
+  # 参数化构建示例（default_params 会在触发时自动传入，命令行参数可覆盖）：
+  # uni-stu-pc:
+  #   path: "job/k12-test-cloud/job/uni-stu-pc"
+  #   default_params:
+  #     BRANCH_OR_TAG: "master"
+  #     Build_Type: "Release"
+  #     VERSION_PREFIX: "1.2.1"
 ```
 
 ### 执行构建
