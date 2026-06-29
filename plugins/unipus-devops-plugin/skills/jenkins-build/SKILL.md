@@ -49,6 +49,12 @@ jobs:
 
 ### 执行构建
 
+> 🔴 **CHECKPOINT — 触发前确认**
+> 触发构建是不可逆操作，请确认以下三项后再执行：
+> 1. `config.yaml` 已正确配置（url / api_token / job path）
+> 2. 目标 job 名称与环境（开发/测试/生产）与预期一致
+> 3. 该 job 当前无正在运行的构建（避免并发冲突）
+
 优先使用 `scripts/run.sh` 脚本运行（自动检查配置、安装依赖）：
 
 ```bash
@@ -67,6 +73,8 @@ jobs:
 ```bash
 python3 jenkins_build/main.py [job_name] [KEY=VALUE ...]
 ```
+
+**完整调用链**：触发构建 → 获取 build_number → 轮询等待结果 → 调用 `notify-api-change` skill
 
 ## 代码位置
 
