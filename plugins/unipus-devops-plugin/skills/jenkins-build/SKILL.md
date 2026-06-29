@@ -103,3 +103,16 @@ python3 jenkins_build/main.py [job_name] [KEY=VALUE ...]
 - job `path` 需与 Jenkins URL 中的路径一致，特殊字符需 URL 编码
 - 构建触发后会自动轮询状态，默认每 10 秒查询一次
 - 返回值：SUCCESS 时退出码为 0，其他结果退出码为 1
+
+## ⛔ 反例黑名单
+
+**以下操作禁止执行：**
+
+| 禁止行为 | 原因 | 正确做法 |
+|---|---|---|
+| 将 `api_token` 或 `password` 明文写入代码或提交到 git | 凭证泄露风险 | 写入 `config.yaml` 并确保该文件在 `.gitignore` 中 |
+| 未确认 job 名称就触发构建 | 可能误触发生产环境构建 | 先用 `config.yaml` 中的 jobs 列表核对 job 名称 |
+| 同时并发触发同一个 job 多次 | 可能导致构建队列阻塞或资源竞争 | 等待当前构建完成后再触发 |
+| 构建结果为 FAILURE 时跳过 `notify-api-change` 调用 | 失败信息不会通知前端/测试人员 | 无论 SUCCESS 还是 FAILURE 都必须调用 notify |
+| 使用 `password` 字段代替 `api_token` 作为长期方案 | 明文密码安全级别低，账号密码变更后需手动更新 | 始终优先使用 Jenkins API Token |
+| 在未配置 `config.yaml` 的情况下直接运行脚本 | 脚本会报错退出，无提示说明原因 | 先复制 `config.yaml.example` 为 `config.yaml` 并填写实际值 |
