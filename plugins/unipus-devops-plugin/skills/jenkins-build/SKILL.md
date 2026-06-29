@@ -1,5 +1,5 @@
 ---
-name: unipus-ci-jenkins-build
+name: jenkins-build
 description: 触发 Jenkins 构建并等待结果的自动化工具，支持指定 job 名称和构建参数
 globs:
   - "jenkins_build/**"
