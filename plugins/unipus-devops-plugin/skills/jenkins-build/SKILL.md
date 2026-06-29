@@ -85,6 +85,18 @@ python3 jenkins_build/main.py [job_name] [KEY=VALUE ...]
 - `jenkins_url` + `job_path`：用于拼接构建地址
 - `commits`：本次 changeSet 的 commit message 列表
 
+## 失败处理
+
+| 触发条件 | 一线修复 | 仍失败兜底 |
+|---|---|---|
+| `Connection refused` / 无法连接 Jenkins | 检查 `config.yaml` 中 `url` 是否可访问（`curl <url>/api/json`） | 确认 VPN/网络，或联系 DevOps 确认 Jenkins 服务状态 |
+| 401 Unauthorized | 检查 `api_token` 是否过期，在 Jenkins → 用户设置重新生成 | 回退到 `password` 字段临时使用 |
+| 403 Forbidden | 确认账号对目标 job 有 Build 权限 | 联系 Jenkins 管理员授权 |
+| 构建启动后无响应（超过 5 分钟未进入 RUNNING） | 检查 Jenkins executor 是否空闲，队列是否阻塞 | 手动在 Jenkins UI 取消排队，再次触发 |
+| 构建结果 `FAILURE` | 打开构建日志（脚本输出构建 URL）排查失败原因 | 修复后重新触发，仍失败则上报给对应开发负责人 |
+| 构建结果 `ABORTED` | 通常是手动取消或超时，确认是否需要重触发 | 检查 Jenkins job 的超时配置 |
+| `job_name` 不存在 | 检查 `config.yaml` 中 jobs 列表，确认拼写与路径一致 | 在 Jenkins UI 手动确认 job path |
+
 ## 注意事项
 
 - `api_token` 字段优先于 `password`，建议在 Jenkins 用户设置中生成 API Token 使用

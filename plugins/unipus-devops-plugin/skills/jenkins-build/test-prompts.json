@@ -1,0 +1,5 @@
+[
+  {"id": 1, "prompt": "帮我触发 lms-api-test 的 Jenkins 构建", "expected": "执行 scripts/run.sh lms-api-test，等待构建结果，调用 notify-api-change"},
+  {"id": 2, "prompt": "触发 uni-stu-pc 构建，分支用 feature/new-ui", "expected": "执行 scripts/run.sh uni-stu-pc BRANCH_OR_TAG=feature/new-ui，传入参数"},
+  {"id": 3, "prompt": "Jenkins 构建返回 FAILURE，接下来怎么做？", "expected": "按失败分支给出明确处置步骤（调用 notify-api-change，告知构建失败原因）"}
+]
