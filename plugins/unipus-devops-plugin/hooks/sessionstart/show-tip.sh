@@ -117,14 +117,18 @@ try:
         # 读取或初始化状态
         need_reset = False
         if os.path.exists(STATE_FILE):
-            with open(STATE_FILE, 'r', encoding='utf-8') as f:
-                state = json.load(f)
-            round_num = state.get('round', 1)
-            remaining = state.get('remaining', [])
-            saved_count = state.get('count', count)
+            try:
+                with open(STATE_FILE, 'r', encoding='utf-8') as f:
+                    state = json.load(f)
+                round_num = state.get('round', 1)
+                remaining = state.get('remaining', [])
+                saved_count = state.get('count', count)
 
-            # 检测技巧数量是否变化
-            if saved_count != count:
+                # 检测技巧数量是否变化
+                if saved_count != count:
+                    need_reset = True
+            except (json.JSONDecodeError, ValueError):
+                # 状态文件损坏（空文件或无效 JSON），重新初始化
                 need_reset = True
         else:
             need_reset = True
