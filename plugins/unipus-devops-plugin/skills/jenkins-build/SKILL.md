@@ -49,6 +49,12 @@ jobs:
 
 ### 执行构建
 
+> 🔴 **CHECKPOINT — 触发前确认**
+> 触发构建是不可逆操作，请确认以下三项后再执行：
+> 1. `config.yaml` 已正确配置（url / api_token / job path）
+> 2. 目标 job 名称与环境（开发/测试/生产）与预期一致
+> 3. 该 job 当前无正在运行的构建（避免并发冲突）
+
 优先使用 `scripts/run.sh` 脚本运行（自动检查配置、安装依赖）：
 
 ```bash
@@ -68,6 +74,8 @@ jobs:
 python3 jenkins_build/main.py [job_name] [KEY=VALUE ...]
 ```
 
+**完整调用链**：触发构建 → 获取 build_number → 轮询等待结果 → 调用 `notify-api-change` skill
+
 ## 代码位置
 
 - 主程序入口: `.claude/skills/jenkins-build/jenkins_build/main.py`
@@ -85,9 +93,34 @@ python3 jenkins_build/main.py [job_name] [KEY=VALUE ...]
 - `jenkins_url` + `job_path`：用于拼接构建地址
 - `commits`：本次 changeSet 的 commit message 列表
 
+## 失败处理
+
+| 触发条件 | 一线修复 | 仍失败兜底 |
+|---|---|---|
+| `Connection refused` / 无法连接 Jenkins | 检查 `config.yaml` 中 `url` 是否可访问（`curl <url>/api/json`） | 确认 VPN/网络，或联系 DevOps 确认 Jenkins 服务状态 |
+| 401 Unauthorized | 检查 `api_token` 是否过期，在 Jenkins → 用户设置重新生成 | 回退到 `password` 字段临时使用 |
+| 403 Forbidden | 确认账号对目标 job 有 Build 权限 | 联系 Jenkins 管理员授权 |
+| 构建启动后无响应（超过 5 分钟未进入 RUNNING） | 检查 Jenkins executor 是否空闲，队列是否阻塞 | 手动在 Jenkins UI 取消排队，再次触发 |
+| 构建结果 `FAILURE` | 打开构建日志（脚本输出构建 URL）排查失败原因 | 修复后重新触发，仍失败则上报给对应开发负责人 |
+| 构建结果 `ABORTED` | 通常是手动取消或超时，确认是否需要重触发 | 检查 Jenkins job 的超时配置 |
+| `job_name` 不存在 | 检查 `config.yaml` 中 jobs 列表，确认拼写与路径一致 | 在 Jenkins UI 手动确认 job path |
+
 ## 注意事项
 
 - `api_token` 字段优先于 `password`，建议在 Jenkins 用户设置中生成 API Token 使用
 - job `path` 需与 Jenkins URL 中的路径一致，特殊字符需 URL 编码
 - 构建触发后会自动轮询状态，默认每 10 秒查询一次
 - 返回值：SUCCESS 时退出码为 0，其他结果退出码为 1
+
+## ⛔ 反例黑名单
+
+**以下操作禁止执行：**
+
+| 禁止行为 | 原因 | 正确做法 |
+|---|---|---|
+| 将 `api_token` 或 `password` 明文写入代码或提交到 git | 凭证泄露风险 | 写入 `config.yaml` 并确保该文件在 `.gitignore` 中 |
+| 未确认 job 名称就触发构建 | 可能误触发生产环境构建 | 先用 `config.yaml` 中的 jobs 列表核对 job 名称 |
+| 同时并发触发同一个 job 多次 | 可能导致构建队列阻塞或资源竞争 | 等待当前构建完成后再触发 |
+| 构建结果为 FAILURE 时跳过 `notify-api-change` 调用 | 失败信息不会通知前端/测试人员 | 无论 SUCCESS 还是 FAILURE 都必须调用 notify |
+| 使用 `password` 字段代替 `api_token` 作为长期方案 | 明文密码安全级别低，账号密码变更后需手动更新 | 始终优先使用 Jenkins API Token |
+| 在未配置 `config.yaml` 的情况下直接运行脚本 | 脚本会报错退出，无提示说明原因 | 先复制 `config.yaml.example` 为 `config.yaml` 并填写实际值 |
