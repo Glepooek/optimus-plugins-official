@@ -1,18 +1,20 @@
 ---
 name: sync-agent-skills
 version: 1.2.0
-description: 将 ~/.agents/skills/ 中的所有 skill 目录以符号链接同步到 ~/.claude/skills/ 和 ~/.kiro/skills/，使用户只需维护一个 source of truth。触发词：同步 skills、sync agent skills、链接 skills、更新 skill 链接、sync-agent-skills。
+description: 将 skill 源目录以符号链接同步到各 AI 工具的 skills 目录，维护单一 source of truth。默认 source：~/.agents/skills/，默认 targets：~/.claude/skills/ 和 ~/.kiro/skills/。支持自定义：source=<路径> target=<路径1,路径2,...>。触发词：同步 skills、sync agent skills、链接 skills、更新 skill 链接、sync-agent-skills、link skills、update skill symlinks。不适用：仅需查看已有链接状态而不修改时，无需触发本 skill。
 ---
 
 # sync-agent-skills
 
-将 `~/.agents/skills/` 中的所有 skill 同步为符号链接，分发到各 AI 工具的 skills 目录。
+将 skill 源目录中的所有 skill 子目录以符号链接形式分发到各 AI 工具的 skills 目录，使用户只需维护一个 source of truth。
 
 ---
 
-## Step 0 — 参数解析
+## Step 0 — 参数解析与路径验证
 
-读取用户指令，提取 `source=` 和 `target=` 参数。未提供则使用默认值。
+读取用户指令，提取 `source=` 和 `target=` 参数；若使用自定义路径，同步执行边界检查。
+
+### 0.1 参数解析
 
 **Windows PowerShell：**
 
@@ -23,7 +25,7 @@ $targets   = @("$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.kiro\skills
 $useCustom = $false
 
 # 从用户消息中提取 source= 和 target= 参数
-# 用户消息示例："同步 skills source=D:\my-skills target=C:\cursor\skills,C:\windsurf\skills"
+# 示例："同步 skills source=D:\my-skills target=C:\cursor\skills,C:\windsurf\skills"
 $userMsg = "<此处为用户完整消息>"   # AI 将此变量替换为实际用户消息
 
 if ($userMsg -match '(?:^|\s)source=([^\s]+)') {
@@ -41,7 +43,7 @@ Write-Host "🎯 targets: $($targets -join ' | ')"
 if ($useCustom) {
     Write-Host ""
     Write-Host "ℹ️  参数用法："
-    Write-Host "    source=<绝对路径>         指定 skill 源目录"
+    Write-Host "    source=<绝对路径>         指定 skill 源目录（默认：~\.agents\skills）"
     Write-Host "    target=<路径1,路径2,...>  指定一个或多个目标目录（逗号分隔）"
 }
 ```
@@ -55,7 +57,7 @@ targets=("$HOME/.claude/skills" "$HOME/.kiro/skills")
 use_custom=false
 
 # 从用户消息中提取 source= 和 target= 参数
-# 用户消息示例："同步 skills source=~/my-skills target=~/.cursor/skills,~/.windsurf/skills"
+# 示例："同步 skills source=~/my-skills target=~/.cursor/skills,~/.windsurf/skills"
 user_msg="<此处为用户完整消息>"   # AI 将此变量替换为实际用户消息
 
 if [[ "$user_msg" =~ (^|[[:space:]])source=([^[:space:]]+) ]]; then
@@ -73,22 +75,59 @@ echo "🎯 targets: $(IFS=' | '; echo "${targets[*]}")"
 if [ "$use_custom" = true ]; then
     echo ""
     echo "ℹ️  参数用法："
-    echo "    source=<绝对路径>         指定 skill 源目录"
+    echo "    source=<绝对路径>         指定 skill 源目录（默认：~/.agents/skills）"
     echo "    target=<路径1,路径2,...>  指定一个或多个目标目录（逗号分隔）"
 fi
 ```
 
+### 0.2 自定义路径边界检查（仅 `$useCustom = true` 时执行）
+
+**检查 A — target 父目录不存在：** 收集所有父目录缺失的 target，进入 CHECKPOINT：
+
+🔴 **CHECKPOINT — 目标父目录缺失（继续前必须完成）：**
+
+> 以下目标目录的父目录不存在，无法自动创建符号链接：
+> - `<target>`（父目录：`<parent>`）
+>
+> 是否自动创建缺失的父目录？回复 `y` 全部创建，`n` 跳过这些目标。
+
+- 若回复 `y`（Windows）：`New-Item -ItemType Directory -Path $parentDir -Force | Out-Null`；打印 `✅ 已创建: <parent>`
+- 若回复 `y`（Bash）：`mkdir -p "$(dirname "$target")"`；打印 `✅ 已创建: <parent>`
+- 若回复 `n`：将这些 target 从 `$targets` 数组移除，打印 `ℹ️  已跳过: <target>`
+- 若所有 target 均被跳过：打印 `⛔ 无可用目标目录，操作终止。` 并退出
+
+**检查 B — target 路径是文件（非目录）：** 直接过滤，无需 CHECKPOINT：
+
+```powershell
+# Windows
+$targets = $targets | Where-Object {
+    if (Test-Path $_ -PathType Leaf) {
+        Write-Host "❌ $_ 已存在且是文件，已跳过。" -ForegroundColor Red
+        $false
+    } else { $true }
+}
+```
+
+```bash
+# Bash
+filtered=()
+for t in "${targets[@]}"; do
+    if [ -f "$t" ]; then echo "❌ $t 已存在且是文件，已跳过。"
+    else filtered+=("$t"); fi
+done
+targets=("${filtered[@]}")
+```
+
 ---
 
-## Step 1 — 平台检测与权限预检（Windows 专用）
+## Step 1 — 权限预检（Windows 专用）
 
 检测当前平台。若为 Windows，执行：
 
 ```powershell
-# 检测是否有符号链接创建权限（开发者模式或管理员）
 $canSymlink = $false
 try {
-    $testLink = "$env:TEMP\__symlink_test_$(Get-Random)"
+    $testLink   = "$env:TEMP\__symlink_test_$(Get-Random)"
     $testTarget = "$env:TEMP\__symlink_target_$(Get-Random)"
     New-Item -ItemType Directory -Path $testTarget -Force | Out-Null
     New-Item -ItemType SymbolicLink -Path $testLink -Target $testTarget -ErrorAction Stop | Out-Null
@@ -99,7 +138,7 @@ try {
     Write-Host "❌ 无法创建符号链接。请开启 Windows 开发者模式（设置 → 隐私和安全 → 开发者选项），或以管理员身份运行终端。" -ForegroundColor Red
 }
 if (-not $canSymlink) {
-    Write-Host "⛔ 权限检测失败，操作终止。解决权限后重新运行本 skill。" -ForegroundColor Red
+    Write-Host "⛔ 权限检测失败，操作终止。" -ForegroundColor Red
     return
 }
 ```
@@ -108,92 +147,22 @@ macOS/Linux 无需此步骤，直接进入 Step 2。
 
 ---
 
-## 自定义路径边界处理（仅在使用自定义参数时执行）
-
-若 `$useCustom`（Windows）或 `$use_custom`（Bash）为 true，在扫描源目录前执行以下检查：
-
-**检查 1 — source 路径不存在：** 行为与默认模式一致，打印错误并终止。无需额外处理，Step 2 的扫描逻辑已覆盖。
-
-**检查 2 — target 父目录不存在：** AI 打印提示并进入 CHECKPOINT，用户回复 y/n 后继续。写法与现有 Step 5 CHECKPOINT 保持一致：
-
-```
-🔴 CHECKPOINT — 目标目录父目录缺失（继续前必须完成）：
-
-以下目标目录的父目录不存在：
-  - <target> (父目录: <parent>)
-  ...
-
-是否自动创建缺失的父目录？
-请回复 `y` 全部创建，或 `n` 跳过这些目标。
-```
-
-- 若用户回复 `y`（Windows）：
-```powershell
-foreach ($target in $missingParentTargets) {
-    $parentDir = Split-Path $target -Parent
-    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
-    Write-Host "✅ 已创建: $parentDir"
-}
-```
-
-- 若用户回复 `y`（Bash）：
-```bash
-for target in "${missing_parent_targets[@]}"; do
-    mkdir -p "$(dirname "$target")"
-    echo "✅ 已创建: $(dirname "$target")"
-done
-```
-
-- 若用户回复 `n`：将这些 target 从 `$targets` 数组中移除，打印 `ℹ️  已跳过: <target>`
-
-**检查 3 — target 路径是文件（非目录）（Windows）：**
-
-```powershell
-$targets = $targets | Where-Object {
-    $t = $_
-    if (Test-Path $t -PathType Leaf) {
-        Write-Host "❌ $t 已存在且是文件，跳过。" -ForegroundColor Red
-        $false
-    } else {
-        $true
-    }
-}
-```
-
-**检查 3 — target 路径是文件（非目录）（Bash）：**
-
-```bash
-final_targets=()
-for target in "${targets[@]}"; do
-    if [ -f "$target" ]; then
-        echo "❌ $target 已存在且是文件，跳过。"
-    else
-        final_targets+=("$target")
-    fi
-done
-targets=("${final_targets[@]}")
-```
-
----
-
 ## Step 2 — 扫描源目录
 
 **Windows PowerShell：**
 
 ```powershell
-# Windows（$source 由 Step 0 赋值，此处仅在 Step 0 未执行时兜底）
+# $source 由 Step 0 赋值；此处兜底仅在 Step 0 未执行时生效
 if (-not $source) { $source = "$env:USERPROFILE\.agents\skills" }
 
-# 源目录不存在 → 终止并提示
 if (-not (Test-Path $source)) {
     Write-Host "❌ 源目录不存在: $source" -ForegroundColor Red
-    Write-Host "   请先创建该目录，并在其中放置 skill 子目录，再运行本 skill。"
+    Write-Host "   请先创建该目录并放置 skill 子目录，再运行本 skill。"
     return
 }
 
 $skills = Get-ChildItem -Path $source -Directory | Select-Object -ExpandProperty Name
 
-# 源目录为空 → 提示并终止
 if ($skills.Count -eq 0) {
     Write-Host "⚠️  $source 中没有发现任何 skill 子目录，无需同步。"
     return
@@ -205,13 +174,12 @@ Write-Host "🔍 发现 $($skills.Count) 个 skill: $($skills -join ', ')"
 **macOS/Linux Bash：**
 
 ```bash
-# macOS/Linux（$source_dir 由 Step 0 赋值，此处仅在 Step 0 未执行时兜底）
+# $source_dir 由 Step 0 赋值；此处兜底仅在 Step 0 未执行时生效
 source_dir="${source_dir:-$HOME/.agents/skills}"
 
-# 源目录不存在 → 终止并提示
 if [ ! -d "$source_dir" ]; then
     echo "❌ 源目录不存在: $source_dir"
-    echo "   请先创建该目录，并在其中放置 skill 子目录，再运行本 skill。"
+    echo "   请先创建该目录并放置 skill 子目录，再运行本 skill。"
     return 1
 fi
 
@@ -220,7 +188,6 @@ while IFS= read -r -d '' d; do
     skills+=("$(basename "$d")")
 done < <(find "$source_dir" -mindepth 1 -maxdepth 1 -type d -print0)
 
-# 源目录为空 → 提示并终止
 if [ ${#skills[@]} -eq 0 ]; then
     echo "⚠️  $source_dir 中没有发现任何 skill 子目录，无需同步。"
     return 0
@@ -231,33 +198,26 @@ echo "🔍 发现 ${#skills[@]} 个 skill: ${skills[*]}"
 
 ---
 
-## Step 3 — 检测目标目录 & 创建缺失链接
+## Step 3 — 创建符号链接
 
-目标目录：`~/.claude/skills/` 和 `~/.kiro/skills/`（若 `~/.kiro/` 不存在则跳过 kiro）。
+`$targets` 由 Step 0 赋值（默认：`~/.claude/skills/` 和 `~/.kiro/skills/`）。对每个目标目录逐一处理：父目录不存在则静默跳过（默认 targets）；自动创建目标目录本身；链接不存在则新建，已存在但目标路径不符则自动更新，目标路径一致则跳过，非符号链接则警告。
 
 **Windows PowerShell：**
 
 ```powershell
-# $targets 由 Step 0 赋值，此处仅在 Step 0 未执行时兜底
+# $targets 由 Step 0 赋值；此处兜底仅在 Step 0 未执行时生效
 if (-not $targets) {
-    $targets = @(
-        "$env:USERPROFILE\.claude\skills",
-        "$env:USERPROFILE\.kiro\skills"
-    )
+    $targets = @("$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.kiro\skills")
 }
 
-$created = 0
-$skipped = 0
-$warned  = 0
+$created = 0; $skipped = 0; $warned = 0
 
 foreach ($target in $targets) {
-    # 检查父目录（.kiro 本体）是否存在
     $parentDir = Split-Path $target -Parent
     if (-not (Test-Path $parentDir)) {
-        Write-Host "ℹ️  $parentDir 不存在，已跳过 $(Split-Path $target -Leaf) 同步"
+        Write-Host "ℹ️  $parentDir 不存在，已跳过"
         continue
     }
-    # 自动创建目标目录
     if (-not (Test-Path $target)) {
         New-Item -ItemType Directory -Path $target -Force | Out-Null
     }
@@ -270,19 +230,18 @@ foreach ($target in $targets) {
             Write-Host "✅ 新建链接: $skill → $target/"
             $created++
         } elseif ($item.LinkType -eq "SymbolicLink") {
-            $currentTarget = (Get-Item $dest).Target
-            if ($currentTarget -ne $src) {
+            $cur = (Get-Item $dest).Target
+            if ($cur -ne $src) {
                 Remove-Item $dest -Force
                 New-Item -ItemType SymbolicLink -Path $dest -Target $src | Out-Null
-                Write-Host "🔄 更新链接: $skill ($currentTarget → $src)"
+                Write-Host "🔄 更新链接: $skill ($cur → $src)"
                 $created++
             } else {
-                Write-Host "✔  已是最新，跳过: $skill ($target)"
+                Write-Host "✔  已是最新，跳过: $skill"
                 $skipped++
             }
         } else {
-            Write-Host "⚠️  警告: $dest 已存在且非符号链接，自动同步失败。" -ForegroundColor Yellow
-            Write-Host "    修复：执行 Remove-Item '$dest' -Recurse -Force，再重新运行本 skill。"
+            Write-Host "⚠️  $dest 已存在且非符号链接，跳过。修复：Remove-Item '$dest' -Recurse -Force" -ForegroundColor Yellow
             $warned++
         }
     }
@@ -292,7 +251,7 @@ foreach ($target in $targets) {
 **macOS/Linux Bash：**
 
 ```bash
-# targets 由 Step 0 赋值，此处仅在 Step 0 未执行时兜底
+# targets 由 Step 0 赋值；此处兜底仅在 Step 0 未执行时生效
 if [ ${#targets[@]} -eq 0 ]; then
     targets=("$HOME/.claude/skills" "$HOME/.kiro/skills")
 fi
@@ -301,7 +260,7 @@ created=0; skipped=0; warned=0
 for target in "${targets[@]}"; do
     parent=$(dirname "$target")
     if [ ! -d "$parent" ]; then
-        echo "ℹ️  $parent 不存在，已跳过 $(basename $parent) 同步"
+        echo "ℹ️  $parent 不存在，已跳过"
         continue
     fi
     mkdir -p "$target"
@@ -313,19 +272,17 @@ for target in "${targets[@]}"; do
             echo "✅ 新建链接: $skill → $target/"
             ((created++))
         elif [ -L "$dest" ]; then
-            current_target=$(readlink "$dest")
-            if [ "$current_target" != "$src" ]; then
-                rm "$dest"
-                ln -s "$src" "$dest"
-                echo "🔄 更新链接: $skill ($current_target → $src)"
+            cur=$(readlink "$dest")
+            if [ "$cur" != "$src" ]; then
+                rm "$dest" && ln -s "$src" "$dest"
+                echo "🔄 更新链接: $skill ($cur → $src)"
                 ((created++))
             else
-                echo "✔  已是最新，跳过: $skill ($target)"
+                echo "✔  已是最新，跳过: $skill"
                 ((skipped++))
             fi
         else
-            echo "⚠️  警告: $dest 已存在且非符号链接，自动同步失败。"
-            echo "    修复：执行 rm -rf '$dest'，再重新运行本 skill。"
+            echo "⚠️  $dest 已存在且非符号链接，跳过。修复：rm -rf '$dest'"
             ((warned++))
         fi
     done
@@ -335,6 +292,8 @@ done
 ---
 
 ## Step 4 — 检测失效链接
+
+扫描所有目标目录中的符号链接，收集指向已不存在路径的链接：
 
 **Windows：**
 
@@ -348,6 +307,11 @@ foreach ($target in $targets) {
         }
     }
 }
+if ($dangling.Count -eq 0) { Write-Host "✅ 未检测到失效链接" }
+else {
+    Write-Host "⚠️  检测到 $($dangling.Count) 条失效链接："
+    $dangling | ForEach-Object { Write-Host "   $($_.Path) → $($_.Target)" }
+}
 ```
 
 **macOS/Linux：**
@@ -360,24 +324,7 @@ for target in "${targets[@]}"; do
         [ -L "$link" ] && [ ! -e "$link" ] && dangling+=("$link")
     done < <(find "$target" -maxdepth 1 -type l -print0)
 done
-```
-
-检测完成后输出结果：
-
-**Windows：**
-```powershell
-if ($dangling.Count -eq 0) {
-    Write-Host "✅ 未检测到失效链接"
-} else {
-    Write-Host "⚠️  检测到 $($dangling.Count) 条失效链接："
-    $dangling | ForEach-Object { Write-Host "   $($_.Path) → $($_.Target)" }
-}
-```
-
-**macOS/Linux：**
-```bash
-if [ ${#dangling[@]} -eq 0 ]; then
-    echo "✅ 未检测到失效链接"
+if [ ${#dangling[@]} -eq 0 ]; then echo "✅ 未检测到失效链接"
 else
     echo "⚠️  检测到 ${#dangling[@]} 条失效链接："
     for link in "${dangling[@]}"; do echo "   $link"; done
@@ -386,50 +333,25 @@ fi
 
 ---
 
-## Step 5 — 汇总输出 & CHECKPOINT 处理失效链接
+## Step 5 — 汇总 & CHECKPOINT 处理失效链接
 
-先打印汇总：
+打印汇总：
 
-**Windows：**
-```powershell
-Write-Host "──────────────────────────────────────────"
-Write-Host "汇总: 新建 $created 条，跳过 $skipped 条，警告 $warned 条，失效 $($dangling.Count) 条"
+```
+──────────────────────────────────────────
+汇总: 新建 X 条，跳过 X 条，警告 X 条，失效 X 条
 ```
 
-**macOS/Linux：**
-```bash
-echo "──────────────────────────────────────────"
-echo "汇总: 新建 $created 条，跳过 $skipped 条，警告 $warned 条，失效 ${#dangling[@]} 条"
-```
-
-若 `dangling` 非空，列出所有失效链接后进入 CHECKPOINT：
+若 `dangling` 非空：
 
 🔴 **CHECKPOINT — 失效链接处理（继续前必须完成）：**
 
-> 以上 X 条失效链接指向已不存在的源目录，是否删除？
-> 请回复 `y` 确认删除，或 `n` 跳过（稍后手动处理）。
+> 以上 X 条失效链接指向已不存在的目录，是否删除？
+> 回复 `y` 确认删除，`n` 跳过留待手动处理。
 
-- 若用户回复 `y`：逐条删除失效链接，打印 `🗑️ 已删除: <path>`
-
-**Windows — 删除失效链接**
-
-```powershell
-foreach ($item in $dangling) {
-    Remove-Item $item.Path -Force
-    Write-Host "🗑️ 已删除: $($item.Path)"
-}
-```
-
-**macOS/Linux — 删除失效链接**
-
-```bash
-for link in "${dangling[@]}"; do
-    rm "$link"
-    echo "🗑️ 已删除: $link"
-done
-```
-
-- 若用户回复 `n`：打印 `ℹ️  已跳过，失效链接保留在原位置。如需清理：Windows 执行 Remove-Item <path> -Force；macOS/Linux 执行 rm <path>`
+- 若回复 `y`（Windows）：`foreach ($item in $dangling) { Remove-Item $item.Path -Force; Write-Host "🗑️ 已删除: $($item.Path)" }`
+- 若回复 `y`（Bash）：`for link in "${dangling[@]}"; do rm "$link"; echo "🗑️ 已删除: $link"; done`
+- 若回复 `n`：`ℹ️  已跳过，失效链接保留原位。清理方式：Windows → Remove-Item <path> -Force；macOS/Linux → rm <path>`
 
 ---
 
@@ -437,12 +359,12 @@ done
 
 | # | 禁止行为 | 后果 | 正确做法 |
 |---|---------|------|---------|
-| 1 | 在 `~/.agents/skills/` 中直接放置文件（非子目录） | skill 不识别，会被 `ls -d */` 跳过，但可能引起路径歧义 | 每个 skill 必须是独立子目录，如 `my-skill/SKILL.md` |
-| 2 | 在目标目录（`~/.claude/skills/` 等）手动创建与 skill 同名的普通目录 | skill 检测为"非符号链接"，打印警告跳过，永远无法自动同步 | 先手动删除该目录，再运行 skill |
-| 3 | 在 Windows 未开启开发者模式也未以管理员身份运行时强行执行 | Step 0 权限检测失败，skill 终止 | 开启设置 → 隐私和安全 → 开发者选项，或右键以管理员身份运行终端 |
-| 4 | 手动修改已创建的符号链接指向 | 下次运行 skill 时会自动检测目标路径不符，自动删除旧链接并重建正确链接 | 直接重新运行本 skill 即可 |
-| 5 | 在 `~/.agents/skills/` 被删除后不处理仍运行 skill | Step 2 源目录不存在检测会终止，但目标目录中的失效链接不会自动清除 | 先运行 skill 触发 CHECKPOINT，选 `y` 清除失效链接 |
-| 6 | 对 `~/.claude/skills/` 中非本 skill 管理的符号链接执行失效检测 | Step 3 会检测所有符号链接，包括你手动创建或其他工具创建的链接，可能误列为"失效" | 在 CHECKPOINT 仔细核对列表再选 `y`，不确定则选 `n` |
+| 1 | 在源目录中直接放置文件（非子目录） | 被 `find -type d` 跳过，skill 不会被同步 | 每个 skill 必须是独立子目录，如 `my-skill/SKILL.md` |
+| 2 | 在目标目录手动创建与 skill 同名的普通目录 | 被检测为"非符号链接"，打印警告并永远跳过 | 先删除该目录（`rm -rf` / `Remove-Item -Recurse`），再运行 skill |
+| 3 | Windows 下未开启开发者模式也非管理员 | Step 1 权限检测失败，skill 终止 | 开启设置 → 隐私和安全 → 开发者选项，或以管理员身份运行终端 |
+| 4 | 直接编辑目标目录（`~/.claude/skills/xxx`）中的文件 | 实际修改的是 source 中的原始文件（符号链接穿透），符合预期；但若误删链接则 source 文件不受影响 | 明确知道这一点即可；若要独立副本请改用 `cp -r` 复制而非 symlink |
+| 5 | source 目录被删除后不清理即再次运行 | Step 2 正常终止，但目标目录中的失效链接不会自动清除 | 运行 skill 触发 Step 5 CHECKPOINT，回复 `y` 清除失效链接 |
+| 6 | CHECKPOINT 确认删除时未仔细核对失效链接列表 | Step 4 扫描所有符号链接，含手动创建或其他工具管理的链接，可能误删 | 回复 `y` 前逐条核对路径；不确定的选 `n` 留待手动处理 |
 
 ---
 
@@ -452,4 +374,4 @@ done
 
 1. 将本目录复制到 `~/.agents/skills/sync-agent-skills/`
 2. 在任意已加载本 skill 的会话中输入「同步 skills」
-3. skill 会将 `sync-agent-skills` 自身也链接到目标目录，之后全局生效
+3. skill 会将 `sync-agent-skills` 自身链接到目标目录，之后全局生效
