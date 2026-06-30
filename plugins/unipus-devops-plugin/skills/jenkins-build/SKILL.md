@@ -1,6 +1,6 @@
 ---
 name: jenkins-build
-description: 远程触发 Jenkins 构建、等待结果并输出摘要表格。当用户说"触发构建"、"构建 <job>"、"跑 Jenkins"、"build <项目名>"、"帮我打包"时使用。需提前配置 jenkins-config.yaml（参考 jenkins_build/jenkins-config.yaml.example）。
+description: Use when user wants to immediately execute a Jenkins CI build — 触发构建、跑 Jenkins、build [job]、帮我打包（CI场景）、构建 [项目]、ci 跑一下。Applies even when "Jenkins" is not mentioned — any intent to trigger CI and wait for result. Not for Jenkinsfile authoring, diagnosing past failures, API token management, or GitHub Actions.
 ---
 
 # Jenkins 构建触发工具

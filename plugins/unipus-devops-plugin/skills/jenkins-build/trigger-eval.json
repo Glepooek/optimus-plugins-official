@@ -1,0 +1,22 @@
+[
+  {"query": "帮我触发一下 lms-api 的 Jenkins 构建，分支是 release/2.1", "should_trigger": true},
+  {"query": "build uni-stu-pc，用 master 分支，Release 包", "should_trigger": true},
+  {"query": "Jenkins 跑起来了吗？帮我看看 zk-api 的构建状态，没跑的话帮我触发一下", "should_trigger": true},
+  {"query": "帮我打一个包，项目叫 DigitalTeachingPlatform-PC-Release", "should_trigger": true},
+  {"query": "ci 跑一下 lms-web，参数 BRANCH_OR_TAG=hotfix/login-bug", "should_trigger": true},
+  {"query": "跑 Jenkins，job 名是 uni-teacher-pc，版本号 1.3.0", "should_trigger": true},
+  {"query": "帮我在 Jenkins 上构建 k12-api 这个 job，用默认参数就行", "should_trigger": true},
+  {"query": "构建失败了，帮我重新 build 一下 zk-web", "should_trigger": true},
+  {"query": "I need to trigger a Jenkins build for the admin-portal job on the dev branch", "should_trigger": true},
+  {"query": "帮我把 uni-stu-pc 打个 debug 包，分支用 feature/new-login", "should_trigger": true},
+  {"query": "Jenkins 构建一直超时，应该怎么排查？", "should_trigger": false},
+  {"query": "帮我看看 Jenkins 的 job 配置文件，我想了解一下 Jenkinsfile 怎么写", "should_trigger": false},
+  {"query": "我们项目的 CI/CD 流程怎么设计比较好？有什么最佳实践推荐吗", "should_trigger": false},
+  {"query": "帮我把这段代码打包成 zip，准备发给同事", "should_trigger": false},
+  {"query": "Jenkins 服务器挂了，帮我看看日志找一下原因，日志在 /var/log/jenkins/jenkins.log", "should_trigger": false},
+  {"query": "我要发布一个新版本，帮我写一下 CHANGELOG 和 release notes", "should_trigger": false},
+  {"query": "帮我在 GitHub Actions 里配一个自动构建的 workflow，当 push 到 main 时触发", "should_trigger": false},
+  {"query": "构建产物在哪里下载？帮我找一下昨天 uni-stu-pc 构建成功的包", "should_trigger": false},
+  {"query": "帮我 docker build 一下这个镜像，Dockerfile 在当前目录", "should_trigger": false},
+  {"query": "Jenkins 的 api_token 过期了，帮我生成一个新的", "should_trigger": false}
+]
