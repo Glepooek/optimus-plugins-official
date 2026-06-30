@@ -22,15 +22,18 @@ $source    = "$env:USERPROFILE\.agents\skills"
 $targets   = @("$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.kiro\skills")
 $useCustom = $false
 
-# 从用户指令中提取参数（AI 读取用户消息，有则覆盖）
-# source=<绝对路径>           → 覆盖 $source
-# target=<路径1,路径2,...>    → 按逗号分割并 .Trim()，覆盖 $targets
+# 从用户消息中提取 source= 和 target= 参数
+# 用户消息示例："同步 skills source=D:\my-skills target=C:\cursor\skills,C:\windsurf\skills"
+$userMsg = "<此处为用户完整消息>"   # AI 将此变量替换为实际用户消息
 
-# 示例：若用户说 "source=D:\my-skills target=C:\tools\cursor\skills,C:\tools\windsurf\skills"
-# 则：
-#   $source  = "D:\my-skills"
-#   $targets = @("C:\tools\cursor\skills", "C:\tools\windsurf\skills")
-#   $useCustom = $true
+if ($userMsg -match '(?:^|\s)source=([^\s]+)') {
+    $source    = $Matches[1]
+    $useCustom = $true
+}
+if ($userMsg -match '(?:^|\s)target=([^\s]+)') {
+    $targets   = $Matches[1] -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
+    $useCustom = $true
+}
 
 Write-Host "📂 source : $source"
 Write-Host "🎯 targets: $($targets -join ' | ')"
@@ -51,15 +54,18 @@ source_dir="$HOME/.agents/skills"
 targets=("$HOME/.claude/skills" "$HOME/.kiro/skills")
 use_custom=false
 
-# 从用户指令中提取参数（AI 读取用户消息，有则覆盖）
-# source=<绝对路径>           → 覆盖 source_dir
-# target=<路径1,路径2,...>    → IFS=',' read -ra targets，覆盖 targets 数组
+# 从用户消息中提取 source= 和 target= 参数
+# 用户消息示例："同步 skills source=~/my-skills target=~/.cursor/skills,~/.windsurf/skills"
+user_msg="<此处为用户完整消息>"   # AI 将此变量替换为实际用户消息
 
-# 示例：若用户说 "source=~/my-skills target=~/.cursor/skills,~/.windsurf/skills"
-# 则：
-#   source_dir="$HOME/my-skills"
-#   targets=("$HOME/.cursor/skills" "$HOME/.windsurf/skills")
-#   use_custom=true
+if [[ "$user_msg" =~ (^|[[:space:]])source=([^[:space:]]+) ]]; then
+    source_dir="${BASH_REMATCH[2]}"
+    use_custom=true
+fi
+if [[ "$user_msg" =~ (^|[[:space:]])target=([^[:space:]]+) ]]; then
+    IFS=',' read -ra targets <<< "${BASH_REMATCH[2]}"
+    use_custom=true
+fi
 
 echo "📂 source : $source_dir"
 echo "🎯 targets: $(IFS=' | '; echo "${targets[*]}")"
@@ -199,12 +205,12 @@ Write-Host "🔍 发现 $($skills.Count) 个 skill: $($skills -join ', ')"
 **macOS/Linux Bash：**
 
 ```bash
-# macOS/Linux
-source="$HOME/.agents/skills"
+# macOS/Linux（$source_dir 由 Step 0 赋值，此处仅在 Step 0 未执行时兜底）
+source_dir="${source_dir:-$HOME/.agents/skills}"
 
 # 源目录不存在 → 终止并提示
-if [ ! -d "$source" ]; then
-    echo "❌ 源目录不存在: $source"
+if [ ! -d "$source_dir" ]; then
+    echo "❌ 源目录不存在: $source_dir"
     echo "   请先创建该目录，并在其中放置 skill 子目录，再运行本 skill。"
     return 1
 fi
@@ -212,11 +218,11 @@ fi
 skills=()
 while IFS= read -r -d '' d; do
     skills+=("$(basename "$d")")
-done < <(find "$source" -mindepth 1 -maxdepth 1 -type d -print0)
+done < <(find "$source_dir" -mindepth 1 -maxdepth 1 -type d -print0)
 
 # 源目录为空 → 提示并终止
 if [ ${#skills[@]} -eq 0 ]; then
-    echo "⚠️  $source 中没有发现任何 skill 子目录，无需同步。"
+    echo "⚠️  $source_dir 中没有发现任何 skill 子目录，无需同步。"
     return 0
 fi
 
