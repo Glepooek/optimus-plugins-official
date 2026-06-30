@@ -457,3 +457,7 @@
 [配置] 🚫 auto-mode 拒绝原因可见\n功能：auto-mode 拒绝某操作时，拒绝原因同步写入 transcript、拒绝 toast 提示，以及 /permissions 的"最近拒绝"标签页\n效果：可追溯每次自动拒绝的具体原因，方便调整 auto-mode 规则或授权策略\n例子：/permissions 进入最近拒绝标签页，查看每条被拒命令的拒绝原因；批准某条后拒绝记录立即生效
 ---
 [CLI] 📁 bash 模式实时路径补全\n功能：在输入框使用 ! 前缀进入 bash 模式时，支持实时文件路径自动补全\n效果：输入 ! 命令时按 Tab 可补全文件和目录路径，减少手动输入长路径的错误\n例子：! cat ./src/comp<Tab> 自动补全为 ! cat ./src/components/Button.tsx，无需记忆完整路径
+---
+[配置] 🐕 CLAUDE_ENABLE_STREAM_WATCHDOG 流式看门狗\n功能：环境变量 CLAUDE_ENABLE_STREAM_WATCHDOG=0 禁用流式空闲看门狗（v2.1.196+，默认开启，5 分钟无事件则中止并重试）\n效果：在网络抖动或长时间无输出的任务中防止会话被误判超时中止；设为 0 可关闭看门狗避免干扰正常的长时间等待\n例子：CLAUDE_ENABLE_STREAM_WATCHDOG=0 claude 禁用看门狗，适合需要等待超过 5 分钟的长时间 API 调用
+---
+[配置] 🖱️ CLAUDE_CODE_DISABLE_MOUSE_CLICKS 禁用鼠标点击\n功能：环境变量 CLAUDE_CODE_DISABLE_MOUSE_CLICKS=1 在全屏模式下禁用鼠标点击、拖拽和悬停，但保留滚轮滚动（v2.1.195+）\n效果：在不支持或不希望鼠标交互的全屏终端中避免误触，同时保留滚动浏览能力\n例子：CLAUDE_CODE_DISABLE_MOUSE_CLICKS=1 claude 在全屏模式下只允许滚轮，禁止鼠标点击和拖拽

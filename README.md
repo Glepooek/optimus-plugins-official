@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)](https://github.com/Glepooek/unipus-plugins-official)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-> Unipus 公司官方 Claude Code 插件集合,提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强（230条技巧智能轮播）、权限通知等企业级开发工具链。
+> Unipus 公司官方 Claude Code 插件集合,提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强（232条技巧智能轮播）、权限通知等企业级开发工具链。
 
 ## 📦 插件列表
 
@@ -77,7 +77,7 @@
 - **工作周报转写** - 从对话、日志、git 提交中自动提取工作内容，生成标准四段式周报
 
 **内置 Hooks（自动加载）：**
-- **SessionStart Hook** - 会话启动时展示技巧（230条技巧智能轮播，带进度追踪）
+- **SessionStart Hook** - 会话启动时展示技巧（232条技巧智能轮播，带进度追踪）
 - **Notification Hook** - Windows 权限通知
 
 ### 8. [unipus-mcp-servers](plugins/unipus-mcp-servers) - MCP 服务器集成
