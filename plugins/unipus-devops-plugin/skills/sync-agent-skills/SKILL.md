@@ -181,8 +181,8 @@ targets=("${final_targets[@]}")
 **Windows PowerShell：**
 
 ```powershell
-# Windows
-$source = "$env:USERPROFILE\.agents\skills"
+# Windows（$source 由 Step 0 赋值，此处仅在 Step 0 未执行时兜底）
+if (-not $source) { $source = "$env:USERPROFILE\.agents\skills" }
 
 # 源目录不存在 → 终止并提示
 if (-not (Test-Path $source)) {
@@ -238,10 +238,13 @@ echo "🔍 发现 ${#skills[@]} 个 skill: ${skills[*]}"
 **Windows PowerShell：**
 
 ```powershell
-$targets = @(
-    "$env:USERPROFILE\.claude\skills",
-    "$env:USERPROFILE\.kiro\skills"
-)
+# $targets 由 Step 0 赋值，此处仅在 Step 0 未执行时兜底
+if (-not $targets) {
+    $targets = @(
+        "$env:USERPROFILE\.claude\skills",
+        "$env:USERPROFILE\.kiro\skills"
+    )
+}
 
 $created = 0
 $skipped = 0
@@ -289,7 +292,10 @@ foreach ($target in $targets) {
 **macOS/Linux Bash：**
 
 ```bash
-targets=("$HOME/.claude/skills" "$HOME/.kiro/skills")
+# targets 由 Step 0 赋值，此处仅在 Step 0 未执行时兜底
+if [ ${#targets[@]} -eq 0 ]; then
+    targets=("$HOME/.claude/skills" "$HOME/.kiro/skills")
+fi
 created=0; skipped=0; warned=0
 
 for target in "${targets[@]}"; do
