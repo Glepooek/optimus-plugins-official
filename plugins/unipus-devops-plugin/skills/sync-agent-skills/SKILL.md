@@ -301,7 +301,7 @@ for target in "${targets[@]}"; do
     mkdir -p "$target"
     for skill in "${skills[@]}"; do
         dest="$target/$skill"
-        src="$source/$skill"
+        src="$source_dir/$skill"
         if [ ! -e "$dest" ] && [ ! -L "$dest" ]; then
             ln -s "$src" "$dest"
             echo "✅ 新建链接: $skill → $target/"
