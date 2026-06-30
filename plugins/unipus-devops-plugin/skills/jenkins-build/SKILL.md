@@ -1,6 +1,6 @@
 ---
 name: jenkins-build
-description: 触发 Jenkins 构建并等待结果的自动化工具，支持指定 job 名称和构建参数
+description: 远程触发 Jenkins 构建、等待结果并输出摘要表格。当用户说"触发构建"、"构建 <job>"、"跑 Jenkins"、"build <项目名>"、"帮我打包"时使用。需提前配置 jenkins-config.yaml（参考 jenkins_build/jenkins-config.yaml.example）。
 ---
 
 # Jenkins 构建触发工具
