@@ -1,0 +1,46 @@
+# =============================================================================
+# 配置模板 — 复制此文件到目标路径，填写实际值后使用
+# =============================================================================
+
+jenkins:
+  url: "jenkins address"
+  username: "your_username"
+  api_token: "your_api_token"  # 在 Jenkins → 用户设置 → API Token 中生成
+  # password: ""               # 无 api_token 时使用密码
+
+jobs:
+  job_name:
+    path: "job_path"
+    default_params:
+      BRANCH_OR_TAG: "branch_name"
+      Build_Type: "Release or Debug"
+      VERSION_PREFIX: "version"
+
+# =============================================================================
+# 配置示例
+# =============================================================================
+
+# jenkins:
+#   url: "http://jenkins.example.com:8080"
+#   username: "zhangsan"
+#   api_token: "1106cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+#
+# jobs:
+#   lms-api-test:
+#     path: "view/mid/job/lms-api-test"
+#
+#   uni-stu-pc:
+#     path: "job/k12-test-cloud/job/uni-stu-pc"
+#     default_params:
+#       BRANCH_OR_TAG: "master"
+#       Build_Type: "Release"
+#       VERSION_PREFIX: "1.2.1"
+
+# =============================================================================
+# 配置查找优先级
+# =============================================================================
+#
+#   1. <当前工作目录>/jenkins-config.yaml   项目级，建议加入 .gitignore
+#   2. ~/.claude/jenkins-config.yaml        用户级全局默认
+#
+# 建议将此文件复制到 ~/.claude/jenkins-config.yaml 并填写实际值。

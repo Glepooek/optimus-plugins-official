@@ -10,19 +10,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# 优先从用户配置目录加载 config.yaml，自动同步到 skill 运行目录
-USER_CONFIG="$HOME/.claude/skills/jenkins-build/jenkins_build/config.yaml"
-SKILL_CONFIG="$SKILL_DIR/jenkins_build/config.yaml"
-
-if [ -f "$USER_CONFIG" ]; then
-    cp "$USER_CONFIG" "$SKILL_CONFIG"
-elif [ ! -f "$SKILL_CONFIG" ]; then
-    echo "[✗] 未找到配置文件，请参考 config.yaml.example 在以下位置创建："
-    echo "    $USER_CONFIG"
-    exit 1
-fi
-
-VENV_DIR="$SKILL_DIR/.venv"
+# venv 固定放在用户目录，避免污染插件仓库或项目目录
+VENV_DIR="$HOME/.claude/cache/jenkins-build/.venv"
 
 # 兼容 Windows（Scripts/）和 Unix（bin/）的 venv 路径
 if [ -f "$VENV_DIR/Scripts/python.exe" ]; then
@@ -37,7 +26,6 @@ fi
 if [ ! -f "$PYTHON" ]; then
     echo "[~] 创建虚拟环境..."
     python3 -m venv "$VENV_DIR"
-    # 重新确认路径（刚创建的 venv）
     if [ -f "$VENV_DIR/Scripts/python.exe" ]; then
         PYTHON="$VENV_DIR/Scripts/python.exe"
         PIP="$VENV_DIR/Scripts/pip.exe"
@@ -52,6 +40,6 @@ if ! "$PYTHON" -c "import requests, yaml" 2>/dev/null; then
     "$PIP" install requests pyyaml -q
 fi
 
-# 执行构建
+# 执行构建（配置查找由 main.py 负责）
 cd "$SKILL_DIR/jenkins_build"
 PYTHONIOENCODING=utf-8 "$PYTHON" main.py "$@"

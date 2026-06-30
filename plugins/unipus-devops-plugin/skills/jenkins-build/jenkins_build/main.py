@@ -1,7 +1,7 @@
 """
 Jenkins Build CLI
 用法：
-  python main.py                        # 触发默认 job（config.yaml 第一个）
+  python main.py                        # 触发默认 job
   python main.py zk-api                 # 触发指定 job
   python main.py zk-api BRANCH=main     # 触发带参数的 job
 """
@@ -11,14 +11,23 @@ import sys
 import yaml
 from jenkins_build import JenkinsBuildSkill
 
+CONFIG_SEARCH_PATHS = [
+    os.path.join(os.getcwd(), "jenkins-config.yaml"),
+    os.path.join(os.path.expanduser("~"), ".claude", "jenkins-config.yaml"),
+]
 
-def load_config(path: str = "config.yaml") -> dict:
-    if not os.path.exists(path):
-        print(f"[✗] 未找到配置文件 {os.path.abspath(path)}")
-        print("    请参考 config.yaml.example 创建配置文件")
-        sys.exit(1)
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+
+def load_config() -> dict:
+    for path in CONFIG_SEARCH_PATHS:
+        if os.path.exists(path):
+            print(f"[i] 使用配置文件：{path}")
+            with open(path, "r", encoding="utf-8") as f:
+                return yaml.safe_load(f)
+    print("[✗] 未找到配置文件，请在以下任一位置创建 jenkins-config.yaml：")
+    for path in CONFIG_SEARCH_PATHS:
+        print(f"    {path}")
+    print("    参考：jenkins_build/jenkins-config.yaml.example")
+    sys.exit(1)
 
 
 def parse_args(args):
@@ -48,7 +57,6 @@ def main():
 
     job_name, params = parse_args(sys.argv[1:])
 
-    # 未指定 job 时使用配置文件第一个
     if job_name is None:
         job_name = next(iter(jobs))
 
@@ -58,7 +66,7 @@ def main():
 
     job_path = jobs[job_name]["path"]
     default_params = jobs[job_name].get("default_params", {})
-    merged_params = {**default_params, **params}  # 命令行参数覆盖默认值
+    merged_params = {**default_params, **params}
     print(f"[→] 触发 job: {job_name}  path: {job_path}")
     if merged_params:
         print(f"    参数: {merged_params}")
