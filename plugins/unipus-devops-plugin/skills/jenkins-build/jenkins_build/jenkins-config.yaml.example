@@ -40,7 +40,5 @@ jobs:
 # 配置查找优先级
 # =============================================================================
 #
-#   1. <当前工作目录>/jenkins-config.yaml   项目级，建议加入 .gitignore
-#   2. ~/.claude/jenkins-config.yaml        用户级全局默认
-#
+# 查找优先级详见 SKILL.md「配置文件」章节。
 # 建议将此文件复制到 ~/.claude/jenkins-config.yaml 并填写实际值。
