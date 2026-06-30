@@ -85,6 +85,55 @@ claude --plugin-dir "E:\ProjectxPlex\unipus-plugins-official\plugins\unipus-devo
 
 ---
 
+## Skill 级版本管理
+
+每个 skill 维护**独立的语义版本**，与仓库 marketplace 版本号分开管理。
+
+### SKILL.md frontmatter 版本号
+
+新增或修改 skill 时，必须同步更新 SKILL.md frontmatter 中的 `version` 字段：
+
+| 变更类型 | Skill 版本升级 |
+|---|---|
+| 新增功能、新增章节、新增参数 | **Minor** `x.X.x` |
+| 修改/修复已有内容、文档优化、重构 | **Patch** `x.x.X` |
+| 破坏性变更（接口不兼容、删除用户可见功能） | **Major** `X.x.x` |
+
+```yaml
+---
+name: my-skill
+version: 1.2.0
+description: ...
+---
+```
+
+### CHANGELOG.md
+
+每个 skill 目录**必须**有 `CHANGELOG.md`，提交前必须更新，格式：
+
+```markdown
+## [版本号] - YYYY-MM-DD
+
+### Added
+- 新增的功能或章节
+
+### Changed
+- 修改的内容
+
+### Removed
+- 删除的内容
+
+### Fixed
+- 修复的问题
+```
+
+规则：
+- 只写实际发生的类别，无变更的类别可省略
+- 新建 skill 时同步创建 CHANGELOG.md，初始版本为 `[1.0.0]`
+- agent（AGENT.md）遵循相同规范
+
+---
+
 ## 提交与推送（强制）
 
 **必须**使用 `commit-cc-plugin` skill，禁止手动执行 git 工作流。说"提交"或"推上去"即可触发。
