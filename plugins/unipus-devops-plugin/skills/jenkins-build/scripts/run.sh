@@ -54,4 +54,4 @@ fi
 
 # 执行构建
 cd "$SKILL_DIR/jenkins_build"
-"$PYTHON" main.py "$@"
+PYTHONIOENCODING=utf-8 "$PYTHON" main.py "$@"
