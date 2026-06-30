@@ -67,11 +67,25 @@ python3 jenkins_build/main.py [job_name] [KEY=VALUE ...]
 
 ## 构建完成后通知
 
-脚本执行完毕后，**必须**调用 `unipus-ci-notify-api-change` skill，并传入以下信息：
-- `job_name`：job 名称
-- `build_number`：构建号
-- `build_result`：构建结果（SUCCESS / FAILURE 等）
-- `build_url`：由 `jenkins_url` + `job_path` + `/` + `build_number` + `/` 拼接而成
+脚本执行完毕后，**必须**以如下格式输出构建摘要：
+
+```
+● 构建成功！       （SUCCESS 时）
+● 构建失败！       （非 SUCCESS 时）
+
+| 项目         | 值                                              |
+|--------------|------------------------------------------------|
+| Job          | <job_name>                                     |
+| 构建号       | #<build_number>                                |
+| 结果         | <build_result>                                 |
+| 耗时         | <duration>s（约 X 分钟）                       |
+| 构建地址     | <build_url>                                    |
+| 配置来源     | <实际加载的 jenkins-config.yaml 路径> ✓        |
+```
+
+- 结果为 SUCCESS 时首行用 `●`，非 SUCCESS 时首行用 `●`（内容改为"构建失败！"）
+- `build_url` 由 `jenkins_url` + `job_path` + `/` + `build_number` + `/` 拼接
+- 耗时同时展示秒数和换算后的分钟数（不足 1 分钟只显示秒）
 
 ## 失败处理
 
@@ -100,5 +114,5 @@ python3 jenkins_build/main.py [job_name] [KEY=VALUE ...]
 | 将 `api_token` 或 `password` 明文写入代码或提交到 git | 凭证泄露风险 | 写入 `jenkins-config.yaml` 并加入 `.gitignore` |
 | 未确认 job 名称就触发构建 | 可能误触发生产环境构建 | 先用 `jenkins-config.yaml` 中的 jobs 列表核对 |
 | 同时并发触发同一个 job 多次 | 可能导致构建队列阻塞或资源竞争 | 等待当前构建完成后再触发 |
-| 构建结果为 FAILURE 时跳过通知 | 失败信息不会通知前端/测试人员 | 无论 SUCCESS 还是 FAILURE 都必须调用 notify |
+| 构建完成后不输出摘要表格 | 用户无法快速确认构建结果 | 无论 SUCCESS 还是 FAILURE 都必须输出摘要 |
 | 使用 `password` 字段代替 `api_token` 作为长期方案 | 明文密码安全级别低 | 始终优先使用 Jenkins API Token |
