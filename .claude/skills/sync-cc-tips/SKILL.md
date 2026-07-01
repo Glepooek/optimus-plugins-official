@@ -10,25 +10,23 @@ disable-model-invocation: true
 
 ## 第一步 — 抓取 changelog
 
-**优先使用 Playwright CLI**（JS 渲染，内容更完整）：
+直接读取仓库根目录的 `CHANGELOG.md`（纯 Markdown 文本源头，按版本从新到旧排列，无需处理页面折叠块或 JS 渲染，比 releases 页面更完整可靠）。
 
-调用 `playwright-cli` skill，执行以下步骤：
-1. 导航至 `https://github.com/anthropics/claude-code/releases`
-2. 等待页面加载完成（等待 `.release-entry` 或 `[data-hpc]` 元素出现）
-3. 提取每个 release 的版本号和正文内容（展开所有折叠块）
+**按顺序执行，命中即停，不要跳步：**
+1. `curl -s --max-time 15 https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md`
+2. 若步骤 1 失败（超时 / 连接被拒绝）→ 输出 `⚠️ curl 不可达，降级为 WebFetch`，改为 `WebFetch: https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md`
+3. 若步骤 2 也失败 → 等待 2 秒，重试一次步骤 1（同一条 curl 命令，不再等待更久）
+4. 若步骤 3 仍失败 → **停止整个流程**，报告网络不可达（curl 与 WebFetch 均无法访问），不执行任何写入操作
 
-**降级条件**：若 playwright-cli skill 不可用、浏览器启动失败或抓取结果为空，则：
-> ⚠️ Playwright CLI 不可用，降级为 WebFetch（静态 HTML，部分版本 body 可能不完整）
-
-改用：
-```
-WebFetch: https://github.com/anthropics/claude-code/releases
-```
-
-**无论使用哪种方式：**
-- 默认提取最近 **10 个版本**的更新内容
+**成功拿到内容后：**
+- 文件中每个版本以 `## {版本号}` 标记（如 `## 2.1.197`），紧随其后为该版本的完整 bullet 列表
+- 默认提取最靠前（最新）的 **10 个版本**段落
 - 若用户指定数量（如 `/sync-cc-tips 5`），按指定数量提取
-- 记录版本范围（如 v2.1.160 → v2.1.170），用于摘要展示
+- 记录版本范围（如 v2.1.183 → v2.1.197），用于摘要展示
+
+| 触发条件 | 一线处理 | 仍失败兜底 |
+|---|---|---|
+| CHANGELOG.md 内容为空或找不到 `##` 版本标记 | 确认 URL 是否正确（分支名可能变更） | 停止流程，报告解析失败 |
 
 ## 第二步 — 读取现有 tips.txt
 
@@ -92,13 +90,14 @@ Read: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 - 每条末尾确保有 `---` 分隔符
 - **如果校验不通过** → 修正后再写入，不跳过也不写入不合格条目；若无法修正则跳过该条并在摘要中注明
 
+### 🚦 零变更总闸（唯一判定点）
+若本轮识别结果为 **0 新增 + 0 修改 + 0 删除** → 立即终止整个流程，**不进入第四步 CHECKPOINT、不执行第四/五步任何写入或数字同步、不执行第六步的 commit-cc-plugin 调用**。仅输出「本次 changelog 检查完成，所有功能点已在 tips.txt 覆盖，无需变更」后结束。第四步、第六步中对"0 变化"的提及均以本节为准，不重复判断。
+
 ## 第四步 — 写入 tips.txt
 
-> 🔴 **CHECKPOINT**：写入前展示变更预览——列出「📥 新增 N 条 / ✏️ 修改 N 条 / 🗑️ 删除 N 条」及每条标题，等待用户确认：
+> 🔴 **CHECKPOINT**（仅在变更数 > 0 时触发，0 变化场景见「🚦 零变更总闸」）：写入前展示变更预览——列出「📥 新增 N 条 / ✏️ 修改 N 条 / 🗑️ 删除 N 条」及每条标题，等待用户确认：
 > - 输入 `y` / `yes` / 按 Enter → 继续执行写入和第五步数字同步
 > - 输入 `n` / `no` / 任何其他内容 → **立即停止**，输出「操作已取消，tips.txt 未修改」，不执行任何写入或提交
->
-> 若变更数为 0，跳过此检查点直接退出。
 
 ```
 Edit: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
@@ -134,7 +133,9 @@ Edit: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 |---|---|---|
 | 某处文件不存在（如 README.md 路径错误） | 跳过该处，继续更新其余文件 | 在摘要中列出"未同步"文件，不阻断提交 |
 | 数字 pattern 在文件中找不到 | 搜索邻近上下文确认格式是否变更 | 跳过并在摘要注明，不修改该文件 |
-| 更新后数字不一致（多处数字不同） | 以 tips.txt 实际 `---` 计数为准 | 报告具体不一致位置，等用户确认后提交 |
+| 更新后数字不一致（多处数字不同） | 以 tips.txt 实际 `---` 计数为准 | 报告具体不一致位置 |
+
+> 🔴 **CHECKPOINT**：若命中上表"数字不一致"分支，报告具体差异位置后**必须停止**，等待用户确认（y 按 `---` 计数结果继续提交 / n 取消本次提交）——不得在未确认的情况下直接进入第六步。
 
 ## 第六步 — 展示摘要并提交
 
@@ -176,7 +177,7 @@ Edit: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 |---|---|---|
 | 把 changelog 里所有更新项都加入 tips.txt | tips 面向用户实用技巧，不是版本记录——内部重构、bug fix、依赖升级不应出现 | 只加对用户操作有实质影响的功能（新 flag、新命令、新设置项） |
 | 只用条目标题判断是否已覆盖 | tips.txt 每条包含完整正文，次级功能点只出现在功能/效果/例子字段而非标题 | 必须扫描 tips.txt **全文**，用主标识符（flag 名/设置项名/命令名）做精确匹配 |
-| 0变化时仍然提交 | 产生无意义 commit，污染 git 历史 | 检测到 0新增/0修改/0删除 → 输出提示并退出，不调用 commit-cc-plugin |
+| 0变化时仍然提交 | 产生无意义 commit，污染 git 历史 | 触发「🚦 零变更总闸」直接终止，不进入 Step 4-6，不调用 commit-cc-plugin |
 | 修改 show-tip.sh 脚本逻辑 | 脚本逻辑不在本 skill 职责范围内 | 只修改 tips.txt 数据文件 |
 | 删除旧功能条目，但该功能仍可用（只是有了替代方案） | 用户可能仍在用旧方式 | 仅在 changelog 明确标注 Removed/Deprecated 时删除 |
 | 用估算数字代替实际计数更新文档 | 估算不准会导致文档与实际不符 | 必须先 Read tips.txt 计算实际 `---` 数量再更新 |

@@ -2,16 +2,16 @@
   {
     "id": 1,
     "prompt": "/sync-cc-tips",
-    "expected": "完整执行六步：抓 changelog → 读 tips.txt → 差异识别 → 展示变更预览（CHECKPOINT）→ 同步数字 → 提交"
+    "expected": "完整执行六步：curl 直读 CHANGELOG.md（不经过 releases 页面/Playwright）→ 读 tips.txt 构建标识符集 → 逐条新增/修改/删除判定 → 展示变更预览（🔴 CHECKPOINT，明确列出 y/n 两种输入的后续行为）→ 用户确认后同步 5 处文档数字 + Patch 版本号 → 调用 commit-cc-plugin"
   },
   {
     "id": 2,
-    "prompt": "/sync-cc-tips 3",
-    "expected": "只提取最近 3 个版本，其余流程相同；摘要版本范围缩小，参数正确传递到 Step 1"
+    "prompt": "假设 curl 请求 raw.githubusercontent.com 超时失败，继续执行 /sync-cc-tips",
+    "expected": "命中第一步降级条件：先按表格重试一次 curl，仍失败则改用 WebFetch 读取同一 CHANGELOG.md URL；若两者都失败则立即停止整个流程、不做任何写入，而不是静默跳过第一步继续后续步骤"
   },
   {
     "id": 3,
-    "prompt": "用户在 Step 4 CHECKPOINT 回复 n 拒绝写入",
-    "expected": "正确停止，不执行写入和后续步骤，输出明确的'操作已取消，tips.txt 未修改'提示"
+    "prompt": "本次 changelog 的所有功能点在 tips.txt 中都已通过标识符命中覆盖，运行 /sync-cc-tips",
+    "expected": "识别为 0 新增/0 修改/0 删除，跳过 Step 4 的 CHECKPOINT 直接退出，不写入 tips.txt、不同步文档数字、不调用 commit-cc-plugin，只输出提示说明无变更"
   }
 ]
