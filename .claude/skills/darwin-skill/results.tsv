@@ -1,0 +1,18 @@
+timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
+2026-06-30T23:24	bb8b268	sync-agent-skills	-	73.0	baseline	-	初始基线评估	dry_run
+2026-06-30T23:35	a93ff85	sync-agent-skills	73.0	77.4	keep	dim5+dim6	bash source变量冲突修复+Step0 regex解析	dry_run
+2026-06-30T23:42	7fbf2ab	sync-agent-skills	77.4	79.7	keep	dim6+dim8	Step3 Bash src变量残留修复	dry_run
+2026-06-30T23:50	6512892	sync-agent-skills	79.7	83.6	keep	dim3+dim8	Step2/3 兜底赋值修复自定义参数覆盖	dry_run
+2026-06-30T23:58	4d9e898	sync-agent-skills	83.6	88.9	keep	dim1+dim2+dim7	Phase2.5探索性重写消除游离章节+frontmatter扩充	dry_run
+2026-07-01T22:20	baseline	sync-cc-tips	-	85.8	baseline	-	首次评估(curl直读CHANGELOG.md改动后)；实测发现Step1降级/重试顺序需拼凑推断+0变化规则分散两处	dry_run
+2026-07-01T22:35	c2bcd8f	sync-cc-tips	85.8	90.5	keep	dim3	Step1降级/重试线性化+0变化规则收敛为单一总闸；独立子agent复测确认歧义消除	dry_run
+2026-07-01T22:42	2b63281	sync-cc-tips	90.5	91.1	keep	dim4	Step5数字不一致分支补充显性CHECKPOINT标记；独立子agent复测确认停止行为明确	dry_run
+2026-07-01T22:48	316ba27	sync-cc-tips	91.1	91.1	revert	dim5	!前缀识别规则被独立子agent指出会引入新歧义(粒度混淆导致假阴性风险)；git revert HEAD撤销	dry_run
+2026-07-01T23:05	baseline-v2	sync-agent-skills	88.9	91.2	baseline	-	首次全真实沙盒full_test评估(6/6完成)，取代此前100%dry_run历史；发现真实latent bug:Step3路径比较未规范化(大小写/尾斜杠会误判需更新)	full_test
+2026-07-01T23:18	revert-attempt	sync-agent-skills	91.2	91.2	revert	dim5	GetFullPath()未指定basePath，相对路径符号链接会按进程cwd而非链接自身目录解析，误判风险不降反增；git revert HEAD撤销	full_test
+timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
+2026-07-02T22:30	baseline	project-analyze	-	60.1	baseline	-	初始评估	full_test
+2026-07-02T22:35	396c155	project-analyze	60.1	68.3	keep	可执行具体性	替换虚构工具为实际可用工具	full_test
+2026-07-02T22:40	f01d6a6	project-analyze	68.3	70.7	keep	检查点设计	添加3个用户确认检查点	full_test
+2026-07-02T22:45	2d3ab34	project-analyze	70.7	74.3	keep	反例与黑名单	添加8条禁止行为清单	full_test
+2026-07-02T22:50	2221f75	project-analyze	74.3	75.0	keep	综合	清理残余+CHANGELOG+版本号	full_test

@@ -1,13 +1,14 @@
 ---
-name: unipus-infra-init-app
+name: infra-init-app
+version: 2.0.0
 description: 触发词：初始化项目, init app, 新建服务, 创建应用, 项目脚手架, 服务声明
 ---
 
-# unipus-infra-init-app
+# infra-init-app
 
 初始化 Git 仓库为平台标准服务，生成 service.yaml 与 Jenkinsfile。
 
-**宣告**：正在执行 `unipus-infra-init-app` — 平台服务初始化。
+**宣告**：正在执行 `infra-init-app` — 平台服务初始化。
 
 ---
 
