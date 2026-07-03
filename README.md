@@ -1,6 +1,6 @@
 # Unipus 官方 Claude Code 插件仓库
 
-[![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)](https://github.com/Glepooek/unipus-plugins-official)
+[![Version](https://img.shields.io/badge/version-4.1.1-blue.svg)](https://github.com/Glepooek/unipus-plugins-official)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 > Unipus 公司官方 Claude Code 插件集合,提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强（234条技巧智能轮播）、权限通知等企业级开发工具链。
@@ -12,9 +12,9 @@
 **功能：** React/Vue 开发、WPF XAML 性能优化、UI 设计规范、组件库、前端架构文档
 
 **核心 Skills：**
-- `unipus:fe-dev` - 前端全流程开发（复合 skill，5 阶段工作流）
-- `unipus:design-ui` - UI 设计规范管理
-- `wpf-xaml-performance` - WPF XAML 性能优化
+- `unipus-frontend-plugin:unipus-fe-dev` - 前端全流程开发（复合 skill，5 阶段工作流）
+- `unipus-frontend-plugin:unipus-design-ui` - UI 设计规范管理
+- `unipus-frontend-plugin:wpf-xaml-performance` - WPF XAML 性能优化
 
 **特色：** 唯一的复合 skill 实现，包含完整的前端开发工作流（从 PRD 到交付）。
 
@@ -114,20 +114,20 @@ git clone https://github.com/Glepooek/unipus-plugins-official ~/.claude/plugins/
 
 ```bash
 # 调用前端开发工作流
-/unipus:fe-dev
+/unipus-frontend-plugin:unipus-fe-dev
 
 # 调用 WPF 性能优化
-/wpf-xaml-performance
+/unipus-frontend-plugin:wpf-xaml-performance
 
 # 调用其他 skills
-/unipus:design-ui
+/unipus-frontend-plugin:unipus-design-ui
 ```
 
 ## 🏗️ 核心特性
 
 ### 工作流驱动开发
 
-**unipus:fe-dev** - 唯一的复合 skill，提供完整的前端开发工作流：
+**unipus-frontend-plugin:unipus-fe-dev** - 唯一的复合 skill，提供完整的前端开发工作流：
 - 5 阶段自动化：需求收集 → 分析规划 → 代码生成 → 交付物生成 → 验证完成
 - Subagent 驱动并行生成，显著提升开发效率
 - 详见 [ARCHITECTURE.md](plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md)
@@ -135,7 +135,7 @@ git clone https://github.com/Glepooek/unipus-plugins-official ~/.claude/plugins/
 ### 智能会话增强
 
 **SessionStart Hook** - 每次启动自动展示技巧：
-- 230 条 Claude Code 使用技巧智能轮播
+- 234 条 Claude Code 使用技巧智能轮播
 - 自动追踪展示进度，确保不重复
 - 涵盖开发、测试、文档、CI/CD 等全方位实践
 
@@ -149,7 +149,6 @@ git clone https://github.com/Glepooek/unipus-plugins-official ~/.claude/plugins/
 ## 📚 文档
 
 - **[CLAUDE.md](CLAUDE.md)** - Claude Code 项目指导文档（中文）
-- **[CLAUDE_WORKFLOW.md](CLAUDE_WORKFLOW.md)** - Claude Code Skill 工作流最佳实践（通用）
 - **[ARCHITECTURE.md](plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md)** - 复合 Skill 架构设计文档
 
 ## 🛠️ 开发指南
@@ -204,17 +203,9 @@ cat plugins/{plugin-name}/hooks/hooks.json
 
 ## 💡 技巧
 
-- **会话技巧轮播**: 每次启动会话时，SessionStart Hook 会自动展示 2 条随机技巧（共 230 条），智能追踪展示进度
+- **会话技巧轮播**: 每次启动会话时，SessionStart Hook 会自动展示 2 条随机技巧（共 234 条），智能追踪展示进度
 - **快捷键**: 在 Claude Code 会话中按 `#` 键可以快速将学习内容写入 CLAUDE.md
 - **Hooks 调试**: 使用 `echo $CLAUDE_PLUGIN_ROOT` 查看插件根目录环境变量
-
-## ⚠️ 故障排查
-
-遇到问题？查看 [CLAUDE.md](CLAUDE.md) 中的**故障排查**章节，包含：
-- SessionStart Hook 失败诊断
-- Hooks 未加载的解决方法
-- Skill 加载失败的常见原因
-- Windows 编码问题解决方案
 
 ---
 
