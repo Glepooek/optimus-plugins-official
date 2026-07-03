@@ -1,9 +1,9 @@
 # Unipus 官方 Claude Code 插件仓库
 
-[![Version](https://img.shields.io/badge/version-4.1.1-blue.svg)](https://github.com/Glepooek/unipus-plugins-official)
+[![Version](https://img.shields.io/badge/version-4.1.2-blue.svg)](https://github.com/Glepooek/unipus-plugins-official)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-> Unipus 公司官方 Claude Code 插件集合,提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强（234条技巧智能轮播）、权限通知等企业级开发工具链。
+> Unipus 公司官方 Claude Code 插件集合,提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强（235条技巧智能轮播）、权限通知等企业级开发工具链。
 
 ## 📦 插件列表
 
@@ -135,7 +135,7 @@ git clone https://github.com/Glepooek/unipus-plugins-official ~/.claude/plugins/
 ### 智能会话增强
 
 **SessionStart Hook** - 每次启动自动展示技巧：
-- 234 条 Claude Code 使用技巧智能轮播
+- 235 条 Claude Code 使用技巧智能轮播
 - 自动追踪展示进度，确保不重复
 - 涵盖开发、测试、文档、CI/CD 等全方位实践
 
@@ -203,7 +203,7 @@ cat plugins/{plugin-name}/hooks/hooks.json
 
 ## 💡 技巧
 
-- **会话技巧轮播**: 每次启动会话时，SessionStart Hook 会自动展示 2 条随机技巧（共 234 条），智能追踪展示进度
+- **会话技巧轮播**: 每次启动会话时，SessionStart Hook 会自动展示 2 条随机技巧（共 235 条），智能追踪展示进度
 - **快捷键**: 在 Claude Code 会话中按 `#` 键可以快速将学习内容写入 CLAUDE.md
 - **Hooks 调试**: 使用 `echo $CLAUDE_PLUGIN_ROOT` 查看插件根目录环境变量
 

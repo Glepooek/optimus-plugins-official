@@ -147,5 +147,5 @@ description: ...
 | `.claude-plugin/marketplace.json` | 插件仓库元数据和版本号 |
 | `.claude/skills/commit-cc-plugin/SKILL.md` | 提交发布 skill（含版本决策规则） |
 | `.claude/skills/sync-cc-tips/SKILL.md` | tips.txt 自动同步 skill（从 CC changelog 同步） |
-| `plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt` | 234 条 Claude Code 使用技巧 |
+| `plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt` | 235 条 Claude Code 使用技巧 |
 | `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md` | 复合 skill 模式参考实现 |

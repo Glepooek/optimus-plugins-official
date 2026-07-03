@@ -154,8 +154,6 @@
 ---
 [工具] 🤖 Agent 派生代理\n功能：派生子 agent 处理独立任务\n效果：并行处理多个独立任务，或隔离复杂研究工作\n例子：Agent 派生 Explore agent 搜索代码库，同时你继续主任务
 ---
-[工具] 👥 TeamCreate 团队协作\n功能：创建 agent 团队协作完成复杂项目\n效果：多个 agent 分工合作，并行处理前端、后端、测试等\n例子：TeamCreate 创建团队，分配 frontend、backend、tester agent
----
 [工具] 🌲 EnterWorktree 进入工作树\n功能：创建并进入独立的 git worktree 环境；v2.1.157+ 支持在同一会话内切换到已有的 Claude 托管 worktree（传 path 参数）\n效果：隔离实验性改动，不影响主工作区；多 worktree 并行开发可在会话内直接切换\n例子：EnterWorktree(name="feature-x") 创建新 worktree；EnterWorktree(path=".claude/worktrees/existing") 切换到已有 worktree
 ---
 [工具] 🔙 ExitWorktree 退出工作树\n功能：退出 worktree 并选择保留或删除\n效果：完成实验后清理环境，或保留工作继续使用\n例子：ExitWorktree 删除失败的实验分支
@@ -191,8 +189,6 @@
 [工具] 📤 TaskOutput 任务输出\n功能：获取后台任务的执行输出\n效果：查看后台 agent 或 shell 任务的运行结果\n例子：TaskOutput(task_id="abc") 查看后台任务输出
 ---
 [工具] ⛔ TaskStop 停止任务\n功能：停止正在运行的后台任务\n效果：终止长时间运行的后台 agent 或命令\n例子：TaskStop(task_id="abc") 停止失控的后台任务
----
-[工具] 🗑️ TeamDelete 删除团队\n功能：删除 agent 团队及其任务列表\n效果：清理完成的团队协作环境\n例子：TeamDelete 在团队完成工作后清理资源
 ---
 [工具] 🚪 ExitPlanMode 退出计划模式\n功能：完成计划并提交用户审批\n效果：将编写好的计划提交审批，用户同意后执行\n例子：ExitPlanMode 提交实施计划等待用户批准
 ---
@@ -465,3 +461,9 @@
 [配置] 🧠 Sonnet 5 新默认模型\n功能：v2.1.197 起 Claude Code 默认模型升级为 Sonnet 5，原生支持 1M-token 超长上下文窗口，2026年8月31日前享受 $2/$10 每 Mtok 优惠价格\n效果：处理超大代码库或长文档时无需分段拆分，同时享受限时优惠定价\n例子：升级到 v2.1.197 即可默认启用；claude --model sonnet 显式指定使用 Sonnet 5
 ---
 [交互] 🖱️ 全屏模式菜单鼠标点击\n功能：全屏 TUI 模式下，权限提示、/model、/config 等选择菜单新增鼠标点击支持\n效果：无需仅靠键盘方向键选择选项，直接用鼠标点击即可选中\n例子：全屏模式下遇到权限确认或 /model 选择菜单时，直接用鼠标点击对应选项完成选择
+---
+[Skill] 📊 /dataviz 图表设计技能\n功能：/dataviz 技能提供图表和仪表盘设计指导，附带可运行的调色板校验器\n效果：数据可视化场景中获得专业设计建议，自动校验配色方案的可访问性\n例子：/dataviz 设计一个销售数据仪表盘，自动检查颜色对比度是否符合无障碍标准
+---
+[交互] 📚 堆叠斜杠技能调用\n功能：在一行中堆叠多个斜杠技能调用（如 /skill-a /skill-b do XYZ），最多同时加载 5 个技能\n效果：一次调用组合多个技能能力，无需分多轮对话分别触发\n例子：/code-review /security-review 审查这个 PR 同时启用代码审查和安全审查两个技能
+---
+[Hook] 🔔 后台代理通知 Hook\n功能：后台代理需要输入或完成任务时，触发 Notification hook（事件类型为 agent_needs_input 或 agent_completed）\n效果：后台代理状态变更时自动通知用户，无需手动轮询检查\n例子：后台代理完成代码生成后通过 Notification hook 发送桌面通知提醒你检查结果
