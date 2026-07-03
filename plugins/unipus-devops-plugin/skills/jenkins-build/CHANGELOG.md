@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] - 2026-07-03
+
+### Added
+- 新增触发条件评测数据集 `evals/trigger-eval.json`（10 条应触发 + 11 条不应触发场景），用于验证 description 的触发准确率
+
 ## [1.1.0] - 2026-06-30
 
 ### Added

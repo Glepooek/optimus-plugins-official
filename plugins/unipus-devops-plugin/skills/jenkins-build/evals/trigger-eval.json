@@ -1,0 +1,22 @@
+[
+  {"query": "帮我跑一下 lms-api-test 的 Jenkins 构建", "should_trigger": true},
+  {"query": "触发 uni-stu-pc 这个 job，分支用 release/2.1", "should_trigger": true},
+  {"query": "Jenkins 构建一下，用默认配置就好", "should_trigger": true},
+  {"query": "跑下 CI，zk-api 那个 job", "should_trigger": true},
+  {"query": "我想触发一次 Jenkins build，job 名是 k12-backend", "should_trigger": true},
+  {"query": "帮我把 backend-service 打一个包，Jenkins 的", "should_trigger": true},
+  {"query": "ci build 失败了，你帮我重新触发一下", "should_trigger": true},
+  {"query": "run jenkins job for uni-pc, branch=main", "should_trigger": true},
+  {"query": "jenkins job 触发完了记得通知一下前端", "should_trigger": true},
+  {"query": "构建一下测试环境，job 叫 staging-api-test，带参数 ENV=staging", "should_trigger": true},
+  {"query": "帮我写一个 Jenkinsfile，把编译和测试分两个 stage", "should_trigger": false},
+  {"query": "Jenkins 报错 java.lang.OutOfMemoryError，怎么排查？", "should_trigger": false},
+  {"query": "我要查一下昨天的 Jenkins 构建历史", "should_trigger": false},
+  {"query": "能帮我配置 Jenkins 的 GitHub webhook 吗？", "should_trigger": false},
+  {"query": "GitHub Actions 的 workflow 怎么触发手动 dispatch？", "should_trigger": false},
+  {"query": "帮我跑一下单元测试，本地", "should_trigger": false},
+  {"query": "分析一下这次 Jenkins 构建日志，找失败原因", "should_trigger": false},
+  {"query": "我想了解一下 Jenkins Pipeline 的语法", "should_trigger": false},
+  {"query": "帮我检查一下 config.yaml 配置格式对不对", "should_trigger": false},
+  {"query": "构建产物在哪里下载？Jenkins artifacts", "should_trigger": false}
+]
