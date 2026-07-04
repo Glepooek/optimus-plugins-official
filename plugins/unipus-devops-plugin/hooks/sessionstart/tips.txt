@@ -48,7 +48,7 @@
 ---
 [配置] 🚫 permissions.deny\n功能：配置明确禁止的危险操作，语法与 allow 相同；裸工具名（如 "Edit"）从模型上下文完全移除；"*" 拒绝所有工具\n效果：防止误操作导致数据丢失或系统损坏\n例子：deny: ["Bash(rm -rf *)"] 阻止递归删除；deny: ["Bash(git push --force *)"] 禁止强制推送
 ---
-[配置] 🎛️ defaultMode 权限模式\n功能：控制操作确认策略，支持 acceptEdits（自动接受编辑）、auto（智能判断）、plan（计划审批）等模式\n效果：平衡开发效率和安全性，可按任务类型切换\n例子：日常开发用 acceptEdits，复杂重构用 plan 模式
+[配置] 🎛️ defaultMode 权限模式\n功能：控制操作确认策略，支持 manual（默认询问，v2.1.200 起为 default 的新别名）、acceptEdits（自动接受编辑）、auto（智能判断）、plan（计划审批）等模式\n效果：平衡开发效率和安全性，可按任务类型切换；CLI/VS Code/JetBrains 中 "default" 模式统一显示为 "Manual"\n例子：{"defaultMode": "manual"} 等同于旧版 "default"；日常开发用 acceptEdits，复杂重构用 plan 模式
 ---
 [配置] 📄 CLAUDE.md 项目指令\n功能：在项目根目录创建 CLAUDE.md 提供项目特定指令\n效果：自动加载到系统提示，Claude 遵循项目规范\n例子：指定代码风格、测试要求、部署流程等
 ---
@@ -82,7 +82,7 @@
 ---
 [CLI] ⚙️ --settings 额外配置\n功能：加载指定 settings JSON 文件或 JSON 字符串，此处设置的值覆盖 settings.json 中相同的键，未设置的键保持文件中的值；可配合 --setting-sources user,project 控制加载哪些来源\n效果：适合临时覆盖配置、在 CI 脚本中注入一次性配置，而不修改全局文件\n例子：claude --settings ./ci-settings.json；claude --settings '{"model":"haiku"}' 临时降级模型；claude --setting-sources user --settings extra.json 只加载用户配置和额外覆盖
 ---
-[CLI] 🛂 --permission-mode 权限模式\n功能：启动时直接指定权限模式，选项：default（默认询问）、acceptEdits（自动接受文件编辑）、plan（只规划不执行）、auto（智能自动模式）、dontAsk（不询问）、bypassPermissions（跳过所有检查）；覆盖 settings.json 的 defaultMode\n效果：可以按任务类型快速切换交互风格，而不用先改配置文件\n例子：claude --permission-mode plan 用计划模式审批改动；claude --permission-mode acceptEdits 自动接受所有文件修改；claude --permission-mode auto 启用智能自动判断
+[CLI] 🛂 --permission-mode 权限模式\n功能：启动时直接指定权限模式，选项：default/manual（默认询问，v2.1.200 起两者等价，UI 统一显示为 Manual）、acceptEdits（自动接受文件编辑）、plan（只规划不执行）、auto（智能自动模式）、dontAsk（不询问）、bypassPermissions（跳过所有检查）；覆盖 settings.json 的 defaultMode\n效果：可以按任务类型快速切换交互风格，而不用先改配置文件\n例子：claude --permission-mode manual 等同于 default 显式询问；claude --permission-mode plan 用计划模式审批改动；claude --permission-mode acceptEdits 自动接受所有文件修改
 ---
 [CLI] 🧠 --model 指定模型\n功能：为当前会话指定模型，支持别名（sonnet、opus、haiku、fable）或完整 model ID，覆盖 settings.json 的 model 设置和 ANTHROPIC_MODEL 环境变量\n效果：可以按任务复杂度切换模型，不必先改全局配置\n例子：claude --model fable 使用最新旗舰模型；claude --model claude-sonnet-4-6 指定精确版本；claude --model haiku 处理轻量任务节省费用
 ---
@@ -200,7 +200,7 @@
 ---
 [工具] 🎯 Skill 调用技能\n功能：调用预定义的 skill 执行特定工作流\n效果：使用专家级工作流确保质量和一致性\n例子：Skill(skill="brainstorming") 在编码前进行设计头脑风暴
 ---
-[工具] ❓ AskUserQuestion 询问用户\n功能：在执行过程中向用户提问并获取选择\n效果：需要用户决策时暂停并展示选项\n例子：AskUserQuestion 询问用户选择实现方案
+[工具] ❓ AskUserQuestion 询问用户\n功能：在执行过程中向用户提问并获取选择；v2.1.200 起默认不再自动继续等待，可通过 /config 设置空闲超时后自动继续\n效果：需要用户决策时暂停并展示选项，避免因静默超时被意外跳过\n例子：AskUserQuestion 询问用户选择实现方案；/config 设置 idle timeout 后长时间无响应自动按默认项继续
 ---
 [工具] 📓 NotebookEdit 编辑 Notebook\n功能：编辑 Jupyter Notebook (.ipynb) 文件的单元格\n效果：修改 Notebook 中的代码、Markdown 单元格\n例子：NotebookEdit 更新数据分析 Notebook 的代码单元格
 ---
