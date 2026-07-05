@@ -1,0 +1,33 @@
+{
+  "tabs": {
+    "使用ClaudeCode构建": {
+      "en": "Build with Claude Code",
+      "id": "WEBb2aab5b9ec63445b0c0d299e3b36b96e",
+      "groups": {
+        "Automation": {
+          "en": "Automation",
+          "zh": "自动化",
+          "id": "WEB573ab28c9f02ee4599ace1288819807b",
+          "pages": {
+            "/goal": {
+              "title": "goal.md",
+              "fileId": "F5F3AC5D1C9A40CC8F64D5FA284C0CE5"
+            },
+            "/scheduled-tasks": {
+              "title": "scheduled-tasks.md",
+              "fileId": "712C7470F61340BF88C5D8919C2EC6DB"
+            },
+            "/headless": {
+              "title": "run-claude-code-programmatically.md",
+              "fileId": "FAAD4D7FC8A64A4D8851335F38974039"
+            },
+            "/deep-links": {
+              "title": "deep-links.md",
+              "fileId": "4FF01C36893F4024B7D58955C6DE1419"
+            }
+          }
+        }
+      }
+    }
+  }
+}
