@@ -26,6 +26,12 @@
               "fileId": "4FF01C36893F4024B7D58955C6DE1419"
             }
           }
+        },
+        "Guides": {
+          "en": "Guides",
+          "zh": "指南",
+          "id": "8C6C62A16FB549968D6317A58E6C333E",
+          "pages": {}
         }
       }
     }
