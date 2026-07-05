@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "保存 使用ClaudeCode构建 / Guides 文档",
+    "expected": "解析分类路径，获取 Guides 分组下的页面列表，创建/定位有道文件夹，逐篇同步文档"
+  },
+  {
+    "id": 2,
+    "prompt": "同步 Build with Claude Code / Automation 到有道笔记",
+    "expected": "支持英文 Tab 名，解析 Automation 分组，执行完整同步流程"
+  },
+  {
+    "id": 3,
+    "prompt": "保存不存在的Tab / 不存在的分组 文档",
+    "expected": "立即停止并报错，不创建任何文件夹，给出清晰的错误信息"
+  }
+]

@@ -1,0 +1,5 @@
+timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
+2026-07-05T19:45	baseline	sync-cc-docs-to-youdaonote	-	73.6	baseline	-	初始评估：结构清晰但缺少显性检查点和反例清单	full_test
+2026-07-05T19:50	67e79cb	sync-cc-docs-to-youdaonote	73.6	75.4	keep	检查点设计	添加 🔴 CHECKPOINT 显性视觉标记	full_test
+2026-07-05T19:52	67e79cb	sync-cc-docs-to-youdaonote	75.4	77.8	keep	反例与黑名单	添加反模式与危险操作章节（6 条反例）	full_test
+2026-07-05T19:54	67e79cb	sync-cc-docs-to-youdaonote	77.8	80.2	keep	失败模式编码	升级为三段式 fallback 表	full_test
