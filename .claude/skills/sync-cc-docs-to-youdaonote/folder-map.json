@@ -31,7 +31,68 @@
           "en": "Guides",
           "zh": "指南",
           "id": "8C6C62A16FB549968D6317A58E6C333E",
-          "pages": {}
+          "pages": {
+            "/large-codebases": {
+              "title": "large-codebases.md",
+              "fileId": "E10C737FC468436196C180104138C381"
+            }
+          }
+        },
+        "Agents and parallel work": {
+          "en": "Agents and parallel work",
+          "zh": "Agents和并行工作",
+          "id": "WEB1da7c7a0f3407f4eef60ce4a9a1ef2dc",
+          "pages": {
+            "/agent-view": {
+              "title": "agent-view.md",
+              "fileId": "WEB8d41dff8ca9329d347166e2462f6cdb0"
+            },
+            "/agents": {
+              "title": "agents.md",
+              "fileId": "WEB7cbc069c101c7bf436f85b1970c99206"
+            },
+            "/workflows": {
+              "title": "workflows.md",
+              "fileId": "9EB81C015D6F463B9A9913CAC7A97F61"
+            },
+            "/worktrees": {
+              "title": "worktrees.md",
+              "fileId": "9413A4741D8D47BFBFD4666CFEC20AD6"
+            }
+          }
+        }
+      }
+    },
+    "Getting started": {
+      "en": "Getting started",
+      "zh": "快速开始",
+      "id": "WEBfb0c1cd6a63bde4acd921d2c63b57628",
+      "groups": {
+        "Core concepts": {
+          "en": "Core concepts",
+          "zh": "核心概念",
+          "id": "WEB8a34364324b8b8dfdd08a0f20c386b08",
+          "pages": {
+            "/prompt-caching": {
+              "title": "prompt-caching.md",
+              "fileId": "WEBeac07c6c7300dbb6fae9a854130e3caa"
+            }
+          }
+        },
+        "Use Claude Code": {
+          "en": "Use Claude Code",
+          "zh": "使用Claude Code",
+          "id": "WEBb60a428ab564d64600abbeb5c0da6f51",
+          "pages": {
+            "/prompt-library": {
+              "title": "prompt-library.md",
+              "fileId": "WEB162dea5366ae5515db3e1f25e8f0bd54"
+            },
+            "/sessions": {
+              "title": "sessions.md",
+              "fileId": "WEB6f8e04aa11efb8057b1d4838a96bda3a"
+            }
+          }
         }
       }
     }
