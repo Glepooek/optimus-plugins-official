@@ -1,6 +1,6 @@
 ---
 name: sync-cc-docs-to-youdaonote
-version: 1.0.1
+version: 1.0.2
 description: >
   按分类路径（如"使用ClaudeCode构建 / Guides"）核对 docs/claude_docs/catalog.md，
   抓取翻译该分类下的 Claude Code 官方文档页面，幂等同步到有道云笔记，文件夹层级
@@ -68,6 +68,11 @@ youdaonote -s ydn list -f <GROUP_ID>
 用 Read 工具读取 `.claude/skills/sync-cc-docs-to-youdaonote/folder-map.json`，定位
 `tabs[<Tab中文名>].groups[<group_en>].pages` 这个字典。
 
+**本地存储路径**：`docs/claude_docs/<Tab中文名>/<group_zh>/`
+- `<Tab中文名>`：来自 Step 1 的 `tab_zh`
+- `<group_zh>`：优先使用 folder-map.json 中记录的中文名；若无则翻译 `group_en`（如 "Guides" → "指南"）
+- 目录不存在时自动创建
+
 对 Step 1 返回的每一篇页面（`title` + `url`）：
 
 1. 查 `pages[<url>]` 是否有记录的 `fileId`：
@@ -76,17 +81,18 @@ youdaonote -s ydn list -f <GROUP_ID>
    - **无记录** → 按未同步处理
 2. 未同步的页面，完整走一遍 `unipus-office-plugin:web-to-markdown` skill 已有的抓取
    /翻译/校验流程：
-   - `python -m markitdown "https://code.claude.com/docs/en<url>" > docs/claude_docs/.raw-<slug>.md`（三级降级见 web-to-markdown SKILL.md）
-   - Read 原文 → 翻译（剥离站点通用 Documentation Index 横幅、`<Note>`/`<Tip>` 转引用块）→ Write 到 `docs/claude_docs/<slug>.md`
-   - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/post_process.py "docs/claude_docs/<slug>.md" --base-url "https://code.claude.com/docs"`
-   - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/verify.py ".raw-<slug>.md" "docs/claude_docs/<slug>.md"`
-   - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/verify_quality.py ".raw-<slug>.md" "docs/claude_docs/<slug>.md" --base-url "https://code.claude.com/docs"`
+   - 创建本地目录：`mkdir -p docs/claude_docs/<Tab中文名>/<group_zh>`
+   - `python -m markitdown "https://code.claude.com/docs/en<url>" > docs/claude_docs/<Tab中文名>/<group_zh>/.raw-<slug>.md`（三级降级见 web-to-markdown SKILL.md）
+   - Read 原文 → 翻译（剥离站点通用 Documentation Index 横幅、`<Note>`/`<Tip>` 转引用块）→ Write 到 `docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md`
+   - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/post_process.py "docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md" --base-url "https://code.claude.com/docs"`
+   - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/verify.py "docs/claude_docs/<Tab中文名>/<group_zh>/.raw-<slug>.md" "docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md"`
+   - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/verify_quality.py "docs/claude_docs/<Tab中文名>/<group_zh>/.raw-<slug>.md" "docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md" --base-url "https://code.claude.com/docs"`
    - 两轮核对通过后：`youdaonote -s ydn save` 上传，参数说明：
-     - `contentFile`：`docs/claude_docs/<slug>.md`
+     - `contentFile`：`docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md`
      - `type`：`"md"`
      - `parentId`：`"<GROUP_ID>"`
      - `title`：译文 markdown 的第一个 `#` 标题（用 Read 工具读取译文，提取首行 `# ` 后的内容）
-   - 清理 `.raw-<slug>.md` 临时文件
+   - 清理 `docs/claude_docs/<Tab中文名>/<group_zh>/.raw-<slug>.md` 临时文件
 3. 上传成功 → 用 Edit 工具把 `{"title": "<文档标题>", "fileId": "<返回的fileId>"}` 写入
    `folder-map.json` 的 `pages[<url>]`（覆盖过期记录）
 4. 任一环节失败（抓取/翻译/校验/上传）→ 记录该篇失败原因，**继续处理下一篇**，不阻断

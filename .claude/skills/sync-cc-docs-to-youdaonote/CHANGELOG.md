@@ -1,3 +1,8 @@
+## [1.0.2] - 2026-07-05
+
+### Changed
+- 本地文档按分类路径存储：`docs/claude_docs/<Tab中文名>/<group_zh>/`，而非平铺在 `docs/claude_docs/` 下
+
 ## [1.0.1] - 2026-07-05
 
 ### Changed
