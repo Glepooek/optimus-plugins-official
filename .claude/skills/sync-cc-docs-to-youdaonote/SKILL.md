@@ -1,6 +1,6 @@
 ---
 name: sync-cc-docs-to-youdaonote
-version: 1.0.0
+version: 1.0.1
 description: >
   按分类路径（如"使用ClaudeCode构建 / Guides"）核对 docs/claude_docs/catalog.md，
   抓取翻译该分类下的 Claude Code 官方文档页面，幂等同步到有道云笔记，文件夹层级
@@ -81,9 +81,13 @@ youdaonote -s ydn list -f <GROUP_ID>
    - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/post_process.py "docs/claude_docs/<slug>.md" --base-url "https://code.claude.com/docs"`
    - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/verify.py ".raw-<slug>.md" "docs/claude_docs/<slug>.md"`
    - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/verify_quality.py ".raw-<slug>.md" "docs/claude_docs/<slug>.md" --base-url "https://code.claude.com/docs"`
-   - 两轮核对通过后：`youdaonote -s ydn save --json` 上传（`contentFile` 传 `docs/claude_docs/<slug>.md`，`type: "md"`，`parentId: "<GROUP_ID>"`）
+   - 两轮核对通过后：`youdaonote -s ydn save` 上传，参数说明：
+     - `contentFile`：`docs/claude_docs/<slug>.md`
+     - `type`：`"md"`
+     - `parentId`：`"<GROUP_ID>"`
+     - `title`：译文 markdown 的第一个 `#` 标题（用 Read 工具读取译文，提取首行 `# ` 后的内容）
    - 清理 `.raw-<slug>.md` 临时文件
-3. 上传成功 → 用 Edit 工具把 `{"title": "<slug>.md", "fileId": "<返回的fileId>"}` 写入
+3. 上传成功 → 用 Edit 工具把 `{"title": "<文档标题>", "fileId": "<返回的fileId>"}` 写入
    `folder-map.json` 的 `pages[<url>]`（覆盖过期记录）
 4. 任一环节失败（抓取/翻译/校验/上传）→ 记录该篇失败原因，**继续处理下一篇**，不阻断
    - ⚠️ **注意**：单篇失败不阻断，但需记录失败原因供汇总报告
