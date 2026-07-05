@@ -1,4 +1,7 @@
 import unittest
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
 from resolve_category import parse_catalog, find_tab, find_group
 
 SAMPLE_CATALOG = """\
@@ -95,6 +98,57 @@ class TestFindGroup(unittest.TestCase):
         tabs = parse_catalog(SAMPLE_CATALOG)
         tab = find_tab(tabs, {}, "使用ClaudeCode构建")
         self.assertIsNone(find_group(tab, "Nonexistent Group"))
+
+
+from resolve_category import ensure_folder, load_folder_map, save_folder_map
+
+
+class TestEnsureFolder(unittest.TestCase):
+    @patch("resolve_category.youdaonote_mkdir")
+    @patch("resolve_category.youdaonote_list")
+    def test_reuses_existing_folder_without_creating(self, mock_list, mock_mkdir):
+        mock_list.return_value = [("folder", "WEB123", "指南")]
+        folder_id = ensure_folder("指南", "WEBparent")
+        self.assertEqual(folder_id, "WEB123")
+        mock_mkdir.assert_not_called()
+
+    @patch("resolve_category.youdaonote_mkdir")
+    @patch("resolve_category.youdaonote_list")
+    def test_creates_when_missing_then_relists(self, mock_list, mock_mkdir):
+        mock_list.side_effect = [[], [("folder", "WEB999", "指南")]]
+        folder_id = ensure_folder("指南", "WEBparent")
+        self.assertEqual(folder_id, "WEB999")
+        mock_mkdir.assert_called_once_with("指南", "WEBparent")
+
+    @patch("resolve_category.youdaonote_mkdir")
+    @patch("resolve_category.youdaonote_list")
+    def test_raises_if_still_missing_after_create(self, mock_list, mock_mkdir):
+        mock_list.side_effect = [[], []]
+        with self.assertRaises(RuntimeError):
+            ensure_folder("指南", "WEBparent")
+
+
+class TestFolderMapIO(unittest.TestCase):
+    def test_load_missing_file_returns_empty_structure(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "nonexistent.json"
+            result = load_folder_map(path)
+            self.assertEqual(result, {"tabs": {}})
+
+    def test_save_then_load_roundtrip(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "map.json"
+            data = {"tabs": {"测试": {"id": "WEBabc"}}}
+            save_folder_map(path, data)
+            loaded = load_folder_map(path)
+            self.assertEqual(loaded, data)
+
+    def test_load_invalid_json_exits(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d) / "broken.json"
+            path.write_text("{not valid json", encoding="utf-8")
+            with self.assertRaises(SystemExit):
+                load_folder_map(path)
 
 
 if __name__ == "__main__":
