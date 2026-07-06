@@ -132,8 +132,6 @@
 ---
 [交互] ⚙️ /config 快速配置\n功能：打开交互式配置界面修改 settings.json，或直接用 /config key=value 语法设置单个配置项（支持 interactive、-p 和 Remote Control 模式）；/config --help 列出所有可用的 key=value 简写键；Enter 和 Space 均可更改选项，Esc 保存并关闭\n效果：无需手动编辑 JSON，通过 UI 快速调整配置；直接写 key=value 更快\n例子：/config 修改主题、模型等常用设置；/config thinking=false 直接关闭思考；/config --help 查看所有可设置项
 ---
-[交互] 🤖 /agents 代理管理\n功能：查看和管理当前可用的 agents 配置\n效果：快速了解哪些 agent 可用，每个 agent 的能力和限制\n例子：/agents 查看 code-reviewer、test-runner 等 agent
----
 [交互] 🔌 /mcp MCP 管理\n功能：查看和管理当前连接的 MCP 服务器\n效果：检查 MCP 服务器状态、查看可用工具和资源\n例子：/mcp 查看 GitHub、数据库等 MCP 服务器连接状态
 ---
 [交互] 🧩 /plugins 插件管理\n功能：查看已安装插件和可用技能\n效果：快速了解哪些插件已启用，哪些 skills 可用\n例子：/plugins 查看 superpowers、code-review 等插件状态
@@ -440,7 +438,7 @@
 ---
 [配置] ⏱️ CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT MCP 工具超时\n功能：环境变量 CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT 覆盖远程 MCP 工具调用的默认超时（v2.1.187+ 默认 5 分钟无响应后中止）\n效果：防止远程 MCP 工具调用无响应时永久阻塞会话；在低延迟网络或耗时较长的 MCP 工具场景可按需调大\n例子：CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT=600000 claude 将超时调为 10 分钟，避免长耗时工具被提前终止
 ---
-[配置] 🔁 CLAUDE_CODE_RETRY_WATCHDOG 无人值守重试\n功能：环境变量 CLAUDE_CODE_RETRY_WATCHDOG 为无人值守（非交互）会话设置重试看门狗，替代已上限为 15 的 CLAUDE_CODE_MAX_RETRIES\n效果：自动化脚本或 CI 场景中，API 错误时按看门狗策略持续重试而不受 15 次硬上限约束\n例子：CLAUDE_CODE_RETRY_WATCHDOG=3600 claude -p "长任务" 允许看门狗在 1 小时内持续重试
+[配置] 🔁 CLAUDE_CODE_RETRY_WATCHDOG 无人值守重试\n功能：环境变量 CLAUDE_CODE_RETRY_WATCHDOG 为无人值守（非交互）会话设置重试看门狗；启用后将非容量类瞬时错误的默认重试次数提升至 300 次，并解除 CLAUDE_CODE_MAX_RETRIES 的 15 次硬上限\n效果：自动化脚本或 CI 场景中，API 错误时按看门狗策略持续重试而不受 15 次硬上限约束\n例子：CLAUDE_CODE_RETRY_WATCHDOG=3600 claude -p "长任务" 允许看门狗在 1 小时内持续重试
 ---
 [交互] 🧩 /plugin Skills 区域\n功能：/plugin 已安装插件标签页新增 Skills 区域，展示插件提供的所有技能，并可通过 /plugin 发现最近未使用过的插件以便清理\n效果：快速核查某插件有哪些 skills 可用；定期用 /plugin 清理不再需要的历史插件\n例子：/plugin 进入已安装标签页，查看 Skills 区域确认技能已加载；发现长期未用插件时直接卸载
 ---
@@ -467,3 +465,5 @@
 [交互] 📚 堆叠斜杠技能调用\n功能：在一行中堆叠多个斜杠技能调用（如 /skill-a /skill-b do XYZ），最多同时加载 5 个技能\n效果：一次调用组合多个技能能力，无需分多轮对话分别触发\n例子：/code-review /security-review 审查这个 PR 同时启用代码审查和安全审查两个技能
 ---
 [Hook] 🔔 后台代理通知 Hook\n功能：后台代理需要输入或完成任务时，触发 Notification hook（事件类型为 agent_needs_input 或 agent_completed）\n效果：后台代理状态变更时自动通知用户，无需手动轮询检查\n例子：后台代理完成代码生成后通过 Notification hook 发送桌面通知提醒你检查结果
+---
+[高级] 🤖 后台子代理默认自动化\n功能：v2.1.198 起子代理默认在后台运行（此前为渐进灰度）；在 worktree 中完成代码任务后自动 commit、push 并创建 draft PR，不再停下来询问\n效果：主任务无需等待子代理完成即可继续工作；代码类子代理任务完成后直接产出可审查的 PR，减少人工确认步骤\n例子：Agent 派生一个后台代码修复任务，完成后自动生成 draft PR 供审查，无需手动执行 git commit/push
