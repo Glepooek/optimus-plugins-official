@@ -468,7 +468,7 @@
 ---
 [高级] 🤖 后台子代理默认自动化\n功能：v2.1.198 起子代理默认在后台运行（此前为渐进灰度）；在 worktree 中完成代码任务后自动 commit、push 并创建 draft PR，不再停下来询问\n效果：主任务无需等待子代理完成即可继续工作；代码类子代理任务完成后直接产出可审查的 PR，减少人工确认步骤\n例子：Agent 派生一个后台代码修复任务，完成后自动生成 draft PR 供审查，无需手动执行 git commit/push
 ---
-[配置] 🌊 Dynamic workflow size 工作流规模\n功能：在 /config 中设置动态工作流的规模（small/medium/large），控制 Claude 创建动态工作流时的 agent 数量\n效果：small 适合快速任务减少开销，large 适合复杂任务提高覆盖，medium 为平衡选择\n例子：/config 设置 Dynamic workflow size 为 medium 平衡速度和覆盖范围
+[配置] 🌊 Dynamic workflow size 工作流规模\n功能：在 /config 中设置动态工作流的规模指引（advisory guideline，非硬性上限），控制 Claude 创建动态工作流时的 agent 数量倾向\n效果：small（精简）适合快速任务减少 token 开销；medium（平衡）适合日常开发；large（全面）适合复杂审计和需要高覆盖的场景\n例子：/config 设置 workflowSizeGuideline 为 small 获得精简工作流；设为 large 让 Claude 倾向使用更多 agent 并行
 ---
 [配置] 🏢 组织默认模型\n功能：管理员在组织控制台设置默认模型，用户 /model 中显示 "Org default" 或 "Role default" 标记\n效果：企业统一模型选择，用户无需手动配置即可使用组织推荐模型\n例子：/model 查看带 "Org default" 标记的组织推荐模型，无需手动设置
 ---
