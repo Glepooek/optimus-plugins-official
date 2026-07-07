@@ -20,7 +20,7 @@
 ---
 [交互] ❓ /help 使用帮助\n功能：查看 Claude Code 的帮助信息和常见用法入口\n效果：当你忘记某个命令、能力或交互方式时，可以先从这里找线索\n例子：不确定有哪些内置能力时，先输入 /help
 ---
-[交互] 📎 @ 符号快速引用\n功能：在输入框中使用 @ 符号可以快速引用文件、文件夹或工具输出\n效果：Claude 会自动读取内容并理解上下文，无需手动复制粘贴\n例子：输入 @src/main.ts 可以让 Claude 分析该文件的代码结构
+[交互] 📎 @ 符号快速引用\n功能：在输入框中使用 @ 符号可以快速引用文件、文件夹或工具输出，Claude 回复中提到的文件路径会变为可点击附件（Cmd/Ctrl-click 打开文件管理器）\n效果：@ 引用自动注入上下文，回复中的文件路径可直接点击定位，两者配合实现从输入到输出的完整文件导航\n例子：@src/main.ts 这个组件有 bug 吗？Claude 回复中提到的文件路径可 Cmd-click 打开
 ---
 [交互] ⚡ ! 命令前缀\n功能：在输入框中使用 ! 前缀可以直接运行 shell 命令，命令完成后 Claude 自动回应输出内容；在 settings.json 中设置 "respondToBashCommands": false 可恢复旧行为（仅追加上下文不自动回应）\n效果：命令输出自动触发 Claude 分析并给出建议，适合快速调试；关闭后输出仅加入上下文供下次对话使用\n例子：! git status 让 Claude 自动分析并给出操作建议；"respondToBashCommands": false 关闭自动回应恢复旧行为
 ---
@@ -474,7 +474,7 @@
 ---
 [交互] 📛 可读默认会话名\n功能：v2.1.196 起启动时自动生成可读的会话名称，也可用 -n 或 /rename 手动命名\n效果：多会话并行时快速区分不同任务，/resume 列表和 claude agents 中一目了然\n例子：claude -n "refactor-auth" 启动时指定名称；会话内 /rename my-feature 重命名；claude --resume refactor-auth 按名称恢复
 ---
-[交互] 📎 可点击文件附件\n功能：对话中的文件附件支持 Cmd/Ctrl-click 在 Finder/Explorer 中显示文件位置\n效果：快速定位 Claude 引用的文件，无需手动复制路径查找\n例子：Claude 提到 src/main.ts 时 Cmd-click 直接在文件管理器打开该文件所在目录
+[交互] 📎 可点击文件附件\n功能：Claude 回复中提到的文件路径自动渲染为可点击附件，Cmd/Ctrl-click 在 Finder/Explorer 中打开文件位置；配合 @ 引用使用效果更佳\n效果：快速定位 Claude 引用的文件，无需手动复制路径查找；与 @ 引用形成完整工作流：@ 输入→ Claude 分析 → 点击跳转\n例子：先 @src/Button.tsx 让 Claude 分析，回复中的文件路径 Cmd-click 直接打开
 ---
 [MCP] 🔔 MCP 认证启动通知\n功能：启动时显示需要认证的 MCP 服务器提示，指向 /mcp 管理界面\n效果：首次使用或 token 过期时快速发现并完成 MCP 认证\n例子：启动 Claude 时看到 "GitHub MCP needs authentication" 提示，输入 /mcp 完成认证
 ---
