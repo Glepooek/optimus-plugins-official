@@ -1,5 +1,6 @@
 ---
 name: sync-cc-tips
+version: 1.1.0
 description: 从 Claude Code 最新 changelog 自动同步 tips.txt：新增未覆盖条目、修正过时内容、删除已废弃功能，同步所有文档数字，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 disable-model-invocation: true
 ---
@@ -63,6 +64,39 @@ Read: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 1. 提取该功能点的主标识符列表（如 `respondToBashCommands`、`!命令`）
 2. 在已覆盖标识符集中逐一查找
 3. **任一命中 → 跳过，不新增**；全部未命中 → 标记为新增
+
+**信息补全（生成前必须执行）**：
+changelog 的单行描述往往只覆盖核心功能，生成前需补充完整信息：
+
+1. **交叉关联已有 tips** — 在 tips.txt 全文中搜索与新功能相关的已有条目，提取可关联的信息：
+   - 新功能是否与已有功能形成工作流？（如「可点击附件」与「@ 引用」配合）
+   - 新功能是否涉及已有命令/flag？（如「可读会话名」涉及 `-n`、`/rename`、`--resume`）
+   - 新功能是否属于已有配置项的子集或扩展？
+
+2. **提取完整参数集** — 从 changelog 原文中提取：
+   - settings.json 键名（camelCase 形式）
+   - 环境变量名（全大写下划线形式）
+   - 支持的值/选项（如 small/medium/large、true/false）
+   - 是否为建议性指引（advisory）vs 硬性限制（enforced cap）
+   - 相关 CLI flag 或交互命令
+
+3. **补全用法示例** — 为每个功能点提供完整的使用方式：
+   - CLI 命令必须是完整可执行形式：`claude --xxx`
+   - 配置项需给出 settings.json 键名和示例值
+   - 交互命令需给出触发方式和预期结果
+   - 若有多种使用方式（CLI + 交互 + 配置），全部列出
+
+**完整性校验（生成后必须执行）**：
+生成条目后，对照检查以下清单，任一项缺失则补充：
+
+| 检查项 | 要求 |
+|--------|------|
+| settings.json 键名 | 配置类功能必须包含 camelCase 键名 |
+| 环境变量名 | 有环境变量的功能必须包含全大写形式 |
+| 版本号 | 标注引入版本（如 v2.1.196） |
+| 多种用法 | 有 CLI + 交互两种方式的，全部列出 |
+| 关联功能 | 与已有 tips 有配合关系的，互相引用 |
+| 限制说明 | advisory vs enforced、仅 -p 模式、仅特定平台等 |
 
 生成格式：
 ```
