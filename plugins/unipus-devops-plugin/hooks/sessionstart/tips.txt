@@ -472,7 +472,7 @@
 ---
 [配置] 🏢 组织默认模型\n功能：管理员在组织控制台设置默认模型，用户 /model 中显示 "Org default" 或 "Role default" 标记\n效果：企业统一模型选择，用户无需手动配置即可使用组织推荐模型\n例子：/model 查看带 "Org default" 标记的组织推荐模型，无需手动设置
 ---
-[交互] 📛 可读默认会话名\n功能：启动时自动生成可读的会话名称（如 fix-auth-bug），便于识别和管理\n效果：多会话并行时快速区分不同任务，无需手动命名\n例子：启动新会话时自动生成如 "fix-auth-bug" 的可读名称，/resume 列表中一目了然
+[交互] 📛 可读默认会话名\n功能：v2.1.196 起启动时自动生成可读的会话名称，也可用 -n 或 /rename 手动命名\n效果：多会话并行时快速区分不同任务，/resume 列表和 claude agents 中一目了然\n例子：claude -n "refactor-auth" 启动时指定名称；会话内 /rename my-feature 重命名；claude --resume refactor-auth 按名称恢复
 ---
 [交互] 📎 可点击文件附件\n功能：对话中的文件附件支持 Cmd/Ctrl-click 在 Finder/Explorer 中显示文件位置\n效果：快速定位 Claude 引用的文件，无需手动复制路径查找\n例子：Claude 提到 src/main.ts 时 Cmd-click 直接在文件管理器打开该文件所在目录
 ---
