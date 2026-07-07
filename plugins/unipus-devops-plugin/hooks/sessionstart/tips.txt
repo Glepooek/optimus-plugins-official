@@ -467,3 +467,15 @@
 [Hook] 🔔 后台代理通知 Hook\n功能：后台代理需要输入或完成任务时，触发 Notification hook（事件类型为 agent_needs_input 或 agent_completed）\n效果：后台代理状态变更时自动通知用户，无需手动轮询检查\n例子：后台代理完成代码生成后通过 Notification hook 发送桌面通知提醒你检查结果
 ---
 [高级] 🤖 后台子代理默认自动化\n功能：v2.1.198 起子代理默认在后台运行（此前为渐进灰度）；在 worktree 中完成代码任务后自动 commit、push 并创建 draft PR，不再停下来询问\n效果：主任务无需等待子代理完成即可继续工作；代码类子代理任务完成后直接产出可审查的 PR，减少人工确认步骤\n例子：Agent 派生一个后台代码修复任务，完成后自动生成 draft PR 供审查，无需手动执行 git commit/push
+---
+[配置] 🌊 Dynamic workflow size 工作流规模\n功能：在 /config 中设置动态工作流的规模（small/medium/large），控制 Claude 创建动态工作流时的 agent 数量\n效果：small 适合快速任务减少开销，large 适合复杂任务提高覆盖，medium 为平衡选择\n例子：/config 设置 Dynamic workflow size 为 medium 平衡速度和覆盖范围
+---
+[配置] 🏢 组织默认模型\n功能：管理员在组织控制台设置默认模型，用户 /model 中显示 "Org default" 或 "Role default" 标记\n效果：企业统一模型选择，用户无需手动配置即可使用组织推荐模型\n例子：/model 查看带 "Org default" 标记的组织推荐模型，无需手动设置
+---
+[交互] 📛 可读默认会话名\n功能：启动时自动生成可读的会话名称（如 fix-auth-bug），便于识别和管理\n效果：多会话并行时快速区分不同任务，无需手动命名\n例子：启动新会话时自动生成如 "fix-auth-bug" 的可读名称，/resume 列表中一目了然
+---
+[交互] 📎 可点击文件附件\n功能：对话中的文件附件支持 Cmd/Ctrl-click 在 Finder/Explorer 中显示文件位置\n效果：快速定位 Claude 引用的文件，无需手动复制路径查找\n例子：Claude 提到 src/main.ts 时 Cmd-click 直接在文件管理器打开该文件所在目录
+---
+[MCP] 🔔 MCP 认证启动通知\n功能：启动时显示需要认证的 MCP 服务器提示，指向 /mcp 管理界面\n效果：首次使用或 token 过期时快速发现并完成 MCP 认证\n例子：启动 Claude 时看到 "GitHub MCP needs authentication" 提示，输入 /mcp 完成认证
+---
+[CLI] ⚠️ 模型弃用警告\n功能：当请求的模型已弃用或自动更新到新模型时在 stderr 显示警告\n效果：及时了解模型状态变化，避免使用已弃用的模型导致意外行为\n例子：claude --model claude-sonnet-4-5 时收到弃用警告提示升级到新版本
