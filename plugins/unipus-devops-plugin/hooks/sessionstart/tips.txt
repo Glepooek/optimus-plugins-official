@@ -242,7 +242,7 @@
 ---
 [Skill] 🆕 init 初始化项目\n功能：为项目创建 CLAUDE.md 文档\n效果：初始化项目配置和指令\n例子：init 新项目初始化 Claude Code 配置
 ---
-[Skill] 📋 review PR 审查\n功能：审查 Pull Request\n效果：对 PR 进行全面审查并提供反馈\n例子：review 审查待合并的 PR
+[Skill] 📋 /review PR 快速审查\n功能：/review <pr> 对 PR 进行快速单次审查（v2.1.202 起改回单次模式）；需要多代理深度审查时改用 /code-review <level> <pr#>，level 支持 low/medium/high/xhigh/max 五档努力程度\n效果：/review 响应更快适合日常检查；/code-review 配合更高 effort 级别可获得更全面但更慢的多代理审查结果\n例子：/review 1234 快速审查 PR#1234；/code-review high 1234 用高强度多代理模式深度审查同一 PR
 ---
 [Skill] 🔒 security-review 安全审查\n功能：对当前分支进行安全审查\n效果：检查安全漏洞、敏感信息泄露\n例子：security-review 合并前进行安全检查
 ---
