@@ -4,3 +4,4 @@ timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
 2026-07-05T19:52	67e79cb	sync-cc-docs-to-youdaonote	75.4	77.8	keep	反例与黑名单	添加反模式与危险操作章节（6 条反例）	full_test
 2026-07-05T19:54	67e79cb	sync-cc-docs-to-youdaonote	77.8	80.2	keep	失败模式编码	升级为三段式 fallback 表	full_test
 2026-07-08T21:29	baseline	sync-cc-tips	-	87.0	baseline	-	结构686/760(dim1-7,9=9,9,9,9,9,8,9,10)+dim8=8(5测试prompt模拟轨迹判断均正确) 警告:dry_run比例100%超30%阈值，效果维度可信度需人工复核	dry_run
+2026-07-08T21:40	c1a812b	sync-cc-tips	87.0	87.6	keep	检查点设计	第二步空文件分支补充🔴CHECKPOINT+"停下询问"语义强化；独立裁判盲评该行4→9分，dim4整体9→10；dim8未受影响(该分支无对应测试prompt覆盖)	dry_run
