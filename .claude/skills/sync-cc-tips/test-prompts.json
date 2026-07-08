@@ -13,5 +13,15 @@
     "id": 3,
     "prompt": "本次 changelog 的所有功能点在 tips.txt 中都已通过标识符命中覆盖，运行 /sync-cc-tips",
     "expected": "识别为 0 新增/0 修改/0 删除，跳过 Step 4 的 CHECKPOINT 直接退出，不写入 tips.txt、不同步文档数字、不调用 commit-cc-plugin，只输出提示说明无变更"
+  },
+  {
+    "id": 4,
+    "prompt": "识别出 2 条新增 + 1 条修改，展示变更预览后，用户回复 \"n\"，继续执行 /sync-cc-tips",
+    "expected": "命中第四步 CHECKPOINT 的拒绝分支：立即停止，输出「操作已取消，tips.txt 未修改」，不执行 Edit 写入、不进行第五步数字同步、不调用 commit-cc-plugin"
+  },
+  {
+    "id": 5,
+    "prompt": "本次 changelog 中某功能被明确标注 Deprecated 且已彻底移除，tips.txt 中存在对应的旧条目，运行 /sync-cc-tips",
+    "expected": "命中🗑️删除条件：在第四步变更预览中列出该条目为待删项（含删除原因），等待用户确认后再从 tips.txt 移除条目及其 --- 分隔符，而不是跳过删除判定或未经预览直接删除"
   }
 ]

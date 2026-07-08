@@ -1,6 +1,6 @@
 ---
 name: sync-cc-tips
-version: 1.1.0
+version: 1.1.1
 description: 从 Claude Code 最新 changelog 自动同步 tips.txt：新增未覆盖条目、修正过时内容、删除已废弃功能，同步所有文档数字，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 disable-model-invocation: true
 ---
@@ -49,7 +49,7 @@ Read: plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
 | 文件不存在 / Read 报错 | 确认路径 `plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt` 是否正确 | 停止整个流程，报告路径错误，不做任何修改 |
-| 文件存在但内容为空 | 提示用户确认是否为全新初始化场景 | 若用户确认，继续（视为无旧条目）；否则停止 |
+| 文件存在但内容为空 | 🔴 CHECKPOINT：停下询问用户是否为全新初始化场景 | 若用户确认，继续（视为无旧条目）；否则停止 |
 
 ## 第三步 — 三类差异识别
 
