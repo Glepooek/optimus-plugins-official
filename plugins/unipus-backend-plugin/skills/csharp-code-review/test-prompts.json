@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "帮我审查一下这段代码：\n\n```csharp\npublic class userManager\n{\n    public string userName;\n    private static int MaxUsers;\n    public bool isActive;\n\n    public void ProcessData(String input)\n    {\n        if(input != null & input.Length > 0)\n        {\n            string result = \"\";\n            for(int i = 0; i < 100; i++)\n            {\n                result = result + i.ToString();\n            }\n        }\n    }\n}\n```",
+    "expected": "按标准报告模板输出：识别出类名 userManager 应为 PascalCase、公共字段未封装（userName/isActive）、静态字段缺 s_ 前缀、参数用 String 而非 string、& 应为 &&、循环中字符串拼接应用 StringBuilder，按 🔴/🟡/🟢 三级分类，并提供修正后的完整代码"
+  },
+  {
+    "id": 2,
+    "prompt": "这段代码有什么问题？\n\n```csharp\npublic interface IDataService\n{\n    Task<User?> GetUserAsync(int id);\n}\n\npublic class DataService : IDataService\n{\n    private readonly HttpClient _httpClient;\n\n    public DataService(HttpClient httpClient)\n    {\n        _httpClient = httpClient;\n    }\n\n    public async Task<User?> GetUserAsync(int id)\n    {\n        using var response = await _httpClient.GetAsync($\"/users/{id}\").ConfigureAwait(false);\n        if (!response.IsSuccessStatusCode) return null;\n        return await response.Content.ReadFromJsonAsync<User>().ConfigureAwait(false);\n    }\n}\n```",
+    "expected": "这段代码基本合规（接口命名、私有字段前缀、async/await、ConfigureAwait 均正确），报告应体现问题数极少或为 0，不应为了显得\"有产出\"而编造或吹毛求疵到无意义程度的违规项"
+  },
+  {
+    "id": 3,
+    "prompt": "review 一下：\n\n```csharp\npublic class OrderProcessor\n{\n    public async void ProcessOrder(int orderId)\n    {\n        try\n        {\n            var order = GetOrder(orderId).Result;\n            Process(order);\n        }\n        catch (Exception ex)\n        {\n            Console.WriteLine(ex.Message);\n        }\n    }\n}\n```",
+    "expected": "正确识别 async void（异常丢失/无法 await，应标 🔴）、.Result 阻塞异步调用（死锁风险，应标 🔴）、捕获泛型 Exception（应标 🟡）、异常处理仅打印消息（应标 🟡），且严重级别分级要能区分\"会导致死锁/异常丢失的问题\"与\"普通风格问题\"，不能把两者都归为同一级别"
+  }
+]

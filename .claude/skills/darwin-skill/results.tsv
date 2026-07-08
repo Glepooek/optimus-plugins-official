@@ -6,3 +6,4 @@ timestamp	commit	skill	old_score	new_score	status	dimension	note	eval_mode
 2026-07-08T21:29	baseline	sync-cc-tips	-	87.0	baseline	-	结构686/760(dim1-7,9=9,9,9,9,9,8,9,10)+dim8=8(5测试prompt模拟轨迹判断均正确) 警告:dry_run比例100%超30%阈值，效果维度可信度需人工复核	dry_run
 2026-07-08T21:40	c1a812b	sync-cc-tips	87.0	87.6	keep	检查点设计	第二步空文件分支补充🔴CHECKPOINT+"停下询问"语义强化；独立裁判盲评该行4→9分，dim4整体9→10；dim8未受影响(该分支无对应测试prompt覆盖)	dry_run
 2026-07-08T21:47	3544250	sync-cc-tips	87.6	88.8	keep	失败模式编码	第三步补充三段式fallback表(信息缺失/新增修改冲突)；独立裁判盲评该步局部5→7分(指出删除条件判定模糊仍未覆盖，非全面对齐)，据此dim3整体9→10；连续2轮Δ<2(0.6,1.2)，触发HL-4触顶信号，建议进入Phase3	dry_run
+2026-07-08T22:03	baseline	csharp-code-review	-	58.6	baseline	-	结构494/760(dim1=7,dim2=7,dim3=3,dim4=6,dim5=9,dim6=7,dim7=8,dim9=2)+dim8=4(3组full_test对比，测试2场景发现带skill明显弱于baseline：审查范围局限在风格规则11类，遗漏API健壮性/异常语义/取消传播等真实问题，命中P0"带skill比不带还差")	full_test
