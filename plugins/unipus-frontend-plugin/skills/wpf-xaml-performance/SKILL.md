@@ -446,8 +446,8 @@ private void DoLongWork(IProgress<int> progress, CancellationToken ct)
 - 每个问题：**位置**（文件:行号）、**影响**（具体指标）、**修复前后代码**、**预期提升**
 
 🔴 **CHECKPOINT · 应用修复前的确认**：默认只在报告中给出修复前后代码供用户参考，不直接编辑文件。若用户要求直接修改代码：
-- **局部修改**（补 `Freeze()`、改 `Binding Mode`、加 `VirtualizationMode`、调整 `x:Key` 等单点改动）→ 可直接应用，无需额外确认
-- **架构级改动**（Shape 迁移到 DrawingVisual/DrawingGroup、重写虚拟化容器、拆分 ViewModel 职责等涉及多文件或行为变化的重构）→ 先在报告中列出改动范围和风险，**🛑 STOP 等用户明确确认后再应用**，不要在报告之外直接静默重写
+- **局部修改**（单个方法/单个类内部即可完成，不涉及新增类型、不影响多文件协调、不改变现有行为契约）→ 可直接应用，无需额外确认。包括但不限于：补 `Freeze()`、改 `Binding Mode`、加 `VirtualizationMode`、调整 `x:Key`、构造函数同步初始化迁移到 `Loaded` 异步初始化（检查点5）、手动订阅+`Unloaded` 取消订阅改造为 `WeakEventManager`（检查点9）、事件处理器同步改 `async`/`await` + `Task.Run`（检查点10）
+- **架构级改动**（Shape 迁移到 DrawingVisual/DrawingGroup、重写虚拟化容器、拆分 ViewModel 职责等涉及多文件或改变现有行为契约（如命中测试、可视化树结构）的重构）→ 先在报告中列出改动范围和风险，**🛑 STOP 等用户明确确认后再应用**，不要在报告之外直接静默重写
 
 性能指标参考：
 
