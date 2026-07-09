@@ -444,6 +444,10 @@ private void DoLongWork(IProgress<int> progress, CancellationToken ct)
 - 扫描文件数量、问题汇总（高危/中危/低危）
 - 每个问题：**位置**（文件:行号）、**影响**（具体指标）、**修复前后代码**、**预期提升**
 
+🔴 **CHECKPOINT · 应用修复前的确认**：默认只在报告中给出修复前后代码供用户参考，不直接编辑文件。若用户要求直接修改代码：
+- **局部修改**（补 `Freeze()`、改 `Binding Mode`、加 `VirtualizationMode`、调整 `x:Key` 等单点改动）→ 可直接应用，无需额外确认
+- **架构级改动**（Shape 迁移到 DrawingVisual/DrawingGroup、重写虚拟化容器、拆分 ViewModel 职责等涉及多文件或行为变化的重构）→ 先在报告中列出改动范围和风险，**🛑 STOP 等用户明确确认后再应用**，不要在报告之外直接静默重写
+
 性能指标参考：
 
 | 优化项 | 提升幅度 |
