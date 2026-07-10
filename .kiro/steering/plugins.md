@@ -68,12 +68,11 @@
 
 ## unipus-devops-plugin — DevOps 工具集
 
-**Skills（5个）:**
+**Skills（4个）:**
 - `jenkins-build` — Jenkins CI/CD 构建触发
 - `weekly-report` — 工作周报转写（四段式标准格式）
 - `sync-agent-skills` — Agent Skills 同步
 - `project-analyze` — 项目结构分析
-- `infra-init-app` — 应用初始化脚手架
 
 **Hooks（内置自动加载）:**
 - `SessionStart` — 会话启动展示技巧（425条智能轮播，带进度追踪）
