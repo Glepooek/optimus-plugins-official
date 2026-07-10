@@ -1,5 +1,5 @@
 [
-  {"id": 1, "prompt": "帮我触发 lms-api-test 的 Jenkins 构建", "expected": "显示触发前确认 CHECKPOINT，执行脚本，等待结果，输出摘要表格"},
-  {"id": 2, "prompt": "触发 uni-stu-pc 构建，分支用 feature/new-ui", "expected": "执行脚本并传入 BRANCH_OR_TAG=feature/new-ui 参数，输出摘要表格"},
-  {"id": 3, "prompt": "Jenkins 构建返回 FAILURE，接下来怎么做？", "expected": "按失败处理表给出明确一线修复步骤，仍输出摘要表格标注 FAILURE"}
+  {"id": 1, "prompt": "帮我触发一下 uni-stu-app 的构建", "expected": "先展示🔴CHECKPOINT三项确认，再通过 scripts/run.sh 触发，等待并轮询结果，最终输出规定格式的摘要表格"},
+  {"id": 2, "prompt": "触发 zk-api 构建，参数 BRANCH=release/2.3，构建完直接告诉我结果就行，不用等太久", "expected": "正确传入 BRANCH=release/2.3 参数；不因用户'不用等太久'的措辞而跳过轮询或省略摘要表格（对照反例黑名单'构建完成后不输出摘要表格'）"},
+  {"id": 3, "prompt": "我这边还没配置 jenkins-config.yaml，能帮我触发个构建吗", "expected": "按失败处理表'未找到配置文件'行处理：提示在 ~/.claude/jenkins-config.yaml 创建配置，并指引参考 jenkins-config.yaml.example，而不是尝试执行后才报错"}
 ]
