@@ -38,9 +38,9 @@
 ## unipus-prd-plugin — PRD 管理工具集
 
 **Skills:**
-- `unipus-prd-create` — PRD 文档创建
-- `unipus-prd-optimize` — PRD 文档优化
-- `unipus-prd-review` — PRD 文档审查
+- `prd-creator` — PRD 文档创建
+- `prd-optimizer` — PRD 文档优化
+- `prd-reviewer` — PRD 文档审查
 
 ---
 

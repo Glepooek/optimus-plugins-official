@@ -1,9 +1,10 @@
 ---
-name: unipus-prd-optimize
+name: prd-optimizer
+version: 2.0.0
 description: 读取已有 PRD，诊断问题后询问优化重点，输出完整优化版文档并对比提升效果。触发词：优化PRD、改进PRD、完善需求文档、optimize PRD
 ---
 
-使用 `unipus-prd-optimize` 对已有 PRD 进行结构增强和内容补全。
+使用 `prd-optimizer` 对已有 PRD 进行结构增强和内容补全。
 
 ---
 
@@ -20,7 +21,7 @@ description: 读取已有 PRD，诊断问题后询问优化重点，输出完整
 ## Workflow
 
 **Step 1 — 宣告并读取参考文件**
-告知用户："正在使用 unipus-prd-optimize"，然后读取 `references/prd-template.md` 和 `references/prd-checklist.md`。
+告知用户："正在使用 prd-optimizer"，然后读取 `references/prd-template.md` 和 `references/prd-checklist.md`。
 
 **Step 2 — 获取待优化 PRD**
 - 用户已提供文件路径 → 用 Read 工具读取文件内容
