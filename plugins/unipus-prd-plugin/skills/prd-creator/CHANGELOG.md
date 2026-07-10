@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0] - 2026-07-10
+
+### Added
+- darwin-skill round4：Step 7 新增🔴 CHECKPOINT，写入前检查 `docs/prd/{功能名}.md` 是否已存在同名文件，禁止静默覆盖，已存在时停下询问覆盖/另存/取消
+- Red Flags 新增对应反例
+
 ## [2.2.0] - 2026-07-10
 
 ### Added
