@@ -1,6 +1,6 @@
 ---
 name: jenkins-build
-version: 1.2.1
+version: 1.2.2
 description: Use when user wants to immediately execute a Jenkins CI build — 触发构建、跑 Jenkins、build [job]、帮我打包（CI场景）、构建 [项目]、ci 跑一下。Applies even when "Jenkins" is not mentioned — any intent to trigger CI and wait for result. Not for Jenkinsfile authoring, diagnosing past failures, API token management, or GitHub Actions.
 ---
 
@@ -138,3 +138,4 @@ python3 jenkins_build/main.py [job_name] [KEY=VALUE ...]
 | 使用 `password` 字段代替 `api_token` 作为长期方案 | 明文密码安全级别低 | 始终优先使用 Jenkins API Token |
 | job `path` 填写错误或含未编码特殊字符 | 触发请求 404 / 参数丢失 | 与 Jenkins URL 路径严格一致，特殊字符需 URL 编码 |
 | 跳过 `jenkins-config.yaml` 直接手动运行 `main.py` | 未经 venv 管理可能依赖缺失 | 始终通过 `scripts/run.sh` 执行，自动处理 venv 和依赖 |
+| 项目级与用户级 `jenkins-config.yaml` 同时存在时，不确认实际命中的是哪一份就直接触发 | 项目级优先级更高会静默覆盖用户预期的全局默认配置，可能触发非预期的 job 或环境 | 触发前核对 Step 2 定位到的实际配置路径（而非假设用的是哪一级），确认 job 列表与预期一致 |
