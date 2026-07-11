@@ -3,6 +3,9 @@ name: feishu-doc
 description: 飞书文档读写工具。通过 lark-cli 读取、上传、下载、搜索飞书文档（Doc/Docx、Wiki、云文档附件、Sheets）。独立工具 skill，也可在主流程中替代 WebFetch 获取飞书链接内容。
 metadata:
   version: "1.0.0"
+  author: desktop client team
+compatibility: 强依赖 Node.js/npx 环境执行 @larksuite/cli，需提前 npx @larksuite/cli auth login 完成认证；支持飞书(feishu.cn)与Lark国际版(larksuite.com)。
+allowed-tools: Bash Read
 triggers:
   - 飞书
   - feishu

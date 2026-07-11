@@ -2,6 +2,10 @@
 name: optimus-qa-test-design
 description: 测试设计一站式工具，支持五种单独模式 + 全流程自动流水线。(0) 全流程——用户同时提供需求文档（PRD/.docx/.md/.pdf）和设计稿（Figma/MasterGo链接）时自动触发，依次生成：需求拆分 → 测试计划 → 测试点 → 测试用例；(A) 需求拆分——用户说"需求拆分"、"提取功能需求"、"分析PRD"时触发，输出 docs/{产品名称}-功能需求拆分.md；(B) 测试计划——用户说"生成测试计划"、"测试计划"时触发，输出 docs/{产品名称}_测试计划.md；(C) 测试点——用户说"提取测试点"、"生成测试点"时触发，输出 docs/testcases/{需求名称}-{模块名称}测试点.md；(D) 测试用例——用户说"生成测试用例"、"测试用例"时触发，输出 docs/testcases/{需求名称}-测试用例-{序号}.md；(E) 合并测试用例——用户说"合并测试用例"、"汇总用例"时触发，将所有分模块用例文件合并为单一完整文件，输出 docs/testcases/{需求名称}-测试用例.md。
 creator: yinxuan@optimus.cn
+metadata:
+  author: desktop client team
+compatibility: 需要 Figma MCP 或 MasterGo MCP 之一已配置（视是否提供设计稿链接；MasterGo 为本仓库内置 mastergo-magic-mcp，Figma 需用户自行配置）。
+allowed-tools: Read Write mastergo-magic-mcp
 ---
 
 # optimus-test-design — 测试设计一站式工具

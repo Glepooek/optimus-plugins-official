@@ -3,6 +3,9 @@ name: prd-creator
 description: 从零创建 PRD 文档，通过一问一答交互收集信息，生成符合7章结构规范的完整 PRD，并内置质量自检。触发词：创建PRD、新建PRD、写PRD、生成需求文档
 metadata:
   version: "2.4.1"
+  author: desktop client team
+compatibility: 纯对话式生成，无外部 CLI/MCP 依赖；写入前会检查 docs/prd/ 下是否已有同名文件避免静默覆盖。
+allowed-tools: Read Write TodoWrite
 ---
 
 使用 `prd-creator` 从零创建标准 PRD 文档。

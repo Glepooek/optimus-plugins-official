@@ -3,6 +3,9 @@ name: jenkins-build
 description: Use when user wants to immediately execute a Jenkins CI build — 触发构建、跑 Jenkins、build [job]、帮我打包（CI场景）、构建 [项目]、ci 跑一下。Applies even when "Jenkins" is not mentioned — any intent to trigger CI and wait for result. Not for Jenkinsfile authoring, diagnosing past failures, API token management, or GitHub Actions.
 metadata:
   version: "1.2.2"
+  author: desktop client team
+compatibility: 需要 Python3 环境（脚本自动创建 venv 并安装 requests/pyyaml）；需要用户提供 jenkins-config.yaml（Jenkins URL + API Token）及可访问的 Jenkins 服务器。
+allowed-tools: Bash
 ---
 
 # Jenkins 构建触发工具

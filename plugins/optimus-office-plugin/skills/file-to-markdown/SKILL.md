@@ -4,7 +4,9 @@ license: MIT
 metadata:
   version: "1.1.0"
   category: document-processing
-  author: Glepooek
+  author: desktop client team
+compatibility: 核心依赖 markitdown（pip install markitdown），按文件类型可选依赖 mammoth(docx)/pdfminer(pdf)/python-pptx(pptx)/openpyxl(xlsx)。
+allowed-tools: Bash Read Write
 description: >
   将本地文件转换为 Markdown 并保存到 docs/ 目录，支持 Word、PDF、PPT、Excel、CSV、JSON、XML、HTML、TXT 格式。
   自动检测语言，英文内容翻译为中文，中文内容直接输出。

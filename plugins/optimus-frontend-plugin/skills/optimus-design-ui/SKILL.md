@@ -1,6 +1,10 @@
 ---
 name: optimus-design-ui
 description: 触发词：UI 设计，设计 Prompt，Figma Make，从 PRD 生成设计稿，设计评审清单
+metadata:
+  author: desktop client team
+compatibility: 需要 Figma 付费账号（Professional 及以上）使用 Figma Make 功能；PRD 来自飞书链接时调用 optimus-feishu-read-write skill。
+allowed-tools: Read WebFetch
 ---
 
 ## 🎯 快速开始

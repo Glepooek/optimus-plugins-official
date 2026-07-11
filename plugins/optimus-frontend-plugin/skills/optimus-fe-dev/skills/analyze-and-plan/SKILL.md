@@ -3,6 +3,9 @@ name: analyze-and-plan
 description: Use when all 4 inputs are collected to analyze documents, detect tech stack, and generate implementation plan
 metadata:
   version: "1.0.0"
+  author: desktop client team
+compatibility: 需要目标项目为 Node.js 项目（读取 package.json/tsconfig.json 探测技术栈）。
+allowed-tools: Read Glob Grep
 ---
 
 # 阶段 2：分析与规划

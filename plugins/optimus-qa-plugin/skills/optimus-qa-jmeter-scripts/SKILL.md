@@ -2,6 +2,10 @@
 name: optimus-qa-jmeter-scripts
 description: 根据 OpenAPI 文档自动生成具备完整接口依赖关系的 JMeter JMX 性能测试脚本。当用户需要：(1) 根据 API 文档生成 JMeter JMX 脚本；(2) 生成带认证、CRUD 串联、数据流依赖的接口测试脚本；(3) 生成包含业务断言、数据一致性验证、枚举值全覆盖的测试脚本时触发。需用户提供 JMeter 版本号（如 5.5、5.6.3）。
 creator: yinxuan@optimus.cn
+metadata:
+  author: desktop client team
+compatibility: 生成 XML 文本本身无额外运行时依赖；生成产物需要用户本地安装对应版本 JMeter 才能使用；可选通过 apifox-mcp-server 获取 OpenAPI 规范。
+allowed-tools: Read Write
 ---
 
 # JMeter JMX 脚本生成

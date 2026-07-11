@@ -2,6 +2,10 @@
 name: optimus-qa-feishu-project-xmind
 description: 将标准格式测试用例 Markdown 文档转换为飞书兼容的 XMind 思维导图文件（.xmind）。当用户需要：(1) 将测试用例 Markdown 转换为 .xmind 文件；(2) 生成可导入飞书项目的 XMind 测试用例；(3) 用户说"转成 xmind"、"生成 xmind 用例"、"导出飞书用例"、"测试用例转 xmind"时触发。输入为 testcases/ 下的测试用例 Markdown 文件，输出为同目录下的 .xmind 文件。
 creator: yinxuan@optimus.cn
+metadata:
+  author: desktop client team
+compatibility: 需要 Python 运行时（converter.py 用标准库 zipfile 打包生成 .xmind 文件）。
+allowed-tools: Read Bash
 ---
 
 # 测试用例转飞书兼容 XMind

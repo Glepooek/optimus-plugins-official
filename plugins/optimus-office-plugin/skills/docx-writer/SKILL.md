@@ -4,12 +4,14 @@ license: MIT
 metadata:
   version: "1.0.0"
   category: document-processing
-  author: UAI
+  author: desktop client team
   sources:
     - "ECMA-376 Office Open XML File Formats"
     - "GB/T 9704-2012 Layout Standard for Official Documents"
     - "IEEE / ACM / APA / MLA / Chicago / Turabian Style Guides"
     - "Springer LNCS / Nature / HBR Document Templates"
+compatibility: 需要 .NET SDK 及 OpenXML SDK（NuGet DocumentFormat.OpenXml 3.2.0）；内置 dotnet CLI 项目 UAIDocx.Cli；Windows用PowerShell脚本，*nix用bash脚本。
+allowed-tools: Bash Read Write
 description: >
   使用 OpenXML SDK（.NET）进行专业的 DOCX 文档创建、编辑和排版。
   三条流水线：(A) 从零创建新文档，(B) 填写/编辑已有文档内容，(C) 应用模板排版并通过 XSD 验证门控。

@@ -3,6 +3,9 @@ name: collect-inputs
 description: Use when starting optimus-fe-dev workflow to collect and validate all 4 required inputs (PRD, architecture doc, design mockup, API doc)
 metadata:
   version: "1.0.0"
+  author: desktop client team
+compatibility: 需要 Figma 或 Sketch MCP server 至少一个已连接（需用户自行配置，非本仓库内置）；飞书链接场景需要 @larksuite/cli 已认证。
+allowed-tools: Read WebFetch
 ---
 
 # 阶段 1：收集并验证输入

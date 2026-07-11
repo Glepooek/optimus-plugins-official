@@ -2,6 +2,10 @@
 name: optimus-qa-test-report
 description: QA报告统一生成工具，支持三种模式：(A) 缺陷分析报告——用户说"生成缺陷分析报告"、"缺陷报告"、"bug分析报告"、"质量分析报告"时触发，输出 docs/{项目名}-缺陷分析报告.md；(B) 测试执行记录——用户说"生成测试执行报告"、"测试执行记录"、"执行分析报告"时触发，输出 docs/{项目名}-测试执行记录.md；(C) 综合测试报告——用户说"综合测试报告"、"出测试报告"、"测试总结"时触发，整合缺陷数据与执行数据，给出上线结论，输出 docs/{项目名}-测试报告.md。输入支持飞书项目 URL/MQL 查询、本地文件读取、手动粘贴三种方式。
 creator: yinxuan@optimus.cn
+metadata:
+  author: desktop client team
+compatibility: 需要已配置的飞书项目管理 MCP server（本仓库内置 FeishuProjectMcp）及有效鉴权。
+allowed-tools: Read Write FeishuProjectMcp Task
 ---
 
 # QA报告统一生成工具

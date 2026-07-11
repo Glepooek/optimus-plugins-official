@@ -17,6 +17,9 @@ license: MIT
 metadata:
   version: "1.1"
   category: document-generation
+  author: desktop client team
+compatibility: 需要 Python 3.9+（reportlab、pypdf、matplotlib）与 Node.js 18+（Playwright + Microsoft Edge，用于封面HTML渲染）。
+allowed-tools: Bash Read
 ---
 
 # pdf-creator

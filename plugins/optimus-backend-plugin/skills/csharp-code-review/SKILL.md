@@ -3,6 +3,9 @@ name: csharp-code-review
 description: 用于审查 C# 代码的 Microsoft 编码规范、命名标准、代码质量，以及异常处理/取消令牌传播等 API 健壮性问题。当用户提到：审查/检查/review C# 代码、.cs 文件、C# 项目代码规范、准备合并/PR、代码质量检查、命名约定问题、代码风格统一时，务必使用此 skill。也适用于用户询问"这段 C# 代码有什么问题"、"帮我看看这个类的命名"、"检查一下代码规范"等场景。
 metadata:
   version: "1.4.0"
+  author: desktop client team
+compatibility: 纯知识型审查 skill，基于用户粘贴/提供的代码文本分析，无外部 CLI/MCP 依赖。
+allowed-tools: Read
 ---
 
 # C# 代码审查

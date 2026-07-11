@@ -3,6 +3,9 @@ name: optimus-fe-dev
 description: 通用前端开发技能。空项目时引导创建；现有项目时自动探测技术栈。基于 Sketch 设计稿（Sketch MCP）或 Figma 设计稿（Figma MCP）+ 组件库还原页面，基于 Swagger / Markdown 接口文档生成 API 层代码（含完整数据模型定义），基于 PRD 需求文档生成完整页面功能（含类型、接口、页面、交互、埋点），任务完成后生成面向测试的标准化交付物（功能说明书、接口清单、状态清单、Mock 数据）。所有产出代码风格匹配当前项目。
 metadata:
   version: "1.1.0"
+  author: desktop client team
+compatibility: 需要 superpowers 插件已安装（阶段3/5依赖其 subagent-driven-development、verification-before-completion、finishing-a-development-branch workflow）；设计稿还原场景需要 Figma 或 Sketch MCP server 之一已连接（需用户自行配置，非本仓库内置）；目标项目技术栈由自动探测决定，无强制要求。
+allowed-tools: Read Write Edit Grep Glob WebFetch TodoWrite Task
 triggers:
   - 还原页面
   - 还原设计稿

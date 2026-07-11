@@ -6,6 +6,9 @@ description: >
   与站点导航一致。触发词："保存 <分类路径> 文档"、"同步 <分类路径> 到有道笔记"。
 metadata:
   version: "1.0.2"
+  author: desktop client team
+compatibility: 需要 Python 运行时（含 markitdown 包）；需要已配置账号的 youdaonote CLI；依赖同仓库 optimus-office-plugin:web-to-markdown skill 完成抓取翻译流程。
+allowed-tools: Bash Read Edit Write Task
 ---
 
 # sync-cc-docs-to-youdaonote

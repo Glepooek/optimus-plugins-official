@@ -5,9 +5,12 @@ license: MIT
 metadata:
   version: "1.0"
   category: productivity
+  author: desktop client team
   sources:
     - https://gitbrent.github.io/PptxGenJS/
     - https://github.com/microsoft/markitdown
+compatibility: 需要 Python（markitdown[pptx]）与 Node.js（pptxgenjs，可选 react-icons/sharp）；可并发派发子代理生成多张幻灯片。
+allowed-tools: Bash Read Write Task
 ---
 
 # PPTX 生成器与编辑器

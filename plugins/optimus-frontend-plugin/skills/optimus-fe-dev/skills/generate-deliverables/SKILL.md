@@ -3,6 +3,9 @@ name: generate-deliverables
 description: Use after code generation is complete to produce standardized test deliverables (functional spec, API list, state list, mock data)
 metadata:
   version: "1.0.0"
+  author: desktop client team
+compatibility: 依赖项目内 AI-DEV-STANDARDS.md 规范文档（第七章）；依赖项目已有 Mock 目录约定。
+allowed-tools: Read Write
 ---
 
 # 阶段 4：生成测试交付物

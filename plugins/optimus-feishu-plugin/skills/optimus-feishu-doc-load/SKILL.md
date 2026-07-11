@@ -1,6 +1,10 @@
 ---
 name: optimus-feishu-doc-load
 description: 从飞书研发数字化资产文档库加载指定项目/版本的文档到本地 doc/ 目录，供当前会话使用。支持按角色选择性加载（PRD/设计/后端/前端/测试）。触发词：加载项目文档、load project docs、读取飞书项目文档、拉取文档库
+metadata:
+  author: desktop client team
+compatibility: 硬性依赖 lark-cli（飞书开放平台CLI）已安装且已认证，lark-cli doctor 通过为前置门槛。
+allowed-tools: Bash Write
 triggers:
   - 加载项目文档
   - load project docs

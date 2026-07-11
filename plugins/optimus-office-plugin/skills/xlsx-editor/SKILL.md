@@ -5,9 +5,12 @@ license: MIT
 metadata:
   version: "1.0"
   category: productivity
+  author: desktop client team
   sources:
     - ECMA-376 Office Open XML File Formats
     - Microsoft Open XML SDK documentation
+compatibility: 需要 Python 3 + pandas；VALIDATE 模式可选依赖 LibreOffice 做动态重算。
+allowed-tools: Bash Read Edit
 ---
 
 # optimus XLSX Skill

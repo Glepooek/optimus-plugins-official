@@ -1,9 +1,10 @@
 ---
 name: optimus-backend-api-connect
 description: 根据服务注册表自动对接后端 API，生成对接代码
-globs:
-  - "**/*"
-alwaysApply: false
+metadata:
+  author: desktop client team
+compatibility: 需要网络访问 api-doc-test.optimus.cn 服务注册表（有本地缓存降级）；需要 Python 运行时执行 fetch_swagger.py/fetch_webpage_api.py/fetch_feishu_doc.py 三个脚本；对接飞书托管文档时需要 FEISHU_APP_ID/FEISHU_APP_SECRET 凭证。
+allowed-tools: Bash Read Glob Grep WebFetch Write
 ---
 
 你正在帮助开发者对接后端 API。根据 `$ARGUMENTS` 的值，按以下阶段执行。

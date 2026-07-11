@@ -3,6 +3,9 @@ name: test-locally
 description: 修改本仓库任何 skill / hook / command 后，用 --plugin-dir 加载本仓库进行本地测试。触发词："本地测试"、"测试这个 skill"、"加载插件测试"。
 metadata:
   version: "1.0.0"
+  author: desktop client team
+compatibility: 需要本机已安装 claude CLI，在仓库根目录执行 --plugin-dir 命令；无 MCP 或第三方 CLI 依赖。
+allowed-tools: Bash
 ---
 
 # 本地测试

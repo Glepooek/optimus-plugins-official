@@ -2,6 +2,10 @@
 name: optimus-qa-ui-scripts
 description: 快速初始化 Midscene + Playwright UI 自动化测试项目，生成完整的项目结构、配置文件和测试模板；也支持将测试用例文档转换为 UI 自动化脚本并补全缺失的项目文件。当用户说"创建 Midscene 测试项目"、"初始化 UI 自动化框架"、"搭建 Playwright + Midscene 项目"、"快速启动 UI 自动化项目"、"将测试用例转换为自动化脚本"、"把用例转成 UI 脚本"、"补全项目文件"时触发。
 creator: yinxuan@optimus.cn
+metadata:
+  author: desktop client team
+compatibility: 需要 Node.js/npm、Playwright（含Chromium）、Midscene（@midscene/web）、TypeScript；需要用户提供 AI 模型 API Key（阿里云Qwen或OpenAI兼容）；会自动执行 npm install，需要网络访问。
+allowed-tools: Bash Read Write AskUserQuestion
 ---
 
 # Midscene UI 自动化测试项目启动器

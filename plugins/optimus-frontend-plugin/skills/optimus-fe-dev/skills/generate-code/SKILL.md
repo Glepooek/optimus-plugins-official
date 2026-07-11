@@ -3,6 +3,9 @@ name: generate-code
 description: Use when implementation plan is confirmed to dispatch subagents for code generation with spec compliance and quality review
 metadata:
   version: "1.0.0"
+  author: desktop client team
+compatibility: 需要 superpowers 插件已安装（subagent-driven-development、requesting-code-review）；派发 implementer/spec-reviewer/quality-reviewer 子代理生成代码。
+allowed-tools: TodoWrite Task
 ---
 
 # 阶段 3：Subagent 驱动代码生成

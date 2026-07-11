@@ -3,6 +3,9 @@ name: architecture-doc
 description: Use when starting a new frontend feature or project to produce the frontend architecture design document. Takes PRD as input, outputs architecture doc that becomes a required input for the main fe-dev workflow.
 metadata:
   version: "1.0.0"
+  author: desktop client team
+compatibility: 默认推荐 React 18 + TypeScript + Tailwind CSS + Zustand + TanStack Query + Vite 技术栈；可独立触发或被主流程调用。
+allowed-tools: Read Write WebFetch Glob Grep
 ---
 
 # 编写前端架构设计文档

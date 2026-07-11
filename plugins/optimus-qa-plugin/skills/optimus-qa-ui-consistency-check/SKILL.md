@@ -2,6 +2,10 @@
 name: optimus-qa-ui-consistency-check
 description: 对比 Figma/MasterGo 设计稿与实际页面的 UI 一致性，生成标准格式验证报告。当用户需要：(1) 对比设计稿与实际页面的视觉还原度；(2) 检查颜色、字体、布局、尺寸、圆角、阴影等维度的偏差；(3) 生成包含差异明细、缺陷清单、截图对比的 UI 一致性验证报告；(4) 用户说"UI走查"、"视觉还原验证"、"对比设计稿"、"UI一致性检查"、"UI对比"时触发。输入：设计稿链接（Figma/MasterGo）+ 实际页面 URL。输出为 Markdown 格式报告，保存至 docs/{产品名}-UI一致性验证报告.md。
 creator: yinxuan@optimus.cn
+metadata:
+  author: desktop client team
+compatibility: 需要 Figma MCP、MasterGo MCP（本仓库内置 mastergo-magic-mcp）、Chrome DevTools MCP 均已配置（Figma/Chrome DevTools 需用户自行配置，非本仓库内置）。
+allowed-tools: Write Task mastergo-magic-mcp
 ---
 
 # UI 一致性验证技能

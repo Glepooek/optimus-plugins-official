@@ -4,7 +4,9 @@ license: MIT
 metadata:
   version: "1.9.0"
   category: document-processing
-  author: Glepooek
+  author: desktop client team
+compatibility: 可选依赖 markitdown、curl（降级抓取）；二级抓取需要 Node.js + @playwright/cli 及 msedge/chrome 浏览器；三级降级用 WebFetch。
+allowed-tools: Bash WebFetch Read Write
 description: >
   将网页内容抓取并以 Markdown 格式保存到 docs/ 目录，自动翻译为中文。
   支持单个 URL、对话内多 URL、或 .txt 列表文件三种输入方式。

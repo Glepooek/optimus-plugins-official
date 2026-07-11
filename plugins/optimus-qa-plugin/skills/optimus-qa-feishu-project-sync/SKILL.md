@@ -2,6 +2,10 @@
 name: optimus-qa-feishu-project-sync
 description: 将测试产物同步到飞书项目的统一工具，支持三种模式：(1) 同步测试计划——用户说"同步测试计划"、"上传测试计划到飞书"、"创建飞书测试计划"时触发，输入为 docs/ 下的测试计划 Markdown；(2) 导入测试用例——用户说"导入用例到飞书"、"同步测试用例"、"上传用例到飞书项目"时触发，输入为 testcases/ 下的测试用例 Markdown；(3) 提交失败缺陷——用户说"提交缺陷"、"提交bug"、"把失败用例提交到飞书"、"自动提bug"时触发，输入为 Playwright/Midscene 测试报告。
 creator: yinxuan@optimus.cn
+metadata:
+  author: desktop client team
+compatibility: 需要已配置的飞书项目管理 MCP server（本仓库内置 FeishuProjectMcp）及有效鉴权；模式C依赖 Playwright/Midscene 测试报告产物。
+allowed-tools: Read Edit Write FeishuProjectMcp
 ---
 
 # 飞书项目同步（统一入口）
