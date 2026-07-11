@@ -26,6 +26,7 @@ description: 修改本仓库任何 skill / hook / command 后，用 --plugin-dir
 | 报错找不到插件/目录 | 确认当前在仓库根目录执行（`--plugin-dir .` 依赖相对路径），用 `pwd` 确认所在目录 | 改用绝对路径重试；若仍报错，检查目标目录下是否有 `skills/`、`hooks/` 等标准插件结构 |
 | 输入触发词没反应 | 确认改的 skill 是否在这次 `--plugin-dir` 加载到的插件目录内（单插件加载模式下其余插件不会被注册） | 换成全量加载 `claude --plugin-dir .` 重新验证 |
 | 改了 SKILL.md 但行为没变 | 确认是新开的会话（同一会话内 skill 定义不会热更新），退出重进一个新会话 | 用 `/plugin` 查看当前会话实际加载了哪些 skill，排查 frontmatter 是否有 YAML 语法错误导致该 skill 整体未被解析 |
+| 新开会话后改动依然没生效 | 确认当前会话是用 `--plugin-dir` 指向本仓库源码启动的，不是走已安装的 marketplace 插件包——marketplace 安装的副本不会同步本地文件改动 | 重新用 `--plugin-dir` 指向本仓库目录启动一个新会话再测 |
 
 ## 不要做
 

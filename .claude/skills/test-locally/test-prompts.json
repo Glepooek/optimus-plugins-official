@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "prompt": "我刚改完 optimus-qa-plugin 下的一个 skill，怎么在本地测试这个改动？",
+    "expected": "给出 claude --plugin-dir . 命令，说明需在仓库根目录执行；提到新会话直接输入触发词即可验证，无需重启/重装"
+  },
+  {
+    "id": 2,
+    "prompt": "本地测试一下",
+    "expected": "识别为触发词，主动给出完整的本地测试步骤（全量/单插件两种方式）"
+  },
+  {
+    "id": 3,
+    "prompt": "我只想测试 optimus-devops-plugin 这一个插件，不想加载全部 8 个，应该怎么做？",
+    "expected": "给出 claude --plugin-dir ./plugins/optimus-devops-plugin 单插件加载命令，说明相对路径需在仓库根目录下执行"
+  },
+  {
+    "id": 4,
+    "prompt": "我在 D:\\other-folder 下执行了 claude --plugin-dir . ，结果报错说找不到插件，为什么？",
+    "expected": "识别出问题是相对路径 . 被解析成了 D:\\other-folder（不是仓库根目录），指出需要 cd 回仓库根目录或改用绝对路径重试"
+  },
+  {
+    "id": 5,
+    "prompt": "我刚在这个会话里改完 test-locally 这个 skill 的内容，直接问了一下发现好像还是老的行为，怎么回事？",
+    "expected": "指出同一会话内 skill 定义不会热更新，需要退出重开一个新会话才能读到最新内容"
+  }
+]
