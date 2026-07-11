@@ -2,7 +2,7 @@
 name: commit-cc-plugin
 description: 在 optimus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户明确表达提交或推送意图，如说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"、"推一下"、"存一下"。
 metadata:
-  version: "3.1.4"
+  version: "3.2.0"
   author: desktop client team
 compatibility: 需要 Git 仓库环境及远程推送权限；无 MCP 或第三方 CLI 依赖。
 allowed-tools: Bash Edit
@@ -29,7 +29,41 @@ git log --oneline -5
 | 与本次改动属于**同一逻辑任务** | 一并提交，提交消息中说明 |
 | 与本次改动**无关** | `git restore --staged <file>` 取消暂存，单独处理 |
 
-## 第二步 — 版本号决策
+## 第二步 — 补齐 .kiro/skills 符号链接
+
+🔴 **GATE**：仅当本次改动包含 `.claude/skills/*/SKILL.md` 的**新增或删除**时才执行本步骤，否则跳过直接进入第三步：
+
+```bash
+git status --porcelain | grep -E '^(A|D|\?\?).*\.claude/skills/[^/]+/SKILL\.md$'
+```
+
+无输出（未新增/删除 skill，只是修改已有 skill 内容或改动 `plugins/` 等其他文件）→ 跳过本步骤。有输出才继续：
+
+检查 `.claude/skills/` 下每个 skill 目录，是否都有对应的 `.kiro/skills/<name>` 符号链接：
+
+```bash
+for d in .claude/skills/*/; do
+  name=$(basename "$d")
+  [ -e ".kiro/skills/$name" ] || echo "缺失: $name"
+done
+```
+
+发现缺失时自动补齐（相对路径，指向 `.claude/skills/<name>`，与已有链接保持一致的目标形式）：
+
+```bash
+# Windows（PowerShell）
+New-Item -ItemType SymbolicLink -Path ".kiro/skills/<name>" -Target "..\..\.claude\skills\<name>"
+# macOS / Linux
+ln -s ../../.claude/skills/<name> .kiro/skills/<name>
+```
+
+删除的 skill 同理清理对应的 `.kiro/skills/<name>` 符号链接（`rm .kiro/skills/<name>`）。
+
+补齐/清理后纳入本次暂存：`git add .kiro/skills/<name>`（新增用 `git add`，删除用 `git rm`；后续第四步会走原子性自查，无需在此单独处理）。
+
+🔴 **CHECKPOINT**：`git config core.symlinks` 必须为 `true`（本仓库已设置），否则符号链接会被 git 存成普通文件而非 `120000` 模式的 symlink blob。创建后用 `git ls-files -s .kiro/skills/<name>` 确认 mode 为 `120000`，不是 `100644`。
+
+## 第三步 — 版本号决策
 
 **变更路径决定是否升级：**
 
@@ -45,7 +79,7 @@ git log --oneline -5
 
 如需升级，编辑 `.claude-plugin/marketplace.json` 的 `"version"` 字段，随本次一并暂存。
 
-## 第三步 — 暂存与原子性核查
+## 第四步 — 暂存与原子性核查
 
 **禁止 `git add -A`**，逐文件暂存：
 
@@ -63,7 +97,7 @@ git diff --staged --stat   # 确认暂存内容
 2. 同目录是否有同任务的关联文件**未暂存**（untracked 或 modified）？
 3. 是否混入了**无关**变更？
 
-## 第四步 — 提交
+## 第五步 — 提交
 
 分析 `git diff --staged`，按 Conventional Commits 规范写消息：
 
@@ -97,7 +131,7 @@ EOF
 )"
 ```
 
-## 第五步 — 同步推送
+## 第六步 — 同步推送
 
 提交后先 rebase 同步远端，再推送：
 
@@ -120,3 +154,4 @@ git push origin master
 | skill 内容改进就升级 Major | Major 仅用于破坏性变更 |
 | `git push --force` 或 `git push -f` | 禁止 force push；push 失败先排查原因，最多重试一次 |
 | `git commit --no-verify` 绕过 hook | 禁止跳过 hook；hook 报错必须修复后重试 |
+| 新增 `.claude/skills/` 下的 skill 后忘记补 `.kiro/skills` 符号链接 | 第二步已内置自动检测缺失并补齐，提交前务必确认 |
