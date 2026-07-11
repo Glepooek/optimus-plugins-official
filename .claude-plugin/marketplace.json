@@ -1,8 +1,8 @@
 {
   "name": "unipus-plugins-official",
   "displayName": "Unipus 官方插件仓库",
-  "description": "Unipus 公司官方 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强（244条技巧智能轮播）、权限通知等企业级开发工具链",
-  "version": "6.0.1",
+  "description": "Unipus 公司官方 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强（247条技巧智能轮播）、权限通知等企业级开发工具链",
+  "version": "6.0.2",
   "owner": {
     "name": "unipus",
     "url": "https://www.unipus.cn"
@@ -61,7 +61,7 @@
     {
       "name": "unipus-devops-plugin",
       "source": "./plugins/unipus-devops-plugin",
-      "description": "DevOps 工具集：Jenkins CI/CD、API 变更通知、应用初始化、项目分析、工作周报转写。内置 Hooks：SessionStart（244条技巧智能轮播）、Notification（Windows权限通知）"
+      "description": "DevOps 工具集：Jenkins CI/CD、API 变更通知、应用初始化、项目分析、工作周报转写。内置 Hooks：SessionStart（247条技巧智能轮播）、Notification（Windows权限通知）"
     },
     {
       "name": "unipus-mcp-servers",

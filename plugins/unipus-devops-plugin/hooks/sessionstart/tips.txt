@@ -342,7 +342,7 @@
 ---
 [CLI] 🗑️ claude project purge 清理项目状态\n功能：删除项目所有 Claude Code 状态，包括转录记录、任务列表、文件历史\n效果：彻底清理项目积累的历史数据，释放空间或重置为干净状态\n例子：claude project purge --dry-run 先预览要删除的内容，确认后再执行清理
 ---
-[交互] 📁 /cd 切换工作目录\n功能：在会话内用 /cd <路径> 切换工作目录，不会中断 prompt cache\n效果：无需退出重开会话，直接切换到另一个项目目录继续工作，已有上下文全部保留\n例子：/cd ../another-project 切换到邻近项目目录继续任务
+[交互] 📁 /cd 切换工作目录\n功能：在会话内用 /cd <路径> 切换工作目录，不会中断 prompt cache；v2.1.206 起支持目录路径自动建议，与 /add-dir 输入体验一致\n效果：无需退出重开会话，直接切换到另一个项目目录继续工作，已有上下文全部保留；输入时自动提示候选目录路径，减少手动输入\n例子：/cd ../another-project 切换到邻近项目目录继续任务；输入 /cd ../ 后可看到候选目录列表
 ---
 [CLI] 🛡️ --safe-mode 安全模式\n功能：启动参数 --safe-mode 或环境变量 CLAUDE_CODE_SAFE_MODE=1 禁用所有自定义配置（hooks、plugins、MCP 等）\n效果：排障时隔离自定义配置干扰，确认问题是否由配置引起\n例子：claude --safe-mode 用干净环境启动，排查 hook 或 MCP 异常
 ---
@@ -358,7 +358,7 @@
 ---
 [Hook] ➕ Stop Hook additionalContext\n功能：Stop/SubagentStop hook 现在可在返回值中附加 additionalContext，让当前 turn 在 hook 介入后继续运行\n效果：hook 可以向 Claude 补充信息（如检查结果、外部状态），而不是直接结束 turn\n例子：Stop hook 检测到测试未通过，返回 additionalContext 告知 Claude 错误详情，Claude 自动继续修复
 ---
-[配置] ☁️ Bedrock/Vertex Auto 模式\n功能：Bedrock、Vertex、Foundry 上的 Opus 4.7/4.8 现支持 Auto 模式，通过 CLAUDE_CODE_ENABLE_AUTO_MODE=1 开启\n效果：云端部署场景也能享受 Auto 自动调配推理资源，按任务复杂度动态分配算力\n例子：CLAUDE_CODE_ENABLE_AUTO_MODE=1 claude 在 Bedrock/Vertex 上启用 Auto 模式
+[配置] ☁️ Bedrock/Vertex Auto 模式\n功能：Bedrock、Vertex、Foundry 上的 Auto 模式 v2.1.207 起默认开启，无需再手动设置 CLAUDE_CODE_ENABLE_AUTO_MODE；可在 settings.json 设置 disableAutoMode: true 关闭\n效果：云端部署场景默认享受 Auto 自动调配推理资源，按任务复杂度动态分配算力；不需要时可显式关闭\n例子：v2.1.207+ 在 Bedrock/Vertex/Foundry 上开箱即用 Auto 模式；{"disableAutoMode": true} 关闭该行为
 ---
 [CLI] ⚠️ --dangerously-skip-permissions 跳过所有权限检查\n功能：claude --dangerously-skip-permissions 完全跳过所有权限提示，等价于 --permission-mode bypassPermissions；注意：仍然尊重 deny 规则，不会绕过 managed 策略，也不绕过沙盒。与 --allow-dangerously-skip-permissions 不同：后者只是把 bypassPermissions 加入 Shift+Tab 循环而不立即启用\n效果：全自动化执行、CI 脚本、无人值守任务的终极提速手段，代价是放弃所有安全确认\n例子：claude --dangerously-skip-permissions "自动修复所有 lint 错误并提交"；claude --permission-mode plan --allow-dangerously-skip-permissions 先从 plan 模式开始，需要时再 Shift+Tab 切换到 bypass
 ---
@@ -418,7 +418,7 @@
 ---
 [配置] 💬 会话标题语言适配\n功能：会话标题现在根据对话语言自动生成，可通过 language 设置固定语言\n效果：中文对话生成中文标题，英文对话生成英文标题，更易识别会话内容\n例子：language: "chinese" 确保所有会话标题都是中文
 ---
-[高级] 🛡️ Auto 模式破坏性命令防护\n功能：Auto 模式自动拦截破坏性 git 命令：git reset --hard、git checkout -- .、git clean -fd、git stash drop、git commit --amend（当前会话非 agent 创建时）；以及 terraform/pulumi/cdk destroy（未指定 stack 时）\n效果：防止自动化脚本误执行不可逆操作，保护代码和基础设施安全\n例子：Auto 模式下 Claude 发起 git reset --hard 会被自动拦截，需要用户手动确认或改用其他方式
+[高级] 🛡️ Auto 模式破坏性命令防护\n功能：Auto 模式自动拦截破坏性操作：git reset --hard、git checkout -- .、git clean -fd、git stash drop、git commit --amend（非 agent 创建的会话）、篡改会话 transcript 文件（v2.1.205+）；以及 terraform/pulumi/cdk destroy（未指定 stack 时）\n效果：防止自动化脚本误执行不可逆操作或篡改会话记录，保护代码、基础设施和审计追溯完整性\n例子：Auto 模式下 Claude 发起 git reset --hard 或试图修改 transcript 文件都会被自动拦截，需要用户手动确认
 ---
 [配置] 🔗 attribution.sessionUrl 链接控制\n功能：settings.json 中设置 attribution.sessionUrl: false，在 web/Remote Control 会话的提交和 PR 中省略 claude.ai 链接\n效果：企业或私有化部署场景中不希望代码含有 claude.ai 链接时使用\n例子：{"attribution": {"sessionUrl": false}} 使提交信息不含 claude.ai 会话链接
 ---
@@ -484,5 +484,11 @@
 ---
 [交互] ⌨️ Esc 关闭详情面板\n功能：Esc 键关闭后台任务、diff、workflow 详情视图（v2.1.203 起从左箭头 ← 改为 Esc）\n效果：← 和 Esc 职责更清晰：← 专用于进入 claude agents 后台会话视图，Esc 用于退出各类详情面板，避免混用误触\n例子：查看某个 workflow 详情后按 Esc 返回，而不是像之前那样按 ←
 ---
-[排障] 🩺 /doctor 诊断命令\n功能：/doctor 检查 Claude Code 配置问题；原启动时的 "claude command missing or broken" 横幅警告已于 v2.1.203 迁移至此，同时也会在 /status 中显示\n效果：排查命令缺失、配置异常等问题时不必等待启动横幅提示，可随时主动运行查看完整诊断报告\n例子：怀疑 CLI 命令未正确安装或配置异常时，输入 /doctor 查看详细诊断结果
+[排障] 🩺 /doctor 诊断命令\n功能：/doctor（别名 /checkup，v2.1.205+）是完整的配置体检工具，可诊断并修复问题；新增检查项：建议裁剪冗余的 CLAUDE.md 内容（v2.1.206+）；原启动时的 "claude command missing or broken" 横幅警告已于 v2.1.203 迁移至此，同时也会在 /status 中显示\n效果：排查命令缺失、配置异常、CLAUDE.md 内容冗余等问题时不必等待启动横幅提示，可随时主动运行查看完整诊断报告并按建议修复\n例子：输入 /doctor 或 /checkup 查看详细诊断结果；若提示 CLAUDE.md 内容可裁剪，说明其中含可从代码库直接推导的冗余描述
+---
+[Hook] 🛡️ 插件配置安全加固\n功能：v2.1.207 起，plugin hooks/monitors/headersHelper 的 shell 形式命令中禁止直接使用 ${user_config.*}（防 shell 注入）；同时 pluginConfigs 插件选项值不再从项目级 .claude/settings.json 读取，仅认可用户级、--settings 和 managed 配置\n效果：编写 hook 时需改用 args 数组形式（exec form）或 $CLAUDE_PLUGIN_OPTION_<KEY> 环境变量传值；monitors/headersHelper 需在脚本内部读取配置文件或 server 的 env 块\n例子：旧写法 command: "echo ${user_config.token}" 已被拒绝，改用 {"args": ["sh", "-c", "echo $CLAUDE_PLUGIN_OPTION_TOKEN"]} 通过环境变量传参
+---
+[交互] ❌ Ctrl+X 永久移除会话\n功能：在 claude agents 后台会话视图中按 Ctrl+X 永久移除一个已完成的会话（v2.1.206+）\n效果：配合 Ctrl+T 固定重要会话使用，清理已完成任务，删除后不会重新出现在列表中\n例子：完成的会话较多时按 Ctrl+X 逐个清理，保持 claude agents 列表整洁
+---
+[排障] ⏸️ 权限模式 footer 徽章\n功能：处于 manual 权限模式时，终端底部 footer 显示灰色 ⏸ 徽章，明确标识当前激活的权限模式（v2.1.203+）\n效果：无需执行 /permissions 或 /status 即可一眼确认当前是否处于手动确认模式，避免误以为已切换了模式\n例子：终端底部出现灰色 ⏸ 时表示当前处于 manual 模式，所有操作仍需手动确认
 ---
