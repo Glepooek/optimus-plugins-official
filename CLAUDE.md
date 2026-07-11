@@ -19,19 +19,6 @@
 | `optimus-devops-plugin` | Jenkins CI/CD、项目分析；内置 SessionStart + Notification hooks |
 | `optimus-mcp-servers` | GitHub Copilot MCP、MasterGo、飞书项目等 MCP 集成 |
 
-### 目录结构
-
-```
-plugins/{plugin-name}/
-├── skills/{skill-name}/SKILL.md    # Skill 定义
-├── commands/{cmd}/COMMAND.md       # Commands（如有）
-├── subagents/{name}/AGENT.md       # Subagents（如有）
-├── mcp/{name}/                     # MCP 服务器配置（如有）
-└── hooks/hooks.json                # Hooks 配置（可选）
-
-.claude/skills/{skill-name}/SKILL.md  # 项目级 skill（本仓库工作流专用，不进 marketplace）
-```
-
 ---
 
 ## 重要约束
@@ -58,17 +45,7 @@ Hooks 自动加载自 `plugins/{plugin-name}/hooks/hooks.json`，当前配置见
 
 ## 本地测试
 
-修改任何 skill / hook / command 后，用 `--plugin-dir` 加载本仓库进行测试：
-
-```bash
-# 加载本仓库所有插件（推荐用于完整测试）
-claude --plugin-dir "E:\ProjectxPlex\optimus-plugins-official"
-
-# 也可以只加载单个插件目录
-claude --plugin-dir "E:\ProjectxPlex\optimus-plugins-official\plugins\optimus-devops-plugin"
-```
-
-启动新会话后，直接输入触发词验证行为（无需重启、无需重新安装）。文件改动立即生效。
+见 `test-locally` skill（`/test-locally` 触发）。
 
 ---
 
