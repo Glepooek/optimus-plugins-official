@@ -68,8 +68,10 @@ git diff --staged --stat   # 确认暂存内容
 - <具体变更>
 - <具体变更>
 
-Co-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>
+Co-Authored-By: <当前会话实际使用的模型名> <noreply@anthropic.com>
 ```
+
+**Co-Authored-By 的模型名不得硬编码**——必须填写当前会话实际使用的模型（如 Claude Sonnet 5、Claude Opus 4.6 等），不得照抄下方示例或任何历史提交里的旧模型名。
 
 **类型：** `feat`（新增）/ `fix`（修复）/ `docs`（文档）/ `refactor`（重构）/ `chore`（版本/依赖）/ `perf`（性能）
 
@@ -85,7 +87,7 @@ feat(devops-hooks): 新增 weekly-report 工作周报转写技能
 - 支持四段式标准周报格式输出
 - 版本升级：2.0.0 → 2.1.0（Minor）
 
-Co-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>
+Co-Authored-By: <当前会话实际使用的模型名> <noreply@anthropic.com>
 EOF
 )"
 ```
