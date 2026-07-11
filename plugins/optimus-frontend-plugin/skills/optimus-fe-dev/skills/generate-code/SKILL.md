@@ -1,7 +1,8 @@
 ---
 name: generate-code
-version: 1.0.0
 description: Use when implementation plan is confirmed to dispatch subagents for code generation with spec compliance and quality review
+metadata:
+  version: "1.0.0"
 ---
 
 # 阶段 3：Subagent 驱动代码生成

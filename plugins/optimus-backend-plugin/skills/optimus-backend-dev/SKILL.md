@@ -1,7 +1,8 @@
 ---
 name: optimus-backend-dev
-version: 1.0.0
 description: 后端开发技能。基于 superpowers 工作流驱动完整的后端开发流程：需求分析、方案设计、代码实现、文档生成。涉及第三方 API 对接时优先检查公司已有服务（optimus-backend-api-connect）。开发完成后自动生成架构设计文档和后端 API 接口文档，可选上传至飞书云空间。
+metadata:
+  version: "1.0.0"
 triggers:
   - 后端开发
   - backend

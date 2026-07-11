@@ -1,7 +1,8 @@
 ---
 name: optimus-frontend-wpf-xaml-performance
-version: 1.1.0
 description: 识别并修复 WPF/XAML 性能问题的专家级 skill。当用户提到 WPF、XAML、Prism、MVVM、界面卡顿、ListView/ListBox 滚动慢、内存占用高、启动慢、渲染慢、Shape 元素多、数据绑定性能、虚拟化、ObservableCollection，或请求审查/优化 WPF 代码时立即使用此 skill。涵盖从硬件加速到数据绑定的全方位性能优化，特别擅长诊断虚拟化、Freezable、图形渲染和启动时间问题。无论是审查现有代码还是编写新代码都应该使用此 skill。
+metadata:
+  version: "1.1.0"
 ---
 
 # WPF XAML 性能优化 Skill

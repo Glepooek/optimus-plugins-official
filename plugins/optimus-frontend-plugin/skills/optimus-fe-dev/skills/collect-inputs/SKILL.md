@@ -1,7 +1,8 @@
 ---
 name: collect-inputs
-version: 1.0.0
 description: Use when starting optimus-fe-dev workflow to collect and validate all 4 required inputs (PRD, architecture doc, design mockup, API doc)
+metadata:
+  version: "1.0.0"
 ---
 
 # 阶段 1：收集并验证输入

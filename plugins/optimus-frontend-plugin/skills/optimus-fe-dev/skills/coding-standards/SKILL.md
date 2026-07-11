@@ -1,7 +1,8 @@
 ---
 name: coding-standards
-version: 1.0.0
 description: Use when generating any frontend code to enforce coding conventions across all layers (entry, styles, pages, components, API, state, types, utils). Tech stack React 18 + TypeScript + Tailwind CSS + Zustand + TanStack Query + Vite.
+metadata:
+  version: "1.0.0"
 ---
 
 # 前端开发规范

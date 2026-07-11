@@ -68,7 +68,7 @@ Hooks 自动加载自 `plugins/{plugin-name}/hooks/hooks.json`，当前配置见
 
 ### SKILL.md frontmatter 版本号
 
-新增或修改 skill 时，必须同步更新 SKILL.md frontmatter 中的 `version` 字段：
+新增或修改 skill 时，必须同步更新 SKILL.md frontmatter 中 `metadata.version` 字段：
 
 | 变更类型 | Skill 版本升级 |
 |---|---|
@@ -76,11 +76,14 @@ Hooks 自动加载自 `plugins/{plugin-name}/hooks/hooks.json`，当前配置见
 | 修改/修复已有内容、文档优化、重构 | **Patch** `x.x.X` |
 | 破坏性变更（接口不兼容、删除用户可见功能） | **Major** `X.x.x` |
 
+版本号放在 `metadata` 下而非顶层，是为了兼容开放 Agent Skills 规范（agentskills.io）——该规范只允许 `name`/`description`/`license`/`allowed-tools`/`metadata`/`compatibility` 六个顶层字段，顶层出现 `version` 会导致跨 runtime 严格校验器报错。
+
 ```yaml
 ---
 name: my-skill
-version: 1.2.0
 description: ...
+metadata:
+  version: "1.2.0"
 ---
 ```
 

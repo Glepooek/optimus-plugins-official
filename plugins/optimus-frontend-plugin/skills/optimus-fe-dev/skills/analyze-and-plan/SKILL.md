@@ -1,7 +1,8 @@
 ---
 name: analyze-and-plan
-version: 1.0.0
 description: Use when all 4 inputs are collected to analyze documents, detect tech stack, and generate implementation plan
+metadata:
+  version: "1.0.0"
 ---
 
 # 阶段 2：分析与规划

@@ -1,7 +1,8 @@
 ---
 name: sync-agent-skills
-version: 1.2.0
 description: 将 skill 源目录以符号链接同步到各 AI 工具的 skills 目录，维护单一 source of truth。默认 source：~/.agents/skills/，默认 targets：~/.claude/skills/ 和 ~/.kiro/skills/。支持自定义：source=<路径> target=<路径1,路径2,...>。触发词：同步 skills、sync agent skills、链接 skills、更新 skill 链接、sync-agent-skills、link skills、update skill symlinks。不适用：仅需查看已有链接状态而不修改时，无需触发本 skill。
+metadata:
+  version: "1.2.0"
 ---
 
 # sync-agent-skills

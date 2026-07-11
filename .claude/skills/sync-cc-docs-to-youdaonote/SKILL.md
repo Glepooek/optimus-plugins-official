@@ -1,10 +1,11 @@
 ---
 name: sync-cc-docs-to-youdaonote
-version: 1.0.2
 description: >
   按分类路径（如"使用ClaudeCode构建 / Guides"）核对 docs/claude_docs/catalog.md，
   抓取翻译该分类下的 Claude Code 官方文档页面，幂等同步到有道云笔记，文件夹层级
   与站点导航一致。触发词："保存 <分类路径> 文档"、"同步 <分类路径> 到有道笔记"。
+metadata:
+  version: "1.0.2"
 ---
 
 # sync-cc-docs-to-youdaonote

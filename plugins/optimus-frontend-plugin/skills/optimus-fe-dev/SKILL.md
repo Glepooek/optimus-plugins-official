@@ -1,7 +1,8 @@
 ---
 name: optimus-fe-dev
-version: 1.1.0
 description: 通用前端开发技能。空项目时引导创建；现有项目时自动探测技术栈。基于 Sketch 设计稿（Sketch MCP）或 Figma 设计稿（Figma MCP）+ 组件库还原页面，基于 Swagger / Markdown 接口文档生成 API 层代码（含完整数据模型定义），基于 PRD 需求文档生成完整页面功能（含类型、接口、页面、交互、埋点），任务完成后生成面向测试的标准化交付物（功能说明书、接口清单、状态清单、Mock 数据）。所有产出代码风格匹配当前项目。
+metadata:
+  version: "1.1.0"
 triggers:
   - 还原页面
   - 还原设计稿

@@ -1,7 +1,8 @@
 ---
 name: generate-deliverables
-version: 1.0.0
 description: Use after code generation is complete to produce standardized test deliverables (functional spec, API list, state list, mock data)
+metadata:
+  version: "1.0.0"
 ---
 
 # 阶段 4：生成测试交付物

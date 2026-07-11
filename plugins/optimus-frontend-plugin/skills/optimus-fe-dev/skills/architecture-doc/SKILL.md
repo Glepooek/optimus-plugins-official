@@ -1,7 +1,8 @@
 ---
 name: architecture-doc
-version: 1.0.0
 description: Use when starting a new frontend feature or project to produce the frontend architecture design document. Takes PRD as input, outputs architecture doc that becomes a required input for the main fe-dev workflow.
+metadata:
+  version: "1.0.0"
 ---
 
 # 编写前端架构设计文档

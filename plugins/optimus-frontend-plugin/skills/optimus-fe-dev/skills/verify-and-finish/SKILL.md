@@ -1,7 +1,8 @@
 ---
 name: verify-and-finish
-version: 1.0.0
 description: Use after deliverables are generated to run final verification and complete the development workflow
+metadata:
+  version: "1.0.0"
 ---
 
 # 阶段 5：验证与完成

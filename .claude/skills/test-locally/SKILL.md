@@ -1,7 +1,8 @@
 ---
 name: test-locally
-version: 1.0.0
 description: 修改本仓库任何 skill / hook / command 后，用 --plugin-dir 加载本仓库进行本地测试。触发词："本地测试"、"测试这个 skill"、"加载插件测试"。
+metadata:
+  version: "1.0.0"
 ---
 
 # 本地测试

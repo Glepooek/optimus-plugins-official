@@ -1,7 +1,8 @@
 ---
 name: feishu-doc
-version: 1.0.0
 description: 飞书文档读写工具。通过 lark-cli 读取、上传、下载、搜索飞书文档（Doc/Docx、Wiki、云文档附件、Sheets）。独立工具 skill，也可在主流程中替代 WebFetch 获取飞书链接内容。
+metadata:
+  version: "1.0.0"
 triggers:
   - 飞书
   - feishu
