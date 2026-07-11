@@ -1,6 +1,6 @@
 ---
 name: prd-optimizer
-version: 2.0.0
+version: 2.1.0
 description: 读取已有 PRD，诊断问题后询问优化重点，输出完整优化版文档并对比提升效果。触发词：优化PRD、改进PRD、完善需求文档、optimize PRD
 ---
 
