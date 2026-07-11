@@ -3,7 +3,7 @@
 ## 顶层目录
 
 ```
-unipus-plugins-official/
+optimus-plugins-official/
 ├── .claude-plugin/          # 插件仓库元数据
 │   └── marketplace.json     # 版本号、插件注册表
 ├── .claude/skills/          # 项目级 Skills（不进 marketplace，仅本仓库开发用）
@@ -46,19 +46,19 @@ plugins/{plugin-name}/
 
 | 插件 | 路径 | Skills 数量 | 特殊组件 |
 |------|------|-------------|----------|
-| unipus-frontend-plugin | `plugins/unipus-frontend-plugin` | 3 | 含唯一复合 Skill |
-| unipus-backend-plugin | `plugins/unipus-backend-plugin` | 3 | Python 辅助脚本 |
-| unipus-qa-plugin | `plugins/unipus-qa-plugin` | 7 | 最多 Skills 的插件 |
-| unipus-prd-plugin | `plugins/unipus-prd-plugin` | 3 | — |
-| unipus-feishu-plugin | `plugins/unipus-feishu-plugin` | 3 | — |
-| unipus-office-plugin | `plugins/unipus-office-plugin` | 7 | Node.js 脚本 |
-| unipus-devops-plugin | `plugins/unipus-devops-plugin` | 5 | Hooks + 脚本 |
-| unipus-mcp-servers | `plugins/unipus-mcp-servers` | 0 | 仅 .mcp.json |
+| optimus-frontend-plugin | `plugins/optimus-frontend-plugin` | 3 | 含唯一复合 Skill |
+| optimus-backend-plugin | `plugins/optimus-backend-plugin` | 3 | Python 辅助脚本 |
+| optimus-qa-plugin | `plugins/optimus-qa-plugin` | 7 | 最多 Skills 的插件 |
+| optimus-prd-plugin | `plugins/optimus-prd-plugin` | 3 | — |
+| optimus-feishu-plugin | `plugins/optimus-feishu-plugin` | 3 | — |
+| optimus-office-plugin | `plugins/optimus-office-plugin` | 7 | Node.js 脚本 |
+| optimus-devops-plugin | `plugins/optimus-devops-plugin` | 5 | Hooks + 脚本 |
+| optimus-mcp-servers | `plugins/optimus-mcp-servers` | 0 | 仅 .mcp.json |
 
 ## 命名约定
 
-- **插件目录名**：`unipus-{domain}-plugin`（MCP 例外：`unipus-mcp-servers`）
-- **Skill 目录名**：`unipus-{domain}-{功能}` 或 `{功能名}`（较新的独立 skill）
+- **插件目录名**：`optimus-{domain}-plugin`（MCP 例外：`optimus-mcp-servers`）
+- **Skill 目录名**：`optimus-{domain}-{功能}` 或 `{功能名}`（较新的独立 skill）
 - **文件名**：全小写，连字符分隔
 - **SKILL.md frontmatter**：必须包含 `name`、`version`、`description`
 
@@ -69,7 +69,7 @@ plugins/{plugin-name}/
 | `.claude-plugin/marketplace.json` | 仓库版本号和插件注册 |
 | `.claude/skills/commit-cc-plugin/SKILL.md` | 提交发布工作流（强制使用） |
 | `.claude/skills/sync-cc-tips/SKILL.md` | tips 文件同步 Skill |
-| `plugins/unipus-devops-plugin/hooks/hooks.json` | Hooks 配置入口 |
-| `plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt` | 425 条使用技巧 |
-| `plugins/unipus-mcp-servers/.mcp.json` | MCP 服务器声明 |
-| `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md` | 复合 Skill 架构参考 |
+| `plugins/optimus-devops-plugin/hooks/hooks.json` | Hooks 配置入口 |
+| `plugins/optimus-devops-plugin/hooks/sessionstart/tips.txt` | 425 条使用技巧 |
+| `plugins/optimus-mcp-servers/.mcp.json` | MCP 服务器声明 |
+| `plugins/optimus-frontend-plugin/skills/optimus-fe-dev/ARCHITECTURE.md` | 复合 Skill 架构参考 |

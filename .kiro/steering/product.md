@@ -2,11 +2,11 @@
 
 ## 产品定位
 
-Unipus 官方 Claude Code 插件仓库（unipus-plugins-official），为企业开发团队提供完整的 AI 辅助开发工具链。通过 Claude Code 插件机制，将前端/后端开发、测试QA、产品文档、飞书集成、Office文档处理、CI/CD、MCP服务等能力以 Skills 形式交付。
+Optimus 官方 Claude Code 插件仓库（optimus-plugins-official），为企业开发团队提供完整的 AI 辅助开发工具链。通过 Claude Code 插件机制，将前端/后端开发、测试QA、产品文档、飞书集成、Office文档处理、CI/CD、MCP服务等能力以 Skills 形式交付。
 
 ## 目标用户
 
-- Unipus 公司内部开发团队
+- Optimus 公司内部开发团队
 - 使用 Claude Code 的全栈开发者
 - 需要标准化开发流程的企业团队
 

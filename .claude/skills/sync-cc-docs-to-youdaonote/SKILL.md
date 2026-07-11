@@ -79,14 +79,14 @@ youdaonote -s ydn list -f <GROUP_ID>
    - **有记录，且该 `fileId` 出现在 Step 3 拉取的远端列表中** → 已同步，跳过，计入"已跳过"
    - **有记录，但不在远端列表中**（用户手动删除过）→ 记录已过期，按未同步处理
    - **无记录** → 按未同步处理
-2. 未同步的页面，完整走一遍 `unipus-office-plugin:web-to-markdown` skill 已有的抓取
+2. 未同步的页面，完整走一遍 `optimus-office-plugin:web-to-markdown` skill 已有的抓取
    /翻译/校验流程：
    - 创建本地目录：`mkdir -p docs/claude_docs/<Tab中文名>/<group_zh>`
    - `python -m markitdown "https://code.claude.com/docs/en<url>" > docs/claude_docs/<Tab中文名>/<group_zh>/.raw-<slug>.md`（三级降级见 web-to-markdown SKILL.md）
    - Read 原文 → 翻译（剥离站点通用 Documentation Index 横幅、`<Note>`/`<Tip>` 转引用块）→ Write 到 `docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md`
-   - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/post_process.py "docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md" --base-url "https://code.claude.com/docs"`
-   - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/verify.py "docs/claude_docs/<Tab中文名>/<group_zh>/.raw-<slug>.md" "docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md"`
-   - `python plugins/unipus-office-plugin/skills/web-to-markdown/scripts/verify_quality.py "docs/claude_docs/<Tab中文名>/<group_zh>/.raw-<slug>.md" "docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md" --base-url "https://code.claude.com/docs"`
+   - `python plugins/optimus-office-plugin/skills/web-to-markdown/scripts/post_process.py "docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md" --base-url "https://code.claude.com/docs"`
+   - `python plugins/optimus-office-plugin/skills/web-to-markdown/scripts/verify.py "docs/claude_docs/<Tab中文名>/<group_zh>/.raw-<slug>.md" "docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md"`
+   - `python plugins/optimus-office-plugin/skills/web-to-markdown/scripts/verify_quality.py "docs/claude_docs/<Tab中文名>/<group_zh>/.raw-<slug>.md" "docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md" --base-url "https://code.claude.com/docs"`
    - 两轮核对通过后：`youdaonote -s ydn save` 上传，参数说明：
      - `contentFile`：`docs/claude_docs/<Tab中文名>/<group_zh>/<slug>.md`
      - `type`：`"md"`

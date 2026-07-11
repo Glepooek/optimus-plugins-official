@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "帮我分析一下 plugins/optimus-devops-plugin 这个项目，生成一份项目概览报告",
+    "expected": "生成 doc/project-overview.md，包含 14 个章节的完整分析报告"
+  },
+  {
+    "id": 2,
+    "prompt": "快速了解 plugins/optimus-qa-plugin 的技术栈和 API 接口",
+    "expected": "报告重点覆盖技术栈和 API 接口章节，其余章节有但较简略"
+  },
+  {
+    "id": 3,
+    "prompt": "分析这个仓库整体的架构和内部依赖关系",
+    "expected": "识别 monorepo 结构，分析跨插件依赖，生成架构图和依赖关系"
+  }
+]

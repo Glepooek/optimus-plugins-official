@@ -86,7 +86,7 @@ Co-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>
 
 - 简单 Skill：`/plugin-name:skill-name`
 - 复合 Skill：`/plugin-name:skill-name:substep`
-- 唯一复合 Skill：`/unipus-frontend-plugin:unipus-fe-dev`（5阶段工作流）
+- 唯一复合 Skill：`/optimus-frontend-plugin:optimus-fe-dev`（5阶段工作流）
 
 ### 跨插件约束
 
@@ -100,10 +100,10 @@ Co-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>
 
 ```bash
 # 完整测试
-claude --plugin-dir "F:\unipus-plugins-official"
+claude --plugin-dir "F:\optimus-plugins-official"
 
 # 单插件测试
-claude --plugin-dir "F:\unipus-plugins-official\plugins\unipus-devops-plugin"
+claude --plugin-dir "F:\optimus-plugins-official\plugins\optimus-devops-plugin"
 ```
 
 文件改动立即生效，无需重启或重装。

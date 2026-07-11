@@ -4,20 +4,20 @@
 
 ## 仓库概览
 
-Unipus 官方 Claude Code 插件仓库，8 个领域插件提供企业级开发工具链。
+自定义的 Claude Code 插件仓库，8 个领域插件提供企业级开发工具链。
 
 ### 插件职责速查
 
 | 插件 | 职责 |
 |---|---|
-| `unipus-frontend-plugin` | React/Vue/WPF 前端开发、UI 设计规范 |
-| `unipus-backend-plugin` | API 开发、后端架构、数据库设计 |
-| `unipus-qa-plugin` | 测试用例、JMeter、UI 自动化 |
-| `unipus-prd-plugin` | PRD 文档创建、审查、需求管理 |
-| `unipus-feishu-plugin` | 飞书文档读写、上传、自动化 |
-| `unipus-office-plugin` | Word/Excel/PPT/PDF 生成与处理 |
-| `unipus-devops-plugin` | Jenkins CI/CD、项目分析；内置 SessionStart + Notification hooks |
-| `unipus-mcp-servers` | GitHub Copilot MCP、MasterGo、飞书项目等 MCP 集成 |
+| `optimus-frontend-plugin` | React/Vue/WPF 前端开发、UI 设计规范 |
+| `optimus-backend-plugin` | API 开发、后端架构、数据库设计 |
+| `optimus-qa-plugin` | 测试用例、JMeter、UI 自动化 |
+| `optimus-prd-plugin` | PRD 文档创建、审查、需求管理 |
+| `optimus-feishu-plugin` | 飞书文档读写、上传、自动化 |
+| `optimus-office-plugin` | Word/Excel/PPT/PDF 生成与处理 |
+| `optimus-devops-plugin` | Jenkins CI/CD、项目分析；内置 SessionStart + Notification hooks |
+| `optimus-mcp-servers` | GitHub Copilot MCP、MasterGo、飞书项目等 MCP 集成 |
 
 ### 目录结构
 
@@ -48,11 +48,11 @@ plugins/{plugin-name}/
 
 - 简单 skill：`/plugin-name:skill-name`
 - 复合 skill：`/plugin-name:skill-name:substep`
-- `unipus-fe-dev` 是唯一的复合 skill（5 阶段工作流），触发词：`/unipus-frontend-plugin:unipus-fe-dev`，详见 `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md`
+- `optimus-fe-dev` 是唯一的复合 skill（5 阶段工作流），触发词：`/optimus-frontend-plugin:optimus-fe-dev`，详见 `plugins/optimus-frontend-plugin/skills/optimus-fe-dev/ARCHITECTURE.md`
 
 ### Hooks
 
-Hooks 自动加载自 `plugins/{plugin-name}/hooks/hooks.json`，当前配置见 `plugins/unipus-devops-plugin/hooks/hooks.json`。
+Hooks 自动加载自 `plugins/{plugin-name}/hooks/hooks.json`，当前配置见 `plugins/optimus-devops-plugin/hooks/hooks.json`。
 
 ---
 
@@ -62,10 +62,10 @@ Hooks 自动加载自 `plugins/{plugin-name}/hooks/hooks.json`，当前配置见
 
 ```bash
 # 加载本仓库所有插件（推荐用于完整测试）
-claude --plugin-dir "E:\ProjectxPlex\unipus-plugins-official"
+claude --plugin-dir "E:\ProjectxPlex\optimus-plugins-official"
 
 # 也可以只加载单个插件目录
-claude --plugin-dir "E:\ProjectxPlex\unipus-plugins-official\plugins\unipus-devops-plugin"
+claude --plugin-dir "E:\ProjectxPlex\optimus-plugins-official\plugins\optimus-devops-plugin"
 ```
 
 启动新会话后，直接输入触发词验证行为（无需重启、无需重新安装）。文件改动立即生效。
@@ -147,5 +147,5 @@ description: ...
 | `.claude-plugin/marketplace.json` | 插件仓库元数据和版本号 |
 | `.claude/skills/commit-cc-plugin/SKILL.md` | 提交发布 skill（含版本决策规则） |
 | `.claude/skills/sync-cc-tips/SKILL.md` | tips.txt 自动同步 skill（从 CC changelog 同步） |
-| `plugins/unipus-devops-plugin/hooks/sessionstart/tips.txt` | 235 条 Claude Code 使用技巧 |
-| `plugins/unipus-frontend-plugin/skills/unipus-fe-dev/ARCHITECTURE.md` | 复合 skill 模式参考实现 |
+| `plugins/optimus-devops-plugin/hooks/sessionstart/tips.txt` | 235 条 Claude Code 使用技巧 |
+| `plugins/optimus-frontend-plugin/skills/optimus-fe-dev/ARCHITECTURE.md` | 复合 skill 模式参考实现 |

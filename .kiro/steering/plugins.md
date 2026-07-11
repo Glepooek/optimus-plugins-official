@@ -1,41 +1,41 @@
 # 插件详情
 
-## unipus-frontend-plugin — 前端开发工具集
+## optimus-frontend-plugin — 前端开发工具集
 
 **Skills:**
-- `unipus-fe-dev` — 前端全流程开发（唯一复合 Skill，5阶段：需求收集→分析规划→代码生成→交付物生成→验证完成）
-- `unipus-design-ui` — UI 设计规范管理
+- `optimus-fe-dev` — 前端全流程开发（唯一复合 Skill，5阶段：需求收集→分析规划→代码生成→交付物生成→验证完成）
+- `optimus-design-ui` — UI 设计规范管理
 - `wpf-xaml-performance` — WPF XAML 性能优化
 
 **特色:** 复合 Skill 采用 Subagent 驱动并行生成，详见 ARCHITECTURE.md。
 
 ---
 
-## unipus-backend-plugin — 后端开发工具集
+## optimus-backend-plugin — 后端开发工具集
 
 **Skills:**
-- `unipus-backend-dev` — 后端开发（架构设计、API开发）
-- `unipus-backend-api-connect` — API 连接和文档生成
+- `optimus-backend-dev` — 后端开发（架构设计、API开发）
+- `optimus-backend-api-connect` — API 连接和文档生成
 - `csharp-code-review` — C# 代码审查
 
 **辅助脚本:** fetch_swagger.py、fetch_feishu_doc.py、fetch_webpage_api.py
 
 ---
 
-## unipus-qa-plugin — 测试 QA 工具集
+## optimus-qa-plugin — 测试 QA 工具集
 
 **Skills（7个，最多的插件）:**
-- `unipus-qa-test-design` — 测试用例设计
-- `unipus-qa-test-report` — 测试报告生成
-- `unipus-qa-jmeter-scripts` — JMeter 性能测试脚本
-- `unipus-qa-ui-scripts` — UI 自动化测试脚本
-- `unipus-qa-ui-consistency-check` — UI 一致性检查
-- `unipus-qa-feishu-project-sync` — 飞书测试项目同步
-- `unipus-qa-feishu-project-xmind` — 飞书项目转 XMind（含 converter.py）
+- `optimus-qa-test-design` — 测试用例设计
+- `optimus-qa-test-report` — 测试报告生成
+- `optimus-qa-jmeter-scripts` — JMeter 性能测试脚本
+- `optimus-qa-ui-scripts` — UI 自动化测试脚本
+- `optimus-qa-ui-consistency-check` — UI 一致性检查
+- `optimus-qa-feishu-project-sync` — 飞书测试项目同步
+- `optimus-qa-feishu-project-xmind` — 飞书项目转 XMind（含 converter.py）
 
 ---
 
-## unipus-prd-plugin — PRD 管理工具集
+## optimus-prd-plugin — PRD 管理工具集
 
 **Skills:**
 - `prd-creator` — PRD 文档创建
@@ -44,20 +44,20 @@
 
 ---
 
-## unipus-feishu-plugin — 飞书集成工具集
+## optimus-feishu-plugin — 飞书集成工具集
 
 **Skills:**
-- `unipus-feishu-read-write` — 飞书文档读写
-- `unipus-feishu-upload-doc` — 飞书文档上传
-- `unipus-feishu-doc-load` — 飞书文档加载
+- `optimus-feishu-read-write` — 飞书文档读写
+- `optimus-feishu-upload-doc` — 飞书文档上传
+- `optimus-feishu-doc-load` — 飞书文档加载
 
 ---
 
-## unipus-office-plugin — Office 文档处理工具集
+## optimus-office-plugin — Office 文档处理工具集
 
 **Skills（7个）:**
 - `docx-writer` — Word 文档生成（含模板和脚本）
-- `unipus-office-docx` — Office DOCX 处理
+- `optimus-office-docx` — Office DOCX 处理
 - `xlsx-editor` — Excel 编辑和报表
 - `pptx-editor` — PowerPoint 演示文稿
 - `pdf-creator` — PDF 文档生成
@@ -66,7 +66,7 @@
 
 ---
 
-## unipus-devops-plugin — DevOps 工具集
+## optimus-devops-plugin — DevOps 工具集
 
 **Skills（4个）:**
 - `jenkins-build` — Jenkins CI/CD 构建触发
@@ -86,7 +86,7 @@
 
 ---
 
-## unipus-mcp-servers — MCP 服务器集成
+## optimus-mcp-servers — MCP 服务器集成
 
 **无 Skills，仅 MCP 配置（.mcp.json）:**
 
