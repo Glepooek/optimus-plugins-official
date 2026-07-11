@@ -1,6 +1,6 @@
 ---
 name: prd-reviewer
-version: 2.0.0
+version: 2.1.0
 description: 对已有 PRD 文档进行6维度质量诊断，输出评分报告和分优先级改进建议，不修改原文档。触发词：审查PRD、检查PRD、review PRD、诊断需求文档
 ---
 
