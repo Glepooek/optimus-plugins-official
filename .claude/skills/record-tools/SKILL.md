@@ -2,7 +2,7 @@
 name: record-tools
 description: 将工具/资源（CLI、MCP、Agent、Skill、Plugin等）的信息抓取整理并归档到仓库根目录 tools.md，自动判断分类、检测重复。触发词："记录这个工具"、"整理进tools.md"、"归档这个CLI/MCP"、"catalog this tool"、"把这个加到工具清单"。
 metadata:
-  version: "1.0.1"
+  version: "1.0.2"
   author: desktop client team
 compatibility: 优先使用 playwright-cli（通过 npx 调用，需 Node.js 环境）抓取网页；不可用时降级为 WebFetch。写入目标固定为仓库根目录 tools.md。
 allowed-tools: Bash WebFetch Read Edit Write
@@ -89,6 +89,7 @@ allowed-tools: Bash WebFetch Read Edit Write
 | tools.md 中已存在同名/同网址条目 | 🔴 **STOP**——见 Step 4 |
 | 新工具不属于现有5个分类 | 🔴 **STOP**——见 Step 5 |
 | tools.md 文件不存在 | 创建文件并写入 `## Skill`/`## MCP`/`## CLI`/`## Agent`/`## Plugin` 五个分类骨架，再写入新条目 |
+| 抓取"成功"但内容明显与目标工具不符（页面标题/主体产品名与用户提供的工具名不一致，很可能是链接跳转到了错误页面、或该产品已改名/下线跳转到了别的站点） | 🔴 **STOP**——不得按抓错的内容继续填写字段。向用户说明实际抓到的页面标题/关键信息与预期不符，请用户确认链接是否正确 |
 
 ## Red Flags
 
