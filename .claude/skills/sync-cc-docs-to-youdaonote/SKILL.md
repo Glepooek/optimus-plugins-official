@@ -5,7 +5,7 @@ description: >
   抓取翻译该分类下的 Claude Code 官方文档页面，幂等同步到有道云笔记，文件夹层级
   与站点导航一致。触发词："保存 <分类路径> 文档"、"同步 <分类路径> 到有道笔记"。
 metadata:
-  version: "1.2.0"
+  version: "1.2.1"
   author: desktop client team
 compatibility: 需要 Python 运行时（含 markitdown 包）；需要已配置账号的 youdaonote CLI；依赖同仓库 optimus-office-plugin:web-to-markdown skill 完成抓取翻译流程。
 allowed-tools: Bash Read Edit Write Task
@@ -47,10 +47,14 @@ allowed-tools: Bash Read Edit Write Task
    ```
 
    - exit 0（`fresh` 或 `recently_prompted`）→ 跳过本 Step，直接进入 Step 1
-   - exit 1（`stale` 或 `never_checked`）→ 读 stdout JSON，向用户提问：
-     > "距离上次核对 Claude Code 文档站点导航结构已经 `<days_since_verified>` 天（阈值 14
-     > 天）。是否要花几分钟重新核对站点导航结构？（预计 5–15 分钟，需逐个访问 8 个 Tab
-     > 并展开手风琴子菜单）"
+   - exit 1 → 读 stdout JSON 的 `status` 字段，按以下两种情况分别提问（**不要**不加区分地套用同一个模板——`never_checked` 时 `days_since_verified` 是 `null`，直接套天数模板会生成"已经 null 天"这种不通顺的话术）：
+     - `status` 为 `stale`：
+       > "距离上次核对 Claude Code 文档站点导航结构已经 `<days_since_verified>` 天（阈值 14
+       > 天）。是否要花几分钟重新核对站点导航结构？（预计 5–15 分钟，需逐个访问 8 个 Tab
+       > 并展开手风琴子菜单）"
+     - `status` 为 `never_checked`：
+       > "尚未核对过 Claude Code 文档站点导航结构。是否要花几分钟核对一下？（预计 5–15
+       > 分钟，需逐个访问 8 个 Tab 并展开手风琴子菜单）"
    - exit 2 → 🔴 **报错停止**，`catalog-check-meta.json` 损坏，告知用户手动检查该文件
 
 2. **用户回答"否"**：

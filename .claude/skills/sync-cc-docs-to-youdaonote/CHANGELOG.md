@@ -1,3 +1,9 @@
+## [1.2.1] - 2026-07-12
+
+### Fixed
+- Step 0 询问模板按 `never_checked`/`stale` 分开措辞，避免 `days_since_verified` 为
+  `null` 时机械套用天数模板产生"已经 null 天"这种不通顺话术（darwin-skill 实测发现）
+
 ## [1.2.0] - 2026-07-12
 
 ### Added
