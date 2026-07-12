@@ -2,7 +2,7 @@
 name: record-tools
 description: 将工具/资源（CLI、MCP、Agent、Skill、Plugin等）的信息抓取整理并归档到仓库根目录 tools.md，自动判断分类、检测重复。触发词："记录这个工具"、"整理进tools.md"、"归档这个CLI/MCP"、"catalog this tool"、"把这个加到工具清单"。
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
 compatibility: 优先使用 playwright-cli（通过 npx 调用，需 Node.js 环境）抓取网页；不可用时降级为 WebFetch。写入目标固定为仓库根目录 tools.md。
 allowed-tools: Bash WebFetch Read Edit Write
@@ -33,8 +33,10 @@ allowed-tools: Bash WebFetch Read Edit Write
 2. 若 playwright-cli 不可用（如 `npx --no-install playwright-cli --version` 报错）或抓到的内容明显为空/异常，降级改用 WebFetch 抓取同一 URL。
 
 **Step 3 — 提取结构化信息**
-输入：Step2 抓到的页面内容
+输入：Step2 抓到的页面内容（若有）+ Step1 用户提供的文字描述（若有）
 输出：结构化字段——名称 / 网址 / 简介 / 核心能力（bullet列表）/ 安装方式（如适用，不适用则省略该项）/ 备注（可选，若与本仓库现有 skill/MCP 有直接关联需指出）
+
+若用户同时提供了文字描述、且成功抓取到页面内容，两者存在实质性出入（如核心能力条数、版本定位有明显差异）时，以抓取内容为准；仅当抓取失败或降级失败（见异常处理表）时才使用用户描述兜底。以抓取内容为准不等于丢弃用户描述——若用户描述中有抓取内容未覆盖的信息（如内部使用经验、与本仓库其他工具的关联），仍需保留进"备注"字段。
 
 **Step 4 — 读取 tools.md，检查重复**
 输入：Step3 提取的名称/网址 + `tools.md` 现有内容

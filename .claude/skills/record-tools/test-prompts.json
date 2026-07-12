@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "记录这个工具：Insomnia，一个开源的 API 客户端和设计平台，支持 REST/GraphQL/gRPC/WebSocket 调试，官网 https://insomnia.rest/，可以用插件扩展、支持团队协作同步。帮我整理进 tools.md。",
+    "expected": "直接从粘贴内容提取名称/网址/简介/核心能力，判定归入 ## CLI 或合理新分类前先确认（Insomnia 是桌面GUI客户端非CLI，可能触发分类不确定 CHECKPOINT），检测 tools.md 无重复条目后按模板格式写入，只展示改动不自动提交"
+  },
+  {
+    "id": 2,
+    "prompt": "把 Apifox CLI 这个工具也记录到 tools.md 里，网址是 https://apifox.com/apifox-cli/。",
+    "expected": "命中 Step4 重复检测 CHECKPOINT——tools.md 中已存在同名同网址的 Apifox CLI 条目，必须停下询问用户是更新/跳过/仍新增，不得未经确认直接写入或静默跳过"
+  },
+  {
+    "id": 3,
+    "prompt": "帮我抓一下这个链接的工具信息存进 tools.md：https://this-domain-definitely-does-not-exist-12345.example/tool-page",
+    "expected": "playwright-cli 和 WebFetch 抓取均失败（域名不可达），命中异常处理表第一行，🔴 STOP 报告具体错误信息并请用户确认链接或改为直接粘贴介绍内容，不得凭训练知识杜撰工具简介"
+  }
+]
