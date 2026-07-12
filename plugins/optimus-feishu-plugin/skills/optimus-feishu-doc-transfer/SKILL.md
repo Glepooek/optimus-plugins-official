@@ -1,13 +1,14 @@
 ---
-name: optimus-feishu-read-write
+name: optimus-feishu-doc-transfer
 description: 飞书文档读写通用工具，支持读取文档/表格、上传文件、导出文档，触发词：飞书读取、飞书上传、飞书导出、fetch feishu、read feishu doc
 metadata:
+  version: "1.0.0"
   author: desktop client team
 compatibility: 硬性依赖 @larksuite/cli（通过 npx 调用，需 Node.js/npm 环境）且需登录认证。
 allowed-tools: Bash
 ---
 
-# optimus-feishu-read-write
+# optimus-feishu-doc-transfer
 
 飞书文档读写通用工具，整合 lark-cli 能力，支持读取、上传、导出飞书云文档。
 

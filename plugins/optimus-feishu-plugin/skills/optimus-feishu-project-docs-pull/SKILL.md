@@ -1,7 +1,8 @@
 ---
-name: optimus-feishu-doc-load
+name: optimus-feishu-project-docs-pull
 description: 从飞书研发数字化资产文档库加载指定项目/版本的文档到本地 doc/ 目录，供当前会话使用。支持按角色选择性加载（PRD/设计/后端/前端/测试）。触发词：加载项目文档、load project docs、读取飞书项目文档、拉取文档库
 metadata:
+  version: "1.0.0"
   author: desktop client team
 compatibility: 硬性依赖 lark-cli（飞书开放平台CLI）已安装且已认证，lark-cli doctor 通过为前置门槛。
 allowed-tools: Bash Write
@@ -14,9 +15,9 @@ triggers:
   - 从飞书加载
 ---
 
-# optimus-feishu-doc-load
+# optimus-feishu-project-docs-pull
 
-宣告：**正在使用 optimus-feishu-doc-load v1.0**
+宣告：**正在使用 optimus-feishu-project-docs-pull v1.0**
 
 ## 职责
 
@@ -194,7 +195,7 @@ mkdir -p ./doc
 - ./doc/V2.0_用户中心_前端组件文档.md
 
 提示：文档已就绪，当前会话可直接引用 ./doc/ 中的内容。
-如需更新文档到飞书，使用 optimus-feishu-doc-sync
+如需更新文档到飞书，使用 optimus-feishu-project-docs-push
 ```
 
 ## Red Flags

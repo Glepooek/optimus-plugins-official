@@ -1,13 +1,14 @@
 ---
-name: optimus-feishu-upload-doc
+name: optimus-feishu-project-docs-push
 description: 按部门规范上传文档到飞书统一云空间，自动管理目录结构和文件命名，触发词：上传文档到飞书、飞书规范上传、upload to feishu drive、飞书云空间上传
 metadata:
+  version: "1.0.0"
   author: desktop client team
 compatibility: 硬性依赖 lark-cli（npm install -g @larksuite/cli 全局安装）已安装并认证。
 allowed-tools: Bash
 ---
 
-# optimus-feishu-upload-doc
+# optimus-feishu-project-docs-push
 
 按公司规范上传文档到飞书统一云空间，自动管理子目录创建和文件命名规范。
 

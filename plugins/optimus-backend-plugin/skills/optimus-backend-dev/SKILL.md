@@ -4,7 +4,7 @@ description: 后端开发技能。基于 superpowers 工作流驱动完整的后
 metadata:
   version: "1.0.0"
   author: desktop client team
-compatibility: 硬性依赖 superpowers 插件已安装（brainstorming/writing-plans/subagent-driven-development/verification-before-completion/finishing-a-development-branch 均为必调工作流）；可选调用 optimus-backend-api-connect、optimus-feishu-upload-doc。
+compatibility: 硬性依赖 superpowers 插件已安装（brainstorming/writing-plans/subagent-driven-development/verification-before-completion/finishing-a-development-branch 均为必调工作流）；可选调用 optimus-backend-api-connect、optimus-feishu-project-docs-push。
 allowed-tools: Glob Read Write Task
 triggers:
   - 后端开发
@@ -84,7 +84,7 @@ digraph backend_workflow {
 
     verify [label="阶段 7：验证与完成\nverification + finishing", shape=box, style=filled, fillcolor="#cce5ff"];
     feishu_ask [label="是否上传到\n飞书云空间？", shape=diamond];
-    feishu_upload [label="阶段 8：飞书上传\noptimus-feishu-upload-doc", shape=box, style=filled, fillcolor="#ffe0cc"];
+    feishu_upload [label="阶段 8：飞书上传\noptimus-feishu-project-docs-push", shape=box, style=filled, fillcolor="#ffe0cc"];
     done [label="完成", shape=doublecircle, style=filled, fillcolor="#ccffcc"];
 
     gate -> gate_check;
@@ -126,7 +126,7 @@ digraph backend_workflow {
 6. **代码实现** — 使用 `superpowers:subagent-driven-development` 按计划执行开发
 7. **文档生成** — 生成架构设计文档和后端 API 接口文档，放入 `docs/` 目录
 8. **验证与完成** — 使用 `superpowers:verification-before-completion` + `superpowers:finishing-a-development-branch`
-9. **飞书上传（可选）** — 询问用户后决定是否调用 `optimus-feishu-upload-doc` 上传文档
+9. **飞书上传（可选）** — 询问用户后决定是否调用 `optimus-feishu-project-docs-push` 上传文档
 
 ---
 
@@ -285,7 +285,7 @@ docs/V1.0_统一认证平台_后端API接口文档.md
 是否需要将文档上传到飞书统一云空间？
 ```
 
-用户选择「是」时，对每份文档调用 `optimus-feishu-upload-doc` 执行规范化上传。
+用户选择「是」时，对每份文档调用 `optimus-feishu-project-docs-push` 执行规范化上传。
 
 ---
 
@@ -306,7 +306,7 @@ docs/V1.0_统一认证平台_后端API接口文档.md
 | 技能 | 使用阶段 | 触发条件 |
 |---|---|---|
 | `optimus-backend-api-connect` | 阶段 4 | 涉及第三方 API 对接时 |
-| `optimus-feishu-upload-doc` | 阶段 8 | 用户选择上传到飞书时 |
+| `optimus-feishu-project-docs-push` | 阶段 8 | 用户选择上传到飞书时 |
 
 ---
 

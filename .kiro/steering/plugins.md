@@ -47,9 +47,9 @@
 ## optimus-feishu-plugin — 飞书集成工具集
 
 **Skills:**
-- `optimus-feishu-read-write` — 飞书文档读写
-- `optimus-feishu-upload-doc` — 飞书文档上传
-- `optimus-feishu-doc-load` — 飞书文档加载
+- `optimus-feishu-doc-transfer` — 飞书文档读写（通用/临时，不走部门规范）
+- `optimus-feishu-project-docs-push` — 项目文档规范化推送到飞书
+- `optimus-feishu-project-docs-pull` — 项目文档从飞书拉取到本地
 
 ---
 
