@@ -422,6 +422,7 @@ FodyWeavers.xsd
 .claude/**/*.local.*
 .claude/memory/
 .claude/plans/
+.claude/skills/darwin-skill/
 .playwright-mcp/
 .playwright-cli/
 .remember/
