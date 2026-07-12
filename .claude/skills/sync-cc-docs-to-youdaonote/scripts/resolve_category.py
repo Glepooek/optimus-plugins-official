@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """解析 docs/claude_docs/catalog.md 的分类结构，维护有道云笔记文件夹映射。"""
+import difflib
 import json
 import re
 import sys
@@ -7,7 +8,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 CATALOG_PATH = REPO_ROOT / "docs" / "claude_docs" / "catalog.md"
-MAP_PATH = Path(__file__).resolve().parent.parent / "folder-map.json"
+MAP_PATH = Path(__file__).resolve().parent.parent / "data" / "folder-map.json"
 ROOT_FOLDER_ID = "WEBc1d2e6c709ed0850b09f070a86573197"
 
 TAB_RE = re.compile(
@@ -67,6 +68,30 @@ def find_group(tab, name):
         if group["en"].lower() == name.lower():
             return group
     return None
+
+
+def tab_candidate_names(tabs, folder_map):
+    """汇总所有可能被用户提及的 Tab 名称（英文名/catalog.md 中文标注/folder-map 别名），供模糊匹配用。"""
+    names = []
+    for tab in tabs:
+        names.append(tab["en"])
+        if tab["zh"]:
+            names.append(tab["zh"])
+    for zh_key in folder_map.get("tabs", {}):
+        names.append(zh_key)
+    seen = set()
+    deduped = []
+    for name in names:
+        if name not in seen:
+            seen.add(name)
+            deduped.append(name)
+    return deduped
+
+
+def suggest_names(name, candidates, n=3, cutoff=0.4):
+    """返回与 name 最接近的候选名（编辑距离），找不到已知匹配时用来提示用户，而不是让用户
+    自己回 catalog.md 逐字核对拼写。"""
+    return difflib.get_close_matches(name, candidates, n=n, cutoff=cutoff)
 
 
 import argparse
@@ -148,12 +173,20 @@ def cmd_resolve(args):
 
     tab = find_tab(tabs, folder_map, args.tab)
     if tab is None:
-        print(f"错误：未在 catalog.md 中找到 Tab {args.tab!r}", file=sys.stderr)
+        msg = f"错误：未在 catalog.md 中找到 Tab {args.tab!r}"
+        suggestions = suggest_names(args.tab, tab_candidate_names(tabs, folder_map))
+        if suggestions:
+            msg += f"\n你是不是想找：{' / '.join(suggestions)}？"
+        print(msg, file=sys.stderr)
         sys.exit(1)
 
     group = find_group(tab, args.group)
     if group is None:
-        print(f"错误：未在 Tab {tab['en']!r} 下找到分组 {args.group!r}", file=sys.stderr)
+        msg = f"错误：未在 Tab {tab['en']!r} 下找到分组 {args.group!r}"
+        suggestions = suggest_names(args.group, [g["en"] for g in tab["groups"]])
+        if suggestions:
+            msg += f"\n你是不是想找：{' / '.join(suggestions)}？"
+        print(msg, file=sys.stderr)
         sys.exit(1)
 
     print(json.dumps(

@@ -2,7 +2,7 @@ import unittest
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
-from resolve_category import parse_catalog, find_tab, find_group
+from resolve_category import parse_catalog, find_tab, find_group, suggest_names, tab_candidate_names
 
 SAMPLE_CATALOG = """\
 ## Tab 1 — Getting started（入口：`/overview`）
@@ -149,6 +149,40 @@ class TestFolderMapIO(unittest.TestCase):
             path.write_text("{not valid json", encoding="utf-8")
             with self.assertRaises(SystemExit):
                 load_folder_map(path)
+
+
+class TestSuggestNames(unittest.TestCase):
+    def test_suggests_close_match_for_typo(self):
+        result = suggest_names("Guids", ["Guides", "Automation", "Plugins"])
+        self.assertIn("Guides", result)
+
+    def test_no_suggestion_when_nothing_close(self):
+        result = suggest_names("完全不相关的名字", ["Guides", "Automation"])
+        self.assertEqual(result, [])
+
+    def test_limits_to_n_results(self):
+        result = suggest_names("Guide", ["Guides", "Guidee", "Guided", "Guidex"], n=2)
+        self.assertLessEqual(len(result), 2)
+
+
+class TestTabCandidateNames(unittest.TestCase):
+    def test_includes_english_and_chinese_annotation(self):
+        tabs = parse_catalog(SAMPLE_CATALOG)
+        names = tab_candidate_names(tabs, {})
+        self.assertIn("Build with Claude Code", names)
+        self.assertIn("使用ClaudeCode构建", names)
+
+    def test_includes_folder_map_alias(self):
+        tabs = parse_catalog(SAMPLE_CATALOG)
+        folder_map = {"tabs": {"入门": {"en": "Getting started"}}}
+        names = tab_candidate_names(tabs, folder_map)
+        self.assertIn("入门", names)
+
+    def test_dedupes_when_catalog_annotation_matches_folder_map_alias(self):
+        tabs = parse_catalog(SAMPLE_CATALOG)
+        folder_map = {"tabs": {"使用ClaudeCode构建": {"en": "Build with Claude Code"}}}
+        names = tab_candidate_names(tabs, folder_map)
+        self.assertEqual(names.count("使用ClaudeCode构建"), 1)
 
 
 if __name__ == "__main__":
