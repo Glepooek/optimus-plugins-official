@@ -2,16 +2,16 @@
   {
     "id": 1,
     "prompt": "保存 使用ClaudeCode构建 / Guides 文档",
-    "expected": "解析分类路径，获取 Guides 分组下的页面列表，创建/定位有道文件夹，逐篇同步文档"
+    "expected": "前置状态：catalog-check-meta.json 不存在（从未核对过）。Step 0 检测到 never_checked，先询问用户是否要花时间重新核对站点导航（并说明预计耗时）；假设用户同意，走抓取→diff→（无变化则）继续 Step 1-5；若用户拒绝，record-check --result declined 后直接继续 Step 1-5。核心同步流程里未同步的页面应调用 finalize_page.py 完成 post_process/verify/verify_quality/上传/更新 folder-map.json/清理临时文件，而不是手动逐步执行"
   },
   {
     "id": 2,
-    "prompt": "同步 Build with Claude Code / Automation 到有道笔记",
-    "expected": "支持英文 Tab 名，解析 Automation 分组，执行完整同步流程"
+    "prompt": "保存 使用ClaudCode构建 / Guids 文档",
+    "expected": "Tab 名和分组名均故意拼错。resolve_category.py 的 resolve 命令报错退出，且报错信息里应包含基于 difflib 的模糊匹配候选名提示（如\"你是不是想找：使用ClaudeCode构建\"），不创建任何文件夹，立即停止"
   },
   {
     "id": 3,
-    "prompt": "保存不存在的Tab / 不存在的分组 文档",
-    "expected": "立即停止并报错，不创建任何文件夹，给出清晰的错误信息"
+    "prompt": "保存 使用ClaudeCode构建 / Automation 文档",
+    "expected": "前置状态：catalog-check-meta.json 显示 last_verified_epoch 是几小时前（fresh，未超 14 天阈值）。Step 0 的 check-freshness 应判定 fresh 并直接跳过，不询问用户、不触发任何抓取动作，直接进入 Step 1 走核心同步流程"
   }
 ]
