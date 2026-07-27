@@ -330,7 +330,7 @@
 ---
 [交互] 🔀 /workflows 工作流记录\n功能：查看 ultracode 动态工作流的运行记录和实时进度；在工作流 agent 详情视图中按 f 键可按状态过滤 agent 列表\n效果：了解多 agent 并行工作流各阶段的执行状态、耗时和结果；按 f 筛选运行中/完成/等待中的 agent\n例子：/workflows 在 ultracode 运行期间查看各子 agent 的执行进度；进入 agent 详情后按 f 只看失败的 agent
 ---
-[Skill] 🔍 /code-review --fix / --comment\n功能：/code-review 支持 --fix 自动应用修复，--comment 将审查意见发为 GitHub PR 内联评论\n效果：审查不止于建议，--fix 直接修代码，--comment 让团队在 PR 中看到详细意见\n例子：/code-review --comment 在提 PR 前将审查意见同步为 GitHub 内联评论
+[Skill] 🔍 /code-review 后台执行与 --fix / --comment\n功能：v2.1.218 起 /code-review 默认作为后台子代理运行，不再占用当前对话；支持 --fix 自动应用修复，--comment 将审查意见发为 GitHub PR 内联评论\n效果：审查耗时不阻塞你继续对话；--fix 直接修代码，--comment 让团队在 PR 中看到详细意见\n例子：/code-review --comment 在提 PR 前将审查意见同步为 GitHub 内联评论，同时在后台执行不阻塞主对话
 ---
 [交互] 📊 /usage 分类明细\n功能：/usage 按 skills/subagents/plugins/MCP 服务器分类展示 token 消耗明细\n效果：精准定位哪类操作消耗最多，优化高消耗工作流\n例子：/usage 查看本次会话中哪个 skill 或 MCP 服务器消耗了最多 token
 ---
@@ -410,7 +410,7 @@
 ---
 [配置] 🏖️ sandbox.allowAppleEvents 沙箱 Apple Events\n功能：settings.json 中设置 sandbox.allowAppleEvents: true 允许沙箱命令在 macOS 上发送 Apple Events\n效果：沙箱内的脚本可以与其他 macOS 应用交互（如自动化 AppleScript）\n例子：{"sandbox": {"allowAppleEvents": true}} 允许沙箱内执行 AppleScript 自动化
 ---
-[高级] 🪆 子代理嵌套生成\n功能：子代理现在可以生成自己的子代理，最多支持 5 层嵌套深度\n效果：复杂任务可以递归分解，每层子代理专注于子任务，实现更精细的分工\n例子：Agent 派生一个研究 agent，该 agent 再派生多个搜索 agent 并行收集信息
+[高级] 🪆 子代理嵌套生成\n功能：子代理可以生成自己的子代理，最多支持 5 层嵌套深度；v2.1.219 起默认嵌套深度从 1（不嵌套）提升为 3，可用 CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH 环境变量调整，设为 1 可禁用嵌套\n效果：复杂任务可以递归分解，每层子代理专注于子任务，默认即可获得多层委派能力，无需额外配置\n例子：Agent 派生一个研究 agent，该 agent 再派生多个搜索 agent 并行收集信息；CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1 禁用嵌套
 ---
 [交互] 🔍 /plugin 搜索栏\n功能：/plugin 浏览 marketplace 插件时新增搜索栏\n效果：快速过滤和查找需要的插件，无需滚动浏览完整列表\n例子：/plugin marketplace 后输入关键词搜索相关插件
 ---
@@ -491,4 +491,36 @@
 [交互] ❌ Ctrl+X 永久移除会话\n功能：在 claude agents 后台会话视图中按 Ctrl+X 永久移除一个已完成的会话（v2.1.206+）\n效果：配合 Ctrl+T 固定重要会话使用，清理已完成任务，删除后不会重新出现在列表中\n例子：完成的会话较多时按 Ctrl+X 逐个清理，保持 claude agents 列表整洁
 ---
 [排障] ⏸️ 权限模式 footer 徽章\n功能：处于 manual 权限模式时，终端底部 footer 显示灰色 ⏸ 徽章，明确标识当前激活的权限模式（v2.1.203+）\n效果：无需执行 /permissions 或 /status 即可一眼确认当前是否处于手动确认模式，避免误以为已切换了模式\n例子：终端底部出现灰色 ⏸ 时表示当前处于 manual 模式，所有操作仍需手动确认
+---
+[CLI] 🧠 Claude Opus 5 旗舰模型\n功能：v2.1.219 发布 Claude Opus 5（claude-opus-5），现为默认 Opus 模型，原生支持 1M 上下文，fast mode 定价 $10/$50 每 Mtok\n效果：处理超大代码库或长文档时无需分段，配合 /fast 获得更快响应速度\n例子：claude --model claude-opus-5 启动 Opus 5 会话；/fast 切换到快速模式
+---
+[配置] 🌐 sandbox.network.strictAllowlist 网络白名单\n功能：settings.json 中设置 sandbox.network.strictAllowlist，拒绝沙箱命令访问白名单外的主机，且不弹出确认提示\n效果：严格网络隔离场景中防止沙箱命令意外访问未授权的外部主机\n例子：{"sandbox": {"network": {"strictAllowlist": ["api.github.com"]}}} 只允许沙箱命令访问指定主机
+---
+[Hook] 📂 DirectoryAdded Hook\n功能：新增 DirectoryAdded hook 事件，在 /add-dir 或 SDK register_repo_root 控制请求注册新工作目录后触发\n效果：动态添加目录时自动执行初始化逻辑，如加载该目录专属配置\n例子：DirectoryAdded hook 在新增工作目录后自动检查其中的 CLAUDE.md 并提示加载
+---
+[Skill] 🔬 /deep-research 深度研究技能\n功能：/deep-research 提供多轮深度研究工作流；v2.1.218 起改为仅手动触发，Claude 不再自行启动\n效果：需要系统性调研时主动调用，避免 Claude 在普通对话中意外进入耗时的研究流程\n例子：/deep-research 调查这个开源库的所有已知安全漏洞
+---
+[Skill] 🌙 context: fork 后台默认运行\n功能：SKILL.md frontmatter 中声明 context: fork 的技能，v2.1.218 起默认在后台运行，可用 background: false 关闭\n效果：耗时较长的技能调用不再阻塞当前对话，随时可以继续其他工作\n例子：在 SKILL.md frontmatter 加入 context: fork 让该技能默认后台执行；需要同步等待时设置 background: false
+---
+[交互] 😀 emoji shortcode 自动补全\n功能：在输入框中输入 :heart: 可直接插入 ❤️，输入 :hea 会弹出候选提示；可用 emojiCompletionEnabled 设置关闭\n效果：无需切换输入法或复制粘贴即可快速插入常用表情符号\n例子：输入 :rocket: 自动替换为 🚀；{"emojiCompletionEnabled": false} 关闭该功能
+---
+[高级] 🚧 CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS 并发子代理上限\n功能：环境变量 CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS 控制同时运行的子代理数量上限，默认 20\n效果：防止一条消息意外扇出过多并发子代理耗尽资源或产生失控成本\n例子：CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS=50 claude 提高并发子代理上限用于大规模并行任务
+---
+[配置] 🗄️ sandbox.filesystem.disabled 跳过文件系统隔离\n功能：settings.json 中设置 sandbox.filesystem.disabled: true，跳过文件系统层面的沙箱隔离，同时保留网络出站控制\n效果：适合信任本地文件系统但仍需限制网络访问的场景，减少沙箱对文件操作的性能开销\n例子：{"sandbox": {"filesystem": {"disabled": true}}} 只保留网络隔离，不限制文件读写
+---
+[交互] 🍴 /fork 与 /subtask 职责拆分\n功能：v2.1.212 起 /fork 将当前对话复制为一个新的后台会话（在 claude agents 中有独立行），你可以继续在原会话工作；原来 /fork 派生的会话内子代理改名为 /subtask\n效果：需要"复制当前进度另起分支探索"时用 /fork；需要"在本会话内派生一个子任务"时用 /subtask，职责更清晰\n例子：/fork 复制当前会话到后台继续探索另一种方案；/subtask 在本会话内派生一个子代理处理独立任务
+---
+[CLI] 🔄 claude auto-mode reset 重置自动模式\n功能：claude auto-mode reset 将自动模式配置恢复为默认值，执行前会有确认提示，加 --yes 跳过确认\n效果：auto-mode 规则被改乱或调试出问题时，一键恢复到官方默认配置\n例子：claude auto-mode reset 恢复默认配置；claude auto-mode reset --yes 跳过确认直接重置
+---
+[高级] 🔍 CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION 搜索次数上限\n功能：环境变量 CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION 设置单个会话内 WebSearch 工具调用次数上限，默认 200\n效果：防止 WebSearch 陷入失控循环导致意外消耗大量请求配额\n例子：CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION=50 claude 降低单会话搜索次数上限
+---
+[高级] 🧮 CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION 子代理派生上限\n功能：环境变量 CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION 设置单个会话内可派生子代理总数上限，默认 200；/clear 会重置该计数\n效果：防止委派循环失控导致子代理数量爆炸；长会话可用 /clear 重新获得完整配额\n例子：CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION=500 claude 提高单会话子代理派生上限
+---
+[高级] ⏲️ CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS MCP自动转后台\n功能：MCP 工具调用运行超过阈值（默认 2 分钟）会自动转入后台，避免阻塞会话；用 CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS 调整阈值或设为极大值禁用\n效果：耗时较长的 MCP 工具调用不会卡住整个会话，可以继续其他操作\n例子：CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS=300000 claude 将阈值调整为 5 分钟
+---
+[CLI] 📡 --forward-subagent-text 转发子代理文本\n功能：--forward-subagent-text 或环境变量 CLAUDE_CODE_FORWARD_SUBAGENT_TEXT，在 stream-json 输出中包含子代理的文本和思考内容；v2.1.219 起深度2+的嵌套子代理也会显示，按其派生 Agent 的 tool_use id 归类\n效果：脚本化消费 stream-json 时可以完整观察子代理的思考过程，不只是最终结果\n例子：claude -p --output-format stream-json --forward-subagent-text "复杂任务" 完整捕获子代理输出
+---
+[配置] 📌 "always allow" 权限持久化到仓库根目录\n功能：v2.1.211 起，会话中选择"always allow"批准的权限规则保存到仓库根目录，而非当前 worktree\n效果：在某个 git worktree 中批准的权限，之后在其他 worktree 或重新打开会话时依然生效，无需重复批准\n例子：在 feature-x worktree 中批准某个命令后，切换到 feature-y worktree 时该批准依然有效
+---
+[配置] 🎯 dir/** 权限规则单段匹配语义\n功能：settings.json 权限规则和 hook if: 条件中，单段形式的 dir/** 只匹配 <cwd>/dir 目录本身，不再意外匹配树中任意深度的同名目录；需要任意深度匹配请显式写 **/dir/**\n效果：避免过宽的 allow 规则意外放行了项目中其他路径下同名子目录的写入操作，收紧了权限边界的精确度\n例子：Edit(src/**) 现在只匹配 <cwd>/src，若想匹配任意深度的 src 目录需写 Edit(**/src/**)
 ---
