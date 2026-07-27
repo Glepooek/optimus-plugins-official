@@ -184,8 +184,6 @@
 ---
 [工具] ✏️ TaskUpdate 更新任务\n功能：更新任务状态、描述、所有者、依赖关系\n效果：标记任务为进行中或已完成，设置依赖\n例子：TaskUpdate(taskId="1", status="completed") 标记完成
 ---
-[工具] 📤 TaskOutput 任务输出（已弃用）\n功能：获取后台任务的执行输出；该工具自 v2.1.83 起已弃用，官方推荐直接用 Read 工具打开任务返回结果里的输出文件路径\n效果：任务完成时会收到带有该路径的 task-notification，Read 该路径通常比调用 TaskOutput 更直接、更省 token\n例子：优先 Read 后台任务输出文件路径查看结果；兼容旧脚本时仍可用 TaskOutput(task_id="abc") 作为后备
----
 [工具] ⛔ TaskStop 停止任务\n功能：停止正在运行的后台任务\n效果：终止长时间运行的后台 agent 或命令\n例子：TaskStop(task_id="abc") 停止失控的后台任务
 ---
 [工具] 🚪 ExitPlanMode 退出计划模式\n功能：完成计划并提交用户审批\n效果：将编写好的计划提交审批，用户同意后执行\n例子：ExitPlanMode 提交实施计划等待用户批准
