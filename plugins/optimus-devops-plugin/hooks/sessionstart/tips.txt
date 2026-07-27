@@ -84,7 +84,7 @@
 ---
 [CLI] 🛂 --permission-mode 权限模式\n功能：启动时直接指定权限模式，选项：default/manual（默认询问，v2.1.200 起两者等价，UI 统一显示为 Manual）、acceptEdits（自动接受文件编辑）、plan（只规划不执行）、auto（智能自动模式）、dontAsk（不询问）、bypassPermissions（跳过所有检查）；覆盖 settings.json 的 defaultMode\n效果：可以按任务类型快速切换交互风格，而不用先改配置文件\n例子：claude --permission-mode manual 等同于 default 显式询问；claude --permission-mode plan 用计划模式审批改动；claude --permission-mode acceptEdits 自动接受所有文件修改
 ---
-[CLI] 🧠 --model 指定模型\n功能：为当前会话指定模型，支持别名（sonnet、opus、haiku、fable）或完整 model ID，覆盖 settings.json 的 model 设置和 ANTHROPIC_MODEL 环境变量\n效果：可以按任务复杂度切换模型，不必先改全局配置\n例子：claude --model fable 使用最新旗舰模型；claude --model claude-sonnet-4-6 指定精确版本；claude --model haiku 处理轻量任务节省费用
+[CLI] 🧠 --model 指定模型\n功能：为当前会话指定模型，支持别名（sonnet、opus、haiku、fable）或完整 model ID，覆盖 settings.json 的 model 设置和 ANTHROPIC_MODEL 环境变量\n效果：可以按任务复杂度切换模型，不必先改全局配置\n例子：claude --model fable 使用 Fable 5 旗舰模型；claude --model claude-haiku-4-5-20251001 指定精确版本；claude --model haiku 处理轻量任务节省费用
 ---
 [CLI] 🎭 --agent 指定代理\n功能：为当前会话指定 agent（覆盖 settings.json 的 agent 配置）；--agents 支持传入 JSON 动态定义临时 subagent，字段与 subagent frontmatter 相同，额外加 prompt 字段\n效果：临时切换到特定工作风格，或在命令行中即时定义专用代理\n例子：claude --agent code-reviewer 启动代码审查会话；claude --agents '{"reviewer":{"description":"专注审查","prompt":"你是代码审查专家"}}' 动态注入临时 agent
 ---
@@ -184,7 +184,7 @@
 ---
 [工具] ✏️ TaskUpdate 更新任务\n功能：更新任务状态、描述、所有者、依赖关系\n效果：标记任务为进行中或已完成，设置依赖\n例子：TaskUpdate(taskId="1", status="completed") 标记完成
 ---
-[工具] 📤 TaskOutput 任务输出\n功能：获取后台任务的执行输出\n效果：查看后台 agent 或 shell 任务的运行结果\n例子：TaskOutput(task_id="abc") 查看后台任务输出
+[工具] 📤 TaskOutput 任务输出（已弃用）\n功能：获取后台任务的执行输出；该工具自 v2.1.83 起已弃用，官方推荐直接用 Read 工具打开任务返回结果里的输出文件路径\n效果：任务完成时会收到带有该路径的 task-notification，Read 该路径通常比调用 TaskOutput 更直接、更省 token\n例子：优先 Read 后台任务输出文件路径查看结果；兼容旧脚本时仍可用 TaskOutput(task_id="abc") 作为后备
 ---
 [工具] ⛔ TaskStop 停止任务\n功能：停止正在运行的后台任务\n效果：终止长时间运行的后台 agent 或命令\n例子：TaskStop(task_id="abc") 停止失控的后台任务
 ---
@@ -302,7 +302,7 @@
 ---
 [MCP] ⚡ alwaysLoad MCP 工具\n功能：MCP 服务器工具可设置 alwaysLoad 选项，跳过延迟直接可用\n效果：常用工具无需等待懒加载，首次使用立即响应\n例子：在 MCP 配置中设置 alwaysLoad: true 让核心工具始终就绪
 ---
-[配置] 🧠 Fable 5 旗舰模型\n功能：Fable 5（Mythos 级）是 v2.1.170 引入的最新旗舰模型，能力超越此前所有可用模型；Opus 4.8 仍可用\n效果：最复杂的架构决策、长链推理、需要最高质量输出的场景首选 Fable 5\n例子：claude --model fable 启动 Fable 5 会话；配合 /effort xhigh 获得最深度推理
+[配置] 🧠 Fable 5 旗舰模型\n功能：Fable 5（Mythos 级）是 v2.1.170 引入的 Mythos 级顶尖模型，专为最复杂的推理任务设计；v2.1.219 起 Claude Opus 5 发布并成为默认 Opus 模型，二者同属 Claude 5 系列旗舰\n效果：最复杂的架构决策、长链推理等高难度场景可在 Fable 5 与 Opus 5 之间按实际效果选用\n例子：claude --model fable 启动 Fable 5 会话；claude --model claude-opus-5 启动 Opus 5 会话；配合 /effort xhigh 获得最深度推理
 ---
 [交互] 📝 vim 可视化模式\n功能：全屏模式下支持 vim 可视化选择（v 字符选择，V 行选择）\n效果：在 TUI 模式中像 vim 一样精确选择和复制文本内容\n例子：/tui 后按 v 进入字符选择，V 进入行选择，复制多行输出
 ---
