@@ -8,6 +8,15 @@
 
 各插件职责见 `.claude-plugin/marketplace.json` 的 `description` 字段。
 
+**两层 skill，不要混淆：**
+
+| 位置 | 性质 | 调用方式 |
+|---|---|---|
+| `plugins/*/skills/` | 对外发布的插件产物 | `/plugin-name:skill-name` |
+| `.claude/skills/` | 仅本仓库维护自用，不发布 | `/skill-name`（无前缀） |
+
+`.claude/skills/` 的 skill 需在 `.kiro/skills/` 保持同名符号链接镜像（`commit-cc-plugin` 会自动补齐）。
+
 ---
 
 ## 重要约束
@@ -31,6 +40,12 @@
 ## 本地测试
 
 见 `test-locally` skill（`/test-locally` 触发）。
+
+Python 脚本单元测试（**本机无 `pytest`，只能用 `unittest`**）：
+
+```bash
+python -m unittest discover -s .claude/skills/sync-cc-docs-to-youdaonote/scripts -p "test_*.py"
+```
 
 ---
 
@@ -65,3 +80,6 @@ Skill frontmatter / CHANGELOG 规范见 `.claude/rules/skill-authoring.md`（编
 |---|---|
 | `.claude-plugin/marketplace.json` | 插件仓库元数据和版本号 |
 | `plugins/optimus-frontend-plugin/skills/optimus-fe-dev/ARCHITECTURE.md` | 复合 skill 模式参考实现 |
+| `.claude/rules/skill-authoring.md` | SKILL.md frontmatter / CHANGELOG 规范（按路径自动加载） |
+
+**已被 gitignore 的目录（有意排除，非缺失）：** `.claude/skills/darwin-skill/`（评估产物）、`.remember/`、`.codegraph/`

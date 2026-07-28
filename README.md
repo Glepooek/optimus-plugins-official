@@ -1,6 +1,6 @@
 # Claude Code 插件仓库
 
-[![Version](https://img.shields.io/badge/version-4.1.12-blue.svg)](https://github.com/Glepooek/optimus-plugins-official)
+[![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FGlepooek%2Foptimus-plugins-official%2Fmaster%2F.claude-plugin%2Fmarketplace.json&query=%24.version&label=version&color=blue)](https://github.com/Glepooek/optimus-plugins-official)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## 📦 插件列表
