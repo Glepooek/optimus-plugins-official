@@ -203,7 +203,8 @@ Copy-Item -Recurse -Force .\plugins\optimus-devops-plugin\hooks\notification $en
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/sessionstart/show-tip.sh"
+            "command": "bash ~/.claude/hooks/sessionstart/show-tip.sh",
+            "async": true
           }
         ]
       }
