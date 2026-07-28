@@ -230,7 +230,7 @@
 ---
 [Skill] 🎨 frontend-design 前端设计\n功能：创建高质量、独特的前端界面\n效果：根据需求设计并实现生产级 UI\n例子：frontend-design 设计新的用户界面
 ---
-[Skill] 🧹 simplify 简化代码\n功能：审查并简化最近修改的代码\n效果：提高代码可读性、一致性、可维护性\n例子：simplify 重构后清理和简化代码
+[Skill] 🧹 /simplify 清理式审查并应用修复\n功能：v2.1.154 起 /simplify 只做 cleanup 类审查（复用、简化、效率、抽象层级）并直接把修改应用到工作区，不再排查 bug——找正确性缺陷请改用 /code-review\n效果：重构或改完功能后一键收敛代码质量，改动直接落到工作区无需手动誊抄；与 /code-review 职责明确分离，各跑各的互不干扰\n例子：/simplify 清理最近改动并应用修复；找 bug 改用 /code-review high
 ---
 [Skill] 🔌 claude-api 构建 API 应用\n功能：构建、调试、优化 Claude API 应用\n效果：使用最佳实践开发 Claude API 应用\n例子：claude-api 开发使用 Claude 的应用
 ---
@@ -370,7 +370,7 @@
 ---
 [CLI] 🧪 --betas beta 功能\n功能：claude --betas <header名> 在 API 请求中加入 beta header，仅适用于 API key 用户；可开启实验性功能如 interleaved-thinking\n效果：抢先体验尚未正式发布的模型能力\n例子：claude --betas interleaved-thinking 开启交叉思考模式
 ---
-[CLI] 🌐 --remote 创建云端会话\n功能：claude --remote "任务描述" 在 claude.ai 上创建新的 web 会话；--teleport 将云端 web 会话迁移回本地终端继续\n效果：在浏览器端开始任务，之后用 --teleport 拉回终端处理，或反向将本地任务推到云端协作\n例子：claude --remote "调查这个内存泄漏问题"；claude --teleport 将 web 会话拉回本地终端
+[CLI] 🌐 --cloud / --remote 创建云端会话\n功能：claude --cloud "任务描述"（--remote 为等价别名）在 claude.ai 上创建新的 web 会话；--teleport 将云端 web 会话迁移回本地终端继续；三者均为隐藏 flag，不出现在 claude --help 输出中，且需要交互式终端\n效果：在浏览器端开始任务，之后用 --teleport 拉回终端处理，或反向将本地任务推到云端协作\n例子：claude --cloud "调查这个内存泄漏问题"；claude --teleport 将 web 会话拉回本地终端
 ---
 [CLI] 🖥️ --remote-control 远程控制\n功能：claude --remote-control 启动支持远程控制的交互会话，可从 claude.ai 或 Claude App 控制本地 Claude Code；--remote-control-session-name-prefix 设置自动生成名称的前缀\n效果：手机/平板/另一台电脑通过 Claude App 远程指挥本地终端的 Claude Code 执行任务\n例子：claude --remote-control "My Project"；claude remote-control --remote-control-session-name-prefix dev-box 生成 dev-box-xxx 格式名称
 ---
