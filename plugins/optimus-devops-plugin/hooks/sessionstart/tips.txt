@@ -522,3 +522,15 @@
 ---
 [配置] 🎯 dir/** 权限规则单段匹配语义\n功能：settings.json 权限规则和 hook if: 条件中，单段形式的 dir/** 只匹配 <cwd>/dir 目录本身，不再意外匹配树中任意深度的同名目录；需要任意深度匹配请显式写 **/dir/**\n效果：避免过宽的 allow 规则意外放行了项目中其他路径下同名子目录的写入操作，收紧了权限边界的精确度\n例子：Edit(src/**) 现在只匹配 <cwd>/src，若想匹配任意深度的 src 目录需写 Edit(**/src/**)
 ---
+[配置] 📏 CLAUDE_CODE_OTEL_CONTENT_MAX_LENGTH 遥测内容截断上限\n功能：v2.1.214 起可用环境变量 CLAUDE_CODE_OTEL_CONTENT_MAX_LENGTH 调整 OpenTelemetry 内容属性的截断限制（默认 60 KB），与 OTEL_LOG_USER_PROMPTS / OTEL_LOG_ASSISTANT_RESPONSES 配合决定实际落盘的内容量\n效果：长 prompt 或长响应不再被默认上限静默截断，企业可观测性场景可完整保留对话内容用于审计\n例子：CLAUDE_CODE_OTEL_CONTENT_MAX_LENGTH=200000 claude 将遥测内容上限提升到约 200 KB
+---
+[配置] 🔗 FORCE_HYPERLINK 强制终端超链接\n功能：v2.1.217 起 footer 的 PR 徽章即使在无法探测终端能力的环境（ssh / tmux）下也渲染为可点击超链接；设 FORCE_HYPERLINK=0 可关闭该行为\n效果：远程会话里也能直接点开 PR 链接，无需复制粘贴；终端不支持转义序列而显示乱码时可用 =0 退回纯文本\n例子：FORCE_HYPERLINK=0 claude 在会输出乱码的老终端中关闭超链接渲染
+---
+[配置] 🧭 subagentStatusLine 子代理状态行\n功能：settings.json 的 subagentStatusLine 自定义子代理行的展示内容；v2.1.214 起 payload 中新增 reasoning effort 字段，可与 model 一起渲染\n效果：并行跑多个子代理时，一眼看清每个代理用的是哪个模型、哪档推理强度，便于定位跑偏或过慢的代理\n例子：settings.json 配置 subagentStatusLine 后，代理行可显示 "opus-5 · effort:high"
+---
+[交互] ✋ /verify 与 /code-review 改为手动调用\n功能：v2.1.215 起 Claude 不再自行运行 /verify 和 /code-review，需要时由你显式输入；v2.1.218 起 /code-review 以后台子代理方式运行，评审过程不再占用主对话上下文\n效果：避免模型在你没要求时消耗额度做评审；需要评审时主动触发，结果不挤占当前会话上下文\n例子：改完代码后输入 /code-review 手动发起评审，或用 /verify 校验完成度
+---
+[排障] 🐳 docker 守护进程重定向标志权限提示\n功能：v2.1.214 起 docker 命令（含 Podman 的 docker 兼容 shim）若带有守护进程重定向标志 --url、--connection、--identity 或 Podman remote 模式，会触发权限提示，此前这类命令无提示直接执行\n效果：防止命令被静默重定向到非预期的远程 Docker 守护进程；遇到此前不提示的 docker 命令突然要授权时，先确认标志指向的是否为可信端点\n例子：claude 中执行 docker --url tcp://remote:2375 ps 会先弹出权限确认
+---
+[MCP] 🚨 mcp_server_errors MCP 配置校验错误上报\n功能：v2.1.219 起 headless 的 stream-json init 事件新增 mcp_server_errors 字段，列出因配置校验失败被跳过的 --mcp-config 条目；终端会话则在启动时打印警告；同时 claude mcp list 和 /mcp 会显示连接失败的 HTTP 状态码与错误文本，配置值含首尾隐藏空格时也会告警\n效果：MCP server 静默不加载的问题不再需要靠猜，脚本化场景可从 init 事件直接读到被跳过的原因\n例子：claude -p --output-format stream-json --mcp-config ./mcp.json "任务" 从 init 事件的 mcp_server_errors 读取被跳过的 server
+---
