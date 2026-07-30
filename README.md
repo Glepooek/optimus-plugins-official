@@ -7,7 +7,7 @@
 
 | 插件 | 职责 |
 |---|---|
-| [optimus-frontend-plugin](plugins/optimus-frontend-plugin) | React/Vue/WPF 前端开发、UI 设计规范；内置唯一的复合 skill `optimus-fe-dev`（5 阶段前端开发工作流） |
+| [optimus-frontend-plugin](plugins/optimus-frontend-plugin) | React/Vue/WPF 前端开发、UI 设计规范、SVG `<path d>` 提取并生成 WPF `Path.Data`/XAML；有效样式不同时输出多个 WPF `Path` 元素，以保留支持的 Fill/Stroke 区分；内置唯一的复合 skill `optimus-fe-dev`（5 阶段前端开发工作流） |
 | [optimus-backend-plugin](plugins/optimus-backend-plugin) | API 开发、后端架构、数据库设计 |
 | [optimus-qa-plugin](plugins/optimus-qa-plugin) | 测试用例、JMeter、UI 自动化、飞书测试项目集成 |
 | [optimus-prd-plugin](plugins/optimus-prd-plugin) | PRD 文档创建、审查、需求管理 |
@@ -60,6 +60,9 @@ git clone https://github.com/Glepooek/optimus-plugins-official ~/.claude/plugins
 
 # 调用 WPF 性能优化
 /optimus-frontend-plugin:wpf-xaml-performance
+
+# 从 SVG 提取并合并路径，转换为 WPF Path.Data
+/optimus-frontend-plugin:svg-to-xaml-path
 
 # 调用其他 skills
 /optimus-frontend-plugin:optimus-design-ui
