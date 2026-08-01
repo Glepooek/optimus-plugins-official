@@ -2,7 +2,7 @@
 name: sync-cc-tips
 description: 从 Claude Code 最新 changelog 自动同步 tips.txt：新增未覆盖条目、修正过时内容、删除已废弃功能，同步所有文档数字，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 metadata:
-  version: "1.1.2"
+  version: "1.1.3"
   author: desktop client team
 compatibility: 需要网络访问 raw.githubusercontent.com 拉取 changelog；流程末尾调用 commit-cc-plugin skill 完成提交推送。
 allowed-tools: Bash WebFetch Read Edit Task
@@ -158,7 +158,17 @@ Edit: plugins/optimus-devops-plugin/hooks/sessionstart/tips.txt
 
 ## 第五步 — 同步文档数字
 
-统计写入后 tips.txt 的实际条目总数：**以独立 `---` 分隔符的数量加 1 为准**（主计数方式）；若结果与非空内容块数量不一致，以 `---` 计数为准，并在摘要中标注差异。
+统计写入后 tips.txt 的实际条目总数：**以 `[分类]` 开头的行数为准**（每条 tip 占一行，主计数方式），**不要在任何计数上加 1**。
+
+本文件采用「每条内容后均跟一行 `---`」的追加式格式，末条后也有分隔符，因此 `---` 行数与条目数**相等**——它只用于交叉验证，不能作为条目数再加 1。
+
+```bash
+f=plugins/optimus-devops-plugin/hooks/sessionstart/tips.txt
+grep -c '^\[' "$f"      # 条目数（主计数）
+grep -c '^---$' "$f"    # 分隔符数（应与上面完全相等）
+```
+
+两数不等说明格式有破损（某条漏了分隔符，或删除条目后残留分隔符），此时以 `^\[` 行数为准，并回到第四步修复分隔符后重新计数。另可用「旧条目数 + 新增 − 删除」做第三重校验，三者应一致。
 
 批量更新以下 5 处数字，将旧数字替换为新总数：
 
@@ -176,9 +186,9 @@ Edit: plugins/optimus-devops-plugin/hooks/sessionstart/tips.txt
 |---|---|---|
 | 某处文件不存在（如 README.md 路径错误） | 跳过该处，继续更新其余文件 | 在摘要中列出"未同步"文件，不阻断提交 |
 | 数字 pattern 在文件中找不到 | 搜索邻近上下文确认格式是否变更 | 跳过并在摘要注明，不修改该文件 |
-| 更新后数字不一致（多处数字不同） | 以 tips.txt 实际 `---` 计数为准 | 报告具体不一致位置 |
+| 更新后数字不一致（多处数字不同） | 以 tips.txt 实际 `^\[` 行数为准 | 报告具体不一致位置 |
 
-> 🔴 **CHECKPOINT**：若命中上表"数字不一致"分支，报告具体差异位置后**必须停止**，等待用户确认（y 按 `---` 计数结果继续提交 / n 取消本次提交）——不得在未确认的情况下直接进入第六步。
+> 🔴 **CHECKPOINT**：若命中上表"数字不一致"分支，报告具体差异位置后**必须停止**，等待用户确认（y 按 `^\[` 行数结果继续提交 / n 取消本次提交）——不得在未确认的情况下直接进入第六步。
 
 ## 第六步 — 展示摘要并提交
 
@@ -223,7 +233,7 @@ Edit: plugins/optimus-devops-plugin/hooks/sessionstart/tips.txt
 | 0变化时仍然提交 | 产生无意义 commit，污染 git 历史 | 触发「🚦 零变更总闸」直接终止，不进入 Step 4-6，不调用 commit-cc-plugin |
 | 修改 show-tip.sh 脚本逻辑 | 脚本逻辑不在本 skill 职责范围内 | 只修改 tips.txt 数据文件 |
 | 删除旧功能条目，但该功能仍可用（只是有了替代方案） | 用户可能仍在用旧方式 | 仅在 changelog 明确标注 Removed/Deprecated 时删除 |
-| 用估算数字代替实际计数更新文档 | 估算不准会导致文档与实际不符 | 必须先 Read tips.txt 计算实际 `---` 数量再更新 |
+| 用估算数字代替实际计数更新文档 | 估算不准会导致文档与实际不符 | 必须先统计实际 `^\[` 行数再更新，且不加 1 |
 | 抓取失败后继续执行后续步骤 | 基于空数据的操作可能误删现有条目 | 第一步失败 → 立即停止，不执行任何写入操作 |
 
 > `.claude/` 下的 skill 文件本身不触发版本号升级（遵循 CLAUDE.md 规范）
