@@ -2,7 +2,7 @@
 name: sync-cc-tips
 description: 从 Claude Code 最新 changelog 自动同步 tips.txt：新增未覆盖条目、修正过时内容、删除已废弃功能，同步所有文档数字，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 metadata:
-  version: "1.1.3"
+  version: "1.1.4"
   author: desktop client team
 compatibility: 需要网络访问 raw.githubusercontent.com 拉取 changelog；流程末尾调用 commit-cc-plugin skill 完成提交推送。
 allowed-tools: Bash WebFetch Read Edit Task
@@ -170,23 +170,48 @@ grep -c '^---$' "$f"    # 分隔符数（应与上面完全相等）
 
 两数不等说明格式有破损（某条漏了分隔符，或删除条目后残留分隔符），此时以 `^\[` 行数为准，并回到第四步修复分隔符后重新计数。另可用「旧条目数 + 新增 − 删除」做第三重校验，三者应一致。
 
-批量更新以下 5 处数字，将旧数字替换为新总数：
+**只有 2 处含条目总数**，逐一将旧数字替换为新总数：
 
-| 文件 | 位置 |
-|---|---|
-| `.claude-plugin/marketplace.json` | 顶层 `description` 中的 `N条技巧智能轮播` |
-| `.claude-plugin/marketplace.json` | `optimus-devops-plugin` 的 `description` |
-| `README.md` | 第 6 行简介 |
-| `README.md` | SessionStart Hook 说明行 |
-| `plugins/optimus-devops-plugin/hooks/README.md` | `tips.txt 包含 N 条技巧` |
+| 文件 | 位置 | 形式 |
+|---|---|---|
+| `.claude-plugin/marketplace.json` | `optimus-devops-plugin` 的 `description` | `SessionStart（N条技巧智能轮播）` |
+| `plugins/optimus-devops-plugin/hooks/README.md` | 「技巧分类」小节首行 | `tips.txt 包含 N 条技巧，涵盖以下分类：` |
+
+先用一条命令定位全部候选，再按下表甄别，避免误改：
+
+```bash
+# Bash
+grep -rn '条技巧' .claude-plugin/marketplace.json README.md plugins/optimus-devops-plugin/hooks/README.md
+```
+
+```powershell
+# PowerShell（本机默认 shell，无 grep）——分文件输出以区分两个同名 README.md
+foreach ($f in @('.claude-plugin/marketplace.json','README.md','plugins/optimus-devops-plugin/hooks/README.md')) {
+  Write-Output "=== $f ==="
+  Select-String -Path $f -Pattern '条技巧' -Encoding utf8 | ForEach-Object { "  L{0}: {1}" -f $_.LineNumber, $_.Line.Trim() }
+}
+```
+
+> PowerShell 的 `Select-String` 在多文件模式下 `Filename` 只取 basename，`README.md` 与 `hooks/README.md` 会混淆，务必按上面的写法逐文件循环输出。
+
+| 命中位置 | 是否更新 | 原因 |
+|---|---|---|
+| `marketplace.json` devops `description` | ✅ 更新 | 条目总数 |
+| `hooks/README.md`「tips.txt 包含 N 条技巧」 | ✅ 更新 | 条目总数 |
+| `hooks/README.md`「默认每次显示 2 条技巧」 | ❌ 不动 | 单次展示条数，与总数无关 |
+| `hooks/README.md`「每条技巧使用 `---` 分隔」 | ❌ 不动 | 格式说明，不含数字 |
+| `README.md` 插件列表行「SessionStart（技巧轮播）」 | ❌ 不动 | 有意不含数字，避免多处同步失准 |
+| `marketplace.json` 顶层 `description` | ❌ 不动 | 仅工具链概述，从不含条目数 |
+
+> 若某一天 `README.md` 或顶层 `description` 被改成含具体数字的表述，需同步扩充上表——但**不要主动往这些位置添加数字**，同步点越少越不易失准。
 
 同时将 `.claude-plugin/marketplace.json` 的 `version` 做 **Patch 升级**（`x.x.X`），因为这是已有内容的更新/修复，符合版本管理规范。
 
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
-| 某处文件不存在（如 README.md 路径错误） | 跳过该处，继续更新其余文件 | 在摘要中列出"未同步"文件，不阻断提交 |
-| 数字 pattern 在文件中找不到 | 搜索邻近上下文确认格式是否变更 | 跳过并在摘要注明，不修改该文件 |
-| 更新后数字不一致（多处数字不同） | 以 tips.txt 实际 `^\[` 行数为准 | 报告具体不一致位置 |
+| 某处文件不存在（如路径变更） | 跳过该处，继续更新其余文件 | 在摘要中列出"未同步"文件，不阻断提交 |
+| 数字 pattern 在两处应更新位置中找不到 | 用上面的 `grep -rn '条技巧'` 确认格式是否变更 | 跳过并在摘要注明，不修改该文件 |
+| 两处数字更新后彼此不一致 | 以 tips.txt 实际 `^\[` 行数为准 | 报告具体不一致位置 |
 
 > 🔴 **CHECKPOINT**：若命中上表"数字不一致"分支，报告具体差异位置后**必须停止**，等待用户确认（y 按 `^\[` 行数结果继续提交 / n 取消本次提交）——不得在未确认的情况下直接进入第六步。
 
@@ -210,7 +235,7 @@ grep -c '^---$' "$f"    # 分隔符数（应与上面完全相等）
   · ...
 
 📊 条目总数：{旧数} → {新数}
-📄 已同步：marketplace.json · README.md · hooks/README.md
+📄 已同步：marketplace.json · hooks/README.md
 🔖 版本：{旧版本} → {新版本}（Patch）
 
 ---

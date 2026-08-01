@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.4] - 2026-08-01
+
+### Fixed
+- 第五步「批量更新 5 处数字」表格校准为实际的 **2 处**：此前列出的 `marketplace.json` 顶层 `description`、`README.md` 第 6 行、`README.md` SessionStart 行三处均不含条目数（README.md 第 6 行实为 `## 📦 插件列表`，SessionStart 行写的是无数字的「技巧轮播」），每轮执行都会空跑到「pattern 找不到」兜底分支
+- 新增甄别表，显式标注 `hooks/README.md` 中「默认每次显示 2 条技巧」（单次展示条数）和「每条技巧使用 `---` 分隔」（格式说明）两处**不得误改**
+- 补充定位命令，先列全部候选再按表甄别；同时给出 Bash 与 PowerShell 两种写法（本机默认 shell 为 PowerShell，无 `grep`），并提示 `Select-String` 多文件模式下 `Filename` 只取 basename、会混淆两个同名 `README.md`
+- 第六步摘要模板的「已同步」行移除不参与同步的 `README.md`
+- fallback 表三个分支同步改为两处口径
+
+### Notes
+- 明确「不要主动往 README.md 等位置添加条目数」——同步点越少越不易失准
+
 ## [1.1.3] - 2026-08-01
 
 ### Fixed
