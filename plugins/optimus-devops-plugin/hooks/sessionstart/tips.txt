@@ -44,7 +44,7 @@
 ---
 [交互] 📊 /hooks 管理界面\n功能：打开 hooks 管理界面查看和配置所有 hooks\n效果：查看、启用或调整当前 hook 配置的入口\n例子：/hooks 查看当前激活的 SessionStart 和 PostToolUse hooks
 ---
-[配置] 🛡️ permissions.allow\n功能：在 settings.json 中配置自动允许的命令模式，语法：工具名(glob模式)，用空格分隔命令和模式\n效果：匹配的命令无需确认，提高开发效率\n例子：allow: ["Bash(npm *)"] 自动允许所有 npm 命令；allow: ["Bash(git log *)", "Read"] 允许 git 查询和文件读取
+[配置] 🛡️ permissions.allow\n功能：在 settings.json 中配置自动允许的命令模式，语法：工具名(glob模式)，用空格分隔命令和模式；注意 Write(路径)、NotebookEdit(路径)、Glob(路径) 不是有效规则，v2.1.210 起启动时会告警，写入类请统一用 Edit(路径)、读取类用 Read(路径)\n效果：匹配的命令无需确认，提高开发效率；避免写了 Write(src/**) 却始终不生效还找不到原因\n例子：allow: ["Bash(npm *)"] 自动允许所有 npm 命令；allow: ["Bash(git log *)", "Read"] 允许 git 查询和文件读取；想放行 src 下的写入应写 allow: ["Edit(src/**)"] 而非 Write(src/**)
 ---
 [配置] 🚫 permissions.deny\n功能：配置明确禁止的危险操作，语法与 allow 相同；裸工具名（如 "Edit"）从模型上下文完全移除；"*" 拒绝所有工具\n效果：防止误操作导致数据丢失或系统损坏\n例子：deny: ["Bash(rm -rf *)"] 阻止递归删除；deny: ["Bash(git push --force *)"] 禁止强制推送
 ---
@@ -533,4 +533,8 @@
 [排障] 🐳 docker 守护进程重定向标志权限提示\n功能：v2.1.214 起 docker 命令（含 Podman 的 docker 兼容 shim）若带有守护进程重定向标志 --url、--connection、--identity 或 Podman remote 模式，会触发权限提示，此前这类命令无提示直接执行\n效果：防止命令被静默重定向到非预期的远程 Docker 守护进程；遇到此前不提示的 docker 命令突然要授权时，先确认标志指向的是否为可信端点\n例子：claude 中执行 docker --url tcp://remote:2375 ps 会先弹出权限确认
 ---
 [MCP] 🚨 mcp_server_errors MCP 配置校验错误上报\n功能：v2.1.219 起 headless 的 stream-json init 事件新增 mcp_server_errors 字段，列出因配置校验失败被跳过的 --mcp-config 条目；终端会话则在启动时打印警告；同时 claude mcp list 和 /mcp 会显示连接失败的 HTTP 状态码与错误文本，配置值含首尾隐藏空格时也会告警\n效果：MCP server 静默不加载的问题不再需要靠猜，脚本化场景可从 init 事件直接读到被跳过的原因\n例子：claude -p --output-format stream-json --mcp-config ./mcp.json "任务" 从 init 事件的 mcp_server_errors 读取被跳过的 server
+---
+[Skill] 🔤 frontmatter 布尔值写法兼容\n功能：v2.1.218 起 SKILL.md 和 plugin frontmatter 的布尔字段除 true/false 外，还接受 yes/no、on/off、1/0，且大小写不敏感；与已有的键名三种命名格式（kebab-case / snake_case / camelCase）兼容互为补充\n效果：键名和取值两侧都不再需要死记格式，从其他配置体系（YAML、Ansible 等）迁移 skill 时可直接沿用习惯写法，减少 frontmatter 解析失败\n例子：background: no 等价于 background: false（关闭 context: fork 的后台执行）；default-enabled: YES 等价于 default_enabled: true
+---
+[Hook] 🍴 SessionStart source="fork"\n功能：v2.1.214 起会话由 /fork 派生时，SessionStart hook 收到的 source 字段为 "fork"，此前一律上报为 "resume"；source 其余取值为 startup、resume、clear、compact\n效果：hook 脚本可区分"派生的副本会话"与"恢复的原会话"，避免 fork 出的后台会话重复执行只该跑一次的初始化（如发通知、写日志、启动服务）\n例子：SessionStart hook 中判断 [ "$(jq -r .source)" = "fork" ] 时跳过欢迎语和环境初始化，只有 startup 才完整执行
 ---
