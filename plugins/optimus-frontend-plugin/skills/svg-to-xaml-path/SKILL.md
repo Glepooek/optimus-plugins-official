@@ -14,7 +14,7 @@ allowed-tools: Read Bash PowerShell
 
 ## 运行脚本
 
-命令中的 `$SkillDir` 必须替换为**本 skill 加载时给出的 base directory**（形如 `…/plugins/cache/optimus-plugins-official/optimus-frontend-plugin/<hash>/skills/svg-to-xaml-path`）。**始终使用该绝对路径**——本 skill 通常从插件缓存加载，而 cwd 是用户的项目目录，与 skill 目录无关；仓库相对路径只在 cwd 恰好是本仓库时才碰巧可用。
+命令中的 `$SkillDir` 必须替换为**本 skill 加载时给出的 base directory**。**始终用该绝对路径**——本 skill 通常从插件缓存加载，cwd 是用户的项目目录，与 skill 目录无关。
 
 ```powershell
 $SkillDir = "<本 skill 的 base directory>"
@@ -22,10 +22,10 @@ $SkillDir = "<本 skill 的 base directory>"
 # 本地 .svg 文件路径
 python "$SkillDir\scripts\merge_svg_paths.py" --file "C:\icons\icon.svg" --format xaml
 
-# 用户粘贴的完整 <svg>…</svg> 标记；不要把片段补成臆测的图形
+# 用户粘贴的完整标记；不要把片段补成臆测的图形
 python "$SkillDir\scripts\merge_svg_paths.py" --svg '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0 L1 0 Z" /></svg>' --format data
 
-# 已在管道中的完整标记
+# 已在管道中
 Get-Content -Raw "C:\icons\icon.svg" | python "$SkillDir\scripts\merge_svg_paths.py" --stdin --format data
 ```
 
@@ -73,9 +73,16 @@ SVG 的 `fill` 默认值就是黑，脚本自认正常。**转换前必须打开
 python "$SkillDir\scripts\merge_svg_paths.py" --file "$SkillDir\assets\sample-icon.svg" --format xaml
 ```
 
+stderr：
+
 ```
-warning: class attributes were encountered; CSS classes were not converted.   ← stderr
-<Path Fill="#B8C6E0" Data="F1 M3 3h18v18H3V3zm2 2v14h14V5H5z M7 11h10v2H7v-2z" />   ← stdout
+warning: class attributes were encountered; CSS classes were not converted.
+```
+
+stdout（这一行才是产物）：
+
+```xml
+<Path Fill="#B8C6E0" Data="F1 M3 3h18v18H3V3zm2 2v14h14V5H5z M7 11h10v2H7v-2z" />
 ```
 
 含 transform 时的形态（`<g transform="translate(4 4) rotate(45)">` + `<rect rx="1">`），注意坐标**未被烘焙**：
@@ -100,41 +107,28 @@ warning: class attributes were encountered; CSS classes were not converted.   �
 | `transform`：`translate`/`scale`/`rotate`/`skewX`/`skewY`/`matrix`（含继承与函数列表） | 合成为单一仿射矩阵，输出 `MatrixTransform` |
 | `style` 中的 `fill`/`stroke`/`fill-rule`/`display`/`visibility`/`transform` | 转换，且优先级高于同名 presentation attribute |
 | `style` 中的其余声明 | 忽略，并按名称告警 |
-| `class` | 不解析，出现即告警 |
-| `<style>` 元素 / 外部样式表 | 不解析——靠它上色即落入上文第二个静默陷阱 |
-| `<defs>`/`<clipPath>`/`<mask>`/`<symbol>`/`<marker>`/`<pattern>` 子树 | 整棵跳过（SVG 本身也不直接渲染） |
-| `display:none` 子树、有效 `visibility:hidden` 的路径 | 跳过 |
+| `class`（告警）、`<style>` 元素 / 外部样式表（无告警） | 均不解析——靠它们上色即落入静默陷阱二 |
+| `<defs>`/`<clipPath>`/`<mask>`/`<symbol>`/`<marker>`/`<pattern>` 子树、`display:none` 子树、`visibility:hidden` 的路径 | 跳过（前者 SVG 本身也不直接渲染） |
 | `text`/`tspan`/`textPath`/`image`/`use`/`foreignObject` | 跳过，并**按名称告警** |
-| 渐变 | 被 `fill`/`stroke` 引用时 **exit 2 硬失败**；仅定义在 `<defs>` 未被引用时随 `<defs>` 跳过 |
 | `viewBox`、stroke width、opacity、clip/mask/filter | **不转换，无告警** |
 
-告警原文（须如实转述，不要改写）：
-
-```
-warning: class attributes were encountered; CSS classes were not converted.
-warning: multiple fill/stroke/fill-rule/transform combinations found; emitting separate Path elements.
-warning: multiple fill rules found; data output uses the first path's rule.
-warning: unconverted style declarations were ignored: <属性名>
-warning: these elements have no exact path equivalent and were skipped: <元素名>
-```
+**全部告警与错误的原文见 [`references/messages.md`](references/messages.md)。** 转述给用户时必须完整照抄，**不得截断结尾的处置建议**——那部分正是用户需要的行动指引。该文件同时列出了「既不告警也不报错」的静默行为清单。
 
 ## 错误与告警
 
 脚本失败时 exit 2 且**不产生任何 stdout**，必须如实转达，不得声称转换成功：
 
-| 情形 | 原因 |
+| 情形 | 原因与处置 |
 |---|---|
-| `currentColor` / `url(#grad)` / `hsl()` 作为 `fill`/`stroke` | WPF 无法解析。改用具体 hex/颜色关键字，或在 WPF 侧绑定画刷（`{TemplateBinding Foreground}`、`DynamicResource` 等）——`currentColor` 的语义正是「跟随前景色」。**被引用的渐变在此硬失败，不是静默丢弃** |
+| `currentColor` | WPF 无此概念。在 WPF 侧绑定画刷（`{TemplateBinding Foreground}`、`DynamicResource`）——其语义正是「跟随前景色」 |
+| `url(#grad)` | **被引用的渐变在此硬失败，不是静默丢弃**（未被引用的 `<defs>` 渐变才随 `<defs>` 静默跳过）。展平为纯色，或照 SVG 的 stop 手工建 `LinearGradientBrush` |
+| `hsl()` / 其他非 hex 非关键字 | 改用 hex。注意关键字**不做校验**，SVG 独有的关键字会透传并在 XAML 解析时才失败 |
 | `--format data` 遇到 transform | 路径数据无法承载变换；改用 `--format xaml`，或先在源 SVG 展平 |
 | 长度写作百分比（如 `width="50%"`） | 百分比需要 viewport，本脚本不读取 viewBox；改用用户单位 |
 | transform 语法错误或参数个数不对 | 不做猜测性修复；须修正源 SVG |
-| SVG 声明了内部 DTD 子集（`<!DOCTYPE ... [ ... ]>`） | 其中的实体不会展开；移除 `[...]` 块后重试。仅有外部 DTD 引用（iconfont/Illustrator 的标准前言）不受影响 |
+| 内部 DTD 子集（`<!DOCTYPE ... [ ... ]>`） | 实体不会展开；移除 `[...]` 块后重试。仅有外部 DTD 引用（iconfont/Illustrator 的标准前言）不受影响 |
+| XML 格式错误 / `--file` 路径不可读 | 原样转达解析器或系统的报错原文，让用户修源文件或路径 |
 | 无任何可转换几何 | 需先在源 SVG 中把图形转为 path |
-
-## 支持边界
-
-- stroke width、opacity、clip/mask/filter 及其他作为 presentation attribute 书写的展示属性不会被转换，也不会因其存在而告警（仅当写在 `style` 中时才具名告警）。用户必须检查源 SVG 并自行预处理。
-- **即使 `Fill`、`Stroke` 与 transform 都匹配，也不保证视觉保真**——上述未转换的属性会造成差异。
 
 ## 输出纪律
 
@@ -144,7 +138,7 @@ warning: these elements have no exact path equivalent and were skipped: <元素�
 4. 各路径颜色不同时不得改用 `--format data` 迂回满足「合并成一个」的要求——那会静默丢色。
 5. 输出 `Fill="#000000"` 时必须回查源 SVG：若着色实际来自 `<style>` 元素或外部 CSS，这个黑色是错的，须向用户确认真实颜色而非照发。
 6. 将脚本的警告和错误如实、明确地报告；错误时不要声称已转换成功。
-7. 交付时必须提示「未转换的展示属性不保证视觉保真」，不得因 `Fill` 匹配就宣称与原图一致。
+7. 交付时必须提示「对照表中标注不转换的属性会造成差异，不保证视觉保真」，不得因 `Fill` 匹配就宣称与原图一致。
 
 ## 本地测试
 
