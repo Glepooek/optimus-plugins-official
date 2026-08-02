@@ -73,7 +73,7 @@ def render_text(node: dict, indent: str, extra: str = "") -> list[str]:
     return [f'{indent}<TextBlock{extra} Text="{content}" />']
 
 
-def render_flex(node: dict, depth: int) -> list[str]:
+def render_flex(node: dict, depth: int, extra: str = "") -> list[str]:
     """Render a flex container as a StackPanel, or a Grid when children grow."""
     indent = "  " * depth
     info = node.get("flexContainerInfo") or {}
@@ -84,44 +84,62 @@ def render_flex(node: dict, depth: int) -> list[str]:
         horizontal = str(info.get("flexDirection", "row")).lower() == "row"
         gap = float(info.get("gap") or 0)
         axis, definition = ("Column", "ColumnDefinition Width") if horizontal else ("Row", "RowDefinition Height")
-        lines = [f"{indent}<Grid>", f"{indent}  <Grid.{axis}Definitions>"]
+        lines = [f"{indent}<Grid{extra}>", f"{indent}  <Grid.{axis}Definitions>"]
         lines += [f'{indent}    <{definition}="*" />' for _ in children]
         lines.append(f"{indent}  </Grid.{axis}Definitions>")
         for position, child in enumerate(children):
-            extra = f' Grid.{axis}="{position}"'
+            child_extra = f' Grid.{axis}="{position}"'
             if gap and position < len(children) - 1:
                 margin = f"0,0,{number(gap)},0" if horizontal else f"0,0,0,{number(gap)}"
-                extra += f' Margin="{margin}"'
-            lines += render_node(child, depth + 1, extra=extra)
+                child_extra += f' Margin="{margin}"'
+            lines += render_node(child, depth + 1, extra=child_extra, absolute=False)
         lines.append(f"{indent}</Grid>")
         return lines
 
     horizontal = str(info.get("flexDirection", "row")).lower() == "row"
     orientation = "Horizontal" if horizontal else "Vertical"
     gap = float(info.get("gap") or 0)
-    lines = [f'{indent}<StackPanel Orientation="{orientation}">']
+    lines = [f'{indent}<StackPanel Orientation="{orientation}"{extra}>']
     for position, child in enumerate(children):
-        extra = ""
+        child_extra = ""
         if gap and position < len(children) - 1:
             margin = f"0,0,{number(gap)},0" if horizontal else f"0,0,0,{number(gap)}"
-            extra = f' Margin="{margin}"'
-        lines += render_node(child, depth + 1, extra=extra)
+            child_extra = f' Margin="{margin}"'
+        lines += render_node(child, depth + 1, extra=child_extra, absolute=False)
     lines.append(f"{indent}</StackPanel>")
     return lines
 
 
-def render_node(node: dict, depth: int, extra: str = "") -> list[str]:
-    """Render one DSL node and its subtree."""
+def canvas_position(node: dict) -> str:
+    """Return the Canvas attached properties for an absolutely positioned node."""
+    layout = node.get("layoutStyle") or {}
+    if "relativeX" not in layout and "relativeY" not in layout:
+        raise ConversionError(
+            f"node {node.get('id', '?')} ({node.get('name', 'unnamed')}) has no "
+            "layoutStyle.relativeX/relativeY and is not inside a flex container; "
+            "its position cannot be determined"
+        )
+    left = number(layout.get("relativeX", 0))
+    top = number(layout.get("relativeY", 0))
+    return f' Canvas.Left="{left}" Canvas.Top="{top}"'
+
+
+def render_node(node: dict, depth: int, extra: str = "", absolute: bool = False) -> list[str]:
+    """Render one DSL node and its subtree.
+
+    `absolute` says the parent positions its children with Canvas coordinates; flex
+    parents pass False so their children never receive Canvas.Left/Top.
+    """
     indent = "  " * depth
-    kind = node.get("type")
-    if kind == "TEXT":
-        return render_text(node, indent, extra)
+    placement = canvas_position(node) if absolute else ""
+    if node.get("type") == "TEXT":
+        return render_text(node, indent, extra + placement)
     if node.get("flexContainerInfo"):
-        return render_flex(node, depth)
-    lines = [f"{indent}<Grid{extra}>"]
+        return render_flex(node, depth, extra + placement)
+    lines = [f"{indent}<Canvas{extra}{placement}>"]
     for child in node.get("children") or []:
-        lines += render_node(child, depth + 1)
-    lines.append(f"{indent}</Grid>")
+        lines += render_node(child, depth + 1, absolute=True)
+    lines.append(f"{indent}</Canvas>")
     return lines
 
 
@@ -139,7 +157,7 @@ def render_page(listing: dict, sections: list[dict], page_name: str) -> str:
         left, top = number(box.get("x", 0)), number(box.get("y", 0))
         lines.append(f'    <Canvas Canvas.Left="{left}" Canvas.Top="{top}">')
         for node in section.get("nodes") or []:
-            lines += render_node(node, 3)
+            lines += render_node(node, 3, absolute=False)
         lines.append("    </Canvas>")
     lines += ["  </Canvas>", "</UserControl>", ""]
     return "\n".join(lines)

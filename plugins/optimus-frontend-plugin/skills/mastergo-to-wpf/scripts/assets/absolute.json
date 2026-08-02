@@ -1,0 +1,27 @@
+{
+  "list": {
+    "rootMetadata": { "allTexts": ["标题"] },
+    "splitContainers": [{ "x": 10, "y": 20, "width": 300, "height": 200 }]
+  },
+  "sections": [
+    {
+      "nodes": [
+        {
+          "type": "FRAME",
+          "id": "3:1",
+          "name": "Board",
+          "layoutStyle": { "width": 300, "height": 200, "relativeX": 0, "relativeY": 0 },
+          "children": [
+            {
+              "type": "TEXT",
+              "id": "3:2",
+              "name": "Title",
+              "layoutStyle": { "width": 80, "height": 24, "relativeX": 32, "relativeY": 16 },
+              "text": [{ "text": "标题" }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

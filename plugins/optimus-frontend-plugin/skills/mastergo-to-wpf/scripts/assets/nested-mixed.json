@@ -1,0 +1,36 @@
+{
+  "list": {
+    "rootMetadata": { "allTexts": ["内层"] },
+    "splitContainers": [{ "x": 0, "y": 0, "width": 400, "height": 100 }]
+  },
+  "sections": [
+    {
+      "nodes": [
+        {
+          "type": "FRAME",
+          "id": "4:1",
+          "name": "OuterFlex",
+          "layoutStyle": { "width": 400, "height": 100, "relativeX": 0, "relativeY": 0 },
+          "flexContainerInfo": { "flexDirection": "column", "gap": 0 },
+          "children": [
+            {
+              "type": "FRAME",
+              "id": "4:2",
+              "name": "InnerAbsolute",
+              "layoutStyle": { "width": 400, "height": 100, "relativeX": 0, "relativeY": 0 },
+              "children": [
+                {
+                  "type": "TEXT",
+                  "id": "4:3",
+                  "name": "Inner",
+                  "layoutStyle": { "width": 50, "height": 20, "relativeX": 12, "relativeY": 34 },
+                  "text": [{ "text": "内层" }]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

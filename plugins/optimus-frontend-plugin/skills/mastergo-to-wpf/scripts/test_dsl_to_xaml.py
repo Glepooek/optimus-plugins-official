@@ -142,5 +142,33 @@ class FlexLayoutTests(CliTestCase):
         self.assertIn('Margin="0,0,0,8"', xaml)
 
 
+class AbsoluteLayoutTests(CliTestCase):
+    """A node without flexContainerInfo positions its children absolutely."""
+
+    def test_absolute_container_becomes_a_canvas(self) -> None:
+        result, out_dir = self.convert("absolute.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn('Canvas.Left="32"', xaml)
+        self.assertIn('Canvas.Top="16"', xaml)
+
+    def test_section_shell_uses_the_splitcontainer_page_coordinates(self) -> None:
+        result, out_dir = self.convert("absolute.json")
+
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn('<Canvas Canvas.Left="10" Canvas.Top="20">', xaml)
+
+    def test_nesting_is_preserved_rather_than_flattened(self) -> None:
+        result, out_dir = self.convert("nested-mixed.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn('<StackPanel Orientation="Vertical">', xaml)
+        stack_body = xaml.split('<StackPanel Orientation="Vertical">', 1)[1]
+        self.assertIn("<Canvas>", stack_body)
+        self.assertIn('Canvas.Left="12"', stack_body)
+
+
 if __name__ == "__main__":
     unittest.main()
