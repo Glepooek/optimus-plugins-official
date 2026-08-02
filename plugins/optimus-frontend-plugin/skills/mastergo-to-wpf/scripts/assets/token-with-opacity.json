@@ -1,0 +1,30 @@
+{
+  "list": {
+    "rootMetadata": { "allTexts": ["子元素"] },
+    "splitContainers": [{ "x": 0, "y": 0, "width": 120, "height": 60 }]
+  },
+  "sections": [
+    {
+      "nodes": [
+        {
+          "type": "FRAME",
+          "id": "12:1",
+          "name": "TranslucentToken",
+          "layoutStyle": { "width": 120, "height": 60, "relativeX": 0, "relativeY": 0 },
+          "_token": "Fill/Fill-2",
+          "_color": "#4E5969",
+          "opacity": 0.5,
+          "children": [
+            {
+              "type": "TEXT",
+              "id": "12:2",
+              "name": "Child",
+              "layoutStyle": { "width": 60, "height": 20, "relativeX": 8, "relativeY": 20 },
+              "text": [{ "text": "子元素" }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

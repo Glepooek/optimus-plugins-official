@@ -1,0 +1,26 @@
+{
+  "list": {
+    "rootMetadata": { "allTexts": ["这是通过顺序回退才能取到的很长的说明文字用于验证占位符没有命中parentName时仍可回填"] },
+    "splitContainers": [{ "x": 0, "y": 0, "width": 400, "height": 60 }]
+  },
+  "sections": [
+    {
+      "rowTexts": [
+        {
+          "text": "这是通过顺序回退才能取到的很长的说明文字用于验证占位符没有命中parentName时仍可回填",
+          "parentType": "FRAME",
+          "parentName": "SomeOtherName"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "TEXT",
+          "id": "1:5678",
+          "name": "Desc",
+          "layoutStyle": { "width": 400, "height": 60, "relativeX": 0, "relativeY": 0 },
+          "text": [{ "text": "T0|1:5678" }]
+        }
+      ]
+    }
+  ]
+}

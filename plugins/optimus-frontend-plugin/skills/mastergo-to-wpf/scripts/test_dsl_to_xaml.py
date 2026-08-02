@@ -203,6 +203,14 @@ class TokenTests(CliTestCase):
         self.assertIn("paint_9:9999", result.stderr)
         self.assertEqual(result.stdout, "")
 
+    def test_color_wins_over_a_fill_style_reference(self) -> None:
+        result, out_dir = self.convert("tokens.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn("#112233", xaml)
+        self.assertNotIn("#FFFFFF", xaml)
+
 
 class OpacityTests(CliTestCase):
     """A FRAME's opacity tints only its own background, never its children."""
@@ -226,6 +234,14 @@ class OpacityTests(CliTestCase):
         xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
         child = xaml.split("子元素", 1)[0].rsplit("<TextBlock", 1)[1]
         self.assertNotIn("Opacity", child)
+
+    def test_opacity_wins_over_a_token_even_when_both_are_present(self) -> None:
+        result, out_dir = self.convert("token-with-opacity.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn("#804E5969", xaml)
+        self.assertNotIn("{StaticResource FillFill2}", xaml)
 
 
 class TextTests(CliTestCase):
@@ -255,6 +271,17 @@ class TextTests(CliTestCase):
         self.assertEqual(result.returncode, 2, result.stdout)
         self.assertIn("不在闭集里的文案", result.stderr)
         self.assertEqual(result.stdout, "")
+
+    def test_a_placeholder_with_no_matching_parentname_falls_back_to_order(self) -> None:
+        result, out_dir = self.convert("long-text-order-fallback.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn(
+            "这是通过顺序回退才能取到的很长的说明文字用于验证占位符没有命中parentName时仍可回填",
+            xaml,
+        )
+        self.assertNotIn("T0|1:5678", xaml)
 
 
 class IconTests(CliTestCase):
