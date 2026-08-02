@@ -204,5 +204,29 @@ class TokenTests(CliTestCase):
         self.assertEqual(result.stdout, "")
 
 
+class OpacityTests(CliTestCase):
+    """A FRAME's opacity tints only its own background, never its children."""
+
+    def test_frame_opacity_is_baked_into_the_background_alpha(self) -> None:
+        result, out_dir = self.convert("opacity-frame.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn("#804E5969", xaml)
+
+    def test_no_opacity_property_is_emitted(self) -> None:
+        result, out_dir = self.convert("opacity-frame.json")
+
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertNotIn("Opacity=", xaml)
+
+    def test_the_child_is_not_made_translucent(self) -> None:
+        result, out_dir = self.convert("opacity-frame.json")
+
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        child = xaml.split("子元素", 1)[0].rsplit("<TextBlock", 1)[1]
+        self.assertNotIn("Opacity", child)
+
+
 if __name__ == "__main__":
     unittest.main()

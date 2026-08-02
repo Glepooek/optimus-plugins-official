@@ -127,14 +127,33 @@ def render_resources(brushes: dict[str, tuple[str, str]]) -> str:
     return "\n".join(lines)
 
 
+def with_alpha(colour: str, opacity: float) -> str:
+    """Bake an opacity into a hex colour's alpha channel.
+
+    A FRAME's opacity in MasterGo tints only its own background, so it must not
+    become a WPF `Opacity` — that would make every child translucent too.
+    """
+    if not colour.startswith("#") or opacity >= 1.0:
+        return colour
+    digits = colour[1:]
+    if len(digits) == 3:
+        digits = "".join(digit * 2 for digit in digits)
+    if len(digits) != 6:
+        return colour
+    return f"#{round(max(0.0, min(1.0, opacity)) * 255):02X}{digits.upper()}"
+
+
 def paint_attribute(node: dict, styles: dict, attr: str) -> str:
     """Render a node's resolved paint as a `Background=`/`Foreground=` attribute."""
     key, colour = node_colour(node, styles)
+    if colour is None:
+        return ""
+    opacity = float(node.get("opacity", 1))
+    if opacity < 1.0:
+        return f' {attr}="{with_alpha(colour, opacity)}"'
     if key:
         return f' {attr}="{{StaticResource {key}}}"'
-    if colour:
-        return f' {attr}="{colour}"'
-    return ""
+    return f' {attr}="{colour}"'
 
 
 def render_text(node: dict, indent: str, extra: str = "", styles: dict | None = None) -> list[str]:
