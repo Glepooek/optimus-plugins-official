@@ -1,0 +1,34 @@
+{
+  "list": {
+    "rootMetadata": { "allTexts": [] },
+    "splitContainers": [{ "x": 0, "y": 0, "width": 48, "height": 24 }]
+  },
+  "sections": [
+    {
+      "nodes": [
+        {
+          "type": "FRAME",
+          "id": "10:1",
+          "name": "IconBar",
+          "layoutStyle": { "width": 48, "height": 24, "relativeX": 0, "relativeY": 0 },
+          "children": [
+            {
+              "type": "PATH",
+              "id": "10:2",
+              "name": "SearchIcon",
+              "layoutStyle": { "width": 16, "height": 16, "relativeX": 4, "relativeY": 4 },
+              "svgShortKey": "S0#0"
+            },
+            {
+              "type": "PATH",
+              "id": "10:3",
+              "name": "CloseIcon",
+              "layoutStyle": { "width": 16, "height": 16, "relativeX": 28, "relativeY": 4 },
+              "svgShortKey": "S0#1"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

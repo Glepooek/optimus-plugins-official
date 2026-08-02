@@ -159,6 +159,33 @@ def collect_brushes(sections: list[dict]) -> dict[str, tuple[str, str]]:
     return brushes
 
 
+def icon_key(node: dict) -> str:
+    """Return a PATH node's svgShortKey, which is the only handle on its vector."""
+    key = node.get("svgShortKey")
+    if not key:
+        raise ConversionError(
+            f"PATH node {node.get('id', '?')} ({node.get('name', 'unnamed')}) has no "
+            "svgShortKey; its vector cannot be fetched — re-fetch this section's DSL"
+        )
+    return str(key)
+
+
+def collect_icons(sections: list[dict]) -> list[dict]:
+    """List every PATH node so the caller can fetch its SVG with mcp__extractSvg."""
+    icons: list[dict] = []
+    for section in sections:
+        for node in walk(section.get("nodes") or []):
+            if node.get("type") == "PATH":
+                icons.append(
+                    {
+                        "svgShortKey": icon_key(node),
+                        "nodeId": str(node.get("id", "")),
+                        "name": str(node.get("name", "")),
+                    }
+                )
+    return icons
+
+
 def render_resources(brushes: dict[str, tuple[str, str]]) -> str:
     """Render the colour ResourceDictionary."""
     lines = [
@@ -303,6 +330,9 @@ def render_node(
     styles = styles or {}
     indent = "  " * depth
     placement = canvas_position(node) if absolute else ""
+    if node.get("type") == "PATH":
+        return [f"{indent}<!-- ICON:{icon_key(node)} -->",
+                f'{indent}<Path{extra}{placement} />']
     if node.get("type") == "TEXT":
         return render_text(node, indent, extra + placement, styles=styles, section=section, order=order)
     if node.get("flexContainerInfo"):
@@ -357,10 +387,14 @@ def main(argv: list[str] | None = None) -> int:
         xaml = render_page(listing, sections, arguments.page_name)
         verify_texts(EMITTED_TEXTS, listing)
         brushes = collect_brushes(sections)
+        icons = collect_icons(sections)
         out_dir = Path(arguments.out)
         out_dir.mkdir(parents=True, exist_ok=True)
         (out_dir / f"{arguments.page_name}.xaml").write_text(xaml, encoding="utf-8")
         (out_dir / "Colors.xaml").write_text(render_resources(brushes), encoding="utf-8")
+        (out_dir / "icons.json").write_text(
+            json.dumps(icons, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
     except ConversionError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2

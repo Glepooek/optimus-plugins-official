@@ -257,5 +257,64 @@ class TextTests(CliTestCase):
         self.assertEqual(result.stdout, "")
 
 
+class IconTests(CliTestCase):
+    """PATH nodes become placeholders plus a work list for extractSvg."""
+
+    def test_path_nodes_become_icon_placeholders(self) -> None:
+        result, out_dir = self.convert("icons.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn("<!-- ICON:S0#0 -->", xaml)
+        self.assertIn("<!-- ICON:S0#1 -->", xaml)
+
+    def test_an_icon_manifest_is_written(self) -> None:
+        result, out_dir = self.convert("icons.json")
+
+        manifest = json.loads((out_dir / "icons.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(manifest), 2)
+        self.assertEqual(manifest[0]["svgShortKey"], "S0#0")
+        self.assertEqual(manifest[0]["name"], "SearchIcon")
+        self.assertEqual(manifest[1]["svgShortKey"], "S0#1")
+
+    def test_icon_placeholders_keep_their_canvas_position(self) -> None:
+        result, out_dir = self.convert("icons.json")
+
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn('Canvas.Left="4"', xaml)
+        self.assertIn('Canvas.Left="28"', xaml)
+
+    def test_a_path_without_a_shortkey_is_fatal(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            input_dir = Path(temporary) / "dsl"
+            input_dir.mkdir()
+            (input_dir / "sections-list.json").write_text(
+                json.dumps({"rootMetadata": {"allTexts": []}, "splitContainers": [{}]}),
+                encoding="utf-8",
+            )
+            (input_dir / "section-0.json").write_text(
+                json.dumps(
+                    {
+                        "nodes": [
+                            {
+                                "type": "PATH",
+                                "id": "11:1",
+                                "name": "NoKey",
+                                "layoutStyle": {"relativeX": 0, "relativeY": 0},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result = self.run_cli(
+                "--input", str(input_dir), "--out", str(Path(temporary) / "out")
+            )
+
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("svgShortKey", result.stderr)
+        self.assertEqual(result.stdout, "")
+
+
 if __name__ == "__main__":
     unittest.main()
