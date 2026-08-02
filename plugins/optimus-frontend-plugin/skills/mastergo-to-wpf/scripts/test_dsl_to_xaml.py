@@ -88,5 +88,42 @@ class SkeletonTests(CliTestCase):
         self.assertEqual(result.stdout, "")
 
 
+class FlexLayoutTests(CliTestCase):
+    """flexContainerInfo present means flow layout, never absolute positioning."""
+
+    def test_flex_row_becomes_a_horizontal_stackpanel(self) -> None:
+        result, out_dir = self.convert("flex-row.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn('<StackPanel Orientation="Horizontal"', xaml)
+        self.assertIn("确定", xaml)
+        self.assertIn("取消", xaml)
+
+    def test_flex_children_never_get_canvas_coordinates(self) -> None:
+        result, out_dir = self.convert("flex-row.json")
+
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        body = xaml.split("<StackPanel", 1)[1]
+        self.assertNotIn("Canvas.Left", body)
+        self.assertNotIn("Canvas.Top", body)
+
+    def test_flex_gap_becomes_margin_on_all_but_the_last_child(self) -> None:
+        result, out_dir = self.convert("flex-row.json")
+
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertEqual(xaml.count('Margin="0,0,8,0"'), 1)
+
+    def test_flex_grow_children_become_a_grid_with_star_columns(self) -> None:
+        result, out_dir = self.convert("flex-grow.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn("<Grid", xaml)
+        self.assertEqual(xaml.count('<ColumnDefinition Width="*" />'), 2)
+        self.assertIn('Grid.Column="0"', xaml)
+        self.assertIn('Grid.Column="1"', xaml)
+
+
 if __name__ == "__main__":
     unittest.main()
