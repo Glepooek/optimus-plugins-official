@@ -20,7 +20,7 @@ allowed-tools: Read Bash PowerShell
 
 ## 运行脚本
 
-下列命令中的 `$SkillDir` 必须替换为**本 skill 加载时给出的 base directory**（形如 `…/plugins/cache/optimus-plugins-official/optimus-frontend-plugin/<hash>/skills/svg-to-xaml-path`）。**不要使用仓库相对路径**——本 skill 通常从插件缓存加载，当前工作目录不一定是本仓库，相对路径会直接 `FileNotFoundError`。
+下列命令中的 `$SkillDir` 必须替换为**本 skill 加载时给出的 base directory**（形如 `…/plugins/cache/optimus-plugins-official/optimus-frontend-plugin/<hash>/skills/svg-to-xaml-path`）。**始终使用该绝对路径**——本 skill 通常从插件缓存加载，而当前工作目录是用户的项目目录，与 skill 目录无关；仓库相对路径只在 cwd 恰好是本仓库时才碰巧可用。
 
 ```powershell
 $SkillDir = "<本 skill 的 base directory>"
@@ -37,14 +37,38 @@ Get-Content -Raw "C:\icons\icon.svg" | python "$SkillDir\scripts\merge_svg_paths
 
 ## 输出格式与合并规则
 
-| 格式 | 结果 |
-|---|---|
-| `data` | 按 SVG 文档顺序连接的完整路径数据，带 fill rule 前缀。**含 transform 时会报错**——纯几何字符串无法承载变换。 |
-| `xaml` | 可直接使用的 WPF `Path` 元素，必要时附 `MatrixTransform`。 |
+**stdout 是产物，stderr 是告警——两者必须分开。** 告警行绝不能混进 `.xaml` 文件或交付的 `Data` 字符串。若所用工具会交错两个流，请重定向后再取值：
 
-**核心规则：** 多段路径数据按 SVG 文档顺序串接，形成一个包含多个 figure 的 WPF Geometry，**不是**布尔并集。合并键是 `Fill` + `Stroke` + `fill-rule` + `transform` 四项——全部相同才输出一个 `Path`，任一项不同则 `xaml` 输出多个 `Path`，不得伪造为单一 `Path`。
+```powershell
+python "$SkillDir\scripts\merge_svg_paths.py" --file "C:\icons\icon.svg" --format xaml 2>$null   # 仅取产物
+```
+
+| 格式 | 结果 | 丢失什么 |
+|---|---|---|
+| `data` | 单个几何字符串，带 fill rule 前缀。**含 transform 时报错**——纯几何无法承载变换。 | **`Fill`/`Stroke` 全部丢弃**，需自行补回；多路径异色时会被静默熔为一条（见下） |
+| `xaml` | 可直接使用的 WPF `Path` 元素，必要时附 `MatrixTransform`。 | 仅丢弃对照表中标注「不转换」的属性 |
+
+`--format` 缺省值为 `xaml`。
+
+**合并键（仅适用于 `xaml`）：** `Fill` + `Stroke` + `fill-rule` + `transform` 四项全部相同才输出一个 `Path`；任一项不同则输出多个 `Path`，**不得伪造为单一 `Path`**。基本图元转换后与 `<path>` 同等参与合并。
+
+**🔴 `data` 格式不适用合并键——异色路径会被静默熔合。** `data` 只输出几何，颜色无处安放：两条 `#B8C6E0` 和 `#FF0000` 的路径会被拼成一条字符串，exit 0 且**零告警**。因此：
+
+- 用户要求「合并成一个 Path」但各路径颜色不同时，**不得改用 `--format data` 迂回**——那会静默丢掉一种颜色。正确应对是说明无法合并，输出多个 `Path`。
+- 仅在已确认所有路径同色（或用户只要几何、颜色另行设置）时才使用 `data`。
+
+`fill-rule` 是 `data` 唯一会告警的差异项：混用时报 `warning: multiple fill rules found; data output uses the first path's rule.`，并按**首条路径**的规则决定前缀。
 
 **fill rule 前缀必须保留：** 输出的 `Data` 以 `F1`（nonzero，SVG 的默认值）或 `F0`（evenodd）开头。WPF 路径迷你语言在无前缀时按 EvenOdd 解析，与 SVG 默认值不一致，**删除该前缀会改变自相交路径和孔洞的渲染结果**。
+
+**多段几何不是布尔并集：** 串接后的 `Data` 是一个含多个 figure 的 WPF Geometry，各 figure 按 fill rule 共同决定填充，而非求并。
+
+## 交付给 WPF 时的两个约束
+
+脚本的输出不是「贴进去就完事」，以下两点必须随产物一并告知用户：
+
+- **`MatrixTransform` 挂在 `RenderTransform` 上，不参与布局测量。** WPF 的 `RenderTransform` 在 measure/arrange 之后生效，父容器仍按变换前的尺寸给位置。图标放在 `StackPanel`/`Grid` 等布局敏感容器里时，偏移可能不是用户预期的效果。若需要参与布局，用户须自行改用 `LayoutTransform`（仅适用于无平移的情形）或在源 SVG 中展平变换。
+- **多个 `Path` 是无根元素的裸序列。** 脚本不生成包裹容器，调用方须自行放进 `Canvas`（保持绝对坐标）或 `Grid`（各 Path 重叠）。不要臆造 `Viewbox` 或尺寸——见「支持边界」。
 
 ## 示例
 
@@ -100,7 +124,7 @@ warning: class attributes were encountered; CSS classes were not converted.
 
 | 情形 | 原因 |
 |---|---|
-| `currentColor` / `url(#grad)` / `hsl()` 作为 `fill`/`stroke` | WPF 无法解析；须先在源 SVG 中换成 hex 或颜色关键字 |
+| `currentColor` / `url(#grad)` / `hsl()` 作为 `fill`/`stroke` | WPF 无法解析。改用具体 hex/颜色关键字，或在 WPF 侧绑定画刷（`{TemplateBinding Foreground}`、`DynamicResource` 等）——`currentColor` 的语义正是「跟随前景色」 |
 | `--format data` 遇到 transform | 路径数据无法承载变换；改用 `--format xaml`，或先在源 SVG 展平 |
 | 长度写作百分比（如 `width="50%"`） | 百分比需要 viewport，本脚本不读取 viewBox；改用用户单位 |
 | transform 语法错误或参数个数不对 | 不做猜测性修复；须修正源 SVG |
@@ -117,9 +141,11 @@ warning: class attributes were encountered; CSS classes were not converted.
 ## 输出纪律
 
 1. 返回完整、未截断的 `data` 或 XAML，保留 SVG 文档顺序、fill rule 前缀与 `MatrixTransform`。
-2. 不发明、补全或近似任何几何数据；不手工把变换烘焙进坐标。
-3. 将脚本的警告和错误如实、明确地报告；错误时不要声称已转换成功。
-4. 交付时必须提示「未转换的展示属性不保证视觉保真」，不得因 `Fill` 匹配就宣称与原图一致。
+2. 只交付 stdout 的内容；stderr 的告警单独转述，不得混入产物。
+3. 不发明、补全或近似任何几何数据；不手工把变换烘焙进坐标。
+4. 各路径颜色不同时不得改用 `--format data` 迂回满足「合并成一个」的要求——那会静默丢色。
+5. 将脚本的警告和错误如实、明确地报告；错误时不要声称已转换成功。
+6. 交付时必须提示「未转换的展示属性不保证视觉保真」，不得因 `Fill` 匹配就宣称与原图一致。
 
 ## 本地测试
 
