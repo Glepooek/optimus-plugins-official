@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "prompt": "这是我们的登录页设计稿 https://mastergo.com/file/123456?layer_id=1:100，帮我转成 WPF 页面。",
+    "expected": "先做 Step 0 前置检查（MASTERGO_TOKEN、Team 版、非草稿箱）；确认通过后调 mcp__getDesignSections（不带 sectionIndex）存 sections-list.json，区块数 ≤ 8 时逐区拉取存 section-{N}.json，再用 $SkillDir 绝对路径运行 dsl_to_xaml.py --input .mastergo-dsl --out src\\Views --page-name LoginPage。成功时 exit 0 且 stdout/stderr 均为空，产出 LoginPage.xaml、Colors.xaml、icons.json 三个文件；交付时必须主动说明：所有元素都没有 Width/Height/Padding/BorderThickness，圆角矩形+文字不会被识别为 Button，字体需自行确认可用性。"
+  },
+  {
+    "id": 2,
+    "prompt": "把这个设计稿全部页面都转成 WPF，一次性转完：https://mastergo.com/file/999?layer_id=1:1",
+    "expected": "调用 mcp__getDesignSections 后发现区块数 > 8，必须停止，向用户说明区块过多并请其指定要转换的具体区块，不得擅自全部转换或只转前 8 个。"
+  },
+  {
+    "id": 3,
+    "prompt": "这个设计稿完全没用 auto layout，都是手动摆的位置，帮我转成 WPF。",
+    "expected": "转换器本身不因缺失 flexContainerInfo 而报错——所有无 flexContainerInfo 的节点都会正常生成 <Canvas> + Canvas.Left/Top。但必须在交付时提醒用户：全页退化为 Canvas 绝对定位，不具备响应式能力（SKILL.md 已知限制第 2 条），且不生成 Width/Height，产物在不同窗口尺寸下的可视范围可能与设计稿不符。"
+  },
+  {
+    "id": 4,
+    "prompt": "这个卡片设计稿里有几个图标，帮我转成 WPF 并把图标也一起处理好。",
+    "expected": "dsl_to_xaml.py 跑完后 icons.json 里列出每个 PATH 节点的 svgShortKey/nodeId/name（XAML 中对应位置留 <!-- ICON:{svgShortKey} --> 注释和空 <Path />）；随后对每个条目调 mcp__extractSvg 取真实 SVG，再交给 optimus-frontend-plugin:svg-to-xaml-path 的 merge_svg_paths.py --format data 转出 Path.Data，回填进 XAML 里空的 <Path /> 占位，保留其 Canvas.Left/Top。若某个 PATH 节点缺 svgShortKey，dsl_to_xaml.py 会 exit 2 报错 'has no svgShortKey; its vector cannot be fetched'，需据实转达并建议重新拉取该 section 的 DSL。"
+  },
+  {
+    "id": 5,
+    "prompt": "帮我把这个 MasterGo 设计稿转成 WPF：https://mastergo.com/file/1?layer_id=1:1",
+    "expected": "若 MASTERGO_TOKEN 环境变量未配置，属于 Step 0 前置检查项，必须在调用任何 MCP 工具之前停止并说明「MASTERGO_TOKEN 未配置」，不得尝试调用 mcp__getDesignSections 或以任何方式猜测/编造设计稿内容。"
+  }
+]
