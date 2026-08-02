@@ -2,7 +2,7 @@
 name: svg-to-xaml-path
 description: 当用户提供本地 SVG 文件路径或完整 SVG 标记，并要求提取 path 的 d、合并多路径、生成 WPF XAML 或 Path.Data 时使用此 Skill；适用于 SVG 图标转 WPF Path 的场景。
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
   author: desktop client team
 compatibility: Python 3；可在 Windows PowerShell 中运行随附的无第三方依赖 CLI。
 allowed-tools: Read Bash PowerShell
@@ -31,7 +31,7 @@ Get-Content -Raw "C:\icons\icon.svg" | python "$SkillDir\scripts\merge_svg_paths
 
 ## 输出格式与合并规则
 
-**stdout 是产物，stderr 是告警。** 告警行绝不能混进 `.xaml` 或交付的 `Data`。若工具会交错两流，用 `2>$null` 只取产物。
+**stdout 是产物，stderr 是告警。** 告警行绝不能混进 `.xaml` 或交付的 `Data`。若工具会交错两流，把 stderr 重定向到**文件**再分别读取（`2>err.txt`）——**不要用 `2>$null`**，那会同时丢掉告警和错误原文，而告警正是判断产物是否可信的唯一信号。
 
 | 格式 | 结果 | 丢失什么 |
 |---|---|---|
@@ -40,22 +40,19 @@ Get-Content -Raw "C:\icons\icon.svg" | python "$SkillDir\scripts\merge_svg_paths
 
 **合并键（仅 `xaml` 适用）：** `Fill` + `Stroke` + `fill-rule` + `transform` 四项全同才输出一个 `Path`；任一不同则输出多个，**不得伪造为单一 `Path`**。基本图元转换后与 `<path>` 同等参与合并。
 
-**🔴 静默陷阱一：`data` 不适用合并键。** `data` 只输出几何，颜色无处安放——`#B8C6E0` 与 `#FF0000` 两条路径会被拼成一条串，exit 0 且**零告警**。用户要求「合并成一个」但颜色不同时，**不得改用 `data` 迂回**；正确应对是说明无法合并并输出多个 `Path`。仅在确认全部同色（或用户只要几何）时才用 `data`。
+**🔴 三个静默陷阱——exit 0、零告警、XAML 合法，但产物是错的。** 完整机理与复现见 [`references/silent-traps.md`](references/silent-traps.md)，此处只列判据与禁令：
 
-`fill-rule` 是 `data` 唯一会告警的差异项：混用时报 `multiple fill rules found`，并按**首条路径**的规则定前缀。
+| # | 触发条件（转换前必查） | 禁令 |
+|---|---|---|
+| 1 | 同色路径在源 SVG 中**有重叠** | 绕行方向不明时输出多个 `Path`，不要合并——合并后重叠区会翻转为孔洞 |
+| 2 | 用户要「合并成一个」但**各路径颜色不同** | 不得改用 `--format data` 迂回，那会静默丢色。说明无法合并并输出多个 `Path` |
+| 3 | 源文件含 `<style>` 元素或**外链 CSS** | 必须向用户确认实际颜色，**无论输出是什么颜色**——CSS 层叠优先级高于 presentation attribute |
 
-**🔴 静默陷阱二：颜色由 CSS 提供时输出纯黑且零告警。** 脚本只认前两种着色方式：
+陷阱 3 的判据是「有没有 CSS」，不是「输出是不是黑色」：`<path>` 无 `fill` 时输出 `#000000`，有 `fill` 时输出该属性值，两种情况的颜色都是错的。iconfont、Illustrator、Figma 的部分导出配置都会产生这种 SVG。
 
-| 着色方式 | 脚本行为 |
-|---|---|
-| `fill="#B8C6E0"` | 正常转换 |
-| `style="fill:#B8C6E0"` | 正常转换 |
-| `<style>.icon{…}</style>` + `class="icon"` | 默认黑，**但有 class 告警** |
-| `<style>path{…}</style>`（标签选择器）、外部样式表 | 默认黑，**exit 0 且零告警** |
+`fill-rule` 是 `data` 唯一会告警的差异项：混用时报 `multiple fill rules found`，并按**首条路径**的规则定前缀。`fill-opacity`/`opacity` 不在合并键内——半透明形状会被合并成实心。
 
-SVG 的 `fill` 默认值就是黑，脚本自认正常。**转换前必须打开源 SVG 确认着色方式**：若 `<path>` 上既无 `fill` 也无 `style="fill:…"`，而文件含 `<style>` 元素或依赖外部 CSS，则产出的黑色是错的，须让用户提供实际颜色。iconfont、Illustrator、Figma 的部分导出配置都会产生这种 SVG。
-
-**fill rule 前缀必须保留：** `Data` 以 `F1`（nonzero，SVG 默认）或 `F0`（evenodd）开头。WPF 迷你语言无前缀时按 EvenOdd 解析，与 SVG 默认值不一致，**删除前缀会改变自相交路径和孔洞的渲染结果**。串接后的 `Data` 是含多个 figure 的单一 Geometry，各 figure 按 fill rule 共同决定填充，**不是布尔并集**。
+**fill rule 前缀必须保留：** `Data` 以 `F1`（nonzero，SVG 默认）或 `F0`（evenodd）开头。WPF 迷你语言无前缀时按 EvenOdd 解析，与 SVG 默认值不一致，**删除前缀会改变自相交路径和孔洞的渲染结果**。
 
 ## 交付给 WPF 时的三个约束
 
@@ -110,6 +107,8 @@ stdout（这一行才是产物）：
 | `class`（告警）、`<style>` 元素 / 外部样式表（无告警） | 均不解析——靠它们上色即落入静默陷阱二 |
 | `<defs>`/`<clipPath>`/`<mask>`/`<symbol>`/`<marker>`/`<pattern>` 子树、`display:none` 子树、`visibility:hidden` 的路径 | 跳过（前者 SVG 本身也不直接渲染） |
 | `text`/`tspan`/`textPath`/`image`/`use`/`foreignObject` | 跳过，并**按名称告警** |
+| `<switch>` | **不做条件选择，所有分支都被转换**（SVG 只渲染首个测试通过的分支）。零告警，须手工删掉多余分支 |
+| 嵌套 `<svg>`（含 `x`/`y`/`viewBox`） | 内层视口的平移与缩放**不转换**，子图形按原始坐标输出，位置会错。零告警 |
 | `viewBox`、stroke width、opacity、clip/mask/filter | **不转换，无告警** |
 
 **全部告警与错误的原文见 [`references/messages.md`](references/messages.md)。** 转述给用户时必须完整照抄，**不得截断结尾的处置建议**——那部分正是用户需要的行动指引。该文件同时列出了「既不告警也不报错」的静默行为清单。
@@ -122,7 +121,7 @@ stdout（这一行才是产物）：
 |---|---|
 | `currentColor` | WPF 无此概念。在 WPF 侧绑定画刷（`{TemplateBinding Foreground}`、`DynamicResource`）——其语义正是「跟随前景色」 |
 | `url(#grad)` | **被引用的渐变在此硬失败，不是静默丢弃**（未被引用的 `<defs>` 渐变才随 `<defs>` 静默跳过）。展平为纯色，或照 SVG 的 stop 手工建 `LinearGradientBrush` |
-| `hsl()` / 其他非 hex 非关键字 | 改用 hex。注意关键字**不做校验**，SVG 独有的关键字会透传并在 XAML 解析时才失败 |
+| `hsl()` / 其他非 hex 非关键字 | 改用 hex。关键字按 CSS3 的 148 色白名单校验，不在表内（如 `rebeccapurple`）一律 exit 2 |
 | `--format data` 遇到 transform | 路径数据无法承载变换；改用 `--format xaml`，或先在源 SVG 展平 |
 | 长度写作百分比（如 `width="50%"`） | 百分比需要 viewport，本脚本不读取 viewBox；改用用户单位 |
 | transform 语法错误或参数个数不对 | 不做猜测性修复；须修正源 SVG |
@@ -136,9 +135,10 @@ stdout（这一行才是产物）：
 2. 只交付 stdout 的内容；stderr 的告警单独转述，不得混入产物。
 3. 不发明、补全或近似任何几何数据；不手工把变换烘焙进坐标。
 4. 各路径颜色不同时不得改用 `--format data` 迂回满足「合并成一个」的要求——那会静默丢色。
-5. 输出 `Fill="#000000"` 时必须回查源 SVG：若着色实际来自 `<style>` 元素或外部 CSS，这个黑色是错的，须向用户确认真实颜色而非照发。
-6. 将脚本的警告和错误如实、明确地报告；错误时不要声称已转换成功。
-7. 交付时必须提示「对照表中标注不转换的属性会造成差异，不保证视觉保真」，不得因 `Fill` 匹配就宣称与原图一致。
+5. 源 SVG 含 `<style>` 元素或外链 CSS 时，必须向用户确认实际颜色——**无论输出是什么颜色**，CSS 的层叠优先级高于 presentation attribute。
+6. 合并前核对同色路径是否重叠：有重叠且绕行方向不明时输出多个 `Path`，不要合并。
+7. 将脚本的警告和错误如实、明确地报告；错误时不要声称已转换成功。
+8. 交付时必须提示「对照表中标注不转换的属性会造成差异，不保证视觉保真」，不得因 `Fill` 匹配就宣称与原图一致。
 
 ## 本地测试
 
