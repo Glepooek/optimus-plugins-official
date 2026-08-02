@@ -2,7 +2,7 @@
 name: mastergo-to-wpf
 description: 当用户提供 MasterGo 设计稿链接并要求生成 WPF 界面、XAML 页面或把设计稿转成 WPF 代码时使用此 Skill；产出 XAML 页面脚手架、颜色资源字典与图标，供开发者手工接管。
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
 compatibility: Python 3；需 mastergo-magic-mcp（本仓库 plugins/optimus-mcp-servers/.mcp.json 内置）与 MASTERGO_TOKEN；需 MasterGo Team 版及以上，草稿箱文件不可用。
 allowed-tools: Read Write Bash PowerShell mastergo-magic-mcp
@@ -48,7 +48,7 @@ python "$SkillDir\scripts\dsl_to_xaml.py" --input .mastergo-dsl --out src\Views 
 
 | 文件 | 内容 |
 |---|---|
-| `{page-name}.xaml` | 页面：外层 `<Canvas>` 逐区放置，内部按 flex/绝对定位递归渲染 |
+| `{page-name}.xaml` | 页面：外层 `<Canvas>` 逐区放置，内部按 flex/绝对定位递归渲染。有颜色令牌时，`UserControl.Resources` 自动引用同目录下的 `Colors.xaml`（`<ResourceDictionary Source="Colors.xaml" />`），无需手工接线 |
 | `Colors.xaml` | `_token`/`fill` 解出的颜色汇总为 `SolidColorBrush`，原始令牌名保留为注释 |
 | `icons.json` | 待转图标清单：`[{"svgShortKey","nodeId","name"}, ...]`，无图标时为 `[]` |
 

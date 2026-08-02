@@ -28,6 +28,8 @@
 
 **页面外壳：** 固定为最外层 `<Canvas>`，每个区块用 `splitContainers[i].x`/`y`（缺省 `0`）定位为一个子 `<Canvas Canvas.Left="..." Canvas.Top="...">`，区块内的节点树在其中递归渲染。区块与 `splitContainers` 按数组下标一一对应；`splitContainers` 数组比区块数短时，缺失项按 `{}` 处理，`x`/`y` 静默取 `0`。
 
+**区块根节点的坐标：** `section.nodes` 是数组，可以有多个顶层图层。只有当该数组恰好只有一个根节点时，才省略这些根节点自身的 `Canvas.Left`/`Canvas.Top`（此时外层区块 `<Canvas>` 已经用 `splitContainers` 定位了唯一的内容，根节点自身坐标恒为 `(0,0)`，省略无损）；一旦根节点数量 > 1，每个根节点都会带自己的 `Canvas.Left`/`Canvas.Top`（取自各自 `layoutStyle.relativeX`/`relativeY`），否则多个顶层图层会全部堆叠在原点、坐标被静默丢弃。
+
 ## 2. 节点类型表
 
 | DSL `type` | 实际输出 | 说明 |
@@ -49,7 +51,17 @@
 
 `_token` 只影响 **key**，不影响颜色来源——`_token` 存在时输出 `{StaticResource <key>}` 并在 `Colors.xaml` 登记一条 `SolidColorBrush`；`_token` 缺失但颜色能解析出来时，直接写字面 hex 值，`Colors.xaml` 中**不会**有对应条目。
 
-令牌名转 XAML key（`resource_key`）：按非字母数字字符切分，每段首字母大写后拼接。`Fill/Fill-2` → `FillFill2`；`Text/Text-4` → `TextText4`。`Colors.xaml` 中每条 `SolidColorBrush` 前保留一行注释 `<!-- 原始令牌名 -->`。
+**页面自动接线 `Colors.xaml`：** `collect_brushes` 只要产出至少一条画刷，页面 `<UserControl>` 就会自动带上：
+
+```xml
+<UserControl.Resources>
+  <ResourceDictionary Source="Colors.xaml" />
+</UserControl.Resources>
+```
+
+`Source` 是相对路径，依赖 `{page-name}.xaml` 与 `Colors.xaml` 写在同一个 `--out` 目录（脚本本身保证这一点）。若设计稿没有任何 `_token`，`Colors.xaml` 仍会被写出（内容为空的 `<ResourceDictionary>`），但页面**不会**引用它——避免加载一个空字典。此前版本需要开发者手工把两个文件接起来，否则 `{StaticResource ...}` 在 WPF 加载时会因找不到资源而抛异常；现已由转换器自动完成。
+
+令牌名转 XAML key（`resource_key`）：按非字母数字字符切分，每段首字母大写后拼接。`Fill/Fill-2` → `FillFill2`；`Text/Text-4` → `TextText4`；`brand/brand-primary` → `BrandBrandPrimary`（大小写在切分后统一重新首字母大写，与原始令牌的大小写无关）。`Colors.xaml` 中每条 `SolidColorBrush` 前保留一行注释 `<!-- 原始令牌名 -->`。
 
 `strokeColor`/`strokeWidth`/`padding` 字段**从未被读取**，无论出现与否都不影响输出（不生成 `BorderBrush`/`BorderThickness`/`Padding`）。
 

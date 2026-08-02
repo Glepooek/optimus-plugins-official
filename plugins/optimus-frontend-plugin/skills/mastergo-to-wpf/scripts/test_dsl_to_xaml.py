@@ -114,6 +114,13 @@ class FlexLayoutTests(CliTestCase):
         xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
         self.assertEqual(xaml.count('Margin="0,0,8,0"'), 1)
 
+    def test_the_last_child_gets_no_margin_at_all(self) -> None:
+        result, out_dir = self.convert("flex-row.json")
+
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        last_child = xaml.rsplit("<TextBlock", 1)[1]
+        self.assertNotIn("Margin", last_child)
+
     def test_flex_grow_children_become_a_grid_with_star_columns(self) -> None:
         result, out_dir = self.convert("flex-grow.json")
 
@@ -211,6 +218,43 @@ class TokenTests(CliTestCase):
         self.assertIn("#112233", xaml)
         self.assertNotIn("#FFFFFF", xaml)
 
+    def test_resource_key_capitalises_each_segment(self) -> None:
+        result, out_dir = self.convert("lowercase-token.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        colors = (out_dir / "Colors.xaml").read_text(encoding="utf-8")
+        self.assertIn('x:Key="BrandBrandPrimary"', colors)
+
+
+class ResourceWiringTests(CliTestCase):
+    """The page must merge in Colors.xaml itself; nothing else wires it up."""
+
+    def test_the_page_merges_in_colors_xaml_when_brushes_exist(self) -> None:
+        result, out_dir = self.convert("tokens.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn('<ResourceDictionary Source="Colors.xaml" />', xaml)
+
+    def test_a_token_free_design_does_not_reference_colors_xaml(self) -> None:
+        result, out_dir = self.convert("absolute.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertNotIn("Colors.xaml", xaml)
+
+
+class MultiRootLayoutTests(CliTestCase):
+    """A section's node array can hold more than one top-level layer."""
+
+    def test_each_root_node_keeps_its_own_canvas_coordinates(self) -> None:
+        result, out_dir = self.convert("multi-root.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn('Canvas.Left="0" Canvas.Top="0"', xaml)
+        self.assertIn('Canvas.Left="300" Canvas.Top="400"', xaml)
+
 
 class OpacityTests(CliTestCase):
     """A FRAME's opacity tints only its own background, never its children."""
@@ -270,6 +314,21 @@ class TextTests(CliTestCase):
 
         self.assertEqual(result.returncode, 2, result.stdout)
         self.assertIn("不在闭集里的文案", result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test_ampersand_and_angle_brackets_are_escaped(self) -> None:
+        result, out_dir = self.convert("escaped-text.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn("A &amp; B &lt;tag&gt;", xaml)
+        self.assertNotIn("A & B <tag>", xaml)
+
+    def test_a_node_with_no_position_and_no_flex_parent_is_fatal(self) -> None:
+        result, _ = self.convert("missing-position.json")
+
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("relativeX", result.stderr)
         self.assertEqual(result.stdout, "")
 
     def test_a_placeholder_with_no_matching_parentname_falls_back_to_order(self) -> None:

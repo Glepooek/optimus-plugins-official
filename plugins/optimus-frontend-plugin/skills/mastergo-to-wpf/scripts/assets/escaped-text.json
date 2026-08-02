@@ -1,0 +1,19 @@
+{
+  "list": {
+    "rootMetadata": { "allTexts": ["A & B <tag>"] },
+    "splitContainers": [{ "x": 0, "y": 0, "width": 200, "height": 40 }]
+  },
+  "sections": [
+    {
+      "nodes": [
+        {
+          "type": "TEXT",
+          "id": "21:1",
+          "name": "Escaped",
+          "layoutStyle": { "width": 200, "height": 40, "relativeX": 0, "relativeY": 0 },
+          "text": [{ "text": "A & B <tag>" }]
+        }
+      ]
+    }
+  ]
+}

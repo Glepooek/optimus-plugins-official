@@ -1,0 +1,26 @@
+{
+  "list": {
+    "rootMetadata": { "allTexts": ["A", "B"] },
+    "splitContainers": [{ "x": 0, "y": 0, "width": 400, "height": 500 }]
+  },
+  "sections": [
+    {
+      "nodes": [
+        {
+          "type": "TEXT",
+          "id": "20:1",
+          "name": "A",
+          "layoutStyle": { "width": 40, "height": 20, "relativeX": 0, "relativeY": 0 },
+          "text": [{ "text": "A" }]
+        },
+        {
+          "type": "TEXT",
+          "id": "20:2",
+          "name": "B",
+          "layoutStyle": { "width": 40, "height": 20, "relativeX": 300, "relativeY": 400 },
+          "text": [{ "text": "B" }]
+        }
+      ]
+    }
+  ]
+}

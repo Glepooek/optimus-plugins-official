@@ -345,15 +345,28 @@ def render_node(
     return lines
 
 
-def render_page(listing: dict, sections: list[dict], page_name: str) -> str:
-    """Render the whole page: a Canvas shell holding every section."""
+def render_page(
+    listing: dict, sections: list[dict], page_name: str, has_brushes: bool = False
+) -> str:
+    """Render the whole page: a Canvas shell holding every section.
+
+    `has_brushes` says whether `collect_brushes` produced any entries; only then
+    does the page wire up Colors.xaml, so a token-free design never references an
+    empty dictionary.
+    """
     EMITTED_TEXTS.clear()
     lines = [
         '<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"',
         '             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"',
         f'             x:Class="{page_name}">',
-        "  <Canvas>",
     ]
+    if has_brushes:
+        lines += [
+            "  <UserControl.Resources>",
+            '    <ResourceDictionary Source="Colors.xaml" />',
+            "  </UserControl.Resources>",
+        ]
+    lines.append("  <Canvas>")
     containers = listing.get("splitContainers") or []
     for index, section in enumerate(sections):
         box = containers[index] if index < len(containers) else {}
@@ -361,8 +374,12 @@ def render_page(listing: dict, sections: list[dict], page_name: str) -> str:
         lines.append(f'    <Canvas Canvas.Left="{left}" Canvas.Top="{top}">')
         styles = section.get("styles") or {}
         order = [0]
-        for node in section.get("nodes") or []:
-            lines += render_node(node, 3, absolute=False, styles=styles, section=section, order=order)
+        nodes = section.get("nodes") or []
+        roots_absolute = len(nodes) > 1
+        for node in nodes:
+            lines += render_node(
+                node, 3, absolute=roots_absolute, styles=styles, section=section, order=order,
+            )
         lines.append("    </Canvas>")
     lines += ["  </Canvas>", "</UserControl>", ""]
     return "\n".join(lines)
@@ -384,9 +401,9 @@ def main(argv: list[str] | None = None) -> int:
     arguments = build_parser().parse_args(argv)
     try:
         listing, sections = load_sections(Path(arguments.input))
-        xaml = render_page(listing, sections, arguments.page_name)
-        verify_texts(EMITTED_TEXTS, listing)
         brushes = collect_brushes(sections)
+        xaml = render_page(listing, sections, arguments.page_name, has_brushes=bool(brushes))
+        verify_texts(EMITTED_TEXTS, listing)
         icons = collect_icons(sections)
         out_dir = Path(arguments.out)
         out_dir.mkdir(parents=True, exist_ok=True)
