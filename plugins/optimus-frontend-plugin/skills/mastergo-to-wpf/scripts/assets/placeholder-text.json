@@ -1,0 +1,39 @@
+{
+  "list": {
+    "rootMetadata": { "allTexts": ["真实文案"] },
+    "splitContainers": [{ "x": 0, "y": 0, "width": 200, "height": 60 }]
+  },
+  "sections": [
+    {
+      "rowTexts": [
+        { "text": "Hillstone Design", "parentType": "TEXT", "parentName": "Hillstone Design", "_placeholder": true },
+        { "text": "真实文案", "parentType": "TEXT", "parentName": "Real" }
+      ],
+      "nodes": [
+        {
+          "type": "FRAME",
+          "id": "8:1",
+          "name": "Wrap",
+          "layoutStyle": { "width": 200, "height": 60, "relativeX": 0, "relativeY": 0 },
+          "children": [
+            {
+              "type": "TEXT",
+              "id": "8:2",
+              "name": "Hillstone Design",
+              "layoutStyle": { "width": 120, "height": 20, "relativeX": 0, "relativeY": 0 },
+              "_placeholder": true,
+              "text": [{ "text": "Hillstone Design" }]
+            },
+            {
+              "type": "TEXT",
+              "id": "8:3",
+              "name": "Real",
+              "layoutStyle": { "width": 120, "height": 20, "relativeX": 0, "relativeY": 30 },
+              "text": [{ "text": "真实文案" }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

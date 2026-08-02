@@ -1,0 +1,19 @@
+{
+  "list": {
+    "rootMetadata": { "allTexts": ["允许的文案"] },
+    "splitContainers": [{ "x": 0, "y": 0, "width": 200, "height": 40 }]
+  },
+  "sections": [
+    {
+      "nodes": [
+        {
+          "type": "TEXT",
+          "id": "9:1",
+          "name": "Ghost",
+          "layoutStyle": { "width": 200, "height": 40, "relativeX": 0, "relativeY": 0 },
+          "text": [{ "text": "不在闭集里的文案" }]
+        }
+      ]
+    }
+  ]
+}

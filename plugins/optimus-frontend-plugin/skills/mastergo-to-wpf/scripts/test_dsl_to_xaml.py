@@ -228,5 +228,34 @@ class OpacityTests(CliTestCase):
         self.assertNotIn("Opacity", child)
 
 
+class TextTests(CliTestCase):
+    """Text comes from the DSL's closed set — never invented, never dropped."""
+
+    LONG = "这是一段超过五十个字符的很长的说明文字用于验证占位符能够被正确回填到生成的界面里"
+
+    def test_a_long_text_placeholder_is_filled_from_rowtexts(self) -> None:
+        result, out_dir = self.convert("long-text.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn(self.LONG, xaml)
+        self.assertNotIn("T0|1:1234", xaml)
+
+    def test_placeholder_boilerplate_is_skipped(self) -> None:
+        result, out_dir = self.convert("placeholder-text.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertNotIn("Hillstone Design", xaml)
+        self.assertIn("真实文案", xaml)
+
+    def test_text_outside_the_alltexts_closed_set_is_fatal(self) -> None:
+        result, _ = self.convert("hallucinated-text.json")
+
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("不在闭集里的文案", result.stderr)
+        self.assertEqual(result.stdout, "")
+
+
 if __name__ == "__main__":
     unittest.main()

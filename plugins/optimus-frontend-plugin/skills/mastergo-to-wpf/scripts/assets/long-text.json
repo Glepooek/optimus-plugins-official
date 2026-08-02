@@ -1,0 +1,26 @@
+{
+  "list": {
+    "rootMetadata": { "allTexts": ["这是一段超过五十个字符的很长的说明文字用于验证占位符能够被正确回填到生成的界面里"] },
+    "splitContainers": [{ "x": 0, "y": 0, "width": 400, "height": 60 }]
+  },
+  "sections": [
+    {
+      "rowTexts": [
+        {
+          "text": "这是一段超过五十个字符的很长的说明文字用于验证占位符能够被正确回填到生成的界面里",
+          "parentType": "FRAME",
+          "parentName": "Desc"
+        }
+      ],
+      "nodes": [
+        {
+          "type": "TEXT",
+          "id": "1:1234",
+          "name": "Desc",
+          "layoutStyle": { "width": 400, "height": 60, "relativeX": 0, "relativeY": 0 },
+          "text": [{ "text": "T0|1:1234" }]
+        }
+      ]
+    }
+  ]
+}

@@ -68,6 +68,52 @@ def node_text(node: dict) -> str:
     return "".join(str(run.get("text", "")) for run in runs if isinstance(run, dict))
 
 
+#: A long-text placeholder MasterGo substitutes for text over 50 characters.
+TEXT_PLACEHOLDER = re.compile(r"\AT\d+\|[^\s|]+\Z")
+
+#: Every string actually emitted into the page, collected for the allTexts check.
+EMITTED_TEXTS: list[str] = []
+
+
+def resolve_text(node: dict, section: dict, order: list[int]) -> str:
+    """Return a TEXT node's real content, filling long-text placeholders.
+
+    Long text (>50 chars) reaches the node tree as `T{sectionIndex}|{nodeId}`; the
+    real string lives in `dsl.rowTexts`, in tree order. `order` tracks how many
+    non-placeholder rowTexts have been consumed so far in this section.
+    """
+    raw = node_text(node)
+    if not TEXT_PLACEHOLDER.match(raw.strip()):
+        return raw
+    rows = [row for row in (section.get("rowTexts") or []) if not row.get("_placeholder")]
+    for row in rows:
+        if row.get("parentName") == node.get("name"):
+            return str(row.get("text", ""))
+    if order[0] < len(rows):
+        text = str(rows[order[0]].get("text", ""))
+        order[0] += 1
+        return text
+    raise ConversionError(
+        f"node {node.get('id', '?')} holds placeholder {raw!r} but no matching entry "
+        "exists in dsl.rowTexts; re-fetch this section's DSL"
+    )
+
+
+def verify_texts(emitted: list[str], listing: dict) -> None:
+    """Fail if any emitted string is outside the design's closed text set."""
+    metadata = listing.get("rootMetadata") or {}
+    allowed = metadata.get("allTexts")
+    if not isinstance(allowed, list):
+        return
+    permitted = {str(item) for item in allowed}
+    for text in emitted:
+        if text and text not in permitted:
+            raise ConversionError(
+                f"generated text {text!r} is not in rootMetadata.allTexts; the design's "
+                "text is a closed set, so this string would be fabricated"
+            )
+
+
 def resource_key(token: str) -> str:
     """Turn a design token name like `Text/Text-4` into the XAML key `TextText4`."""
     parts = re.split(r"[^0-9A-Za-z]+", token)
@@ -156,14 +202,32 @@ def paint_attribute(node: dict, styles: dict, attr: str) -> str:
     return f' {attr}="{colour}"'
 
 
-def render_text(node: dict, indent: str, extra: str = "", styles: dict | None = None) -> list[str]:
-    """Render a TEXT node as a TextBlock."""
-    content = escaped(node_text(node))
+def render_text(
+    node: dict,
+    indent: str,
+    extra: str = "",
+    styles: dict | None = None,
+    section: dict | None = None,
+    order: list[int] | None = None,
+) -> list[str]:
+    """Render a TEXT node as a TextBlock, or skip it if it is placeholder boilerplate."""
+    if node.get("_placeholder"):
+        return []
+    text = resolve_text(node, section or {}, order if order is not None else [0])
+    EMITTED_TEXTS.append(text)
+    content = escaped(text)
     paint = paint_attribute(node, styles or {}, "Foreground")
     return [f'{indent}<TextBlock{extra}{paint} Text="{content}" />']
 
 
-def render_flex(node: dict, depth: int, extra: str = "", styles: dict | None = None) -> list[str]:
+def render_flex(
+    node: dict,
+    depth: int,
+    extra: str = "",
+    styles: dict | None = None,
+    section: dict | None = None,
+    order: list[int] | None = None,
+) -> list[str]:
     """Render a flex container as a StackPanel, or a Grid when children grow."""
     styles = styles or {}
     indent = "  " * depth
@@ -184,7 +248,10 @@ def render_flex(node: dict, depth: int, extra: str = "", styles: dict | None = N
             if gap and position < len(children) - 1:
                 margin = f"0,0,{number(gap)},0" if horizontal else f"0,0,0,{number(gap)}"
                 child_extra += f' Margin="{margin}"'
-            lines += render_node(child, depth + 1, extra=child_extra, absolute=False, styles=styles)
+            lines += render_node(
+                child, depth + 1, extra=child_extra, absolute=False, styles=styles,
+                section=section, order=order,
+            )
         lines.append(f"{indent}</Grid>")
         return lines
 
@@ -197,7 +264,10 @@ def render_flex(node: dict, depth: int, extra: str = "", styles: dict | None = N
         if gap and position < len(children) - 1:
             margin = f"0,0,{number(gap)},0" if horizontal else f"0,0,0,{number(gap)}"
             child_extra = f' Margin="{margin}"'
-        lines += render_node(child, depth + 1, extra=child_extra, absolute=False, styles=styles)
+        lines += render_node(
+            child, depth + 1, extra=child_extra, absolute=False, styles=styles,
+            section=section, order=order,
+        )
     lines.append(f"{indent}</StackPanel>")
     return lines
 
@@ -217,7 +287,13 @@ def canvas_position(node: dict) -> str:
 
 
 def render_node(
-    node: dict, depth: int, extra: str = "", absolute: bool = False, styles: dict | None = None
+    node: dict,
+    depth: int,
+    extra: str = "",
+    absolute: bool = False,
+    styles: dict | None = None,
+    section: dict | None = None,
+    order: list[int] | None = None,
 ) -> list[str]:
     """Render one DSL node and its subtree.
 
@@ -228,19 +304,20 @@ def render_node(
     indent = "  " * depth
     placement = canvas_position(node) if absolute else ""
     if node.get("type") == "TEXT":
-        return render_text(node, indent, extra + placement, styles=styles)
+        return render_text(node, indent, extra + placement, styles=styles, section=section, order=order)
     if node.get("flexContainerInfo"):
-        return render_flex(node, depth, extra + placement, styles=styles)
+        return render_flex(node, depth, extra + placement, styles=styles, section=section, order=order)
     paint = paint_attribute(node, styles, "Background")
     lines = [f"{indent}<Canvas{extra}{placement}{paint}>"]
     for child in node.get("children") or []:
-        lines += render_node(child, depth + 1, absolute=True, styles=styles)
+        lines += render_node(child, depth + 1, absolute=True, styles=styles, section=section, order=order)
     lines.append(f"{indent}</Canvas>")
     return lines
 
 
 def render_page(listing: dict, sections: list[dict], page_name: str) -> str:
     """Render the whole page: a Canvas shell holding every section."""
+    EMITTED_TEXTS.clear()
     lines = [
         '<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"',
         '             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"',
@@ -253,8 +330,9 @@ def render_page(listing: dict, sections: list[dict], page_name: str) -> str:
         left, top = number(box.get("x", 0)), number(box.get("y", 0))
         lines.append(f'    <Canvas Canvas.Left="{left}" Canvas.Top="{top}">')
         styles = section.get("styles") or {}
+        order = [0]
         for node in section.get("nodes") or []:
-            lines += render_node(node, 3, absolute=False, styles=styles)
+            lines += render_node(node, 3, absolute=False, styles=styles, section=section, order=order)
         lines.append("    </Canvas>")
     lines += ["  </Canvas>", "</UserControl>", ""]
     return "\n".join(lines)
@@ -277,6 +355,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         listing, sections = load_sections(Path(arguments.input))
         xaml = render_page(listing, sections, arguments.page_name)
+        verify_texts(EMITTED_TEXTS, listing)
         brushes = collect_brushes(sections)
         out_dir = Path(arguments.out)
         out_dir.mkdir(parents=True, exist_ok=True)
