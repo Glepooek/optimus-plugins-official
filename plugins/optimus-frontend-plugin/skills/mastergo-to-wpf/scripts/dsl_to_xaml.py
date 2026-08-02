@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -67,24 +68,96 @@ def node_text(node: dict) -> str:
     return "".join(str(run.get("text", "")) for run in runs if isinstance(run, dict))
 
 
-def render_text(node: dict, indent: str, extra: str = "") -> list[str]:
+def resource_key(token: str) -> str:
+    """Turn a design token name like `Text/Text-4` into the XAML key `TextText4`."""
+    parts = re.split(r"[^0-9A-Za-z]+", token)
+    return "".join(part[:1].upper() + part[1:] for part in parts if part)
+
+
+def node_colour(node: dict, styles: dict) -> tuple[str | None, str | None]:
+    """Resolve a node's paint to (resource key or None, literal colour or None)."""
+    token = node.get("_token")
+    colour = node.get("_color")
+    if colour is None:
+        reference = node.get("fill")
+        if isinstance(reference, str) and reference:
+            entry = styles.get(reference)
+            if entry is None:
+                raise ConversionError(
+                    f"node {node.get('id', '?')} references style {reference!r}, which is "
+                    "not in dsl.styles; re-fetch the section DSL"
+                )
+            values = entry.get("value") or [{}]
+            colour = values[0].get("color")
+    if colour is None:
+        return None, None
+    return (resource_key(token) if token else None), colour
+
+
+def walk(nodes: list[dict]):
+    """Yield every node in the tree, depth first, in document order."""
+    for node in nodes:
+        yield node
+        yield from walk(node.get("children") or [])
+
+
+def collect_brushes(sections: list[dict]) -> dict[str, tuple[str, str]]:
+    """Collect {resource key: (colour, original token name)} across all sections."""
+    brushes: dict[str, tuple[str, str]] = {}
+    for section in sections:
+        styles = section.get("styles") or {}
+        for node in walk(section.get("nodes") or []):
+            key, colour = node_colour(node, styles)
+            if key and colour:
+                brushes.setdefault(key, (colour, str(node.get("_token"))))
+    return brushes
+
+
+def render_resources(brushes: dict[str, tuple[str, str]]) -> str:
+    """Render the colour ResourceDictionary."""
+    lines = [
+        '<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"',
+        '                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">',
+    ]
+    for key in sorted(brushes):
+        colour, token = brushes[key]
+        lines.append(f"  <!-- {token} -->")
+        lines.append(f'  <SolidColorBrush x:Key="{key}" Color="{colour}" />')
+    lines += ["</ResourceDictionary>", ""]
+    return "\n".join(lines)
+
+
+def paint_attribute(node: dict, styles: dict, attr: str) -> str:
+    """Render a node's resolved paint as a `Background=`/`Foreground=` attribute."""
+    key, colour = node_colour(node, styles)
+    if key:
+        return f' {attr}="{{StaticResource {key}}}"'
+    if colour:
+        return f' {attr}="{colour}"'
+    return ""
+
+
+def render_text(node: dict, indent: str, extra: str = "", styles: dict | None = None) -> list[str]:
     """Render a TEXT node as a TextBlock."""
     content = escaped(node_text(node))
-    return [f'{indent}<TextBlock{extra} Text="{content}" />']
+    paint = paint_attribute(node, styles or {}, "Foreground")
+    return [f'{indent}<TextBlock{extra}{paint} Text="{content}" />']
 
 
-def render_flex(node: dict, depth: int, extra: str = "") -> list[str]:
+def render_flex(node: dict, depth: int, extra: str = "", styles: dict | None = None) -> list[str]:
     """Render a flex container as a StackPanel, or a Grid when children grow."""
+    styles = styles or {}
     indent = "  " * depth
     info = node.get("flexContainerInfo") or {}
     children = node.get("children") or []
     grows = [child for child in children if child.get("flexGrow")]
+    paint = paint_attribute(node, styles, "Background")
 
     if grows:
         horizontal = str(info.get("flexDirection", "row")).lower() == "row"
         gap = float(info.get("gap") or 0)
         axis, definition = ("Column", "ColumnDefinition Width") if horizontal else ("Row", "RowDefinition Height")
-        lines = [f"{indent}<Grid{extra}>", f"{indent}  <Grid.{axis}Definitions>"]
+        lines = [f"{indent}<Grid{extra}{paint}>", f"{indent}  <Grid.{axis}Definitions>"]
         lines += [f'{indent}    <{definition}="*" />' for _ in children]
         lines.append(f"{indent}  </Grid.{axis}Definitions>")
         for position, child in enumerate(children):
@@ -92,20 +165,20 @@ def render_flex(node: dict, depth: int, extra: str = "") -> list[str]:
             if gap and position < len(children) - 1:
                 margin = f"0,0,{number(gap)},0" if horizontal else f"0,0,0,{number(gap)}"
                 child_extra += f' Margin="{margin}"'
-            lines += render_node(child, depth + 1, extra=child_extra, absolute=False)
+            lines += render_node(child, depth + 1, extra=child_extra, absolute=False, styles=styles)
         lines.append(f"{indent}</Grid>")
         return lines
 
     horizontal = str(info.get("flexDirection", "row")).lower() == "row"
     orientation = "Horizontal" if horizontal else "Vertical"
     gap = float(info.get("gap") or 0)
-    lines = [f'{indent}<StackPanel Orientation="{orientation}"{extra}>']
+    lines = [f'{indent}<StackPanel Orientation="{orientation}"{extra}{paint}>']
     for position, child in enumerate(children):
         child_extra = ""
         if gap and position < len(children) - 1:
             margin = f"0,0,{number(gap)},0" if horizontal else f"0,0,0,{number(gap)}"
             child_extra = f' Margin="{margin}"'
-        lines += render_node(child, depth + 1, extra=child_extra, absolute=False)
+        lines += render_node(child, depth + 1, extra=child_extra, absolute=False, styles=styles)
     lines.append(f"{indent}</StackPanel>")
     return lines
 
@@ -124,21 +197,25 @@ def canvas_position(node: dict) -> str:
     return f' Canvas.Left="{left}" Canvas.Top="{top}"'
 
 
-def render_node(node: dict, depth: int, extra: str = "", absolute: bool = False) -> list[str]:
+def render_node(
+    node: dict, depth: int, extra: str = "", absolute: bool = False, styles: dict | None = None
+) -> list[str]:
     """Render one DSL node and its subtree.
 
     `absolute` says the parent positions its children with Canvas coordinates; flex
     parents pass False so their children never receive Canvas.Left/Top.
     """
+    styles = styles or {}
     indent = "  " * depth
     placement = canvas_position(node) if absolute else ""
     if node.get("type") == "TEXT":
-        return render_text(node, indent, extra + placement)
+        return render_text(node, indent, extra + placement, styles=styles)
     if node.get("flexContainerInfo"):
-        return render_flex(node, depth, extra + placement)
-    lines = [f"{indent}<Canvas{extra}{placement}>"]
+        return render_flex(node, depth, extra + placement, styles=styles)
+    paint = paint_attribute(node, styles, "Background")
+    lines = [f"{indent}<Canvas{extra}{placement}{paint}>"]
     for child in node.get("children") or []:
-        lines += render_node(child, depth + 1, absolute=True)
+        lines += render_node(child, depth + 1, absolute=True, styles=styles)
     lines.append(f"{indent}</Canvas>")
     return lines
 
@@ -156,8 +233,9 @@ def render_page(listing: dict, sections: list[dict], page_name: str) -> str:
         box = containers[index] if index < len(containers) else {}
         left, top = number(box.get("x", 0)), number(box.get("y", 0))
         lines.append(f'    <Canvas Canvas.Left="{left}" Canvas.Top="{top}">')
+        styles = section.get("styles") or {}
         for node in section.get("nodes") or []:
-            lines += render_node(node, 3, absolute=False)
+            lines += render_node(node, 3, absolute=False, styles=styles)
         lines.append("    </Canvas>")
     lines += ["  </Canvas>", "</UserControl>", ""]
     return "\n".join(lines)
@@ -180,9 +258,11 @@ def main(argv: list[str] | None = None) -> int:
     try:
         listing, sections = load_sections(Path(arguments.input))
         xaml = render_page(listing, sections, arguments.page_name)
+        brushes = collect_brushes(sections)
         out_dir = Path(arguments.out)
         out_dir.mkdir(parents=True, exist_ok=True)
         (out_dir / f"{arguments.page_name}.xaml").write_text(xaml, encoding="utf-8")
+        (out_dir / "Colors.xaml").write_text(render_resources(brushes), encoding="utf-8")
     except ConversionError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2

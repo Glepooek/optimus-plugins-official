@@ -170,5 +170,39 @@ class AbsoluteLayoutTests(CliTestCase):
         self.assertIn('Canvas.Left="12"', stack_body)
 
 
+class TokenTests(CliTestCase):
+    """_token becomes a StaticResource; a dangling style reference is fatal."""
+
+    def test_tokens_become_resource_dictionary_brushes(self) -> None:
+        result, out_dir = self.convert("tokens.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        colors = (out_dir / "Colors.xaml").read_text(encoding="utf-8")
+        self.assertIn('<SolidColorBrush x:Key="FillFill2" Color="#F2F3F5" />', colors)
+        self.assertIn('<SolidColorBrush x:Key="TextText4" Color="#4E5969" />', colors)
+
+    def test_the_original_token_name_is_kept_as_a_comment(self) -> None:
+        result, out_dir = self.convert("tokens.json")
+
+        colors = (out_dir / "Colors.xaml").read_text(encoding="utf-8")
+        self.assertIn("Fill/Fill-2", colors)
+        self.assertIn("Text/Text-4", colors)
+
+    def test_the_page_references_brushes_rather_than_literal_colours(self) -> None:
+        result, out_dir = self.convert("tokens.json")
+
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn("{StaticResource FillFill2}", xaml)
+        self.assertIn("{StaticResource TextText4}", xaml)
+        self.assertNotIn("#F2F3F5", xaml)
+
+    def test_a_dangling_style_reference_is_fatal(self) -> None:
+        result, _ = self.convert("broken-ref.json")
+
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("paint_9:9999", result.stderr)
+        self.assertEqual(result.stdout, "")
+
+
 if __name__ == "__main__":
     unittest.main()
