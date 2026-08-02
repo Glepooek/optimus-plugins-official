@@ -1,0 +1,37 @@
+{
+  "list": {
+    "rootMetadata": { "allTexts": ["上", "下"] },
+    "splitContainers": [{ "x": 0, "y": 0, "width": 48, "height": 200 }]
+  },
+  "sections": [
+    {
+      "nodes": [
+        {
+          "type": "FRAME",
+          "id": "3:1",
+          "name": "SplitColumn",
+          "layoutStyle": { "width": 48, "height": 200, "relativeX": 0, "relativeY": 0 },
+          "flexContainerInfo": { "flexDirection": "column", "gap": 8 },
+          "children": [
+            {
+              "type": "TEXT",
+              "id": "3:2",
+              "name": "Top",
+              "layoutStyle": { "width": 48, "height": 100, "relativeX": 0, "relativeY": 0 },
+              "flexGrow": 1,
+              "text": [{ "text": "上" }]
+            },
+            {
+              "type": "TEXT",
+              "id": "3:3",
+              "name": "Bottom",
+              "layoutStyle": { "width": 48, "height": 100, "relativeX": 0, "relativeY": 100 },
+              "flexGrow": 1,
+              "text": [{ "text": "下" }]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

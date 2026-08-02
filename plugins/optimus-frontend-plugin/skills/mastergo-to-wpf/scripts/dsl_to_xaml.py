@@ -81,11 +81,18 @@ def render_flex(node: dict, depth: int) -> list[str]:
     grows = [child for child in children if child.get("flexGrow")]
 
     if grows:
-        lines = [f"{indent}<Grid>", f"{indent}  <Grid.ColumnDefinitions>"]
-        lines += [f'{indent}    <ColumnDefinition Width="*" />' for _ in children]
-        lines.append(f"{indent}  </Grid.ColumnDefinitions>")
-        for column, child in enumerate(children):
-            lines += render_node(child, depth + 1, extra=f' Grid.Column="{column}"')
+        horizontal = str(info.get("flexDirection", "row")).lower() == "row"
+        gap = float(info.get("gap") or 0)
+        axis, definition = ("Column", "ColumnDefinition Width") if horizontal else ("Row", "RowDefinition Height")
+        lines = [f"{indent}<Grid>", f"{indent}  <Grid.{axis}Definitions>"]
+        lines += [f'{indent}    <{definition}="*" />' for _ in children]
+        lines.append(f"{indent}  </Grid.{axis}Definitions>")
+        for position, child in enumerate(children):
+            extra = f' Grid.{axis}="{position}"'
+            if gap and position < len(children) - 1:
+                margin = f"0,0,{number(gap)},0" if horizontal else f"0,0,0,{number(gap)}"
+                extra += f' Margin="{margin}"'
+            lines += render_node(child, depth + 1, extra=extra)
         lines.append(f"{indent}</Grid>")
         return lines
 

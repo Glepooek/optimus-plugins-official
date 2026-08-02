@@ -124,6 +124,23 @@ class FlexLayoutTests(CliTestCase):
         self.assertIn('Grid.Column="0"', xaml)
         self.assertIn('Grid.Column="1"', xaml)
 
+    def test_flex_grow_column_becomes_a_grid_with_star_rows(self) -> None:
+        result, out_dir = self.convert("flex-grow-column.json")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn("<Grid.RowDefinitions>", xaml)
+        self.assertEqual(xaml.count('<RowDefinition Height="*" />'), 2)
+        self.assertIn('Grid.Row="0"', xaml)
+        self.assertIn('Grid.Row="1"', xaml)
+        self.assertNotIn("ColumnDefinition", xaml)
+
+    def test_flex_grow_column_gap_becomes_margin_on_all_but_the_last_child(self) -> None:
+        result, out_dir = self.convert("flex-grow-column.json")
+
+        xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
+        self.assertIn('Margin="0,0,0,8"', xaml)
+
 
 if __name__ == "__main__":
     unittest.main()
