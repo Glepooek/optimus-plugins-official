@@ -15,11 +15,13 @@ SAME_STYLE_SVG = """<svg xmlns="http://www.w3.org/2000/svg">
   <path d="M0 0 L1 0 Z" fill="#B8C6E0" />
   <path d="M2 0 L3 0 Z" fill="#B8C6E0" />
 </svg>"""
-MERGED_DATA = "M0 0 L1 0 Z M2 0 L3 0 Z"
-MERGED_XAML = '<Path Fill="#B8C6E0" Data="M0 0 L1 0 Z M2 0 L3 0 Z" />'
+MERGED_DATA = "F1 M0 0 L1 0 Z M2 0 L3 0 Z"
+MERGED_XAML = '<Path Fill="#B8C6E0" Data="F1 M0 0 L1 0 Z M2 0 L3 0 Z" />'
 
 
-class MergeSvgPathsCliTests(unittest.TestCase):
+class CliTestCase(unittest.TestCase):
+    """Shared helper for driving the converter as the skill actually invokes it."""
+
     def run_cli(self, *arguments: str, stdin: str | None = None) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [sys.executable, str(SCRIPT), *arguments],
@@ -29,6 +31,9 @@ class MergeSvgPathsCliTests(unittest.TestCase):
             check=False,
             timeout=10,
         )
+
+
+class MergeSvgPathsCliTests(CliTestCase):
 
     def test_same_style_namespaced_svg_merges_paths_to_data(self) -> None:
         result = self.run_cli("--stdin", "--format", "data", stdin=SAME_STYLE_SVG)
@@ -75,10 +80,10 @@ class MergeSvgPathsCliTests(unittest.TestCase):
         result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("multiple fill/stroke styles", result.stderr.lower())
+        self.assertIn("multiple fill/stroke/fill-rule styles", result.stderr.lower())
         self.assertEqual(result.stdout.count("<Path "), 2)
-        self.assertIn('Data="M0 0 L1 0 Z"', result.stdout)
-        self.assertIn('Data="M2 0 L3 0 Z"', result.stdout)
+        self.assertIn('Data="F1 M0 0 L1 0 Z"', result.stdout)
+        self.assertIn('Data="F1 M2 0 L3 0 Z"', result.stdout)
 
     def test_transformed_group_fails_without_stdout(self) -> None:
         svg = """<svg xmlns="http://www.w3.org/2000/svg">
@@ -132,7 +137,7 @@ class MergeSvgPathsCliTests(unittest.TestCase):
         self.assertIn('Fill="#B8C6E0"', result.stdout)
         self.assertNotIn("Stroke=", result.stdout)
 
-    def test_repeated_style_or_class_attributes_emit_one_warning(self) -> None:
+    def test_repeated_class_attributes_emit_one_warning(self) -> None:
         svg = """<svg xmlns="http://www.w3.org/2000/svg" class="icon">
   <g style="fill: #B8C6E0">
     <path d="M0 0 L1 0 Z" class="primary" />
@@ -142,7 +147,8 @@ class MergeSvgPathsCliTests(unittest.TestCase):
         result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stderr.count("style or class attributes"), 1)
+        self.assertEqual(result.stderr.count("class attributes were encountered"), 1)
+        self.assertEqual(result.stdout.strip(), MERGED_XAML)
 
     def test_xml_decoded_quote_fill_remains_escaped_and_parseable_xaml(self) -> None:
         svg = """<svg xmlns="http://www.w3.org/2000/svg">
@@ -161,8 +167,168 @@ class MergeSvgPathsCliTests(unittest.TestCase):
         result = self.run_cli("--stdin", "--format", "data", stdin=svg)
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.strip(), "M0 0 L1 0 Z")
+        self.assertEqual(result.stdout.strip(), "F1 M0 0 L1 0 Z")
         self.assertNotIn("traceback", result.stderr.lower())
+
+
+class NonRenderedContentTests(CliTestCase):
+    """Content SVG never paints must not reach the WPF geometry."""
+
+    def test_paths_inside_non_rendered_containers_are_skipped(self) -> None:
+        for container in ("defs", "clipPath", "mask", "symbol", "marker", "pattern"):
+            svg = f"""<svg xmlns="http://www.w3.org/2000/svg">
+  <{container}><path d="M9 9 L8 8 Z" fill="#B8C6E0" /></{container}>
+  <path d="M0 0 L1 0 Z" fill="#B8C6E0" />
+</svg>"""
+            with self.subTest(container=container):
+                result = self.run_cli("--stdin", "--format", "data", stdin=svg)
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout.strip(), "F1 M0 0 L1 0 Z")
+
+    def test_only_non_rendered_paths_fails_instead_of_emitting_geometry(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <defs><path d="M9 9 L8 8 Z" fill="#B8C6E0" /></defs>
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "data", stdin=svg)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("No <path>", result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test_display_none_prunes_the_whole_subtree(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <g display="none"><path d="M9 9 L8 8 Z" /></g>
+  <g style="display: none"><path d="M7 7 L6 6 Z" /></g>
+  <path d="M0 0 L1 0 Z" />
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "data", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "F1 M0 0 L1 0 Z")
+
+    def test_hidden_visibility_skips_the_path_but_still_inherits(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <g visibility="hidden">
+    <path d="M9 9 L8 8 Z" />
+    <path d="M0 0 L1 0 Z" visibility="visible" />
+  </g>
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "data", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "F1 M0 0 L1 0 Z")
+
+
+class StyleDeclarationTests(CliTestCase):
+    """Inline `style` paint must be honoured instead of silently falling back to black."""
+
+    def test_style_fill_is_converted_instead_of_defaulting_to_black(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <path d="M0 0 L1 0 Z" style="fill:#B8C6E0" />
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Fill="#B8C6E0"', result.stdout)
+        self.assertNotIn("#000000", result.stdout)
+
+    def test_style_outranks_the_presentation_attribute(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <path d="M0 0 L1 0 Z" fill="#FF0000" style="fill: #B8C6E0" />
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Fill="#B8C6E0"', result.stdout)
+        self.assertNotIn("#FF0000", result.stdout)
+
+    def test_style_transform_still_stops_the_conversion(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <g style="transform: translate(2px, 0)"><path d="M0 0 L1 0 Z" /></g>
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "data", stdin=svg)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("transform", result.stderr.lower())
+        self.assertEqual(result.stdout, "")
+
+    def test_unconverted_style_declarations_are_named_in_the_warning(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <path d="M0 0 L1 0 Z" style="fill:#B8C6E0;opacity:0.5;stroke-width:2" />
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("opacity, stroke-width", result.stderr)
+        self.assertNotIn("fill", result.stderr)
+
+
+class FillRuleTests(CliTestCase):
+    """SVG defaults to nonzero; WPF defaults to EvenOdd, so the prefix is mandatory."""
+
+    def test_default_fill_rule_emits_the_nonzero_prefix(self) -> None:
+        svg = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0 L1 0 Z" /></svg>'
+        result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Data="F1 M0 0 L1 0 Z"', result.stdout)
+
+    def test_evenodd_emits_the_evenodd_prefix_from_attribute_and_style(self) -> None:
+        for markup in ('fill-rule="evenodd"', 'style="fill-rule: evenodd"'):
+            svg = f'<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0 Z" {markup} /></svg>'
+            with self.subTest(markup=markup):
+                result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('Data="F0 M0 0 Z"', result.stdout)
+
+    def test_fill_rule_is_inherited_from_an_ancestor_group(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <g fill-rule="evenodd"><path d="M0 0 Z" /></g>
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Data="F0 M0 0 Z"', result.stdout)
+
+    def test_mixed_fill_rules_split_same_coloured_paths(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg" fill="#B8C6E0">
+  <path d="M0 0 L1 0 Z" />
+  <path d="M2 0 L3 0 Z" fill-rule="evenodd" />
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("multiple fill/stroke/fill-rule styles", result.stderr.lower())
+        self.assertEqual(result.stdout.count("<Path "), 2)
+        self.assertIn('Data="F1 M0 0 L1 0 Z"', result.stdout)
+        self.assertIn('Data="F0 M2 0 L3 0 Z"', result.stdout)
+
+    def test_mixed_fill_rules_warn_that_data_output_uses_the_first_rule(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <path d="M0 0 L1 0 Z" fill-rule="evenodd" />
+  <path d="M2 0 L3 0 Z" />
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "data", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("multiple fill rules", result.stderr.lower())
+        self.assertEqual(result.stdout.strip(), "F0 M0 0 L1 0 Z M2 0 L3 0 Z")
+
+
+class SampleIconTests(CliTestCase):
+    """The bundled fixture backs the worked example in SKILL.md."""
+
+    def test_bundled_sample_icon_merges_to_one_path_with_a_class_warning(self) -> None:
+        sample = SCRIPT.parent.parent / "assets" / "sample-icon.svg"
+        result = self.run_cli("--file", str(sample), "--format", "xaml")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("class attributes were encountered", result.stderr)
+        self.assertEqual(result.stdout.count("<Path "), 1)
+        self.assertIn('Fill="#B8C6E0"', result.stdout)
+        self.assertIn('Data="F1 M3 3h18v18H3V3zm2 2v14h14V5H5z M7 11h10v2H7v-2z"', result.stdout)
 
 
 if __name__ == "__main__":

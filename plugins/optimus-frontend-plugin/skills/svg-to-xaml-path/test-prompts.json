@@ -1,22 +1,27 @@
 [
   {
     "id": 1,
-    "prompt": "请把 C:\\Users\\Administrator\\Downloads\\AI问答.svg 转成 WPF XAML Path。",
-    "expected": "应识别为本地 SVG 文件路径，使用 --file 和 --format xaml。该文件有 class=\"icon\"，必须如实报告实际警告 warning: style or class attributes were encountered; they were not converted.；class 被忽略后两个 path 的有效 Fill 相同，结果仍应为一个 XAML Path，带 Fill=\"#B8C6E0\"，Data 按 SVG 文档顺序包含两个完整 d 值；不得截断或发明几何。"
+    "prompt": "请把本 skill 的 assets/sample-icon.svg 转成 WPF XAML Path。",
+    "expected": "应识别为本地 SVG 文件路径，使用 --file 和 --format xaml，且脚本路径基于本 skill 的 base directory 而非仓库相对路径。该文件有 class=\"icon\"，必须如实报告实际警告 warning: class attributes were encountered; CSS classes were not converted.；class 被忽略后两个 path 的有效 Fill、Stroke、fill-rule 相同，结果应为一个 XAML Path：<Path Fill=\"#B8C6E0\" Data=\"F1 M3 3h18v18H3V3zm2 2v14h14V5H5z M7 11h10v2H7v-2z\" />；必须保留 F1 前缀，不得截断或发明几何。"
   },
   {
     "id": 2,
     "prompt": "请只提取下面 SVG 的 Path.Data：<svg xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M0 0 L10 0 Z\" fill=\"#112233\" /></svg>",
-    "expected": "应识别为粘贴的完整 SVG 标记，使用 --svg 和 --format data；返回完整且仅有 M0 0 L10 0 Z 的路径数据，不生成 XAML。"
+    "expected": "应识别为粘贴的完整 SVG 标记，使用 --svg 和 --format data；返回完整的 F1 M0 0 L10 0 Z，不生成 XAML。不得删除 F1 前缀——SVG 默认 nonzero 而 WPF 迷你语言默认 EvenOdd。"
   },
   {
     "id": 3,
     "prompt": "把这段 SVG 合并成一个 WPF Path：<svg xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M0 0 L1 0 Z\" fill=\"#B8C6E0\"/><path d=\"M2 0 L3 0 Z\" fill=\"#FF0000\"/></svg>",
-    "expected": "应说明输入中的有效 Fill 不同；以 --svg --format xaml 运行后必须返回两个 Path 元素，并如实报告实际多样式警告 warning: multiple fill/stroke styles found; emitting separate Path elements.，而不是伪造一个颜色的单一路径。data 格式仍可按顺序提供两个 d 值。"
+    "expected": "应说明输入中的有效 Fill 不同；以 --svg --format xaml 运行后必须返回两个 Path 元素，并如实报告实际多样式警告 warning: multiple fill/stroke/fill-rule styles found; emitting separate Path elements.，而不是伪造一个颜色的单一路径。data 格式仍可按顺序提供两个 d 值。"
   },
   {
     "id": 4,
     "prompt": "请转成 WPF XAML：<svg xmlns=\"http://www.w3.org/2000/svg\"><g transform=\"translate(20 0)\"><path d=\"M0 0 L10 0 Z\" fill=\"#B8C6E0\"/></g></svg>",
     "expected": "应识别祖先 transform，使用 --svg 时如实报告该转换不受支持且没有成功输出；不得手工把 translate(20 0) 近似或烘焙进坐标。应要求先在源 SVG 中应用或展平变换后重新转换。"
+  },
+  {
+    "id": 5,
+    "prompt": "转成 WPF Path.Data：<svg xmlns=\"http://www.w3.org/2000/svg\"><defs><path id=\"clip\" d=\"M9 9 L8 8 Z\"/></defs><path d=\"M0 0 L1 0 Z\" style=\"fill:#B8C6E0\"/></svg>",
+    "expected": "应以 --svg --format data 运行，只返回 F1 M0 0 L1 0 Z：<defs> 内的路径 SVG 本身不直接渲染，脚本会跳过整棵子树，不得把 M9 9 L8 8 Z 串进结果。style 中的 fill 会被正常解析，不应退化为 #000000，也不应报告 class 警告。"
   }
 ]
