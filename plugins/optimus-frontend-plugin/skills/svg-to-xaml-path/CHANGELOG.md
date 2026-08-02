@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.0] - 2026-08-02
+
+### Added
+- 新增基本图元转换：`rect`（含 `rx`/`ry` 圆角与超限钳制）、`circle`、`ellipse`、`line`、`polyline`、`polygon` 按 SVG 2 规范的等价路径精确转换，无任何近似。
+- 新增 `transform` 转换：`translate`/`scale`/`rotate`（含旋转中心）/`skewX`/`skewY`/`matrix` 及函数列表合成为单一仿射矩阵，输出 WPF `MatrixTransform`；坐标不被烘焙。
+- 新增 paint 值校验：hex 与颜色关键字放行，`rgb()`/`rgba()` 换算为 WPF hex，`currentColor`/`url(#…)`/`hsl()` 硬报错并给出预处理建议。
+- 新增 `text`/`tspan`/`textPath`/`image`/`use`/`foreignObject` 的具名跳过告警，替代此前的静默丢弃。
+- 新增内部 DTD 子集拦截，零依赖防范实体展开攻击。
+- 新增 SKILL.md 的「错误与告警」表，逐条说明 exit 2 的成因与处理方式。
+- 新增 30 条 CLI 契约测试（共 64 条），覆盖图元几何、矩阵合成顺序、paint 校验与编码。
+
+### Changed
+- `transform` 由硬停止改为转换：合并键扩展为 `Fill` + `Stroke` + `fill-rule` + `transform` 四项。
+- `--format data` 遇到 transform 时报错——路径数据无法承载变换，提示改用 `xaml` 或先展平。
+- 无可转换几何时的错误信息列出全部受支持的图元，不再只提 `<path>`。
+
+### Fixed
+- 修复 stdin 走 locale 编码：显式 `utf-8-sig`，与 `--file` 对齐；此前中文环境下经 PowerShell 管道传入含非 ASCII 的 SVG 会乱码。
+
 ## [1.1.0] - 2026-08-02
 
 ### Added

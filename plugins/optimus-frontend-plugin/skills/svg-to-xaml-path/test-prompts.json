@@ -2,7 +2,7 @@
   {
     "id": 1,
     "prompt": "请把本 skill 的 assets/sample-icon.svg 转成 WPF XAML Path。",
-    "expected": "应识别为本地 SVG 文件路径，使用 --file 和 --format xaml，且脚本路径基于本 skill 的 base directory 而非仓库相对路径。该文件有 class=\"icon\"，必须如实报告实际警告 warning: class attributes were encountered; CSS classes were not converted.；class 被忽略后两个 path 的有效 Fill、Stroke、fill-rule 相同，结果应为一个 XAML Path：<Path Fill=\"#B8C6E0\" Data=\"F1 M3 3h18v18H3V3zm2 2v14h14V5H5z M7 11h10v2H7v-2z\" />；必须保留 F1 前缀，不得截断或发明几何。"
+    "expected": "应识别为本地 SVG 文件路径，使用 --file 和 --format xaml，且脚本路径基于本 skill 的 base directory 而非仓库相对路径。该文件有 class=\"icon\"，必须如实报告实际警告 warning: class attributes were encountered; CSS classes were not converted.；class 被忽略后两个 path 的有效 Fill、Stroke、fill-rule、transform 相同，结果应为一个 XAML Path：<Path Fill=\"#B8C6E0\" Data=\"F1 M3 3h18v18H3V3zm2 2v14h14V5H5z M7 11h10v2H7v-2z\" />；必须保留 F1 前缀，不得截断或发明几何。"
   },
   {
     "id": 2,
@@ -12,16 +12,26 @@
   {
     "id": 3,
     "prompt": "把这段 SVG 合并成一个 WPF Path：<svg xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M0 0 L1 0 Z\" fill=\"#B8C6E0\"/><path d=\"M2 0 L3 0 Z\" fill=\"#FF0000\"/></svg>",
-    "expected": "应说明输入中的有效 Fill 不同；以 --svg --format xaml 运行后必须返回两个 Path 元素，并如实报告实际多样式警告 warning: multiple fill/stroke/fill-rule styles found; emitting separate Path elements.，而不是伪造一个颜色的单一路径。data 格式仍可按顺序提供两个 d 值。"
+    "expected": "应说明输入中的有效 Fill 不同；以 --svg --format xaml 运行后必须返回两个 Path 元素，并如实报告实际警告 warning: multiple fill/stroke/fill-rule/transform combinations found; emitting separate Path elements.，而不是伪造一个颜色的单一路径。"
   },
   {
     "id": 4,
     "prompt": "请转成 WPF XAML：<svg xmlns=\"http://www.w3.org/2000/svg\"><g transform=\"translate(20 0)\"><path d=\"M0 0 L10 0 Z\" fill=\"#B8C6E0\"/></g></svg>",
-    "expected": "应识别祖先 transform，使用 --svg 时如实报告该转换不受支持且没有成功输出；不得手工把 translate(20 0) 近似或烘焙进坐标。应要求先在源 SVG 中应用或展平变换后重新转换。"
+    "expected": "transform 现在会被转换而非硬停。以 --svg --format xaml 运行，应返回带 <Path.RenderTransform><MatrixTransform Matrix=\"1,0,0,1,20,0\" /> 的 Path，Data 为 F1 M0 0 L10 0 Z——坐标保持原样，不得手工把 translate(20 0) 烘焙进坐标。若用户坚持要 --format data，须说明该格式无法承载变换并会报错。"
   },
   {
     "id": 5,
     "prompt": "转成 WPF Path.Data：<svg xmlns=\"http://www.w3.org/2000/svg\"><defs><path id=\"clip\" d=\"M9 9 L8 8 Z\"/></defs><path d=\"M0 0 L1 0 Z\" style=\"fill:#B8C6E0\"/></svg>",
     "expected": "应以 --svg --format data 运行，只返回 F1 M0 0 L1 0 Z：<defs> 内的路径 SVG 本身不直接渲染，脚本会跳过整棵子树，不得把 M9 9 L8 8 Z 串进结果。style 中的 fill 会被正常解析，不应退化为 #000000，也不应报告 class 警告。"
+  },
+  {
+    "id": 6,
+    "prompt": "这个图标转 WPF：<svg xmlns=\"http://www.w3.org/2000/svg\"><rect width=\"10\" height=\"6\" rx=\"2\" fill=\"#B8C6E0\"/><circle cx=\"5\" cy=\"3\" r=\"1\" fill=\"#B8C6E0\"/></svg>",
+    "expected": "rect 与 circle 会按 SVG 2 规范的等价路径精确转换（rect 圆角与 circle 均用 A 弧，无近似）。两者 Fill 相同，应合并为一个 Path，Data 为 F1 M2,0 H8 A2,2 0 0 1 10,2 V4 A2,2 0 0 1 8,6 H2 A2,2 0 0 1 0,4 V2 A2,2 0 0 1 2,0 Z M6,3 A1,1 0 0 1 5,4 A1,1 0 0 1 4,3 A1,1 0 0 1 5,2 A1,1 0 0 1 6,3 Z，按文档顺序排列。"
+  },
+  {
+    "id": 7,
+    "prompt": "转成 WPF：<svg xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M0 0 L10 0 Z\" fill=\"currentColor\"/></svg>",
+    "expected": "脚本会 exit 2 且无 stdout，报告 error: fill value 'currentColor' is not a WPF colour; bind the WPF brush explicitly or replace it with a concrete colour。必须如实转达该错误，不得声称转换成功，也不得自行臆测一个颜色（如 #000000）代替。应建议用户在源 SVG 中换成具体 hex，或在 WPF 侧显式绑定画刷。"
   }
 ]

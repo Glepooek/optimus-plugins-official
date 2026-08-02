@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import math
+import re
 import sys
 import xml.etree.ElementTree as ElementTree
 from dataclasses import dataclass, replace
@@ -11,14 +13,60 @@ from pathlib import Path
 from typing import Iterable
 
 
+#: An affine transform as SVG writes it: a, b, c, d, e, f.
+Matrix = tuple[float, float, float, float, float, float]
+IDENTITY: Matrix = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+#: One `name(arguments)` item of a transform list.
+TRANSFORM_FUNCTION = re.compile(
+    r"(matrix|translate|scale|rotate|skewX|skewY)\s*\(([^)]*)\)"
+)
+#: Transform arguments are separated by commas, whitespace, or neither before a sign.
+NUMBER_SEPARATOR = re.compile(r"[\s,]+|(?<=[0-9.])(?=-)")
+#: A DOCTYPE carrying an internal subset, which is where entity bombs are declared.
+INTERNAL_DTD_SUBSET = re.compile(r"<!DOCTYPE[^>\[]*\[", re.IGNORECASE)
+
+
 #: Container elements whose descendants are never rendered directly.
 NON_RENDERED_TAGS = frozenset({"defs", "clipPath", "mask", "symbol", "marker", "pattern"})
+#: Basic shapes with an exact, algebraic path equivalent defined by the SVG 2 spec.
+CONVERTED_SHAPE_TAGS = frozenset({"rect", "circle", "ellipse", "line", "polyline", "polygon"})
+#: Renderable elements no path can reproduce; warn rather than drop them silently.
+UNCONVERTIBLE_TAGS = frozenset({"text", "tspan", "textPath", "image", "use", "foreignObject"})
 #: Presentation properties read out of inline `style` declarations.
 CONVERTED_STYLE_PROPERTIES = frozenset(
     {"fill", "stroke", "fill-rule", "display", "visibility", "transform"}
 )
 #: WPF fill rule prefixes; SVG defaults to nonzero while WPF defaults to EvenOdd.
 FILL_RULE_PREFIXES = {"nonzero": "F1", "evenodd": "F0"}
+#: Hex colours WPF's Brush type converter accepts, as #RGB/#ARGB/#RRGGBB/#AARRGGBB.
+HEX_COLOUR = re.compile(r"#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\Z")
+#: Functional `rgb()`/`rgba()` notation, which WPF cannot parse but we can rewrite.
+RGB_FUNCTION = re.compile(
+    r"rgba?\(\s*([^,\s)]+)[\s,]+([^,\s)]+)[\s,]+([^,\s)]+)"
+    r"(?:\s*[,/]\s*([^,\s)]+))?\s*\)\Z",
+    re.IGNORECASE,
+)
+#: SVG/CSS3 colour keywords. WPF's own keyword list is the same set plus `Transparent`.
+COLOUR_KEYWORDS = frozenset(
+    """aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue
+    blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk
+    crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey darkkhaki
+    darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen
+    darkslateblue darkslategray darkslategrey darkturquoise darkviolet deeppink deepskyblue
+    dimgray dimgrey dodgerblue firebrick floralwhite forestgreen fuchsia gainsboro ghostwhite
+    gold goldenrod gray grey green greenyellow honeydew hotpink indianred indigo ivory khaki
+    lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan
+    lightgoldenrodyellow lightgray lightgreen lightgrey lightpink lightsalmon lightseagreen
+    lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime limegreen linen
+    magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen
+    mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream
+    mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid
+    palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum
+    powderblue purple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell
+    sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal
+    thistle tomato transparent turquoise violet wheat white whitesmoke yellow
+    yellowgreen""".split()
+)
 
 
 class ConversionError(Exception):
@@ -33,6 +81,7 @@ class SvgPath:
     fill: str | None
     stroke: str | None
     fill_rule: str
+    matrix: Matrix
 
 
 @dataclass(frozen=True)
@@ -43,7 +92,7 @@ class Inherited:
     stroke: str = "none"
     fill_rule: str = "nonzero"
     visibility: str = "visible"
-    transforms: tuple[str, ...] = ()
+    matrix: Matrix = IDENTITY
 
 
 def local_name(tag: object) -> str:
@@ -53,12 +102,66 @@ def local_name(tag: object) -> str:
     return tag.rsplit("}", 1)[-1]
 
 
-def effective_paint(value: str | None) -> str | None:
-    """Translate SVG's `none` paint value to the absence of a WPF property."""
+def colour_channel(value: str, source: str) -> int:
+    """Convert one `rgb()` channel, which is either a percentage or a 0-255 number."""
+    try:
+        if value.endswith("%"):
+            scaled = round(float(value[:-1]) * 255 / 100)
+        else:
+            scaled = round(float(value))
+    except ValueError:
+        raise ConversionError(
+            f"paint value {source!r} has an unreadable channel {value!r}"
+        ) from None
+    if not 0 <= scaled <= 255:
+        raise ConversionError(f"paint value {source!r} has an out-of-range channel {value!r}")
+    return scaled
+
+
+def alpha_channel(value: str, source: str) -> int:
+    """Convert an `rgba()` alpha, which is a 0-1 fraction or a percentage."""
+    try:
+        fraction = float(value[:-1]) / 100 if value.endswith("%") else float(value)
+    except ValueError:
+        raise ConversionError(f"paint value {source!r} has an unreadable alpha {value!r}") from None
+    if not 0.0 <= fraction <= 1.0:
+        raise ConversionError(f"paint value {source!r} has an out-of-range alpha {value!r}")
+    return round(fraction * 255)
+
+
+def wpf_paint(value: str, role: str) -> str:
+    """Return a paint value WPF can parse, rewriting `rgb()` and rejecting the rest.
+
+    WPF's brush converter accepts hex and colour keywords only. Passing anything else
+    through would exit successfully but fail at XAML load time, so reject it here.
+    """
+    value = value.strip()
+    if HEX_COLOUR.match(value) or value.lower() in COLOUR_KEYWORDS:
+        return value
+
+    match = RGB_FUNCTION.match(value)
+    if match:
+        red, green, blue, alpha = match.groups()
+        channels = [colour_channel(channel, value) for channel in (red, green, blue)]
+        prefix = f"{alpha_channel(alpha, value):02X}" if alpha is not None else ""
+        return "#" + prefix + "".join(f"{channel:02X}" for channel in channels)
+
+    lowered = value.lower()
+    if lowered == "currentcolor":
+        hint = "bind the WPF brush explicitly or replace it with a concrete colour"
+    elif lowered.startswith("url("):
+        hint = "flatten the gradient or pattern to a solid colour in the source SVG"
+    else:
+        hint = "use a hex colour such as #B8C6E0, or a colour keyword"
+    raise ConversionError(f"{role} value {value!r} is not a WPF colour; {hint}")
+
+
+def effective_paint(value: str | None, role: str) -> str | None:
+    """Translate SVG's `none` paint to an absent WPF property and validate the rest."""
     if value is None:
         return None
     value = value.strip()
-    return None if value.lower() == "none" else value
+    return None if value.lower() == "none" else wpf_paint(value, role)
 
 
 def parse_style(value: str) -> dict[str, str]:
@@ -83,18 +186,206 @@ def normalized_fill_rule(value: str) -> str:
     return "evenodd" if value.strip().lower() == "evenodd" else "nonzero"
 
 
+def number(value: float) -> str:
+    """Format a coordinate without a trailing fraction, so output stays readable."""
+    text = f"{value:.6f}".rstrip("0").rstrip(".")
+    return "0" if text in ("", "-", "-0") else text
+
+
+def length(element: ElementTree.Element, name: str, default: float = 0.0) -> float:
+    """Read a user-unit length; percentages need a viewport this converter never reads."""
+    raw = element.attrib.get(name, "").strip()
+    if not raw:
+        return default
+    normalized = raw[:-2].strip() if raw.lower().endswith("px") else raw
+    try:
+        return float(normalized)
+    except ValueError:
+        shape = local_name(element.tag)
+        hint = (
+            "percentages need a viewport, which is not converted; use user units"
+            if raw.endswith("%")
+            else "use a plain number in user units"
+        )
+        raise ConversionError(f"<{shape}> has an unsupported {name} of {raw!r}; {hint}") from None
+
+
+def corner_radii(element: ElementTree.Element, width: float, height: float) -> tuple[float, float]:
+    """Resolve a rect's rx/ry, where either one alone mirrors onto the other."""
+    has_rx = "rx" in element.attrib and element.attrib["rx"].strip().lower() != "auto"
+    has_ry = "ry" in element.attrib and element.attrib["ry"].strip().lower() != "auto"
+    if not has_rx and not has_ry:
+        return 0.0, 0.0
+    rx = length(element, "rx") if has_rx else length(element, "ry")
+    ry = length(element, "ry") if has_ry else rx
+    return min(max(rx, 0.0), width / 2), min(max(ry, 0.0), height / 2)
+
+
+def rect_data(element: ElementTree.Element) -> str | None:
+    """Build the SVG 2 normative equivalent path for <rect>."""
+    width, height = length(element, "width"), length(element, "height")
+    if width <= 0 or height <= 0:
+        return None
+    x, y = length(element, "x"), length(element, "y")
+    rx, ry = corner_radii(element, width, height)
+    if rx <= 0 or ry <= 0:
+        return (
+            f"M{number(x)},{number(y)} H{number(x + width)} "
+            f"V{number(y + height)} H{number(x)} Z"
+        )
+    arc = f"A{number(rx)},{number(ry)} 0 0 1"
+    return (
+        f"M{number(x + rx)},{number(y)} "
+        f"H{number(x + width - rx)} "
+        f"{arc} {number(x + width)},{number(y + ry)} "
+        f"V{number(y + height - ry)} "
+        f"{arc} {number(x + width - rx)},{number(y + height)} "
+        f"H{number(x + rx)} "
+        f"{arc} {number(x)},{number(y + height - ry)} "
+        f"V{number(y + ry)} "
+        f"{arc} {number(x + rx)},{number(y)} Z"
+    )
+
+
+def ellipse_data(element: ElementTree.Element, rx: float, ry: float) -> str | None:
+    """Build the SVG 2 normative four-arc equivalent path for <circle> and <ellipse>."""
+    if rx <= 0 or ry <= 0:
+        return None
+    cx, cy = length(element, "cx"), length(element, "cy")
+    arc = f"A{number(rx)},{number(ry)} 0 0 1"
+    return (
+        f"M{number(cx + rx)},{number(cy)} "
+        f"{arc} {number(cx)},{number(cy + ry)} "
+        f"{arc} {number(cx - rx)},{number(cy)} "
+        f"{arc} {number(cx)},{number(cy - ry)} "
+        f"{arc} {number(cx + rx)},{number(cy)} Z"
+    )
+
+
+def points_data(element: ElementTree.Element, close: bool) -> str | None:
+    """Build the equivalent path for <polyline> and <polygon>."""
+    raw = element.attrib.get("points", "").replace(",", " ").split()
+    try:
+        values = [float(value) for value in raw]
+    except ValueError:
+        shape = local_name(element.tag)
+        raise ConversionError(f"<{shape}> has unreadable points {element.attrib['points']!r}")
+    if len(values) < 4:
+        return None
+    pairs = list(zip(values[::2], values[1::2]))
+    moveto = f"M{number(pairs[0][0])},{number(pairs[0][1])}"
+    lines = " ".join(f"L{number(x)},{number(y)}" for x, y in pairs[1:])
+    return f"{moveto} {lines}{' Z' if close else ''}"
+
+
+def shape_data(element: ElementTree.Element) -> str | None:
+    """Convert a basic shape to exactly equivalent path data, or None if it never paints."""
+    name = local_name(element.tag)
+    if name == "rect":
+        return rect_data(element)
+    if name == "circle":
+        radius = length(element, "r")
+        return ellipse_data(element, radius, radius)
+    if name == "ellipse":
+        return ellipse_data(element, length(element, "rx"), length(element, "ry"))
+    if name == "line":
+        x1, y1 = length(element, "x1"), length(element, "y1")
+        x2, y2 = length(element, "x2"), length(element, "y2")
+        return f"M{number(x1)},{number(y1)} L{number(x2)},{number(y2)}"
+    if name in ("polyline", "polygon"):
+        return points_data(element, close=name == "polygon")
+    return None
+
+
+def multiply(left: Matrix, right: Matrix) -> Matrix:
+    """Compose two affine transforms, applying `right` before `left` as SVG does."""
+    a1, b1, c1, d1, e1, f1 = left
+    a2, b2, c2, d2, e2, f2 = right
+    return (
+        a1 * a2 + c1 * b2,
+        b1 * a2 + d1 * b2,
+        a1 * c2 + c1 * d2,
+        b1 * c2 + d1 * d2,
+        a1 * e2 + c1 * f2 + e1,
+        b1 * e2 + d1 * f2 + f1,
+    )
+
+
+def transform_function(name: str, values: list[float], source: str) -> Matrix:
+    """Build the matrix for one SVG transform function."""
+    count = len(values)
+    if name == "matrix" and count == 6:
+        return (values[0], values[1], values[2], values[3], values[4], values[5])
+    if name == "translate" and count in (1, 2):
+        return (1.0, 0.0, 0.0, 1.0, values[0], values[1] if count == 2 else 0.0)
+    if name == "scale" and count in (1, 2):
+        return (values[0], 0.0, 0.0, values[1] if count == 2 else values[0], 0.0, 0.0)
+    if name == "rotate" and count in (1, 3):
+        radians = math.radians(values[0])
+        cosine, sine = math.cos(radians), math.sin(radians)
+        rotation = (cosine, sine, -sine, cosine, 0.0, 0.0)
+        if count == 1:
+            return rotation
+        centre_x, centre_y = values[1], values[2]
+        return multiply(
+            multiply((1.0, 0.0, 0.0, 1.0, centre_x, centre_y), rotation),
+            (1.0, 0.0, 0.0, 1.0, -centre_x, -centre_y),
+        )
+    if name in ("skewX", "skewY") and count == 1:
+        tangent = math.tan(math.radians(values[0]))
+        if name == "skewX":
+            return (1.0, 0.0, tangent, 1.0, 0.0, 0.0)
+        return (1.0, tangent, 0.0, 1.0, 0.0, 0.0)
+    raise ConversionError(
+        f"transform {source!r} uses {name}() with {count} argument(s), which is not a "
+        "valid SVG transform; fix or flatten the transform in the source SVG"
+    )
+
+
+def parse_transform(source: str) -> Matrix:
+    """Compose an SVG transform list into a single affine matrix, left to right."""
+    result = IDENTITY
+    position = 0
+    for match in TRANSFORM_FUNCTION.finditer(source):
+        if source[position:match.start()].strip(", \t\r\n"):
+            raise ConversionError(f"transform {source!r} could not be parsed")
+        position = match.end()
+        name, arguments = match.group(1), match.group(2)
+        raw = [value for value in NUMBER_SEPARATOR.split(arguments.strip()) if value]
+        try:
+            values = [float(value) for value in raw]
+        except ValueError:
+            raise ConversionError(
+                f"transform {source!r} has an unreadable argument in {name}({arguments.strip()})"
+            ) from None
+        result = multiply(result, transform_function(name, values, source))
+    if position == 0 or source[position:].strip(", \t\r\n"):
+        raise ConversionError(f"transform {source!r} could not be parsed")
+    return result
+
+
+def matrix_attribute(matrix: Matrix) -> str:
+    """Render a WPF Matrix, whose M11..OffsetY order matches SVG's a,b,c,d,e,f."""
+    return ",".join(number(value) for value in matrix)
+
+
 def collect_paths(root: ElementTree.Element) -> tuple[list[SvgPath], list[str]]:
     """Collect rendered paths in document order and conversion warnings."""
     paths: list[SvgPath] = []
     warnings: list[str] = []
     saw_class = False
     ignored_properties: set[str] = set()
+    skipped_shapes: set[str] = set()
     stack = [(root, Inherited())]
 
     while stack:
         element, inherited = stack.pop()
         element_name = local_name(element.tag)
         if element_name in NON_RENDERED_TAGS:
+            continue
+        if element_name in UNCONVERTIBLE_TAGS:
+            # Prune the subtree: <text> children would otherwise each warn again.
+            skipped_shapes.add(element_name)
             continue
 
         saw_class = saw_class or "class" in element.attrib
@@ -108,34 +399,31 @@ def collect_paths(root: ElementTree.Element) -> tuple[list[SvgPath], list[str]]:
             stroke=presentation(element, declarations, "stroke", inherited.stroke),
             fill_rule=presentation(element, declarations, "fill-rule", inherited.fill_rule),
             visibility=presentation(element, declarations, "visibility", inherited.visibility),
-            transforms=inherited.transforms,
+            matrix=inherited.matrix,
         )
         transform = presentation(element, declarations, "transform", "").strip()
         if transform:
-            source = (
-                f"path transform {transform!r}"
-                if element_name == "path"
-                else f"ancestor <{element_name}> transform {transform!r}"
+            current = replace(
+                current, matrix=multiply(current.matrix, parse_transform(transform))
             )
-            current = replace(current, transforms=(*current.transforms, source))
 
         if element_name == "path":
             data = element.attrib.get("d", "").strip()
-            if data and current.visibility.strip().lower() != "hidden":
-                path_index = len(paths) + 1
-                if current.transforms:
-                    raise ConversionError(
-                        f"SVG transform attributes are not supported for path {path_index}: "
-                        + "; ".join(current.transforms)
-                    )
-                paths.append(
-                    SvgPath(
-                        data=data,
-                        fill=effective_paint(current.fill),
-                        stroke=effective_paint(current.stroke),
-                        fill_rule=normalized_fill_rule(current.fill_rule),
-                    )
+        elif element_name in CONVERTED_SHAPE_TAGS:
+            data = shape_data(element)
+        else:
+            data = None
+
+        if data and current.visibility.strip().lower() != "hidden":
+            paths.append(
+                SvgPath(
+                    data=data,
+                    fill=effective_paint(current.fill, "fill"),
+                    stroke=effective_paint(current.stroke, "stroke"),
+                    fill_rule=normalized_fill_rule(current.fill_rule),
+                    matrix=current.matrix,
                 )
+            )
 
         for child in reversed(list(element)):
             stack.append((child, current))
@@ -150,8 +438,17 @@ def collect_paths(root: ElementTree.Element) -> tuple[list[SvgPath], list[str]]:
             + ", ".join(sorted(ignored_properties))
             + "."
         )
+    if skipped_shapes:
+        warnings.append(
+            "warning: these elements have no exact path equivalent and were skipped: "
+            + ", ".join(f"<{shape}>" for shape in sorted(skipped_shapes))
+            + "; convert them to paths in the source SVG if they are needed."
+        )
     if not paths:
-        raise ConversionError("No <path> elements with nonempty d attributes found")
+        raise ConversionError(
+            "No convertible geometry found; expected <path> with a nonempty d, "
+            "or a <rect>/<circle>/<ellipse>/<line>/<polyline>/<polygon>"
+        )
 
     return paths, warnings
 
@@ -174,13 +471,22 @@ def render_path(path: SvgPath) -> str:
     if path.stroke is not None:
         attributes.append(attribute("Stroke", path.stroke))
     attributes.append(attribute("Data", geometry(path.fill_rule, path.data)))
-    return f"<Path {' '.join(attributes)} />"
+    element = f"<Path {' '.join(attributes)}"
+    if path.matrix == IDENTITY:
+        return element + " />"
+    return (
+        f"{element}>\n"
+        f"  <Path.RenderTransform>\n"
+        f'    <MatrixTransform Matrix="{matrix_attribute(path.matrix)}" />\n'
+        f"  </Path.RenderTransform>\n"
+        f"</Path>"
+    )
 
 
 def render_xaml(paths: Iterable[SvgPath]) -> tuple[str, list[str]]:
     """Render one merged Path when presentation matches, otherwise render every path."""
     path_list = list(paths)
-    styles = {(path.fill, path.stroke, path.fill_rule) for path in path_list}
+    styles = {(path.fill, path.stroke, path.fill_rule, path.matrix) for path in path_list}
     if len(styles) == 1:
         first = path_list[0]
         merged = SvgPath(
@@ -188,13 +494,14 @@ def render_xaml(paths: Iterable[SvgPath]) -> tuple[str, list[str]]:
             first.fill,
             first.stroke,
             first.fill_rule,
+            first.matrix,
         )
         return render_path(merged) + "\n", []
 
     return (
         "\n".join(render_path(path) for path in path_list) + "\n",
         [
-            "warning: multiple fill/stroke/fill-rule styles found; "
+            "warning: multiple fill/stroke/fill-rule/transform combinations found; "
             "emitting separate Path elements."
         ],
     )
@@ -202,6 +509,13 @@ def render_xaml(paths: Iterable[SvgPath]) -> tuple[str, list[str]]:
 
 def render_data(paths: list[SvgPath]) -> tuple[str, list[str]]:
     """Render every path's data as one geometry, which carries a single fill rule."""
+    transformed = [path for path in paths if path.matrix != IDENTITY]
+    if transformed:
+        raise ConversionError(
+            f"{len(transformed)} of {len(paths)} paths carry an SVG transform, which path "
+            "data alone cannot express; use --format xaml to emit a MatrixTransform, or "
+            "flatten the transform in the source SVG"
+        )
     warnings: list[str] = []
     if len({path.fill_rule for path in paths}) > 1:
         warnings.append(
@@ -220,6 +534,9 @@ def read_source(arguments: argparse.Namespace) -> str:
     if arguments.svg is not None:
         return arguments.svg
     try:
+        # Match --file: decode as UTF-8 regardless of the console code page, which is
+        # GBK on Chinese Windows and would mangle non-ASCII markup piped in.
+        sys.stdin.reconfigure(encoding="utf-8-sig", errors="strict")
         return sys.stdin.read()
     except (OSError, UnicodeError, ValueError) as error:
         raise ConversionError(f"could not read standard input: {error}") from error
@@ -227,6 +544,16 @@ def read_source(arguments: argparse.Namespace) -> str:
 
 def parse_svg(source: str) -> ElementTree.Element:
     """Parse SVG XML and normalize parser errors for the command-line interface."""
+    # An internal DTD subset is what lets a hostile file mount an entity-expansion
+    # attack on Python versions predating expat's amplification limit; rejecting it
+    # keeps this converter dependency-free. A bare external DTD reference is the
+    # normal iconfont/Illustrator preamble and carries no entities to expand, since
+    # expat does not fetch external DTDs.
+    if INTERNAL_DTD_SUBSET.search(source):
+        raise ConversionError(
+            "SVG declares an internal DTD subset, whose entities are not expanded; "
+            "remove the [...] block from the DOCTYPE and convert again"
+        )
     try:
         return ElementTree.fromstring(source)
     except ElementTree.ParseError as error:
