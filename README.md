@@ -22,7 +22,7 @@
 
 | 插件 | 关键依赖 |
 |---|---|
-| optimus-frontend-plugin | Figma MCP / Sketch MCP（设计稿读取）、lark-cli（飞书文档拉取） |
+| optimus-frontend-plugin | Figma MCP / Sketch MCP / MasterGo MCP（设计稿读取）、lark-cli（飞书文档拉取） |
 | optimus-backend-plugin | Python `requests`、`beautifulsoup4`（接口文档/网页抓取） |
 | optimus-qa-plugin | JMeter（性能测试执行）、Playwright + Midscene（UI 自动化）、MasterGo MCP、飞书项目 MCP |
 | optimus-prd-plugin | 无 |

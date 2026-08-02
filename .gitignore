@@ -429,3 +429,4 @@ FodyWeavers.xsd
 .remember/
 .codegraph/
 .superpowers/
+.mastergo-dsl/
