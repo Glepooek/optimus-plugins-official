@@ -78,6 +78,15 @@ class SkeletonTests(CliTestCase):
         self.assertIn("sections-list.json", result.stderr)
         self.assertEqual(result.stdout, "")
 
+    def test_non_utf8_json_reports_the_file_name(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            (Path(temporary) / "sections-list.json").write_bytes(b"\xff\xfe\x00bad")
+            result = self.run_cli("--input", temporary, "--out", temporary)
+
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("sections-list.json", result.stderr)
+        self.assertEqual(result.stdout, "")
+
 
 if __name__ == "__main__":
     unittest.main()

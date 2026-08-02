@@ -16,7 +16,7 @@ def read_json(path: Path) -> object:
     """Read one JSON file, naming it in any error so the user can find it."""
     try:
         return json.loads(path.read_text(encoding="utf-8-sig"))
-    except OSError as error:
+    except (OSError, UnicodeError) as error:
         raise ConversionError(f"could not read {path.name}: {error}") from error
     except json.JSONDecodeError as error:
         raise ConversionError(f"{path.name} is not valid JSON: {error}") from error
