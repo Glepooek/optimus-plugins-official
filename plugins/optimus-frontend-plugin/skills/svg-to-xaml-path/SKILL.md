@@ -2,7 +2,7 @@
 name: svg-to-xaml-path
 description: 当用户提供本地 SVG 文件路径或完整 SVG 标记，并要求提取 path 的 d、合并多路径、生成 WPF XAML 或 Path.Data 时使用此 Skill；适用于 SVG 图标转 WPF Path 的场景。
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
   author: desktop client team
 compatibility: Python 3；可在 Windows PowerShell 中运行随附的无第三方依赖 CLI。
 allowed-tools: Read Bash PowerShell
@@ -42,15 +42,15 @@ Get-Content -Raw "C:\icons\icon.svg" | python "$SkillDir\scripts\merge_svg_paths
 
 **🔴 三个静默陷阱——exit 0、零告警、XAML 合法，但产物是错的。** 完整机理与复现见 [`references/silent-traps.md`](references/silent-traps.md)，此处只列判据与禁令：
 
-| # | 触发条件（转换前必查） | 禁令 |
+| # | 触发条件（转换前必查） | 处置 |
 |---|---|---|
-| 1 | 同色路径在源 SVG 中**有重叠** | 绕行方向不明时输出多个 `Path`，不要合并——合并后重叠区会翻转为孔洞 |
+| 1 | 同色路径在源 SVG 中**有重叠** | 加 `--no-merge` 输出多个 `Path`——合并后重叠区可能翻转为孔洞 |
 | 2 | 用户要「合并成一个」但**各路径颜色不同** | 不得改用 `--format data` 迂回，那会静默丢色。说明无法合并并输出多个 `Path` |
 | 3 | 源文件含 `<style>` 元素或**外链 CSS** | 必须向用户确认实际颜色，**无论输出是什么颜色**——CSS 层叠优先级高于 presentation attribute |
 
 陷阱 3 的判据是「有没有 CSS」，不是「输出是不是黑色」：`<path>` 无 `fill` 时输出 `#000000`，有 `fill` 时输出该属性值，两种情况的颜色都是错的。iconfont、Illustrator、Figma 的部分导出配置都会产生这种 SVG。
 
-`fill-rule` 是 `data` 唯一会告警的差异项：混用时报 `multiple fill rules found`，并按**首条路径**的规则定前缀。`fill-opacity`/`opacity` 不在合并键内——半透明形状会被合并成实心。
+`fill-rule` 是 `data` 唯一会告警的差异项：混用时报 `multiple fill rules found`，并按**首条路径**的规则定前缀。`fill-opacity`/`opacity` 不在合并键内——半透明形状会被合并成实心，需要时同样用 `--no-merge`。
 
 **fill rule 前缀必须保留：** `Data` 以 `F1`（nonzero，SVG 默认）或 `F0`（evenodd）开头。WPF 迷你语言无前缀时按 EvenOdd 解析，与 SVG 默认值不一致，**删除前缀会改变自相交路径和孔洞的渲染结果**。
 
@@ -100,14 +100,17 @@ stdout（这一行才是产物）：
 | `rect`（含 `rx`/`ry` 圆角）、`circle`、`ellipse`、`line`、`polyline`、`polygon` | 按 SVG 2 规范的等价路径**精确**转换，无近似 |
 | `fill` / `stroke`（含继承、`none`） | 转换为 `Fill` / `Stroke` |
 | `rgb()` / `rgba()` | 换算为 WPF hex（`rgba` → `#AARRGGBB`） |
+| 带 alpha 的字面 hex（`#RGBA`/`#RRGGBBAA`） | 通道重排为 WPF 的 `#ARGB`/`#AARRGGBB`（CSS 与 WPF 的 alpha 位置相反） |
+| `grey` 系拼写 | 改写为 WPF 的 `gray` 拼写（WPF 无 `grey` 变体） |
 | `fill-rule`（含继承） | 转换为 `Data` 的 `F0`/`F1` 前缀 |
 | `transform`：`translate`/`scale`/`rotate`/`skewX`/`skewY`/`matrix`（含继承与函数列表） | 合成为单一仿射矩阵，输出 `MatrixTransform` |
 | `style` 中的 `fill`/`stroke`/`fill-rule`/`display`/`visibility`/`transform` | 转换，且优先级高于同名 presentation attribute |
 | `style` 中的其余声明 | 忽略，并按名称告警 |
-| `class`（告警）、`<style>` 元素 / 外部样式表（无告警） | 均不解析——靠它们上色即落入静默陷阱二 |
+| `class` | 不解析，出现即告警 |
+| `<style>` 元素 / 外部样式表 | 不解析且**无告警**——靠它上色即落入静默陷阱三 |
 | `<defs>`/`<clipPath>`/`<mask>`/`<symbol>`/`<marker>`/`<pattern>` 子树、`display:none` 子树、`visibility:hidden` 的路径 | 跳过（前者 SVG 本身也不直接渲染） |
 | `text`/`tspan`/`textPath`/`image`/`use`/`foreignObject` | 跳过，并**按名称告警** |
-| `<switch>` | **不做条件选择，所有分支都被转换**（SVG 只渲染首个测试通过的分支）。零告警，须手工删掉多余分支 |
+| `<switch>` | **不做条件选择，所有分支都被转换**（SVG 只渲染首个测试通过的分支）。分支同色时零告警，须手工删掉多余分支 |
 | 嵌套 `<svg>`（含 `x`/`y`/`viewBox`） | 内层视口的平移与缩放**不转换**，子图形按原始坐标输出，位置会错。零告警 |
 | `viewBox`、stroke width、opacity、clip/mask/filter | **不转换，无告警** |
 
@@ -136,7 +139,7 @@ stdout（这一行才是产物）：
 3. 不发明、补全或近似任何几何数据；不手工把变换烘焙进坐标。
 4. 各路径颜色不同时不得改用 `--format data` 迂回满足「合并成一个」的要求——那会静默丢色。
 5. 源 SVG 含 `<style>` 元素或外链 CSS 时，必须向用户确认实际颜色——**无论输出是什么颜色**，CSS 的层叠优先级高于 presentation attribute。
-6. 合并前核对同色路径是否重叠：有重叠且绕行方向不明时输出多个 `Path`，不要合并。
+6. 合并前核对同色路径是否重叠：有重叠时用 `--no-merge` 重跑，不要手工拆分 `Data` 字符串。
 7. 将脚本的警告和错误如实、明确地报告；错误时不要声称已转换成功。
 8. 交付时必须提示「对照表中标注不转换的属性会造成差异，不保证视觉保真」，不得因 `Fill` 匹配就宣称与原图一致。
 

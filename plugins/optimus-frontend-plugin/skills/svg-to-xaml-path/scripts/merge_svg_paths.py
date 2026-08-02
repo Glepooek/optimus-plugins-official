@@ -46,7 +46,18 @@ RGB_FUNCTION = re.compile(
     r"(?:\s*[,/]\s*([^,\s)]+))?\s*\)\Z",
     re.IGNORECASE,
 )
-#: SVG/CSS3 colour keywords. WPF's own keyword list is the same set plus `Transparent`.
+#: SVG/CSS3 keywords WPF spells with `gray`; its own list has no `grey` variant at all.
+GREY_SPELLINGS = {
+    "grey": "gray",
+    "darkgrey": "darkgray",
+    "dimgrey": "dimgray",
+    "lightgrey": "lightgray",
+    "slategrey": "slategray",
+    "lightslategrey": "lightslategray",
+    "darkslategrey": "darkslategray",
+}
+#: SVG/CSS3 colour keywords. WPF's own keyword list is the same set plus `Transparent`,
+#: minus the `grey` spellings above, which are rewritten rather than rejected.
 COLOUR_KEYWORDS = frozenset(
     """aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue
     blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk
@@ -129,14 +140,34 @@ def alpha_channel(value: str, source: str) -> int:
     return round(fraction * 255)
 
 
+def wpf_hex(value: str) -> str:
+    """Reorder a CSS hex colour into WPF's channel order.
+
+    CSS writes `#RGBA` / `#RRGGBBAA`; WPF reads `#ARGB` / `#AARRGGBB`. The 3- and
+    6-digit forms carry no alpha and are identical in both, but passing a literal
+    4- or 8-digit value through unchanged rotates the channels silently.
+    """
+    digits = value[1:]
+    if len(digits) == 4:
+        return f"#{digits[3]}{digits[0]}{digits[1]}{digits[2]}"
+    if len(digits) == 8:
+        return f"#{digits[6:8]}{digits[0:6]}"
+    return value
+
+
 def wpf_paint(value: str, role: str) -> str:
-    """Return a paint value WPF can parse, rewriting `rgb()` and rejecting the rest.
+    """Return a paint value WPF can parse, rewriting what it can and rejecting the rest.
 
     WPF's brush converter accepts hex and colour keywords only. Passing anything else
     through would exit successfully but fail at XAML load time, so reject it here.
     """
     value = value.strip()
-    if HEX_COLOUR.match(value) or value.lower() in COLOUR_KEYWORDS:
+    if HEX_COLOUR.match(value):
+        return wpf_hex(value)
+    lowered = value.lower()
+    if lowered in GREY_SPELLINGS:
+        return GREY_SPELLINGS[lowered]
+    if lowered in COLOUR_KEYWORDS:
         return value
 
     match = RGB_FUNCTION.match(value)
@@ -458,6 +489,24 @@ def attribute(name: str, value: str) -> str:
     return f'{name}="{escape(value, quote=True)}"'
 
 
+def absolute_start(data: str) -> str:
+    """Force a path's leading moveto to be absolute before it is concatenated.
+
+    SVG treats the first moveto of a `d` attribute as absolute whichever case it is
+    written in, but a lowercase `m` further along the same geometry is relative to the
+    previous subpath's current point. Concatenating a path that starts with `m` would
+    therefore silently displace it — which is exactly how SVGO and Bootstrap Icons
+    write every path after the first.
+    """
+    stripped = data.lstrip()
+    return "M" + stripped[1:] if stripped[:1] == "m" else data
+
+
+def concatenated(paths: Iterable[SvgPath]) -> str:
+    """Join path data in document order, keeping each path anchored where it was."""
+    return " ".join(absolute_start(path.data) for path in paths)
+
+
 def geometry(fill_rule: str, data: str) -> str:
     """Prefix path data with the WPF fill rule matching SVG's nonzero default."""
     return f"{FILL_RULE_PREFIXES[fill_rule]} {data}"
@@ -483,14 +532,14 @@ def render_path(path: SvgPath) -> str:
     )
 
 
-def render_xaml(paths: Iterable[SvgPath]) -> tuple[str, list[str]]:
+def render_xaml(paths: Iterable[SvgPath], merge: bool = True) -> tuple[str, list[str]]:
     """Render one merged Path when presentation matches, otherwise render every path."""
     path_list = list(paths)
     styles = {(path.fill, path.stroke, path.fill_rule, path.matrix) for path in path_list}
-    if len(styles) == 1:
+    if merge and len(styles) == 1:
         first = path_list[0]
         merged = SvgPath(
-            " ".join(path.data for path in path_list),
+            concatenated(path_list),
             first.fill,
             first.stroke,
             first.fill_rule,
@@ -498,13 +547,15 @@ def render_xaml(paths: Iterable[SvgPath]) -> tuple[str, list[str]]:
         )
         return render_path(merged) + "\n", []
 
-    return (
-        "\n".join(render_path(path) for path in path_list) + "\n",
-        [
+    warnings = (
+        []
+        if merge is False or len(path_list) == 1
+        else [
             "warning: multiple fill/stroke/fill-rule/transform combinations found; "
             "emitting separate Path elements."
-        ],
+        ]
     )
+    return "\n".join(render_path(path) for path in path_list) + "\n", warnings
 
 
 def render_data(paths: list[SvgPath]) -> tuple[str, list[str]]:
@@ -521,7 +572,7 @@ def render_data(paths: list[SvgPath]) -> tuple[str, list[str]]:
         warnings.append(
             "warning: multiple fill rules found; data output uses the first path's rule."
         )
-    return geometry(paths[0].fill_rule, " ".join(path.data for path in paths)) + "\n", warnings
+    return geometry(paths[0].fill_rule, concatenated(paths)) + "\n", warnings
 
 
 def read_source(arguments: argparse.Namespace) -> str:
@@ -568,6 +619,11 @@ def build_parser() -> argparse.ArgumentParser:
     sources.add_argument("--svg", metavar="TEXT", help="SVG XML text")
     sources.add_argument("--stdin", action="store_true", help="read SVG XML from standard input")
     parser.add_argument("--format", choices=("data", "xaml"), default="xaml")
+    parser.add_argument(
+        "--no-merge",
+        action="store_true",
+        help="emit one Path per source path even when their paint matches",
+    )
     return parser
 
 
@@ -580,7 +636,7 @@ def main(argv: list[str] | None = None) -> int:
         if arguments.format == "data":
             output, format_warnings = render_data(paths)
         else:
-            output, format_warnings = render_xaml(paths)
+            output, format_warnings = render_xaml(paths, merge=not arguments.no_merge)
         warnings.extend(format_warnings)
     except ConversionError as error:
         print(f"error: {error}", file=sys.stderr)

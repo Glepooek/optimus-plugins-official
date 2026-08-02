@@ -317,14 +317,38 @@ class FillRuleTests(CliTestCase):
 class PaintValidationTests(CliTestCase):
     """Paint WPF cannot parse must fail here, not at XAML load time."""
 
-    def test_hex_and_keyword_colours_pass_through_unchanged(self) -> None:
-        for colour in ("#ABC", "#ABCD", "#B8C6E0", "#80B8C6E0", "SteelBlue", "transparent"):
+    def test_alphaless_hex_and_keywords_pass_through_unchanged(self) -> None:
+        for colour in ("#ABC", "#B8C6E0", "SteelBlue", "transparent"):
             svg = f'<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0 Z" fill="{colour}"/></svg>'
             with self.subTest(colour=colour):
                 result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
 
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertIn(f'Fill="{colour}"', result.stdout)
+
+    def test_hex_with_alpha_is_reordered_from_css_to_wpf(self) -> None:
+        # CSS/SVG writes #RGBA and #RRGGBBAA; WPF reads #ARGB and #AARRGGBB.
+        for colour, expected in (("#ABCD", "#DABC"), ("#B8C6E080", "#80B8C6E0")):
+            svg = f'<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0 Z" fill="{colour}"/></svg>'
+            with self.subTest(colour=colour):
+                result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn(f'Fill="{expected}"', result.stdout)
+
+    def test_grey_spellings_are_rewritten_to_the_wpf_gray_form(self) -> None:
+        # WPF's keyword list has no `grey` variant; passing one through fails at load.
+        for colour, expected in (
+            ("grey", "gray"),
+            ("lightgrey", "lightgray"),
+            ("darkslategrey", "darkslategray"),
+        ):
+            svg = f'<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0 Z" fill="{colour}"/></svg>'
+            with self.subTest(colour=colour):
+                result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn(f'Fill="{expected}"', result.stdout)
 
     def test_rgb_notation_is_rewritten_to_wpf_hex(self) -> None:
         cases = {
@@ -729,6 +753,83 @@ class TransformTests(CliTestCase):
         root = ElementTree.fromstring(result.stdout)
         self.assertEqual(root.tag, "Path")
         self.assertEqual(root.attrib["Fill"], "#B8C6E0")
+
+
+class ConcatenationTests(CliTestCase):
+    """Joining path data must not move the paths."""
+
+    def test_a_leading_relative_moveto_stays_absolute_after_concatenation(self) -> None:
+        # SVG treats a path's first moveto as absolute whichever case it is written in;
+        # concatenating would otherwise resolve `m` against the previous current point.
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <path fill="#B8C6E0" d="M100 100 H104 V104 H100 Z" />
+  <path fill="#B8C6E0" d="m10 10 h2 v2 h-2 z" />
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "data", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "F1 M100 100 H104 V104 H100 Z M10 10 h2 v2 h-2 z")
+
+    def test_only_the_leading_moveto_is_rewritten(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <path fill="#B8C6E0" d="M0 0 Z" />
+  <path fill="#B8C6E0" d="m1 1 h2 m3 3 h4" />
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "data", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "F1 M0 0 Z M1 1 h2 m3 3 h4")
+
+    def test_a_single_path_keeps_its_original_data(self) -> None:
+        svg = '<svg xmlns="http://www.w3.org/2000/svg"><path d="m10 10 h2 z"/></svg>'
+        result = self.run_cli("--stdin", "--format", "data", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "F1 M10 10 h2 z")
+
+    def test_xaml_merging_applies_the_same_rewrite(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg" fill="#B8C6E0">
+  <path d="M100 100 Z" /><path d="m10 10 z" />
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('Data="F1 M100 100 Z M10 10 z"', result.stdout)
+
+
+class NoMergeTests(CliTestCase):
+    """--no-merge makes the documented "emit separate Paths" remedy executable."""
+
+    SVG = """<svg xmlns="http://www.w3.org/2000/svg" fill="#B8C6E0">
+  <path d="M0 0 H12 V12 H0 Z" /><path d="M6 6 H20 V20 H6 Z" />
+</svg>"""
+
+    def test_same_paint_merges_by_default(self) -> None:
+        result = self.run_cli("--stdin", "--format", "xaml", stdin=self.SVG)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.count("<Path "), 1)
+
+    def test_no_merge_emits_one_path_per_source_path(self) -> None:
+        result = self.run_cli("--stdin", "--format", "xaml", "--no-merge", stdin=self.SVG)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.count("<Path "), 2)
+        self.assertIn('Data="F1 M0 0 H12 V12 H0 Z"', result.stdout)
+        self.assertIn('Data="F1 M6 6 H20 V20 H6 Z"', result.stdout)
+
+    def test_no_merge_does_not_warn_about_multiple_styles(self) -> None:
+        result = self.run_cli("--stdin", "--format", "xaml", "--no-merge", stdin=self.SVG)
+
+        self.assertEqual(result.stderr, "")
+
+    def test_differing_paint_still_warns_without_the_flag(self) -> None:
+        svg = """<svg xmlns="http://www.w3.org/2000/svg">
+  <path d="M0 0 Z" fill="#B8C6E0" /><path d="M5 5 Z" fill="#FF0000" />
+</svg>"""
+        result = self.run_cli("--stdin", "--format", "xaml", stdin=svg)
+
+        self.assertIn("multiple fill/stroke/fill-rule/transform", result.stderr)
 
 
 class SampleIconTests(CliTestCase):
