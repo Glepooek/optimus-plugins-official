@@ -2,7 +2,7 @@
 name: mastergo-to-wpf
 description: 当用户提供 MasterGo 设计稿链接并要求生成 WPF 界面、XAML 页面或把设计稿转成 WPF 代码时使用此 Skill；产出 XAML 页面脚手架、颜色资源字典与图标，供开发者手工接管。
 metadata:
-  version: "1.0.0"
+  version: "1.0.2"
   author: desktop client team
 compatibility: Python 3；需 mastergo-magic-mcp（本仓库 plugins/optimus-mcp-servers/.mcp.json 内置）与 MASTERGO_TOKEN；需 MasterGo Team 版及以上，草稿箱文件不可用。
 allowed-tools: Read Write Bash PowerShell mastergo-magic-mcp
@@ -25,6 +25,12 @@ allowed-tools: Read Write Bash PowerShell mastergo-magic-mcp
 调用 `mcp__getDesignSections`（**不带** `sectionIndex`），把返回的 JSON 原样存为 `.mastergo-dsl/sections-list.json`。
 
 🔴 返回的区块数 > 8 时停止，请用户指定要转换的具体区块，不要一次性全部转换。
+
+## 🔴 CHECKPOINT · 确认转换范围与输出名称
+
+当区块数 ≤ 8 时，在拉取任一 `section-{N}.json` 前，向用户展示将要转换的 `sectionIndex` 列表，以及拟使用的 `--out` 目录和 `--page-name`；等待用户明确确认或修正。
+
+🛑 收到确认前，**不得**调用带 `sectionIndex` 的 `mcp__getDesignSections`，不得运行转换器，也不得创建 XAML、颜色或图标产物。用户缩小范围、改输出目录或改页面名后，按其最新选择执行。
 
 ## Step 2：逐区拉取 DSL
 
@@ -70,6 +76,14 @@ python "$SkillDir\scripts\dsl_to_xaml.py" --input .mastergo-dsl --out src\Views 
 2. 明确告知用户哪些节点需要人工换成真控件——本转换器**不猜控件语义**：圆角矩形 + 居中文字仍然是 `Canvas` + `TextBlock`，不是 `Button`。
 3. 明确告知**所有元素都没有 `Width`/`Height`/`Padding`/`BorderThickness`/`BorderBrush`**（见下方静默行为清单第 1 条）——这是本转换器最容易被忽视的缺口，必须每次主动提醒。
 4. 设计稿常用的 `Inter`/`Roboto` 等字体在 Windows 上通常不存在；转换器不检测、不替换，须提醒用户自行确认字体可用性或改用系统字体。
+
+## 红线：不要做什么
+
+- **不要**在 `MASTERGO_TOKEN`、Team 项目/非草稿箱或链接标识任一前置条件未通过时调用设计读取工具，或猜测设计稿内容。
+- **不要**在区块数 > 8 时擅自全量转换、只转换前 8 个，或把分区流程改回 `mcp__getDsl`。
+- **不要**在用户确认 `sectionIndex` 范围、输出目录和页面名之前读取分区 DSL、运行转换器或创建产物。
+- **不要**把转换器的 exit 2、缺失 `svgShortKey` 或未处理的 `IMAGE` 节点包装成“转换成功”；只交付实际生成的文件。
+- **不要**猜测控件语义、图标 `Path.Data`、尺寸/边框/圆角或缺失的图片 URL；这些必须明确交由人工补齐或基于实际 DSL/SVG 回填。
 
 ## 静默行为清单（转换前须人工检查）
 
