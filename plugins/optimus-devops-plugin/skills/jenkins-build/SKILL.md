@@ -4,6 +4,7 @@ description: Use when user wants to immediately execute a Jenkins CI build — �
 metadata:
   version: "1.2.2"
   author: desktop client team
+  category: tool
 compatibility: 需要 Python3 环境（脚本自动创建 venv 并安装 requests/pyyaml）；需要用户提供 jenkins-config.yaml（Jenkins URL + API Token）及可访问的 Jenkins 服务器。
 allowed-tools: Bash
 ---

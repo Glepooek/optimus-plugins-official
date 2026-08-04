@@ -4,6 +4,7 @@ description: 当用户提供本地 SVG 文件路径或完整 SVG 标记，并要
 metadata:
   version: "1.4.0"
   author: desktop client team
+  category: tool
 compatibility: Python 3；可在 Windows PowerShell 中运行随附的无第三方依赖 CLI。
 allowed-tools: Read Bash PowerShell
 ---

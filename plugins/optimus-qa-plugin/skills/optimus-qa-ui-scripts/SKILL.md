@@ -4,6 +4,7 @@ description: 快速初始化 Midscene + Playwright UI 自动化测试项目，�
 creator: yinxuan@optimus.cn
 metadata:
   author: desktop client team
+  category: tool
 compatibility: 需要 Node.js/npm、Playwright（含Chromium）、Midscene（@midscene/web）、TypeScript；需要用户提供 AI 模型 API Key（阿里云Qwen或OpenAI兼容）；会自动执行 npm install，需要网络访问。
 allowed-tools: Bash Read Write AskUserQuestion
 ---

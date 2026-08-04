@@ -4,6 +4,7 @@ description: 通用前端开发技能。空项目时引导创建；现有项目�
 metadata:
   version: "1.1.0"
   author: desktop client team
+  category: workflow
 compatibility: 需要 superpowers 插件已安装（阶段3/5依赖其 subagent-driven-development、verification-before-completion、finishing-a-development-branch workflow）；设计稿还原场景需要 Figma 或 Sketch MCP server 之一已连接（需用户自行配置，非本仓库内置）；目标项目技术栈由自动探测决定，无强制要求。
 allowed-tools: Read Write Edit Grep Glob WebFetch TodoWrite Task
 triggers:

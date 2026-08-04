@@ -4,6 +4,7 @@ description: QA报告统一生成工具，支持三种模式：(A) 缺陷分析�
 creator: yinxuan@optimus.cn
 metadata:
   author: desktop client team
+  category: generator
 compatibility: 需要已配置的飞书项目管理 MCP server（本仓库内置 FeishuProjectMcp）及有效鉴权。
 allowed-tools: Read Write FeishuProjectMcp Task
 ---

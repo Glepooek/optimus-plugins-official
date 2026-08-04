@@ -1,0 +1,8 @@
+{
+  "list": {"rootMetadata": {"allTexts": ["文本"]}, "splitContainers": [{"x": 0, "y": 0}]},
+  "sections": [{"nodes": [
+    {"type": "FRAME", "id": "v:1", "name": "ObjectStroke", "strokeColor": {"r": 1, "g": 0, "b": 0}, "strokeWidth": 2, "layoutStyle": {"relativeX": 0, "relativeY": 0, "width": 40, "height": 40}},
+    {"type": "TEXT", "id": "v:2", "name": "BadStyle", "fontWeight": {"weird": 1}, "textAlign": "justified", "fontFamily": "Inter", "layoutStyle": {"relativeX": 0, "relativeY": 60}, "text": [{"text": "文本"}]},
+    {"type": "FRAME", "id": "v:3", "name": "GhostOpacity", "opacity": 0.5, "layoutStyle": {"relativeX": 0, "relativeY": 120, "width": 50, "height": 50}}
+  ]}]
+}

@@ -3,7 +3,7 @@ name: docx-writer
 license: MIT
 metadata:
   version: "1.0.0"
-  category: document-processing
+  category: generator
   author: desktop client team
   sources:
     - "ECMA-376 Office Open XML File Formats"

@@ -30,6 +30,18 @@ metadata:
   author: desktop client team
 ```
 
+### metadata.category
+
+标注该 skill 的工作形态，用于跨插件横向检索（与插件归属的领域分类正交，插件回答"属于哪个业务领域"，category 回答"是什么形状的工作"）。可选字段，取值：
+
+| 取值 | 适用场景 |
+|---|---|
+| workflow | 流程编排类（多阶段、pipeline、交接式工作流） |
+| quality | 质量保障类（review、评分、一致性校验、性能诊断） |
+| generator | 代码/文档生成类（创建 PRD、代码、测试用例、报告等产物） |
+| tool | 工具类（格式转换、数据同步、CI 触发、脚本初始化等） |
+| platform | 平台专项类（如未来出现 android/ios/harmony 专属 skill） |
+
 ### compatibility
 
 一句话描述运行环境依赖（≤500字符），必须基于该 skill 实际用到的工具/依赖据实填写，不得凭空编造。常见依赖类型：语言运行时（Python/Node.js/.NET SDK）、第三方 CLI（lark-cli、JMeter）、MCP server——引用 MCP server 时须注明是本仓库 `plugins/optimus-mcp-servers/.mcp.json` 内置（如 `mastergo-magic-mcp`、`FeishuProjectMcp`）还是需要用户自行配置（如 Figma/Sketch/Chrome DevTools MCP）。
@@ -48,10 +60,15 @@ description: ...
 metadata:
   version: "1.2.0"
   author: desktop client team
+  category: workflow
 compatibility: 需要 Node.js 环境及已配置的 XXX MCP server。
 allowed-tools: Read Write Bash Task
 ---
 ```
+
+### 编辑铁律：禁止无关格式化
+
+编辑 SKILL.md / CHANGELOG.md / AGENT.md 时，只改动语义相关的内容，不增删空行、不调整缩进、不做表格对齐等纯格式化改动。仓库已配置 `.prettierignore`（排除 `*.md`）和 `.vscode/settings.json`（禁用 markdown 自动格式化）作为防护，但仍需自查：提交前看 `git diff`，若出现大片纯空白/缩进变化而无实际内容变化，说明格式化工具介入了，应撤销重做。
 
 ### CHANGELOG.md
 

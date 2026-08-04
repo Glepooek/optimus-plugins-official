@@ -4,6 +4,7 @@ description: Use when all 4 inputs are collected to analyze documents, detect te
 metadata:
   version: "1.0.0"
   author: desktop client team
+  category: generator
 compatibility: 需要目标项目为 Node.js 项目（读取 package.json/tsconfig.json 探测技术栈）。
 allowed-tools: Read Glob Grep
 ---

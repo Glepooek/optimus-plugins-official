@@ -4,6 +4,7 @@ description: 按部门规范上传文档到飞书统一云空间，自动管理�
 metadata:
   version: "1.0.0"
   author: desktop client team
+  category: tool
 compatibility: 硬性依赖 lark-cli（npm install -g @larksuite/cli 全局安装）已安装并认证。
 allowed-tools: Bash
 ---

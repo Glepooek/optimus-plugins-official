@@ -1,0 +1,7 @@
+{
+  "list": {"rootMetadata": {"allTexts": ["第三区", "第四区"]}, "splitContainers": [{"x": 0, "y": 0}, {"x": 1000, "y": 0}, {"x": 2000, "y": 0}, {"x": 3000, "y": 0}]},
+  "sections": [
+    {"nodes": [{"type": "TEXT", "id": "p:2", "name": "S2", "layoutStyle": {"relativeX": 0, "relativeY": 0}, "text": [{"text": "第三区"}]}]},
+    {"nodes": [{"type": "TEXT", "id": "p:3", "name": "S3", "layoutStyle": {"relativeX": 0, "relativeY": 0}, "text": [{"text": "第四区"}]}]}
+  ]
+}

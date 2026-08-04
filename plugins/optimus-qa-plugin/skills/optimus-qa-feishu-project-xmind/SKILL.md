@@ -4,6 +4,7 @@ description: 将标准格式测试用例 Markdown 文档转换为飞书兼容的
 creator: yinxuan@optimus.cn
 metadata:
   author: desktop client team
+  category: tool
 compatibility: 需要 Python 运行时（converter.py 用标准库 zipfile 打包生成 .xmind 文件）。
 allowed-tools: Read Bash
 ---

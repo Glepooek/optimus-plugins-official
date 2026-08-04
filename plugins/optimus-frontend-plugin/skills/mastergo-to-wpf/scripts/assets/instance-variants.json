@@ -1,0 +1,4 @@
+{
+  "list": {"rootMetadata": {"allTexts": []}, "splitContainers": [{}]},
+  "sections": [{"nodes": [{"type": "INSTANCE", "id": "v:1", "name": "Toggle", "_variantProps": {"State": "Selected", "Size": "Large"}, "layoutStyle": {"width": 80, "height": 32, "relativeX": 0, "relativeY": 0}}]}]
+}

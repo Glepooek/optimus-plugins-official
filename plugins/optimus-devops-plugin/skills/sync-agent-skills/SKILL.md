@@ -4,6 +4,7 @@ description: 将 skill 源目录以符号链接同步到各 AI 工具的 skills 
 metadata:
   version: "1.2.0"
   author: desktop client team
+  category: tool
 compatibility: 纯文件系统操作（符号链接管理）；Windows 下需开发者模式或管理员权限，macOS/Linux 原生支持 ln -s。
 allowed-tools: Bash
 ---

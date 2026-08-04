@@ -3,7 +3,7 @@ name: web-to-markdown
 license: MIT
 metadata:
   version: "1.9.0"
-  category: document-processing
+  category: tool
   author: desktop client team
 compatibility: 可选依赖 markitdown、curl（降级抓取）；二级抓取需要 Node.js + @playwright/cli 及 msedge/chrome 浏览器；三级降级用 WebFetch。
 allowed-tools: Bash WebFetch Read Write

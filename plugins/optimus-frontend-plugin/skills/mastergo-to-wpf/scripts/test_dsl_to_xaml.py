@@ -26,8 +26,18 @@ class CliTestCase(unittest.TestCase):
             timeout=30,
         )
 
-    def convert(self, asset_name: str) -> tuple[subprocess.CompletedProcess[str], Path]:
-        """Run the converter over one bundled asset and return the result and out dir."""
+    def convert(
+        self,
+        asset_name: str,
+        *,
+        indices: list[int] | None = None,
+        mapping: dict | None = None,
+    ) -> tuple[subprocess.CompletedProcess[str], Path]:
+        """Run the converter over one bundled asset and return the result and out dir.
+
+        `indices` names the section-{N}.json numbers to write, so a test can reproduce a
+        partial selection; `mapping` supplies a strict project mapping file.
+        """
         with tempfile.TemporaryDirectory() as temporary:
             input_dir = Path(temporary) / "dsl"
             input_dir.mkdir()
@@ -35,12 +45,18 @@ class CliTestCase(unittest.TestCase):
             (input_dir / "sections-list.json").write_text(
                 json.dumps(payload["list"], ensure_ascii=False), encoding="utf-8"
             )
-            for index, section in enumerate(payload["sections"]):
-                (input_dir / f"section-{index}.json").write_text(
+            numbers = indices if indices is not None else range(len(payload["sections"]))
+            for number, section in zip(numbers, payload["sections"]):
+                (input_dir / f"section-{number}.json").write_text(
                     json.dumps(section, ensure_ascii=False), encoding="utf-8"
                 )
             out_dir = Path(temporary) / "out"
-            result = self.run_cli("--input", str(input_dir), "--out", str(out_dir))
+            arguments = ["--input", str(input_dir), "--out", str(out_dir)]
+            if mapping is not None:
+                mapping_path = Path(temporary) / "mapping.json"
+                mapping_path.write_text(json.dumps(mapping, ensure_ascii=False), encoding="utf-8")
+                arguments += ["--mapping", str(mapping_path)]
+            result = self.run_cli(*arguments)
             if out_dir.exists():
                 kept = Path(tempfile.mkdtemp())
                 for item in out_dir.iterdir():
@@ -173,7 +189,7 @@ class AbsoluteLayoutTests(CliTestCase):
         xaml = (out_dir / "GeneratedPage.xaml").read_text(encoding="utf-8")
         self.assertIn('<StackPanel Orientation="Vertical">', xaml)
         stack_body = xaml.split('<StackPanel Orientation="Vertical">', 1)[1]
-        self.assertIn("<Canvas>", stack_body)
+        self.assertIn("<Canvas", stack_body)
         self.assertIn('Canvas.Left="12"', stack_body)
 
 

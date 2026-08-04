@@ -1,27 +1,10 @@
 [
-  {
-    "id": 1,
-    "prompt": "这是我们的登录页设计稿 https://mastergo.com/file/123456?layer_id=1:100，帮我转成 WPF 页面。",
-    "expected": "先做 Step 0 前置检查（MASTERGO_TOKEN、Team 版、非草稿箱）；确认通过后调 mcp__getDesignSections（不带 sectionIndex）存 sections-list.json，区块数 ≤ 8 时逐区拉取存 section-{N}.json，再用 $SkillDir 绝对路径运行 dsl_to_xaml.py --input .mastergo-dsl --out src\\Views --page-name LoginPage。成功时 exit 0 且 stdout/stderr 均为空，产出 LoginPage.xaml、Colors.xaml、icons.json 三个文件；交付时必须主动说明：所有元素都没有 Width/Height/Padding/BorderThickness，圆角矩形+文字不会被识别为 Button，字体需自行确认可用性。"
-  },
-  {
-    "id": 2,
-    "prompt": "把这个设计稿全部页面都转成 WPF，一次性转完：https://mastergo.com/file/999?layer_id=1:1",
-    "expected": "调用 mcp__getDesignSections 后发现区块数 > 8，必须停止，向用户说明区块过多并请其指定要转换的具体区块，不得擅自全部转换或只转前 8 个。"
-  },
-  {
-    "id": 3,
-    "prompt": "这个设计稿完全没用 auto layout，都是手动摆的位置，帮我转成 WPF。",
-    "expected": "转换器本身不因缺失 flexContainerInfo 而报错——所有无 flexContainerInfo 的节点都会正常生成 <Canvas> + Canvas.Left/Top。但必须在交付时提醒用户：全页退化为 Canvas 绝对定位，不具备响应式能力（SKILL.md 已知限制第 2 条），且不生成 Width/Height，产物在不同窗口尺寸下的可视范围可能与设计稿不符。"
-  },
-  {
-    "id": 4,
-    "prompt": "这个卡片设计稿里有几个图标，帮我转成 WPF 并把图标也一起处理好。",
-    "expected": "dsl_to_xaml.py 跑完后 icons.json 里列出每个 PATH 节点的 svgShortKey/nodeId/name（XAML 中对应位置留 <!-- ICON:{svgShortKey} --> 注释和空 <Path />）；随后对每个条目调 mcp__extractSvg 取真实 SVG，再交给 optimus-frontend-plugin:svg-to-xaml-path 的 merge_svg_paths.py --format data 转出 Path.Data，回填进 XAML 里空的 <Path /> 占位，保留其 Canvas.Left/Top。若某个 PATH 节点缺 svgShortKey，dsl_to_xaml.py 会 exit 2 报错 'has no svgShortKey; its vector cannot be fetched'，需据实转达并建议重新拉取该 section 的 DSL。"
-  },
-  {
-    "id": 5,
-    "prompt": "帮我把这个 MasterGo 设计稿转成 WPF：https://mastergo.com/file/1?layer_id=1:1",
-    "expected": "若 MASTERGO_TOKEN 环境变量未配置，属于 Step 0 前置检查项，必须在调用任何 MCP 工具之前停止并说明「MASTERGO_TOKEN 未配置」，不得尝试调用 mcp__getDesignSections 或以任何方式猜测/编造设计稿内容。"
-  }
+  {"id":1,"prompt":"这是登录页设计稿 https://mastergo.com/file/123?layer_id=1:1，转 WPF。","expected":"先完成 Step 0，再调用不带 sectionIndex 的 getDesignSections 并保存目录；在读取任一 section DSL 前展示 section 范围、--out、--page-name 和增强模式，等待明确确认。确认前不得读取 section、运行 CLI 或创建产物。"},
+  {"id":2,"prompt":"把这个设计稿全部页面一次性转完：https://mastergo.com/file/999?layer_id=1:1","expected":"目录区块数超过 8 时停止，请用户指定 section；不得擅自全量转换或只取前 8 个。"},
+  {"id":3,"prompt":"这个设计稿没有 auto layout，帮我转 WPF。","expected":"确认后可转换为 Canvas 绝对定位；不得凭名称猜 Button/ItemsControl/绑定。交付须说明无 flex 不具响应式，低置信度保持 Canvas，并提供报告中的回退项。"},
+  {"id":4,"prompt":"卡片有图标和照片，帮我把资源也转好。","expected":"PATH 写入 icons.json 后用 extractSvg 和 svg-to-xaml-path 回填；IMAGE 必须留下 Image 占位、images.json 和报告。url([object Object]) 标为不可恢复，不得声称已转换图片。"},
+  {"id":5,"prompt":"MASTERGO_TOKEN 没配，但请直接读设计稿并生成页面。","expected":"在任何 MCP 调用前停止，说明 token 未配置，不猜测或编造设计稿。"},
+  {"id":6,"prompt":"设计层名有 <--@ActionButton.Primary-->，直接写我们的自定义按钮。","expected":"仅在用户确认的严格 --mapping 已注册控件、xmlns、Variant 白名单后生成自定义控件；否则回退原生 WPF 并写报告。Anchor 不能直接拼进 XAML。"},
+  {"id":7,"prompt":"启用 Meta Rules 自动复用项目 Token 和组件。","expected":"仅在目录确认后可读 getMeta；Meta 不可用、空或格式错误时安全降级纯 DSL，并记录原因。Meta 候选须经项目资产扫描和用户确认后写入严格 JSON mapping。"},
+  {"id":8,"prompt":"我给了截图，生成后自动反复修到和设计稿一模一样。","expected":"截图验证须有可运行项目和明确 opt-in；先输出差异报告，自动返工最多 3 轮并可中止，反馈只写项目 .mastergo-dsl/feedback，绝不隐式改插件文件或保证分数。"}
 ]

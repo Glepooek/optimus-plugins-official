@@ -4,6 +4,7 @@ description: 对项目进行全面分析，输出功能、技术栈、架构、�
 metadata:
   version: "2.0.0"
   author: desktop client team
+  category: generator
 compatibility: 需要 Git（clone/pull/log 分析）；可选调用 optimus-office-plugin:docx-writer 将报告转 Word。
 allowed-tools: Glob Grep Read Write Edit Bash Task
 ---

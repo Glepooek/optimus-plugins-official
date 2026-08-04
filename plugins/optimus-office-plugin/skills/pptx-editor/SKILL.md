@@ -4,7 +4,7 @@ description: "生成、编辑和读取 PowerPoint 演示文稿。使用 PptxGenJ
 license: MIT
 metadata:
   version: "1.0"
-  category: productivity
+  category: generator
   author: desktop client team
   sources:
     - https://gitbrent.github.io/PptxGenJS/

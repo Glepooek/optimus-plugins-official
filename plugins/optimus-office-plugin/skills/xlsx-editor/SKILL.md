@@ -4,7 +4,7 @@ description: "打开、创建、读取、分析、编辑或验证 Excel/电子�
 license: MIT
 metadata:
   version: "1.0"
-  category: productivity
+  category: generator
   author: desktop client team
   sources:
     - ECMA-376 Office Open XML File Formats

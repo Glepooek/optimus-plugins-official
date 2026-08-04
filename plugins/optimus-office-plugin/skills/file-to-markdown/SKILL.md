@@ -3,7 +3,7 @@ name: file-to-markdown
 license: MIT
 metadata:
   version: "1.1.0"
-  category: document-processing
+  category: tool
   author: desktop client team
 compatibility: 核心依赖 markitdown（pip install markitdown），按文件类型可选依赖 mammoth(docx)/pdfminer(pdf)/python-pptx(pptx)/openpyxl(xlsx)。
 allowed-tools: Bash Read Write

@@ -4,6 +4,7 @@ description: 用于审查 C# 代码的 Microsoft 编码规范、命名标准、�
 metadata:
   version: "1.4.0"
   author: desktop client team
+  category: quality
 compatibility: 纯知识型审查 skill，基于用户粘贴/提供的代码文本分析，无外部 CLI/MCP 依赖。
 allowed-tools: Read
 ---

@@ -4,6 +4,7 @@ description: 后端开发技能。基于 superpowers 工作流驱动完整的后
 metadata:
   version: "1.0.0"
   author: desktop client team
+  category: workflow
 compatibility: 硬性依赖 superpowers 插件已安装（brainstorming/writing-plans/subagent-driven-development/verification-before-completion/finishing-a-development-branch 均为必调工作流）；可选调用 optimus-backend-api-connect、optimus-feishu-project-docs-push。
 allowed-tools: Glob Read Write Task
 triggers:

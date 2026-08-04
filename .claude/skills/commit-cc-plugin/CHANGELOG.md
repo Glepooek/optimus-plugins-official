@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.3.0] - 2026-08-04
+
+### Added
+- 新增"第五步 — Unpushed 提交检测与 Amend 合并"：写 commit message 前检测当前分支相对
+  `origin/master` 是否已有未推送的提交，若有则询问用户是否 amend 合并而非直接新建 commit，
+  避免同一逻辑任务被拆成多个碎片提交（借鉴 appskills 仓库 fltrp-git-commit-helper 的
+  unpushed 检测设计）
+- "常见错误"表补充对应反例行
+- 原"第五/六步"顺移为"第六/七步"
+
 ## [3.2.0] - 2026-07-11
 
 ### Added

@@ -4,6 +4,7 @@ description: 对已有 PRD 文档进行6维度质量诊断，输出评分报告�
 metadata:
   version: "2.1.0"
   author: desktop client team
+  category: quality
 compatibility: 纯对话式评审，无外部 CLI/MCP 依赖，只读取本地 references/ 模板与待审 PRD。
 allowed-tools: Read
 ---

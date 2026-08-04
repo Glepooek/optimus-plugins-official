@@ -4,6 +4,7 @@ description: Use when starting a new frontend feature or project to produce the 
 metadata:
   version: "1.0.0"
   author: desktop client team
+  category: generator
 compatibility: 默认推荐 React 18 + TypeScript + Tailwind CSS + Zustand + TanStack Query + Vite 技术栈；可独立触发或被主流程调用。
 allowed-tools: Read Write WebFetch Glob Grep
 ---

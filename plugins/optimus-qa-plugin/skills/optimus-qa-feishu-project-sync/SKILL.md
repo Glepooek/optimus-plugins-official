@@ -4,6 +4,7 @@ description: 将测试产物同步到飞书项目的统一工具，支持三种�
 creator: yinxuan@optimus.cn
 metadata:
   author: desktop client team
+  category: tool
 compatibility: 需要已配置的飞书项目管理 MCP server（本仓库内置 FeishuProjectMcp）及有效鉴权；模式C依赖 Playwright/Midscene 测试报告产物。
 allowed-tools: Read Edit Write FeishuProjectMcp
 ---

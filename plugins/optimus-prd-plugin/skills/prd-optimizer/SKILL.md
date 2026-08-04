@@ -4,6 +4,7 @@ description: 读取已有 PRD，诊断问题后询问优化重点，输出完整
 metadata:
   version: "2.1.1"
   author: desktop client team
+  category: generator
 compatibility: 纯对话式生成，无外部 CLI/MCP 依赖。
 allowed-tools: Read TodoWrite
 ---

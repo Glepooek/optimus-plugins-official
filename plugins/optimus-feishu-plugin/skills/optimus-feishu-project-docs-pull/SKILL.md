@@ -4,6 +4,7 @@ description: 从飞书研发数字化资产文档库加载指定项目/版本的
 metadata:
   version: "1.0.0"
   author: desktop client team
+  category: tool
 compatibility: 硬性依赖 lark-cli（飞书开放平台CLI）已安装且已认证，lark-cli doctor 通过为前置门槛。
 allowed-tools: Bash Write
 triggers:

@@ -1,0 +1,12 @@
+{
+  "list": {"rootMetadata": {"allTexts": ["保存", "行内"]}, "splitContainers": [{"x": 0, "y": 0}]},
+  "sections": [{"nodes": [
+    {"type": "FRAME", "id": "c:1", "name": "Btn <--@ActionButton.Primary-->", "layoutStyle": {"relativeX": 0, "relativeY": 0, "width": 80, "height": 32}, "children": [
+      {"type": "TEXT", "id": "c:2", "name": "Label", "layoutStyle": {"relativeX": 8, "relativeY": 8}, "text": [{"text": "保存"}]}
+    ]},
+    {"type": "FRAME", "id": "c:3", "name": "Row <--@ActionButton.Primary-->", "flexContainerInfo": {"flexDirection": "row"}, "layoutStyle": {"relativeX": 0, "relativeY": 60}, "children": [
+      {"type": "TEXT", "id": "c:4", "name": "Inline", "text": [{"text": "行内"}]}
+    ]},
+    {"type": "FRAME", "id": "c:5", "name": "Leaf <--@ActionButton.Primary-->", "layoutStyle": {"relativeX": 0, "relativeY": 120, "width": 80, "height": 32}}
+  ]}]
+}

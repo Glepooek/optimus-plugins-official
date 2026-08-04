@@ -4,6 +4,7 @@ description: 对比 Figma/MasterGo 设计稿与实际页面的 UI 一致性，�
 creator: yinxuan@optimus.cn
 metadata:
   author: desktop client team
+  category: quality
 compatibility: 需要 Figma MCP、MasterGo MCP（本仓库内置 mastergo-magic-mcp）、Chrome DevTools MCP 均已配置（Figma/Chrome DevTools 需用户自行配置，非本仓库内置）。
 allowed-tools: Write Task mastergo-magic-mcp
 ---

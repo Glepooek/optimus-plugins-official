@@ -1,0 +1,7 @@
+{
+  "list": {"rootMetadata": {"allTexts": ["第二", "第十"]}, "splitContainers": [{}, {}]},
+  "sections": [
+    {"nodes": [{"type": "TEXT", "id": "n:2", "name": "Two", "layoutStyle": {"relativeX": 0, "relativeY": 0}, "text": [{"text": "第二"}]}]},
+    {"nodes": [{"type": "TEXT", "id": "n:10", "name": "Ten", "layoutStyle": {"relativeX": 0, "relativeY": 0}, "text": [{"text": "第十"}]}]}
+  ]
+}

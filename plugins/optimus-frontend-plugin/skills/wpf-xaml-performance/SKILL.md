@@ -4,6 +4,7 @@ description: 识别并修复 WPF/XAML 性能问题的专家级 skill。当用户
 metadata:
   version: "1.1.0"
   author: desktop client team
+  category: quality
 compatibility: 需要 .NET/WPF/XAML 代码库；纯静态代码分析（Grep/Glob扫描+Edit修改），无需额外 CLI 工具或 MCP server。
 allowed-tools: Read Grep Glob Edit
 ---

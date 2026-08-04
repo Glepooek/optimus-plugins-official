@@ -4,6 +4,7 @@ description: 飞书文档读写通用工具，支持读取文档/表格、上传
 metadata:
   version: "1.0.0"
   author: desktop client team
+  category: tool
 compatibility: 硬性依赖 @larksuite/cli（通过 npx 调用，需 Node.js/npm 环境）且需登录认证。
 allowed-tools: Bash
 ---

@@ -4,6 +4,7 @@ description: 根据 OpenAPI 文档自动生成具备完整接口依赖关系的 
 creator: yinxuan@optimus.cn
 metadata:
   author: desktop client team
+  category: generator
 compatibility: 生成 XML 文本本身无额外运行时依赖；生成产物需要用户本地安装对应版本 JMeter 才能使用；可选通过 apifox-mcp-server 获取 OpenAPI 规范。
 allowed-tools: Read Write
 ---

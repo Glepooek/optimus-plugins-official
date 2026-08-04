@@ -4,6 +4,7 @@ description: Use when generating any frontend code to enforce coding conventions
 metadata:
   version: "1.0.0"
   author: desktop client team
+  category: quality
 compatibility: 纯规范文档型 skill，无工具执行；默认技术栈 React 18 + TypeScript + Tailwind CSS + Zustand + TanStack Query + Vite。
 allowed-tools: Read
 ---

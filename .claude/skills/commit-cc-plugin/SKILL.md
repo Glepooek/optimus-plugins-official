@@ -2,7 +2,7 @@
 name: commit-cc-plugin
 description: 在 optimus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户明确表达提交或推送意图，如说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"、"推一下"、"存一下"。
 metadata:
-  version: "3.2.0"
+  version: "3.3.0"
   author: desktop client team
 compatibility: 需要 Git 仓库环境及远程推送权限；无 MCP 或第三方 CLI 依赖。
 allowed-tools: Bash Edit
@@ -97,9 +97,44 @@ git diff --staged --stat   # 确认暂存内容
 2. 同目录是否有同任务的关联文件**未暂存**（untracked 或 modified）？
 3. 是否混入了**无关**变更？
 
-## 第五步 — 提交
+## 第五步 — Unpushed 提交检测与 Amend 合并
 
-分析 `git diff --staged`，按 Conventional Commits 规范写消息：
+在写 commit message 前，检测当前分支相对 `origin/master` 是否已有未推送的提交：
+
+```bash
+git fetch origin master --quiet 2>/dev/null || true
+git log origin/master..HEAD --oneline
+```
+
+🔴 **CHECKPOINT**：
+
+| 检测结果 | 处理 |
+|---|---|
+| 无未推送提交 | 跳过本步骤，第六步正常新建 commit |
+| 有未推送提交 | 展示列表，询问用户是否将本次改动 amend 合并到最近一次提交 |
+
+询问示例：
+
+```
+📌 检测到未推送的提交：
+{hash1} {message1}
+
+是否将本次改动合并到这次提交？(amend/new，默认 new)
+```
+
+选择 amend 时：
+
+1. `git diff HEAD~1 --name-status` 读取上一个提交的改动范围，与本次暂存内容合并分析
+2. 生成一条覆盖两次改动的汇总 commit message，不得遗漏任一次的变更点
+3. 第六步改用 `git commit --amend -m "{汇总 message}"` 而非新建 commit
+
+仅 amend 最近一个未推送提交，不做多提交 squash。
+
+## 第六步 — 提交
+
+若第五步选择了 amend，用 `git commit --amend` 替代下方的 `git commit`，其余流程不变。
+
+分析 `git diff --staged`（amend 时改为分析合并后的完整改动范围），按 Conventional Commits 规范写消息：
 
 ```
 <类型>(<scope>): <简明摘要>
@@ -131,7 +166,7 @@ EOF
 )"
 ```
 
-## 第六步 — 同步推送
+## 第七步 — 同步推送
 
 提交后先 rebase 同步远端，再推送：
 
@@ -155,3 +190,4 @@ git push origin master
 | `git push --force` 或 `git push -f` | 禁止 force push；push 失败先排查原因，最多重试一次 |
 | `git commit --no-verify` 绕过 hook | 禁止跳过 hook；hook 报错必须修复后重试 |
 | 新增 `.claude/skills/` 下的 skill 后忘记补 `.kiro/skills` 符号链接 | 第二步已内置自动检测缺失并补齐，提交前务必确认 |
+| 有未推送提交不检测直接新建 commit | 第五步已内置检测，发现未推送提交时应询问用户是否 amend 合并 |

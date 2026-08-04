@@ -1,0 +1,8 @@
+{
+  "list": {"rootMetadata": {"allTexts": ["左", "中", "右"]}, "splitContainers": [{"x": 0, "y": 0}]},
+  "sections": [{"nodes": [{"type": "FRAME", "id": "g:1", "name": "Row", "flexContainerInfo": {"flexDirection": "row"}, "layoutStyle": {"relativeX": 0, "relativeY": 0}, "children": [
+    {"type": "TEXT", "id": "g:2", "name": "L", "layoutStyle": {"width": 40}, "text": [{"text": "左"}]},
+    {"type": "TEXT", "id": "g:3", "name": "M", "flexGrow": 1, "text": [{"text": "中"}]},
+    {"type": "TEXT", "id": "g:4", "name": "R", "layoutStyle": {"width": 40}, "text": [{"text": "右"}]}
+  ]}]}]
+}

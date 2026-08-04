@@ -1,16 +1,38 @@
-"""Convert MasterGo section DSL into a WPF XAML page scaffold."""
+"""Convert MasterGo section DSL into a deterministic WPF XAML page scaffold."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import math
+import os
 import re
+import shutil
 import sys
+import tempfile
 from pathlib import Path
+from typing import Any
 
 
 class ConversionError(Exception):
     """An input or conversion error that should be shown to the user."""
+
+
+TEXT_PLACEHOLDER = re.compile(r"\AT\d+\|[^\s|]+\Z")
+SECTION_FILE = re.compile(r"\Asection-(\d+)\.json\Z")
+ANCHOR = re.compile(r"<--@([A-Za-z_]\w*)(?:\.([A-Za-z_][\w.-]*))?-->")
+XML_NAME = re.compile(r"\A[A-Za-z_][\w.-]*\Z")
+HEX_COLOUR = re.compile(r"\A#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})\Z")
+# WPF only accepts these enum values; anything else makes the page fail to load.
+FONT_WEIGHTS = {"Thin", "ExtraLight", "UltraLight", "Light", "Normal", "Regular", "Medium",
+                "DemiBold", "SemiBold", "Bold", "ExtraBold", "UltraBold", "Black", "Heavy"}
+TEXT_ENUMS = {
+    "FontWeight": FONT_WEIGHTS,
+    "FontStyle": {"Normal", "Italic", "Oblique"},
+    "TextAlignment": {"Left", "Right", "Center", "Justify"},
+    "TextWrapping": {"Wrap", "NoWrap", "WrapWithOverflow"},
+}
+EMITTED_TEXTS: list[str] = []
 
 
 def read_json(path: Path) -> object:
@@ -23,8 +45,8 @@ def read_json(path: Path) -> object:
         raise ConversionError(f"{path.name} is not valid JSON: {error}") from error
 
 
-def load_sections(directory: Path) -> tuple[dict, list[dict]]:
-    """Load the section directory listing and every section DSL beside it."""
+def load_sections(directory: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Load section DSL files in numeric sectionIndex order."""
     if not directory.is_dir():
         raise ConversionError(f"input directory not found: {directory}")
     listing_path = directory / "sections-list.json"
@@ -37,55 +59,74 @@ def load_sections(directory: Path) -> tuple[dict, list[dict]]:
     if not isinstance(listing, dict):
         raise ConversionError("sections-list.json must contain a JSON object")
 
-    sections: list[dict] = []
-    for path in sorted(directory.glob("section-*.json"), key=lambda p: p.name):
+    indexed_paths: list[tuple[int, Path]] = []
+    for path in directory.glob("section-*.json"):
+        match = SECTION_FILE.match(path.name)
+        if match:
+            indexed_paths.append((int(match.group(1)), path))
+    sections: list[dict[str, Any]] = []
+    for index, path in sorted(indexed_paths, key=lambda item: item[0]):
         section = read_json(path)
         if not isinstance(section, dict):
             raise ConversionError(f"{path.name} must contain a JSON object")
+        section = dict(section)
+        section["_sectionIndex"] = index
         sections.append(section)
     return listing, sections
 
 
-def number(value: float) -> str:
-    """Format a coordinate without a trailing fraction, so output stays readable."""
-    text = f"{float(value):.6f}".rstrip("0").rstrip(".")
-    return "0" if text in ("", "-", "-0") else text
+def finite_nonnegative(value: object) -> float | None:
+    """Return a finite, non-negative number or None for missing/invalid inputs."""
+    if isinstance(value, bool) or value is None:
+        return None
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    return result if math.isfinite(result) and result >= 0 else None
 
 
-def escaped(value: str) -> str:
-    """Escape text for an XML attribute or element body."""
+def number(value: object) -> str:
+    """Format a known valid coordinate or dimension without a trailing fraction."""
+    result = finite_nonnegative(value)
+    if result is None:
+        return "0"
+    text = f"{result:.6f}".rstrip("0").rstrip(".")
+    return text or "0"
+
+
+def escaped(value: object) -> str:
+    """Escape an XML attribute or element value."""
     return (
-        value.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
+        str(value).replace("&", "&amp;").replace("<", "&lt;")
+        .replace(">", "&gt;").replace('"', "&quot;")
     )
 
 
-def node_text(node: dict) -> str:
+def hex_colour(value: object) -> str | None:
+    """Return a literal colour only when it is a hex form WPF can actually parse."""
+    if isinstance(value, str) and HEX_COLOUR.match(value.strip()):
+        return value.strip()
+    return None
+
+
+def note_fallback(report: dict[str, Any], node: dict[str, Any], reason: str) -> None:
+    """Record a degraded conversion so exit 0 never means silent data loss."""
+    report["fallbacks"].append({"nodeId": str(node.get("id", "")), "reason": reason})
+
+
+def node_text(node: dict[str, Any]) -> str:
     """Join a TEXT node's rich-text runs into one string."""
     runs = node.get("text") or []
     return "".join(str(run.get("text", "")) for run in runs if isinstance(run, dict))
 
 
-#: A long-text placeholder MasterGo substitutes for text over 50 characters.
-TEXT_PLACEHOLDER = re.compile(r"\AT\d+\|[^\s|]+\Z")
-
-#: Every string actually emitted into the page, collected for the allTexts check.
-EMITTED_TEXTS: list[str] = []
-
-
-def resolve_text(node: dict, section: dict, order: list[int]) -> str:
-    """Return a TEXT node's real content, filling long-text placeholders.
-
-    Long text (>50 chars) reaches the node tree as `T{sectionIndex}|{nodeId}`; the
-    real string lives in `dsl.rowTexts`, in tree order. `order` tracks how many
-    non-placeholder rowTexts have been consumed so far in this section.
-    """
+def resolve_text(node: dict[str, Any], section: dict[str, Any], order: list[int]) -> str:
+    """Return a TEXT node's real content, filling long-text placeholders."""
     raw = node_text(node)
     if not TEXT_PLACEHOLDER.match(raw.strip()):
         return raw
-    rows = [row for row in (section.get("rowTexts") or []) if not row.get("_placeholder")]
+    rows = [row for row in (section.get("rowTexts") or []) if isinstance(row, dict) and not row.get("_placeholder")]
     for row in rows:
         if row.get("parentName") == node.get("name"):
             return str(row.get("text", ""))
@@ -99,10 +140,10 @@ def resolve_text(node: dict, section: dict, order: list[int]) -> str:
     )
 
 
-def verify_texts(emitted: list[str], listing: dict) -> None:
-    """Fail if any emitted string is outside the design's closed text set."""
+def verify_texts(emitted: list[str], listing: dict[str, Any]) -> None:
+    """Fail if an emitted string falls outside the design's closed text set."""
     metadata = listing.get("rootMetadata") or {}
-    allowed = metadata.get("allTexts")
+    allowed = metadata.get("allTexts") if isinstance(metadata, dict) else None
     if not isinstance(allowed, list):
         return
     permitted = {str(item) for item in allowed}
@@ -115,14 +156,51 @@ def verify_texts(emitted: list[str], listing: dict) -> None:
 
 
 def resource_key(token: str) -> str:
-    """Turn a design token name like `Text/Text-4` into the XAML key `TextText4`."""
+    """Turn a design token name such as `Text/Text-4` into a WPF resource key."""
     parts = re.split(r"[^0-9A-Za-z]+", token)
     return "".join(part[:1].upper() + part[1:] for part in parts if part)
 
 
-def node_colour(node: dict, styles: dict) -> tuple[str | None, str | None]:
-    """Resolve a node's paint to (resource key or None, literal colour or None)."""
+def load_mapping(path_value: str | None) -> tuple[dict[str, Any], str | None]:
+    """Load a strict, data-only project mapping; errors degrade to native WPF output."""
+    if not path_value:
+        return {}, None
+    path = Path(path_value)
+    try:
+        payload = read_json(path)
+    except ConversionError as error:
+        return {}, str(error)
+    if not isinstance(payload, dict):
+        return {}, "mapping must contain a JSON object"
+    resources = payload.get("resources", {})
+    xmlns = payload.get("xmlns", {})
+    components = payload.get("components", {})
+    if not all(isinstance(item, dict) for item in (resources, xmlns, components)):
+        return {}, "mapping resources, xmlns, and components must be JSON objects"
+    if any(not isinstance(key, str) or not isinstance(value, str) or not XML_NAME.match(value) for key, value in resources.items()):
+        return {}, "mapping resources must map design token strings to valid resource keys"
+    if any(not isinstance(key, str) or not XML_NAME.match(key) or not isinstance(value, str) or any(c in value for c in '<>\"') for key, value in xmlns.items()):
+        return {}, "mapping xmlns entries must use safe prefix and namespace strings"
+    safe_components: dict[str, dict[str, Any]] = {}
+    for name, definition in components.items():
+        if not isinstance(name, str) or not isinstance(definition, dict):
+            return {}, "mapping components must map names to objects"
+        prefix, control = definition.get("xmlns"), definition.get("type")
+        allowed = definition.get("allowedProperties", {})
+        variants = definition.get("variants", {})
+        if (not isinstance(prefix, str) or prefix not in xmlns or not isinstance(control, str)
+                or not XML_NAME.match(control) or not isinstance(allowed, dict) or not isinstance(variants, dict)):
+            return {}, f"mapping component {name!r} is invalid or refers to an undeclared xmlns prefix"
+        if any(not isinstance(key, str) or not XML_NAME.match(key) or not isinstance(value, list) or not all(isinstance(v, str) for v in value) for key, value in allowed.items()):
+            return {}, f"mapping component {name!r} has invalid allowedProperties"
+        safe_components[name] = definition
+    return {"resources": resources, "xmlns": xmlns, "components": safe_components}, None
+
+
+def node_colour(node: dict[str, Any], styles: dict[str, Any], mapping: dict[str, Any]) -> tuple[str | None, str | None, str | None]:
+    """Resolve paint to (resource key, literal colour, token), preferring project mapping."""
     token = node.get("_token")
+    token = str(token) if token else None
     colour = node.get("_color")
     if colour is None:
         reference = node.get("fill")
@@ -134,33 +212,45 @@ def node_colour(node: dict, styles: dict) -> tuple[str | None, str | None]:
                     "not in dsl.styles; re-fetch the section DSL"
                 )
             values = entry.get("value") or [{}]
-            colour = values[0].get("color")
+            colour = values[0].get("color") if isinstance(values[0], dict) else None
     if colour is None:
-        return None, None
-    return (resource_key(token) if token else None), colour
+        return None, None, token
+    colour = str(colour)
+    project_key = (mapping.get("resources", {}) or {}).get(token) if token else None
+    return project_key or (resource_key(token) if token else None), colour, token
 
 
-def walk(nodes: list[dict]):
-    """Yield every node in the tree, depth first, in document order."""
+def walk(nodes: list[dict[str, Any]]):
+    """Yield every node in depth-first document order."""
     for node in nodes:
-        yield node
-        yield from walk(node.get("children") or [])
+        if isinstance(node, dict):
+            yield node
+            yield from walk(node.get("children") or [])
 
 
-def collect_brushes(sections: list[dict]) -> dict[str, tuple[str, str]]:
-    """Collect {resource key: (colour, original token name)} across all sections."""
+def collect_brushes(sections: list[dict[str, Any]], mapping: dict[str, Any], report: dict[str, Any]) -> dict[str, tuple[str, str]]:
+    """Collect local token brushes while recording project-resource coverage."""
     brushes: dict[str, tuple[str, str]] = {}
+    coverage = report["tokenCoverage"]
+    seen: set[str] = set()
     for section in sections:
         styles = section.get("styles") or {}
         for node in walk(section.get("nodes") or []):
-            key, colour = node_colour(node, styles)
-            if key and colour:
-                brushes.setdefault(key, (colour, str(node.get("_token"))))
+            key, colour, token = node_colour(node, styles, mapping)
+            if not colour:
+                continue
+            if token and token not in seen:
+                seen.add(token)
+                if token in (mapping.get("resources", {}) or {}):
+                    coverage["mapped"] += 1
+                else:
+                    coverage["literal"] += 1
+            if key and token and token not in (mapping.get("resources", {}) or {}):
+                brushes.setdefault(key, (colour, token))
     return brushes
 
 
-def icon_key(node: dict) -> str:
-    """Return a PATH node's svgShortKey, which is the only handle on its vector."""
+def icon_key(node: dict[str, Any]) -> str:
     key = node.get("svgShortKey")
     if not key:
         raise ConversionError(
@@ -170,42 +260,56 @@ def icon_key(node: dict) -> str:
     return str(key)
 
 
-def collect_icons(sections: list[dict]) -> list[dict]:
-    """List every PATH node so the caller can fetch its SVG with mcp__extractSvg."""
-    icons: list[dict] = []
-    for section in sections:
-        for node in walk(section.get("nodes") or []):
-            if node.get("type") == "PATH":
-                icons.append(
-                    {
-                        "svgShortKey": icon_key(node),
-                        "nodeId": str(node.get("id", "")),
-                        "name": str(node.get("name", "")),
-                    }
-                )
-    return icons
+def size_attributes(node: dict[str, Any], report: dict[str, Any]) -> str:
+    layout = node.get("layoutStyle") or {}
+    values: list[str] = []
+    missing: list[str] = []
+    for dsl_name, xaml_name in (("width", "Width"), ("height", "Height")):
+        value = finite_nonnegative(layout.get(dsl_name, node.get(dsl_name)))
+        if value is None:
+            if dsl_name in layout or dsl_name in node:
+                report["fallbacks"].append({"nodeId": str(node.get("id", "")), "reason": f"invalid {dsl_name} ignored"})
+            else:
+                missing.append(dsl_name)
+        else:
+            values.append(f' {xaml_name}="{number(value)}"')
+    if missing:
+        report["missingDimensions"].append({"nodeId": str(node.get("id", "")), "fields": missing})
+    return "".join(values)
 
 
-def render_resources(brushes: dict[str, tuple[str, str]]) -> str:
-    """Render the colour ResourceDictionary."""
-    lines = [
-        '<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"',
-        '                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">',
-    ]
-    for key in sorted(brushes):
-        colour, token = brushes[key]
-        lines.append(f"  <!-- {token} -->")
-        lines.append(f'  <SolidColorBrush x:Key="{key}" Color="{colour}" />')
-    lines += ["</ResourceDictionary>", ""]
-    return "\n".join(lines)
+def parse_thickness(value: object) -> str | None:
+    if isinstance(value, str):
+        parts = re.split(r"[\s,]+", value.strip())
+    elif isinstance(value, (list, tuple)):
+        parts = list(value)
+    elif isinstance(value, dict):
+        parts = [value.get(key) for key in ("left", "top", "right", "bottom")]
+    else:
+        parts = [value]
+    if not 1 <= len(parts) <= 4:
+        return None
+    parsed = [finite_nonnegative(part) for part in parts]
+    if any(part is None for part in parsed):
+        return None
+    return ",".join(number(part) for part in parsed)
+
+
+def paint_attribute(node: dict[str, Any], styles: dict[str, Any], attr: str, mapping: dict[str, Any]) -> str:
+    """Render a resolved paint as an attribute, keeping FRAME opacity local to paint."""
+    key, colour, _ = node_colour(node, styles, mapping)
+    if colour is None:
+        return ""
+    opacity = finite_nonnegative(node.get("opacity", 1))
+    if opacity is not None and opacity < 1.0:
+        return f' {attr}="{with_alpha(colour, opacity)}"'
+    if key:
+        return f' {attr}="{{StaticResource {key}}}"'
+    return f' {attr}="{escaped(colour)}"'
 
 
 def with_alpha(colour: str, opacity: float) -> str:
-    """Bake an opacity into a hex colour's alpha channel.
-
-    A FRAME's opacity in MasterGo tints only its own background, so it must not
-    become a WPF `Opacity` — that would make every child translucent too.
-    """
+    """Bake background opacity into a hex paint, never into parent Opacity."""
     if not colour.startswith("#") or opacity >= 1.0:
         return colour
     digits = colour[1:]
@@ -216,202 +320,294 @@ def with_alpha(colour: str, opacity: float) -> str:
     return f"#{round(max(0.0, min(1.0, opacity)) * 255):02X}{digits.upper()}"
 
 
-def paint_attribute(node: dict, styles: dict, attr: str) -> str:
-    """Render a node's resolved paint as a `Background=`/`Foreground=` attribute."""
-    key, colour = node_colour(node, styles)
-    if colour is None:
-        return ""
-    opacity = float(node.get("opacity", 1))
-    if opacity < 1.0:
-        return f' {attr}="{with_alpha(colour, opacity)}"'
-    if key:
-        return f' {attr}="{{StaticResource {key}}}"'
-    return f' {attr}="{colour}"'
+def padding_attribute(node: dict[str, Any]) -> str:
+    value = node.get("padding")
+    if value is None:
+        info = node.get("flexContainerInfo") or {}
+        value = info.get("padding") if isinstance(info, dict) else None
+    thickness = parse_thickness(value) if value is not None else None
+    return f' Padding="{thickness}"' if thickness is not None else ""
 
 
-def render_text(
-    node: dict,
-    indent: str,
-    extra: str = "",
-    styles: dict | None = None,
-    section: dict | None = None,
-    order: list[int] | None = None,
-) -> list[str]:
-    """Render a TEXT node as a TextBlock, or skip it if it is placeholder boilerplate."""
+def border_attributes(node: dict[str, Any], styles: dict[str, Any], mapping: dict[str, Any], report: dict[str, Any]) -> str:
+    stroke = node.get("strokeColor", node.get("stroke"))
+    width = node.get("strokeWidth", node.get("strokeThickness"))
+    radius = node.get("cornerRadius", node.get("radius"))
+    attrs = ""
+    if stroke is not None or width is not None:
+        width_text = parse_thickness(width)
+        if stroke is not None and width_text is not None:
+            if isinstance(stroke, str) and stroke.startswith("#"):
+                brush = stroke
+            else:
+                brush = str(stroke)
+            attrs += f' BorderBrush="{escaped(brush)}" BorderThickness="{width_text}"'
+        else:
+            report["fallbacks"].append({"nodeId": str(node.get("id", "")), "reason": "stroke color/width could not be parsed as a pair"})
+    radius_text = parse_thickness(radius) if radius is not None else None
+    if radius is not None and radius_text is None:
+        report["fallbacks"].append({"nodeId": str(node.get("id", "")), "reason": "corner radius could not be parsed"})
+    if radius_text is not None:
+        attrs += f' CornerRadius="{radius_text}"'
+    return attrs
+
+
+def text_attributes(source: dict[str, Any], styles: dict[str, Any], mapping: dict[str, Any]) -> str:
+    """Map reliable common text fields without inventing a fallback font."""
+    attrs = ""
+    value_map = (("fontFamily", "FontFamily"), ("fontSize", "FontSize"), ("fontWeight", "FontWeight"),
+                 ("fontStyle", "FontStyle"), ("lineHeight", "LineHeight"), ("textAlignment", "TextAlignment"),
+                 ("textAlign", "TextAlignment"), ("textWrapping", "TextWrapping"), ("wrap", "TextWrapping"))
+    for dsl_name, xaml_name in value_map:
+        value = source.get(dsl_name)
+        if value is not None and value != "":
+            if dsl_name in {"fontSize", "lineHeight"} and finite_nonnegative(value) is None:
+                continue
+            if dsl_name == "wrap" and isinstance(value, bool):
+                value = "Wrap" if value else "NoWrap"
+            attrs += f' {xaml_name}="{escaped(value)}"'
+    attrs += paint_attribute(source, styles, "Foreground", mapping)
+    return attrs
+
+
+def has_visual_box(node: dict[str, Any], styles: dict[str, Any], mapping: dict[str, Any]) -> bool:
+    return bool(paint_attribute(node, styles, "Background", mapping) or padding_attribute(node)
+                or border_attributes(node, styles, mapping, {"fallbacks": []}))
+
+
+def render_text(node: dict[str, Any], indent: str, extra: str, styles: dict[str, Any], section: dict[str, Any], order: list[int], mapping: dict[str, Any], report: dict[str, Any]) -> list[str]:
     if node.get("_placeholder"):
         return []
-    text = resolve_text(node, section or {}, order if order is not None else [0])
-    EMITTED_TEXTS.append(text)
-    content = escaped(text)
-    paint = paint_attribute(node, styles or {}, "Foreground")
-    return [f'{indent}<TextBlock{extra}{paint} Text="{content}" />']
+    resolved = resolve_text(node, section, order)
+    EMITTED_TEXTS.append(resolved)
+    runs = [run for run in (node.get("text") or []) if isinstance(run, dict)]
+    is_placeholder = bool(runs) and TEXT_PLACEHOLDER.match(node_text(node).strip())
+    attrs = extra + size_attributes(node, report) + text_attributes(node, styles, mapping)
+    if len(runs) <= 1 or is_placeholder:
+        return [f'{indent}<TextBlock{attrs} Text="{escaped(resolved)}" />']
+    lines = [f"{indent}<TextBlock{attrs}>"]
+    for run in runs:
+        run_text = str(run.get("text", ""))
+        # The node-level resolved text is authoritative for placeholders; normal rich text keeps each run.
+        lines.append(f'{indent}  <Run Text="{escaped(run_text)}"{text_attributes(run, styles, mapping)} />')
+    lines.append(f"{indent}</TextBlock>")
+    return lines
 
 
-def render_flex(
-    node: dict,
-    depth: int,
-    extra: str = "",
-    styles: dict | None = None,
-    section: dict | None = None,
-    order: list[int] | None = None,
-) -> list[str]:
-    """Render a flex container as a StackPanel, or a Grid when children grow."""
-    styles = styles or {}
+def render_image(node: dict[str, Any], indent: str, extra: str, report: dict[str, Any]) -> list[str]:
+    source = node.get("url", node.get("src", node.get("cssCode")))
+    source_text = str(source) if source else ""
+    if "url([object Object])" in source_text:
+        status, reason = "unrecoverable", "upstream url([object Object]) cannot be recovered"
+    elif source_text:
+        status, reason = "not-exported", "image resource must be exported and assigned manually"
+    else:
+        status, reason = "missing", "no recoverable image resource reference in DSL"
+    entry = {"nodeId": str(node.get("id", "")), "name": str(node.get("name", "")), "width": (node.get("layoutStyle") or {}).get("width"), "height": (node.get("layoutStyle") or {}).get("height"), "sourceHint": source_text or None, "status": status, "reason": reason}
+    report["assets"]["images"].append(entry)
+    report["manualHandoffs"].append({"nodeId": entry["nodeId"], "reason": reason})
+    return [f'{indent}<!-- TODO IMAGE:{entry["nodeId"]} {escaped(reason)} -->', f'{indent}<Image{extra}{size_attributes(node, report)} Stretch="Fill" />']
+
+
+def render_flex(node: dict[str, Any], depth: int, extra: str, styles: dict[str, Any], section: dict[str, Any], order: list[int], mapping: dict[str, Any], report: dict[str, Any]) -> list[str]:
     indent = "  " * depth
     info = node.get("flexContainerInfo") or {}
     children = node.get("children") or []
-    grows = [child for child in children if child.get("flexGrow")]
-    paint = paint_attribute(node, styles, "Background")
-
+    grows = [child for child in children if isinstance(child, dict) and child.get("flexGrow")]
+    horizontal = str(info.get("flexDirection", "row")).lower() == "row"
+    gap_value = finite_nonnegative(info.get("gap"))
+    gap = gap_value or 0
+    outer_attrs = extra + size_attributes(node, report)
+    visual_attrs = paint_attribute(node, styles, "Background", mapping) + padding_attribute(node) + border_attributes(node, styles, mapping, report)
+    wrapper = bool(visual_attrs)
+    if wrapper:
+        lines = [f"{indent}<Border{outer_attrs}{visual_attrs}>"]
+        content_depth = depth + 1
+    else:
+        lines = []
+        content_depth = depth
+    content_indent = "  " * content_depth
     if grows:
-        horizontal = str(info.get("flexDirection", "row")).lower() == "row"
-        gap = float(info.get("gap") or 0)
         axis, definition = ("Column", "ColumnDefinition Width") if horizontal else ("Row", "RowDefinition Height")
-        lines = [f"{indent}<Grid{extra}{paint}>", f"{indent}  <Grid.{axis}Definitions>"]
-        lines += [f'{indent}    <{definition}="*" />' for _ in children]
-        lines.append(f"{indent}  </Grid.{axis}Definitions>")
+        lines.extend([f"{content_indent}<Grid>", f"{content_indent}  <Grid.{axis}Definitions>"])
+        lines.extend(f'{content_indent}    <{definition}="*" />' for _ in children)
+        lines.append(f"{content_indent}  </Grid.{axis}Definitions>")
         for position, child in enumerate(children):
             child_extra = f' Grid.{axis}="{position}"'
             if gap and position < len(children) - 1:
                 margin = f"0,0,{number(gap)},0" if horizontal else f"0,0,0,{number(gap)}"
                 child_extra += f' Margin="{margin}"'
-            lines += render_node(
-                child, depth + 1, extra=child_extra, absolute=False, styles=styles,
-                section=section, order=order,
-            )
-        lines.append(f"{indent}</Grid>")
-        return lines
-
-    horizontal = str(info.get("flexDirection", "row")).lower() == "row"
-    orientation = "Horizontal" if horizontal else "Vertical"
-    gap = float(info.get("gap") or 0)
-    lines = [f'{indent}<StackPanel Orientation="{orientation}"{extra}{paint}>']
-    for position, child in enumerate(children):
-        child_extra = ""
-        if gap and position < len(children) - 1:
-            margin = f"0,0,{number(gap)},0" if horizontal else f"0,0,0,{number(gap)}"
-            child_extra = f' Margin="{margin}"'
-        lines += render_node(
-            child, depth + 1, extra=child_extra, absolute=False, styles=styles,
-            section=section, order=order,
-        )
-    lines.append(f"{indent}</StackPanel>")
+            lines.extend(render_node(child, content_depth + 1, child_extra, False, styles, section, order, mapping, report))
+        lines.append(f"{content_indent}</Grid>")
+        mode = "flex-grid"
+    else:
+        orientation = "Horizontal" if horizontal else "Vertical"
+        lines.append(f'{content_indent}<StackPanel Orientation="{orientation}">')
+        for position, child in enumerate(children):
+            child_extra = ""
+            if gap and position < len(children) - 1:
+                margin = f"0,0,{number(gap)},0" if horizontal else f"0,0,0,{number(gap)}"
+                child_extra = f' Margin="{margin}"'
+            lines.extend(render_node(child, content_depth + 1, child_extra, False, styles, section, order, mapping, report))
+        lines.append(f"{content_indent}</StackPanel>")
+        mode = "flex"
+    if wrapper:
+        lines.append(f"{indent}</Border>")
+    report["sectionsByNode"].append({"nodeId": str(node.get("id", "")), "renderMode": mode})
     return lines
 
 
-def canvas_position(node: dict) -> str:
-    """Return the Canvas attached properties for an absolutely positioned node."""
+def canvas_position(node: dict[str, Any]) -> str:
     layout = node.get("layoutStyle") or {}
     if "relativeX" not in layout and "relativeY" not in layout:
         raise ConversionError(
             f"node {node.get('id', '?')} ({node.get('name', 'unnamed')}) has no "
-            "layoutStyle.relativeX/relativeY and is not inside a flex container; "
-            "its position cannot be determined"
+            "layoutStyle.relativeX/relativeY and is not inside a flex container; its position cannot be determined"
         )
-    left = number(layout.get("relativeX", 0))
-    top = number(layout.get("relativeY", 0))
-    return f' Canvas.Left="{left}" Canvas.Top="{top}"'
+    return f' Canvas.Left="{number(layout.get("relativeX", 0))}" Canvas.Top="{number(layout.get("relativeY", 0))}"'
 
 
-def render_node(
-    node: dict,
-    depth: int,
-    extra: str = "",
-    absolute: bool = False,
-    styles: dict | None = None,
-    section: dict | None = None,
-    order: list[int] | None = None,
-) -> list[str]:
-    """Render one DSL node and its subtree.
+def component_for(node: dict[str, Any], mapping: dict[str, Any], report: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None]:
+    """Resolve only registered Layer Anchors; all other component intent safely falls back."""
+    match = ANCHOR.search(str(node.get("name", "")))
+    if not match:
+        return None, None
+    component, variant = match.groups()
+    definition = (mapping.get("components", {}) or {}).get(component)
+    if definition is None:
+        report["fallbacks"].append({"nodeId": str(node.get("id", "")), "reason": f"unregistered layer anchor {component}"})
+        return None, variant
+    report["componentMapping"].append({"nodeId": str(node.get("id", "")), "component": component, "source": "anchor", "confidence": 1.0, "fallbackReason": None})
+    return definition, variant
 
-    `absolute` says the parent positions its children with Canvas coordinates; flex
-    parents pass False so their children never receive Canvas.Left/Top.
-    """
-    styles = styles or {}
+
+def render_node(node: dict[str, Any], depth: int, extra: str, absolute: bool, styles: dict[str, Any], section: dict[str, Any], order: list[int], mapping: dict[str, Any], report: dict[str, Any]) -> list[str]:
+    """Render a node with conservative native-WPF fallback semantics."""
     indent = "  " * depth
     placement = canvas_position(node) if absolute else ""
-    if node.get("type") == "PATH":
-        return [f"{indent}<!-- ICON:{icon_key(node)} -->",
-                f'{indent}<Path{extra}{placement} />']
-    if node.get("type") == "TEXT":
-        return render_text(node, indent, extra + placement, styles=styles, section=section, order=order)
+    attrs = extra + placement
+    node_type = node.get("type")
+    if node_type == "PATH":
+        key = icon_key(node)
+        report["assets"]["icons"].append({"svgShortKey": key, "nodeId": str(node.get("id", "")), "name": str(node.get("name", "")), "x": (node.get("layoutStyle") or {}).get("relativeX"), "y": (node.get("layoutStyle") or {}).get("relativeY"), "width": (node.get("layoutStyle") or {}).get("width"), "height": (node.get("layoutStyle") or {}).get("height"), "color": node.get("_color")})
+        return [f"{indent}<!-- ICON:{key} -->", f'{indent}<Path{attrs}{size_attributes(node, report)}{paint_attribute(node, styles, "Fill", mapping)} />']
+    if node_type == "TEXT":
+        return render_text(node, indent, attrs, styles, section, order, mapping, report)
+    if node_type == "IMAGE":
+        return render_image(node, indent, attrs, report)
     if node.get("flexContainerInfo"):
-        return render_flex(node, depth, extra + placement, styles=styles, section=section, order=order)
-    paint = paint_attribute(node, styles, "Background")
-    lines = [f"{indent}<Canvas{extra}{placement}{paint}>"]
+        return render_flex(node, depth, attrs, styles, section, order, mapping, report)
+
+    component, variant = component_for(node, mapping, report)
+    if component:
+        prefix, control = component["xmlns"], component["type"]
+        allowed = component.get("allowedProperties", {})
+        properties = ""
+        if variant and "Variant" in allowed and variant in allowed["Variant"]:
+            properties = f' Variant="{escaped(variant)}"'
+        return [f'{indent}<{prefix}:{control}{attrs}{size_attributes(node, report)}{properties} />']
+
+    visual_attrs = paint_attribute(node, styles, "Background", mapping) + padding_attribute(node) + border_attributes(node, styles, mapping, report)
+    variant_comment: list[str] = []
+    if node_type == "INSTANCE" and node.get("_variantProps"):
+        value = json.dumps(node.get("_variantProps"), ensure_ascii=False, sort_keys=True)
+        variant_comment = [f"{indent}<!-- TODO INSTANCE_VARIANTS:{escaped(value)} -->"]
+        report["manualHandoffs"].append({"nodeId": str(node.get("id", "")), "reason": "instance variant props require a registered mapping", "variantProps": node.get("_variantProps")})
+    if visual_attrs:
+        lines = variant_comment + [f'{indent}<Border{attrs}{size_attributes(node, report)}{visual_attrs}>', f"{indent}  <Canvas>"]
+        for child in node.get("children") or []:
+            lines.extend(render_node(child, depth + 2, "", True, styles, section, order, mapping, report))
+        lines.extend([f"{indent}  </Canvas>", f"{indent}</Border>"])
+        return lines
+    lines = variant_comment + [f"{indent}<Canvas{attrs}{size_attributes(node, report)}>"]
     for child in node.get("children") or []:
-        lines += render_node(child, depth + 1, absolute=True, styles=styles, section=section, order=order)
+        lines.extend(render_node(child, depth + 1, "", True, styles, section, order, mapping, report))
     lines.append(f"{indent}</Canvas>")
     return lines
 
 
-def render_page(
-    listing: dict, sections: list[dict], page_name: str, has_brushes: bool = False
-) -> str:
-    """Render the whole page: a Canvas shell holding every section.
+def render_resources(brushes: dict[str, tuple[str, str]]) -> str:
+    lines = ['<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"', '                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">']
+    for key in sorted(brushes):
+        colour, token = brushes[key]
+        lines.extend([f"  <!-- {escaped(token)} -->", f'  <SolidColorBrush x:Key="{key}" Color="{escaped(colour)}" />'])
+    return "\n".join(lines + ["</ResourceDictionary>", ""])
 
-    `has_brushes` says whether `collect_brushes` produced any entries; only then
-    does the page wire up Colors.xaml, so a token-free design never references an
-    empty dictionary.
-    """
+
+def render_page(listing: dict[str, Any], sections: list[dict[str, Any]], page_name: str, brushes: dict[str, tuple[str, str]], mapping: dict[str, Any], report: dict[str, Any]) -> str:
     EMITTED_TEXTS.clear()
-    lines = [
-        '<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"',
-        '             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"',
-        f'             x:Class="{page_name}">',
-    ]
-    if has_brushes:
-        lines += [
-            "  <UserControl.Resources>",
-            '    <ResourceDictionary Source="Colors.xaml" />',
-            "  </UserControl.Resources>",
-        ]
+    lines = ['<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"', '             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"']
+    for prefix, uri in sorted((mapping.get("xmlns", {}) or {}).items()):
+        lines.append(f'             xmlns:{prefix}="{escaped(uri)}"')
+    lines.append(f'             x:Class="{escaped(page_name)}">')
+    if brushes:
+        lines.extend(["  <UserControl.Resources>", '    <ResourceDictionary Source="Colors.xaml" />', "  </UserControl.Resources>"])
     lines.append("  <Canvas>")
     containers = listing.get("splitContainers") or []
-    for index, section in enumerate(sections):
-        box = containers[index] if index < len(containers) else {}
-        left, top = number(box.get("x", 0)), number(box.get("y", 0))
-        lines.append(f'    <Canvas Canvas.Left="{left}" Canvas.Top="{top}">')
+    for ordinal, section in enumerate(sections):
+        # Index by the section's real number: a partial selection (say sections 2 and 3)
+        # must still take its own page offsets, not the first boxes in the list.
+        index = section.get("_sectionIndex", ordinal)
+        box = containers[index] if index < len(containers) and isinstance(containers[index], dict) else {}
+        lines.append(f'    <Canvas Canvas.Left="{number(box.get("x", 0))}" Canvas.Top="{number(box.get("y", 0))}">')
         styles = section.get("styles") or {}
         order = [0]
         nodes = section.get("nodes") or []
-        roots_absolute = len(nodes) > 1
+        report["sections"].append({"index": index, "renderMode": "absolute"})
         for node in nodes:
-            lines += render_node(
-                node, 3, absolute=roots_absolute, styles=styles, section=section, order=order,
-            )
+            lines.extend(render_node(node, 3, "", len(nodes) > 1, styles, section, order, mapping, report))
         lines.append("    </Canvas>")
-    lines += ["  </Canvas>", "</UserControl>", ""]
+    lines.extend(["  </Canvas>", "</UserControl>", ""])
     return "\n".join(lines)
 
 
+def build_report(mapping_error: str | None) -> dict[str, Any]:
+    report: dict[str, Any] = {"sections": [], "tokenCoverage": {"mapped": 0, "literal": 0, "missing": []}, "componentMapping": [], "assets": {"icons": [], "images": []}, "fallbacks": [], "manualHandoffs": [], "unverified": ["visual validation was not executed"], "missingDimensions": [], "sectionsByNode": []}
+    if mapping_error:
+        report["fallbacks"].append({"nodeId": None, "reason": f"mapping disabled: {mapping_error}"})
+    return report
+
+
+def atomic_write_outputs(out_dir: Path, files: dict[str, str]) -> None:
+    """Write a fully rendered output set only after all conversion validation succeeds."""
+    parent = out_dir.parent
+    if not parent.exists():
+        parent.mkdir(parents=True, exist_ok=True)
+    stage = Path(tempfile.mkdtemp(prefix=f".{out_dir.name}.", dir=parent))
+    try:
+        for name, content in files.items():
+            (stage / name).write_text(content, encoding="utf-8")
+        if not out_dir.exists():
+            os.replace(stage, out_dir)
+            return
+        for name in files:
+            os.replace(stage / name, out_dir / name)
+    finally:
+        if stage.exists():
+            shutil.rmtree(stage, ignore_errors=True)
+
+
 def build_parser() -> argparse.ArgumentParser:
-    """Build the command-line parser."""
-    parser = argparse.ArgumentParser(
-        description="Convert MasterGo section DSL into a WPF XAML page scaffold."
-    )
+    parser = argparse.ArgumentParser(description="Convert MasterGo section DSL into a WPF XAML page scaffold.")
     parser.add_argument("--input", required=True, metavar="PATH", help="directory of DSL JSON")
     parser.add_argument("--out", required=True, metavar="PATH", help="output directory")
     parser.add_argument("--page-name", default="GeneratedPage", help="generated page file name")
+    parser.add_argument("--mapping", metavar="PATH", help="optional strict JSON project resource/component mapping")
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the DSL conversion CLI."""
     arguments = build_parser().parse_args(argv)
     try:
         listing, sections = load_sections(Path(arguments.input))
-        brushes = collect_brushes(sections)
-        xaml = render_page(listing, sections, arguments.page_name, has_brushes=bool(brushes))
+        mapping, mapping_error = load_mapping(arguments.mapping)
+        report = build_report(mapping_error)
+        brushes = collect_brushes(sections, mapping, report)
+        xaml = render_page(listing, sections, arguments.page_name, brushes, mapping, report)
         verify_texts(EMITTED_TEXTS, listing)
-        icons = collect_icons(sections)
-        out_dir = Path(arguments.out)
-        out_dir.mkdir(parents=True, exist_ok=True)
-        (out_dir / f"{arguments.page_name}.xaml").write_text(xaml, encoding="utf-8")
-        (out_dir / "Colors.xaml").write_text(render_resources(brushes), encoding="utf-8")
-        (out_dir / "icons.json").write_text(
-            json.dumps(icons, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
+        # Icons and images are collected during rendering; files are prepared before any output directory is created.
+        files = {f"{arguments.page_name}.xaml": xaml, "Colors.xaml": render_resources(brushes), "icons.json": json.dumps(report["assets"]["icons"], ensure_ascii=False, indent=2) + "\n", "images.json": json.dumps(report["assets"]["images"], ensure_ascii=False, indent=2) + "\n", "conversion-report.json": json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n"}
+        atomic_write_outputs(Path(arguments.out), files)
     except ConversionError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2

@@ -4,6 +4,7 @@ description: 飞书文档读写工具。通过 lark-cli 读取、上传、下载
 metadata:
   version: "1.0.0"
   author: desktop client team
+  category: tool
 compatibility: 强依赖 Node.js/npx 环境执行 @larksuite/cli，需提前 npx @larksuite/cli auth login 完成认证；支持飞书(feishu.cn)与Lark国际版(larksuite.com)。
 allowed-tools: Bash Read
 triggers:

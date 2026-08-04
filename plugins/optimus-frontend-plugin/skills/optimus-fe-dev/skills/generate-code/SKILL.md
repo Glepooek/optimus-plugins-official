@@ -4,6 +4,7 @@ description: Use when implementation plan is confirmed to dispatch subagents for
 metadata:
   version: "1.0.0"
   author: desktop client team
+  category: workflow
 compatibility: 需要 superpowers 插件已安装（subagent-driven-development、requesting-code-review）；派发 implementer/spec-reviewer/quality-reviewer 子代理生成代码。
 allowed-tools: TodoWrite Task
 ---

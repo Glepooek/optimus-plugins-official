@@ -24,6 +24,7 @@
 - **跨插件无重复 skills**：每个插件专注特定领域，新功能前先确认无跨插件重叠
 - **Skills 可相互引用**：子 skill 用相对路径，跨插件用绝对命名空间
 - **复合 skills 很少见**：仅在 3 个以上阶段且每阶段 >200 行时使用
+- **新 skill 上线前自检**：这个 skill 是「引导器」（指导用户/agent 完成某件事）还是「传感器」（校验/检测已有产物是否合规）？有没有配对的另一半（例如有生成类 skill 却没有对应的校验类 skill）？避免只造轮子不造刹车
 
 ---
 
@@ -58,7 +59,9 @@ python -m unittest discover -s .claude/skills/sync-cc-docs-to-youdaonote/scripts
 | `plugins/` 下更新/修复已有内容 | 更新 | **Patch** `x.x.X` |
 | `plugins/` 下删除/重命名用户可见功能 | 删除 | **Major** `X.x.x` |
 
-升级时编辑 `.claude-plugin/marketplace.json` 的 `version` 字段，随本次提交一并推送。
+升级时编辑 `.claude-plugin/marketplace.json` 的 `version` 字段，随本次提交一并推送。**功能变了版本号不变 = 不完整交付**——必须主动检查并升版，不等用户提醒。
+
+Minor/Major 升级建议先用 `darwin-skill` 对改动的 skill 评分，新分数不得低于改动前（不允许倒退），否则先修正再提交。
 
 ---
 

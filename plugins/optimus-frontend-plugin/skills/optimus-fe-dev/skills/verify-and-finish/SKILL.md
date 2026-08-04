@@ -4,6 +4,7 @@ description: Use after deliverables are generated to run final verification and 
 metadata:
   version: "1.0.0"
   author: desktop client team
+  category: quality
 compatibility: 需要 superpowers 插件已安装（verification-before-completion、finishing-a-development-branch）；涉及 git 分支合并/PR 操作。
 allowed-tools: Task Bash
 ---
