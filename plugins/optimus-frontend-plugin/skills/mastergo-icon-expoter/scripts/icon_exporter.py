@@ -78,6 +78,21 @@ def validate_contract(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return validated
 
 
+def decide_format(icon: dict[str, Any]) -> tuple[str, str]:
+    """Map one validated icon to a WPF asset format and a human-readable justification.
+
+    Decision is by paths length alone — svg-to-xaml-path already applied the
+    Fill+Stroke+fill-rule+transform merge key, so this function does not
+    re-inspect colours to avoid second-guessing an already-tested decision.
+    """
+    if icon.get("sourceKind") == "bitmap":
+        return "png", "bitmap source; no vector geometry available"
+    paths = icon.get("paths") or []
+    if len(paths) == 1:
+        return "path", "single fill, no gradient"
+    return "drawing-image", f"{len(paths)} paths after svg-to-xaml-path merge; multi-colour vector"
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Convert MasterGo icon export contract JSON into WPF icon assets.")
     parser.add_argument("--input", required=True, metavar="PATH", help="path to input.json")

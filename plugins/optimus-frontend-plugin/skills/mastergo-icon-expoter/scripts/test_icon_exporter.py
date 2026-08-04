@@ -9,6 +9,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+
 SCRIPT = Path(__file__).with_name("icon_exporter.py")
 
 
@@ -137,6 +139,47 @@ class ContractValidationTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("sourceKind", result.stderr)
         self.assertFalse(out_dir.exists())
+
+
+class FormatDecisionTests(unittest.TestCase):
+    def test_bitmap_becomes_png(self) -> None:
+        from icon_exporter import decide_format
+        icon = {"sourceKind": "bitmap", "paths": []}
+        fmt, decision = decide_format(icon)
+        self.assertEqual(fmt, "png")
+        self.assertTrue(decision)
+
+    def test_single_path_vector_becomes_path(self) -> None:
+        from icon_exporter import decide_format
+        icon = {"sourceKind": "vector", "paths": [{"data": "F1 M0,0 Z", "fill": "#000", "stroke": None}]}
+        fmt, decision = decide_format(icon)
+        self.assertEqual(fmt, "path")
+
+    def test_multi_path_vector_becomes_drawing_image(self) -> None:
+        from icon_exporter import decide_format
+        icon = {
+            "sourceKind": "vector",
+            "paths": [
+                {"data": "F1 M0,0 Z", "fill": "#FFB800", "stroke": None},
+                {"data": "F1 M1,1 Z", "fill": "#FFD666", "stroke": None},
+            ],
+        }
+        fmt, decision = decide_format(icon)
+        self.assertEqual(fmt, "drawing-image")
+
+    def test_two_same_color_paths_still_become_drawing_image(self) -> None:
+        # Decision is by paths length alone; svg-to-xaml-path already made the merge
+        # call, and decide_format must not re-litigate it by inspecting fill values.
+        from icon_exporter import decide_format
+        icon = {
+            "sourceKind": "vector",
+            "paths": [
+                {"data": "F1 M0,0 Z", "fill": "#000", "stroke": None},
+                {"data": "F1 M1,1 Z", "fill": "#000", "stroke": None},
+            ],
+        }
+        fmt, _ = decide_format(icon)
+        self.assertEqual(fmt, "drawing-image")
 
 
 if __name__ == "__main__":
