@@ -277,9 +277,12 @@ def merge_xaml_resources(new_xaml: str, existing_xaml: str) -> str:
         end = xaml.rindex("</ResourceDictionary>")
         return xaml[start:end].strip("\n")
 
-    header_end = new_xaml.index(">", new_xaml.index("<ResourceDictionary")) + 1
-    header = new_xaml[:header_end]
-    parts = [part for part in (_inner(existing_xaml), _inner(new_xaml)) if part]
+    try:
+        header_end = new_xaml.index(">", new_xaml.index("<ResourceDictionary")) + 1
+        header = new_xaml[:header_end]
+        parts = [part for part in (_inner(existing_xaml), _inner(new_xaml)) if part]
+    except ValueError as error:
+        raise ConversionError(f"existing Icons.xaml could not be parsed for merging: {error}") from error
     return header + "\n" + "\n".join(parts) + "\n</ResourceDictionary>\n"
 
 
@@ -340,7 +343,11 @@ def self_check(
         return isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0
 
     for record in manifest.get("icons", []):
-        if record.get("format") in {"png", "ico-fallback-png"} and record.get("fileName"):
+        if (
+            record.get("format") in {"png", "ico-fallback-png"}
+            and record.get("fileName")
+            and record.get("status") != "needs-manual"
+        ):
             width, height = record.get("width"), record.get("height")
             if not _is_positive_number(width) or not _is_positive_number(height):
                 violations.append(f"{record.get('fileName')}: width/height must be positive, got {width}x{height}")

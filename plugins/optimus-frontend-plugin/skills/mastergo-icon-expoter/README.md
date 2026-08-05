@@ -31,13 +31,13 @@ Step 0  前置检查（token / 文件版本 / 链接可解析）
    ↓
 Step 1  拉取目录，扫描 PATH/IMAGE 节点
    ↓
-Step 2  🔴 CHECKPOINT：范围 + 待命名项 + 输出目录 + 是否需要 ico
+Step 2  🔴 CHECKPOINT：范围 + 待命名项 + 输出目录
    ↓
 Step 3  逐图标委派 svg-to-xaml-path，组装 input.json
    ↓
 Step 4  运行 icon_exporter.py（契约校验 → 格式决策 → 命名 → 渲染 → 自检 → 原子写入）
    ↓
-Step 5  交付纪律（needs-manual 转达、Stretch 提醒、ico 降级如实说明）
+Step 5  交付纪律（needs-manual 转达、Stretch 提醒）
 ```
 
 ## 产出物数据流

@@ -428,6 +428,20 @@ class SelfCheckTests(unittest.TestCase):
         violations = self_check("<ResourceDictionary xmlns=\"a\" xmlns:x=\"b\"></ResourceDictionary>\n", manifest, {}, None)
         self.assertTrue(any("ico-fallback-png" in v or "exported" in v for v in violations))
 
+    def test_degraded_bitmap_with_no_dimensions_does_not_trigger_rule_six(self) -> None:
+        # Regression guard: a degraded (needs-manual) bitmap still carries
+        # format "png" and a fileName, but width/height are legitimately
+        # unknown (unresolved source). Rule 6 must skip needs-manual records
+        # entirely instead of aborting the whole batch over them.
+        from icon_exporter import self_check
+        manifest = _manifest_with([{
+            "resourceKey": None, "fileName": "avatar_default", "format": "png",
+            "width": None, "height": None, "status": "needs-manual",
+            "reason": "bitmapPath is missing",
+        }])
+        violations = self_check("<ResourceDictionary xmlns=\"a\" xmlns:x=\"b\"></ResourceDictionary>\n", manifest, {}, None)
+        self.assertEqual(violations, [])
+
 
 class IcoSynthesisTests(unittest.TestCase):
     def test_synthesize_ico_returns_none_when_pillow_unavailable(self) -> None:
@@ -585,6 +599,30 @@ class MergeModeTests(unittest.TestCase):
             self.assertEqual(second_result.returncode, 2)
             self.assertEqual(second_result.stdout, "")
 
+    def test_merge_mode_with_self_closing_existing_xaml_fails_hard_not_with_a_crash(self) -> None:
+        # Regression guard: a self-closing <ResourceDictionary ... /> is valid XAML
+        # that _inner's index()/rindex() calls cannot locate a closing tag for;
+        # this must surface as a clean error:/exit 2, not an uncaught ValueError.
+        # (An existing Icons.xaml is a precondition for the merge code path to run
+        # at all, so --out must already exist here; assert_hard_failure's "does not
+        # exist" check does not apply — instead we assert nothing new was written.)
+        with tempfile.TemporaryDirectory() as directory:
+            out_dir = Path(directory) / "out"
+            out_dir.mkdir()
+            existing_xaml = (
+                '<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" '
+                'xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" />\n'
+            )
+            (out_dir / "Icons.xaml").write_text(existing_xaml, encoding="utf-8")
+            icon = single_vector_icon()
+            input_path = write_input(Path(directory), _payload_with_merge_mode(icon, "merge"))
+            result = run_cli("--input", str(input_path), "--out", str(out_dir))
+            self.assertEqual(result.returncode, 2)
+            self.assertEqual(result.stdout, "")
+            self.assertTrue(result.stderr.startswith("error: "), result.stderr)
+            self.assertEqual((out_dir / "Icons.xaml").read_text(encoding="utf-8"), existing_xaml)
+            self.assertFalse((out_dir / "icons-manifest.json").exists())
+
     def test_overwrite_mode_replaces_existing_icons_xaml_entirely(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             out_dir = Path(directory) / "out"
@@ -646,6 +684,34 @@ class BitmapDegradationTests(unittest.TestCase):
             degraded_record = records["avatar_default"]
             self.assertEqual(degraded_record["status"], "needs-manual")
             self.assertIn("raw/missing.png", degraded_record["reason"])
+
+    def test_degraded_bitmap_with_no_width_height_does_not_abort_batch(self) -> None:
+        # Regression guard: self_check rule 6 used to fire on a degraded bitmap's
+        # planned-but-never-written PNG record regardless of status, aborting the
+        # whole batch (self-check failed: ... width/height must be positive, got
+        # NonexNone) even though nothing was ever planned for it. width/height are
+        # absent here (unresolved bitmap, no dimensions known) — the same shape a
+        # real degraded record has.
+        bitmap_icon = {
+            "nodeId": "i:1", "dslName": "Avatar", "userName": "avatar_default",
+            "paths": [], "warnings": [],
+            "sourceKind": "bitmap", "bitmapPath": "raw/missing.png",
+        }
+        vector_icon = single_vector_icon()
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = write_input(Path(directory), base_payload(vector_icon, bitmap_icon))
+            out_dir = Path(directory) / "out"
+            result = run_cli("--input", str(input_path), "--out", str(out_dir), "--source-root", str(directory))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            icons_xaml = (out_dir / "Icons.xaml").read_text(encoding="utf-8")
+            self.assertIn("IconSearchGeometry", icons_xaml)
+            manifest = json.loads((out_dir / "icons-manifest.json").read_text(encoding="utf-8"))
+            records = {record["fileName"] or record["name"]: record for record in manifest["icons"]}
+            self.assertEqual(records["icon_search"]["status"], "exported")
+            degraded_record = records["avatar_default"]
+            self.assertEqual(degraded_record["status"], "needs-manual")
+            self.assertIsNone(degraded_record["width"])
+            self.assertIsNone(degraded_record["height"])
 
 
 class ExceptionContractTests(unittest.TestCase):
