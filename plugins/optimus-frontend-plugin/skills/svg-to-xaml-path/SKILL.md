@@ -2,7 +2,7 @@
 name: svg-to-xaml-path
 description: 当用户提供本地 SVG 文件路径或完整 SVG 标记，并要求提取 path 的 d、合并多路径、生成 WPF XAML 或 Path.Data 时使用此 Skill；适用于 SVG 图标转 WPF Path 的场景。
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
   author: desktop client team
   category: tool
 compatibility: Python 3；可在 Windows PowerShell 中运行随附的无第三方依赖 CLI。
@@ -11,7 +11,22 @@ allowed-tools: Read Bash PowerShell
 
 # SVG 转 WPF Path
 
-将 SVG 的路径与基本图元转换为 WPF `Path.Data` 或 XAML `Path`。无需 Inkscape。
+将 SVG 的路径与基本图元转换为 WPF `Path.Data`、`Path` 或可嵌入 `DrawingImage` 的 `DrawingGroup`。无需 Inkscape。
+
+## 1.5：线性渐变与父级坐标 DrawingGroup
+
+`--format drawing` 是多色、渐变图标的机器可消费输出。它会保留 SVG 文档顺序，为每个图元生成 `GeometryDrawing`；本地 `<linearGradient>` 会转换为 `LinearGradientBrush`。
+
+```powershell
+# relativeX=12、relativeY=8 的子图元，放进父图标的绝对坐标系
+python "$SkillDir\scripts\merge_svg_paths.py" --file "C:\icons\part.svg" `
+  --format drawing --parent-transform "translate(12 8)"
+```
+
+- `gradientUnits="objectBoundingBox"` 映射为 `MappingMode="RelativeToBoundingBox"`；`userSpaceOnUse` 映射为 `MappingMode="Absolute"`。
+- 支持定义在同一 SVG 内、至少有两个 stop 的 `linearGradient`，以及 `gradientTransform`、`stop-color`、`stop-opacity`。不支持 `radialGradient`、`pattern`、外部引用或无 stop 的渐变时硬失败，不会丢色。
+- `--format data` 遇到渐变硬失败；它不能承载 Brush。调用方必须改用 `drawing`，或执行 PNG 降级，绝不能静默扁平为单色。
+- `--parent-transform` 是父 `DrawingGroup` 的 SVG 变换，适用于 MasterGo DSL 中子元素的 `relativeX`/`relativeY`；每条 SVG 自身 transform 仍以嵌套 `DrawingGroup` 保留。
 
 ## 运行脚本
 

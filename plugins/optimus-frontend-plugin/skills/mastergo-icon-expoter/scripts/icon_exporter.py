@@ -9,6 +9,7 @@ import re
 import shutil
 import sys
 import tempfile
+import xml.etree.ElementTree as ElementTree
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +19,7 @@ class ConversionError(Exception):
 
 
 FILL_RULE_PREFIX = re.compile(r"\A(F0|F1)\s")
-VALID_SOURCE_KINDS = {"vector", "bitmap"}
+VALID_SOURCE_KINDS = {"vector", "bitmap", "fallback-png"}
 
 
 def load_input(path: Path) -> dict[str, Any]:
@@ -64,19 +65,42 @@ def validate_contract(payload: dict[str, Any]) -> list[dict[str, Any]]:
         if source_kind == "vector":
             if not icon.get("svgShortKey"):
                 raise ConversionError(f"{_icon_label(icon)}: vector icon is missing svgShortKey")
-            if not paths:
-                raise ConversionError(f"{_icon_label(icon)}: vector icon has empty paths")
-            for path_entry in paths:
-                data = path_entry.get("data") if isinstance(path_entry, dict) else None
-                if not isinstance(data, str) or not FILL_RULE_PREFIX.match(data):
-                    raise ConversionError(
-                        f"{_icon_label(icon)}: path Data is missing a literal 'F0 ' or 'F1 ' "
-                        "fill-rule prefix (case-sensitive; WPF's mini-language does not "
-                        "tolerate lowercase or a missing prefix)"
-                    )
-        elif source_kind == "bitmap":
+            drawing_xaml = icon.get("drawingXaml")
+            if drawing_xaml is not None:
+                if paths:
+                    raise ConversionError(f"{_icon_label(icon)}: drawingXaml and paths are mutually exclusive")
+                if not isinstance(drawing_xaml, str) or not drawing_xaml.strip():
+                    raise ConversionError(f"{_icon_label(icon)}: drawingXaml must be a non-empty DrawingGroup fragment")
+                try:
+                    drawing_root = ElementTree.fromstring(drawing_xaml)
+                except ElementTree.ParseError as error:
+                    raise ConversionError(f"{_icon_label(icon)}: drawingXaml is not valid XML: {error}") from error
+                if drawing_root.tag.rsplit("}", 1)[-1] != "DrawingGroup":
+                    raise ConversionError(f"{_icon_label(icon)}: drawingXaml root must be DrawingGroup")
+                drawing_data = [node.attrib.get("Geometry", "") for node in drawing_root.iter() if node.tag.rsplit("}", 1)[-1] == "GeometryDrawing"]
+                if not drawing_data:
+                    raise ConversionError(f"{_icon_label(icon)}: drawingXaml contains no GeometryDrawing")
+                if any(not FILL_RULE_PREFIX.match(data) for data in drawing_data):
+                    raise ConversionError(f"{_icon_label(icon)}: drawingXaml Geometry attributes must retain literal F0/F1 prefixes")
+            else:
+                if not paths:
+                    raise ConversionError(f"{_icon_label(icon)}: vector icon has empty paths")
+                for path_entry in paths:
+                    data = path_entry.get("data") if isinstance(path_entry, dict) else None
+                    if not isinstance(data, str) or not FILL_RULE_PREFIX.match(data):
+                        raise ConversionError(
+                            f"{_icon_label(icon)}: path Data is missing a literal 'F0 ' or 'F1 ' "
+                            "fill-rule prefix (case-sensitive; WPF's mini-language does not "
+                            "tolerate lowercase or a missing prefix)"
+                        )
+        elif source_kind in {"bitmap", "fallback-png"}:
             if paths:
-                raise ConversionError(f"{_icon_label(icon)}: sourceKind is 'bitmap' but paths is non-empty")
+                raise ConversionError(f"{_icon_label(icon)}: sourceKind is {source_kind!r} but paths is non-empty")
+            asset_field = "fallbackPngPath" if source_kind == "fallback-png" else "bitmapPath"
+            if not isinstance(icon.get(asset_field), str) or not icon[asset_field].strip():
+                raise ConversionError(f"{_icon_label(icon)}: sourceKind {source_kind!r} is missing {asset_field}")
+            if source_kind == "fallback-png" and not isinstance(icon.get("fallbackReason"), str):
+                raise ConversionError(f"{_icon_label(icon)}: fallback-png is missing fallbackReason")
         validated.append(icon)
     return validated
 
@@ -90,6 +114,10 @@ def decide_format(icon: dict[str, Any]) -> tuple[str, str]:
     """
     if icon.get("sourceKind") == "bitmap":
         return "png", "bitmap source; no vector geometry available"
+    if icon.get("sourceKind") == "fallback-png":
+        return "png", f"vector conversion fallback: {icon.get('fallbackReason')}"
+    if icon.get("drawingXaml"):
+        return "drawing-image", "svg-to-xaml-path DrawingGroup; includes vector gradient or parent coordinates"
     paths = icon.get("paths") or []
     if len(paths) == 1:
         return "path", "single fill, no gradient"
@@ -192,12 +220,16 @@ def render_icons_xaml(entries: list[dict[str, Any]]) -> str:
             key = resource_key(file_name, "Image")
             lines.append(f'  <DrawingImage x:Key="{key}">')
             lines.append('    <DrawingImage.Drawing>')
-            lines.append('      <DrawingGroup>')
-            for path_entry in paths:
-                fill = _escape_xml(path_entry.get("fill") or "#000000")
-                data = _escape_xml(path_entry["data"])
-                lines.append(f'        <GeometryDrawing Brush="{fill}" Geometry="{data}" />')
-            lines.append('      </DrawingGroup>')
+            drawing_xaml = entry.get("drawingXaml")
+            if drawing_xaml:
+                lines.extend(f"      {line}" if line else "" for line in drawing_xaml.strip().splitlines())
+            else:
+                lines.append('      <DrawingGroup>')
+                for path_entry in paths:
+                    fill = _escape_xml(path_entry.get("fill") or "#000000")
+                    data = _escape_xml(path_entry["data"])
+                    lines.append(f'        <GeometryDrawing Brush="{fill}" Geometry="{data}" />')
+                lines.append('      </DrawingGroup>')
             lines.append('    </DrawingImage.Drawing>')
             lines.append('  </DrawingImage>')
         # "png" entries carry no vector representation and are skipped here by design.
@@ -232,6 +264,8 @@ def render_manifest(
             "color": colour,
             "status": "exported",
             "reason": None,
+            "fallbackFrom": "vector" if entry.get("sourceKind") == "fallback-png" else None,
+            "fallbackReason": entry.get("fallbackReason") if entry.get("sourceKind") == "fallback-png" else None,
         })
     for icon in unnamed:
         records.append({
@@ -262,6 +296,8 @@ def render_manifest(
             "color": None,
             "status": "needs-manual",
             "reason": icon.get("reason") or "could not resolve source asset",
+            "fallbackFrom": "vector" if icon.get("sourceKind") == "fallback-png" else None,
+            "fallbackReason": icon.get("fallbackReason") if icon.get("sourceKind") == "fallback-png" else None,
         })
     return {"icons": records}
 
@@ -441,18 +477,20 @@ def main(argv: list[str] | None = None) -> int:
             if entry["format"] != "png":
                 resolved_named.append(entry)
                 continue
-            bitmap_path = entry.get("bitmapPath")
+            asset_field = "fallbackPngPath" if entry.get("sourceKind") == "fallback-png" else "bitmapPath"
+            bitmap_path = entry.get(asset_field)
+            asset_kind = "PNG fallback" if entry.get("sourceKind") == "fallback-png" else "bitmap icon"
             if source_root is None:
-                degraded.append({**entry, "reason": "no --source-root provided for a bitmap icon"})
+                degraded.append({**entry, "reason": f"no --source-root provided for a {asset_kind}"})
                 continue
             if not bitmap_path:
-                degraded.append({**entry, "reason": "bitmapPath is missing"})
+                degraded.append({**entry, "reason": f"{asset_field} is missing"})
                 continue
             source_file = source_root / bitmap_path
             if not source_file.is_file():
                 degraded.append({
                     **entry,
-                    "reason": f"bitmapPath {bitmap_path!r} does not exist under --source-root",
+                    "reason": f"{asset_field} {bitmap_path!r} does not exist under --source-root",
                 })
                 continue
             png_files[f"Images/{entry['fileName']}.png"] = source_file.read_bytes()

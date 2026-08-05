@@ -2,7 +2,7 @@
 name: mastergo-icon-expoter
 description: 当用户要求从 MasterGo 设计稿导出图标、背景等视觉资产用于 WPF XAML 项目时使用此 Skill；产出 Geometry/DrawingImage 资源字典、位图与决策清单，不生成页面代码。
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: desktop client team
   category: generator
 compatibility: Python 3 标准库；可选 Pillow（为未来 .ico 合成功能预留，本版本尚未接入任何调用路径）；需 mastergo-magic-mcp（本仓库 plugins/optimus-mcp-servers/.mcp.json 内置）与 MASTERGO_TOKEN；委派 optimus-frontend-plugin:svg-to-xaml-path 完成 SVG→Path.Data 转换。
@@ -17,7 +17,10 @@ allowed-tools: Read Write Bash PowerShell Task mastergo-magic-mcp
 
 ## Step 0：前置检查
 
-以下任一条件不满足，停止且不要读取设计：`MASTERGO_TOKEN` 已配置；文件属于 MasterGo Team 版或以上且不是草稿箱；分享链接可解析出 `fileId`/`layerId`。
+以下任一条件不满足，停止且不要读取设计：
+- `MASTERGO_TOKEN` 已配置；
+- 文件属于 MasterGo Team 版或以上且不是草稿箱；
+- 分享链接可解析出 `fileId`/`layerId`。
 
 ## Step 1：拉取目录，扫描图标节点
 
@@ -37,20 +40,52 @@ allowed-tools: Read Write Bash PowerShell Task mastergo-magic-mcp
 
 **命名规则**（详见 `references/wpf-xaml-icon-sepc.md` 第八节）：脚本会尝试从 DSL 图层名机械推导 `snake_case` 文件名（如 `SearchIcon` → `icon_search`），失败时（非 ASCII、无法判定 `icon_`/`bg_`/`logo_` 分类等）必须由用户补充完整文件名，不得猜测语义分类。
 
-## Step 3：逐图标委派转换，组装 `input.json`
+## Step 3：按完整图标转换、组装 `input.json`
 
-对每个矢量候选节点：
+先按共同 FRAME/GROUP 父级归并路径、LAYER、IMAGE；**一个完整图标只能写入一个 input 条目**，禁止将局部 PATH 当作完整图标交付。调用 `mcp__extractSvg` 获取目标 layer 的 SVG 集合后，按 DSL `nodeId`/`svgShortKey` 对应源图元。
 
-1. 调用 `mcp__extractSvg(svgShortKey=...)` 取得 SVG 标记。
-2. 委派 `optimus-frontend-plugin:svg-to-xaml-path`（`--format data`），获得 `Data` 字符串（含 `F0`/`F1` 前缀）与其 stderr 告警。**多路径异色**的情形会返回多个 `Path`，按顺序填入同一个 icon 条目的 `paths` 数组，不需要为此额外询问用户——格式决策已经完全由 `paths` 数组长度决定。
+### 3.1 矢量优先路径
 
-对每个位图候选节点：调用 `mcp__getD2c` 落盘，记录相对路径为 `bitmapPath`。`bitmapPath` 必须写成相对于项目根目录的路径（与 Step 4 中 `--source-root .` 所解析的根一致），匹配 `mcp__getD2c` 典型输出约定（如 `.mastergo-icons/raw/avatar.png`）。
+1. 纯色、无渐变且没有需要保留的父级偏移时，委派 `svg-to-xaml-path --format data`，将返回的 `F0`/`F1` Data 原样写入 `paths`。
+2. 多色、线性渐变、SVG transform，或必须按 DSL `relativeX`/`relativeY` 拼装的图元，委派：
 
-🔴 **红线：** `svg-to-xaml-path` 返回的 `Data` 字符串必须逐字写入 `input.json`，包括 `F0`/`F1` 前缀，不得删改、补全或重排。这条由 `icon_exporter.py` 的 `validate_contract` 强制校验——缺前缀会导致 exit 2。
+   ```powershell
+   python "$SvgSkillDir\scripts\merge_svg_paths.py" --file <svg> `
+     --format drawing --parent-transform "translate(<relativeX> <relativeY>)"
+   ```
 
-单个图标的 SVG 取值失败或 `svg-to-xaml-path` 报错（如 `currentColor`、渐变 URL）不中断整批：将该图标的 `sourceKind` 标记为待定，在 `input.json` 中省略该条目，并在后续报告中列为 `unresolved`，附上兄弟 Skill 的错误原文。
+   将 stdout 的完整 `<DrawingGroup>...</DrawingGroup>` 原样写入该矢量条目的 `drawingXaml`，同时令 `paths: []`。`icon_exporter.py` 会生成含 `LinearGradientBrush` 和嵌套父级坐标 `DrawingGroup` 的 `DrawingImage`。
 
-组装完整的 `input.json`（结构见 `references/wpf-xaml-icon-sepc.md` 第十一节），写入 `.mastergo-icons/input.json`。
+🔴 **红线：** `F0`/`F1` 前缀、`DrawingGroup` 的 Geometry 属性和转换器 stdout 都不得删改、补全或重排。
+
+### 3.2 可恢复失败：PNG 降级
+
+转换失败不再直接丢弃完整图标。每个图标按下表处理：
+
+| 失败类型 | 降级动作 | 清单结果 |
+|---|---|---|
+| `svg-to-xaml-path` 不支持的 SVG（径向渐变、pattern、滤镜、不可转换元素） | 调用 `mcp__getD2c` 导出同一**完整图标父节点**的 PNG 到 `.mastergo-icons/raw/` | `png`、`exported`、`fallbackFrom: vector` |
+| 线性渐变/父级坐标的 DrawingGroup 转换或写盘失败 | 对同一完整父节点执行 D2C PNG 导出 | `png`、`exported`、`fallbackFrom: vector` |
+| 原始 `IMAGE` 节点 | 用 D2C PNG 直接落盘 | `png`、`exported` |
+| D2C 无权限、未返回 PNG、PNG 路径不存在 | 不伪造图像；保留转换/D2C 错误原文 | `needs-manual` |
+| 命名冲突、输出目录冲突、契约错误 | 硬失败；不写任何输出 | 无产物 |
+
+有成功 PNG 时在 `input.json` 写入：
+
+```json
+{
+  "sourceKind": "fallback-png",
+  "nodeId": "10:2",
+  "dslName": "GradientIcon",
+  "userName": "icon_gradient",
+  "width": 92, "height": 92,
+  "paths": [],
+  "fallbackPngPath": ".mastergo-icons/raw/icon_gradient.png",
+  "fallbackReason": "svg-to-xaml-path failed: <完整 stderr>"
+}
+```
+
+`fallback-png` 会复制为 `Images/icon_gradient.png`，并在 `icons-manifest.json` 写入 `fallbackFrom: "vector"` 和 `fallbackReason`。位图源使用 `sourceKind: "bitmap"` 与 `bitmapPath`。
 
 ## Step 4：运行转换器
 

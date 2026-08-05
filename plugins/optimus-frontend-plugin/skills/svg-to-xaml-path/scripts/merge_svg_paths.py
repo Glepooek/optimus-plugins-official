@@ -12,6 +12,8 @@ from html import escape
 from pathlib import Path
 from typing import Iterable
 
+from svg_gradients import LinearGradient, collect_linear_gradients, point, resolve_paint
+
 
 #: An affine transform as SVG writes it: a, b, c, d, e, f.
 Matrix = tuple[float, float, float, float, float, float]
@@ -89,8 +91,8 @@ class SvgPath:
     """A usable SVG path and its effective inherited presentation attributes."""
 
     data: str
-    fill: str | None
-    stroke: str | None
+    fill: str | LinearGradient | None
+    stroke: str | LinearGradient | None
     fill_rule: str
     matrix: Matrix
 
@@ -187,12 +189,16 @@ def wpf_paint(value: str, role: str) -> str:
     raise ConversionError(f"{role} value {value!r} is not a WPF colour; {hint}")
 
 
-def effective_paint(value: str | None, role: str) -> str | None:
-    """Translate SVG's `none` paint to an absent WPF property and validate the rest."""
-    if value is None:
-        return None
-    value = value.strip()
-    return None if value.lower() == "none" else wpf_paint(value, role)
+def effective_paint(
+    value: str | None,
+    role: str,
+    gradients: dict[str, LinearGradient],
+) -> str | LinearGradient | None:
+    """Resolve solid paint or a local SVG linear-gradient into a WPF paint."""
+    try:
+        return resolve_paint(value, role, gradients, wpf_paint)
+    except ValueError as error:
+        raise ConversionError(str(error)) from error
 
 
 def parse_style(value: str) -> dict[str, str]:
@@ -402,6 +408,10 @@ def matrix_attribute(matrix: Matrix) -> str:
 
 def collect_paths(root: ElementTree.Element) -> tuple[list[SvgPath], list[str]]:
     """Collect rendered paths in document order and conversion warnings."""
+    try:
+        gradients = collect_linear_gradients(root, wpf_paint, parse_transform)
+    except ValueError as error:
+        raise ConversionError(str(error)) from error
     paths: list[SvgPath] = []
     warnings: list[str] = []
     saw_class = False
@@ -449,8 +459,8 @@ def collect_paths(root: ElementTree.Element) -> tuple[list[SvgPath], list[str]]:
             paths.append(
                 SvgPath(
                     data=data,
-                    fill=effective_paint(current.fill, "fill"),
-                    stroke=effective_paint(current.stroke, "stroke"),
+                    fill=effective_paint(current.fill, "fill", gradients),
+                    stroke=effective_paint(current.stroke, "stroke", gradients),
                     fill_rule=normalized_fill_rule(current.fill_rule),
                     matrix=current.matrix,
                 )
@@ -512,24 +522,99 @@ def geometry(fill_rule: str, data: str) -> str:
     return f"{FILL_RULE_PREFIXES[fill_rule]} {data}"
 
 
+def render_linear_gradient(gradient: LinearGradient, indent: str) -> list[str]:
+    """Render a resolved SVG gradient as a WPF LinearGradientBrush."""
+    attributes = [
+        attribute("StartPoint", point(gradient.start_x, gradient.start_y)),
+        attribute("EndPoint", point(gradient.end_x, gradient.end_y)),
+        attribute("MappingMode", gradient.mapping_mode),
+    ]
+    lines = [f"{indent}<LinearGradientBrush {' '.join(attributes)}>"]
+    for stop in gradient.stops:
+        lines.append(
+            f"{indent}  <GradientStop {attribute('Color', stop.color)} "
+            f"{attribute('Offset', number(stop.offset))} />"
+        )
+    if gradient.transform != IDENTITY:
+        lines.extend([
+            f"{indent}  <LinearGradientBrush.Transform>",
+            f'{indent}    <MatrixTransform Matrix="{matrix_attribute(gradient.transform)}" />',
+            f"{indent}  </LinearGradientBrush.Transform>",
+        ])
+    lines.append(f"{indent}</LinearGradientBrush>")
+    return lines
+
+
 def render_path(path: SvgPath) -> str:
-    """Render one WPF Path element with the required attribute order."""
+    """Render one WPF Path, preserving solid and local linear-gradient brushes."""
     attributes: list[str] = []
-    if path.fill is not None:
+    if isinstance(path.fill, str):
         attributes.append(attribute("Fill", path.fill))
-    if path.stroke is not None:
+    if isinstance(path.stroke, str):
         attributes.append(attribute("Stroke", path.stroke))
     attributes.append(attribute("Data", geometry(path.fill_rule, path.data)))
+    has_nested = isinstance(path.fill, LinearGradient) or isinstance(path.stroke, LinearGradient) or path.matrix != IDENTITY
     element = f"<Path {' '.join(attributes)}"
-    if path.matrix == IDENTITY:
+    if not has_nested:
         return element + " />"
-    return (
-        f"{element}>\n"
-        f"  <Path.RenderTransform>\n"
-        f'    <MatrixTransform Matrix="{matrix_attribute(path.matrix)}" />\n'
-        f"  </Path.RenderTransform>\n"
-        f"</Path>"
-    )
+    lines = [element + ">"]
+    if isinstance(path.fill, LinearGradient):
+        lines.append("  <Path.Fill>")
+        lines.extend(render_linear_gradient(path.fill, "    "))
+        lines.append("  </Path.Fill>")
+    if isinstance(path.stroke, LinearGradient):
+        lines.append("  <Path.Stroke>")
+        lines.extend(render_linear_gradient(path.stroke, "    "))
+        lines.append("  </Path.Stroke>")
+    if path.matrix != IDENTITY:
+        lines.extend([
+            "  <Path.RenderTransform>",
+            f'    <MatrixTransform Matrix="{matrix_attribute(path.matrix)}" />',
+            "  </Path.RenderTransform>",
+        ])
+    lines.append("</Path>")
+    return "\n".join(lines)
+
+
+def render_geometry_drawing(path: SvgPath, indent: str) -> list[str]:
+    """Render one source shape inside a DrawingGroup without losing paint order."""
+    if path.stroke is not None:
+        raise ConversionError("drawing output does not yet support SVG stroke; use --format xaml")
+    data = attribute("Geometry", geometry(path.fill_rule, path.data))
+    if isinstance(path.fill, str):
+        return [f"{indent}<GeometryDrawing {attribute('Brush', path.fill)} {data} />"]
+    lines = [f"{indent}<GeometryDrawing {data}>"]
+    if isinstance(path.fill, LinearGradient):
+        lines.append(f"{indent}  <GeometryDrawing.Brush>")
+        lines.extend(render_linear_gradient(path.fill, indent + "    "))
+        lines.append(f"{indent}  </GeometryDrawing.Brush>")
+    lines.append(f"{indent}</GeometryDrawing>")
+    return lines
+
+
+def render_drawing(paths: Iterable[SvgPath], parent_matrix: Matrix) -> str:
+    """Render ordered source paths as a parent-coordinate WPF DrawingGroup."""
+    lines = ["<DrawingGroup>"]
+    if parent_matrix != IDENTITY:
+        lines.extend([
+            "  <DrawingGroup.Transform>",
+            f'    <MatrixTransform Matrix="{matrix_attribute(parent_matrix)}" />',
+            "  </DrawingGroup.Transform>",
+        ])
+    for path in paths:
+        if path.matrix == IDENTITY:
+            lines.extend(render_geometry_drawing(path, "  "))
+            continue
+        lines.append("  <DrawingGroup>")
+        lines.extend([
+            "    <DrawingGroup.Transform>",
+            f'      <MatrixTransform Matrix="{matrix_attribute(path.matrix)}" />',
+            "    </DrawingGroup.Transform>",
+        ])
+        lines.extend(render_geometry_drawing(path, "    "))
+        lines.append("  </DrawingGroup>")
+    lines.append("</DrawingGroup>")
+    return "\n".join(lines) + "\n"
 
 
 def render_xaml(paths: Iterable[SvgPath], merge: bool = True) -> tuple[str, list[str]]:
@@ -560,6 +645,10 @@ def render_xaml(paths: Iterable[SvgPath], merge: bool = True) -> tuple[str, list
 
 def render_data(paths: list[SvgPath]) -> tuple[str, list[str]]:
     """Render every path's data as one geometry, which carries a single fill rule."""
+    if any(isinstance(path.fill, LinearGradient) or isinstance(path.stroke, LinearGradient) for path in paths):
+        raise ConversionError(
+            "SVG linear gradients cannot be represented by Path.Data; use --format drawing or --format xaml"
+        )
     transformed = [path for path in paths if path.matrix != IDENTITY]
     if transformed:
         raise ConversionError(
@@ -618,7 +707,11 @@ def build_parser() -> argparse.ArgumentParser:
     sources.add_argument("--file", metavar="PATH", help="read SVG XML from a UTF-8 file")
     sources.add_argument("--svg", metavar="TEXT", help="SVG XML text")
     sources.add_argument("--stdin", action="store_true", help="read SVG XML from standard input")
-    parser.add_argument("--format", choices=("data", "xaml"), default="xaml")
+    parser.add_argument("--format", choices=("data", "xaml", "drawing"), default="xaml")
+    parser.add_argument(
+        "--parent-transform", default="", metavar="SVG_TRANSFORM",
+        help="optional parent DrawingGroup SVG transform, e.g. 'translate(12 8)'",
+    )
     parser.add_argument(
         "--no-merge",
         action="store_true",
@@ -635,6 +728,9 @@ def main(argv: list[str] | None = None) -> int:
         paths, warnings = collect_paths(root)
         if arguments.format == "data":
             output, format_warnings = render_data(paths)
+        elif arguments.format == "drawing":
+            parent_matrix = parse_transform(arguments.parent_transform) if arguments.parent_transform.strip() else IDENTITY
+            output, format_warnings = render_drawing(paths, parent_matrix), []
         else:
             output, format_warnings = render_xaml(paths, merge=not arguments.no_merge)
         warnings.extend(format_warnings)

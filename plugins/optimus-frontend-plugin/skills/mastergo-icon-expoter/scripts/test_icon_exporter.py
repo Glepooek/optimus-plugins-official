@@ -734,5 +734,118 @@ class ExceptionContractTests(unittest.TestCase):
         self.assertTrue(result.stderr.startswith("error: "), result.stderr)
 
 
+class VectorPngFallbackTests(unittest.TestCase):
+    """A failed vector conversion can ship the exact MasterGo PNG without aborting peers."""
+
+    def fallback_icon(self, **overrides: object) -> dict:
+        icon = {
+            "nodeId": "v:1", "dslName": "GradientIcon", "userName": "icon_gradient",
+            "width": 92, "height": 92, "paths": [], "warnings": [],
+            "sourceKind": "fallback-png", "fallbackPngPath": "raw/gradient.png",
+            "fallbackReason": "svg-to-xaml-path could not preserve a referenced linear gradient",
+        }
+        icon.update(overrides)
+        return icon
+
+    def test_vector_png_fallback_copies_png_and_records_its_vector_origin(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            raw = root / "raw"
+            raw.mkdir()
+            source_png = b"\x89PNG\r\n\x1a\nmastergo"
+            (raw / "gradient.png").write_bytes(source_png)
+            input_path = write_input(root, base_payload(self.fallback_icon()))
+            out_dir = root / "out"
+
+            result = run_cli("--input", str(input_path), "--out", str(out_dir), "--source-root", str(root))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((out_dir / "Images" / "icon_gradient.png").read_bytes(), source_png)
+            manifest = json.loads((out_dir / "icons-manifest.json").read_text(encoding="utf-8"))
+            record = manifest["icons"][0]
+            self.assertEqual(record["format"], "png")
+            self.assertEqual(record["status"], "exported")
+            self.assertEqual(record["fallbackFrom"], "vector")
+            self.assertIn("linear gradient", record["fallbackReason"])
+
+    def test_missing_vector_fallback_png_degrades_without_aborting_a_vector_peer(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            input_path = write_input(root, base_payload(single_vector_icon(), self.fallback_icon()))
+            out_dir = root / "out"
+
+            result = run_cli("--input", str(input_path), "--out", str(out_dir), "--source-root", str(root))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            manifest = json.loads((out_dir / "icons-manifest.json").read_text(encoding="utf-8"))
+            records = {record["fileName"] or record["name"]: record for record in manifest["icons"]}
+            self.assertEqual(records["icon_search"]["status"], "exported")
+            fallback = records["icon_gradient"]
+            self.assertEqual(fallback["status"], "needs-manual")
+            self.assertEqual(fallback["fallbackFrom"], "vector")
+            self.assertIn("fallbackPngPath", fallback["reason"])
+
+    def test_vector_fallback_without_a_reason_is_rejected_before_output(self) -> None:
+        icon = self.fallback_icon()
+        del icon["fallbackReason"]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            input_path = write_input(root, base_payload(icon))
+            out_dir = root / "out"
+            result = run_cli("--input", str(input_path), "--out", str(out_dir), "--source-root", str(root))
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("fallbackReason", result.stderr)
+        self.assertFalse(out_dir.exists())
+
+
+class DrawingGroupInputTests(unittest.TestCase):
+    """svg-to-xaml-path drawing output is embeddable without dropping gradients or offsets."""
+
+    DRAWING = """<DrawingGroup>
+  <DrawingGroup.Transform>
+    <MatrixTransform Matrix="1,0,0,1,12,8" />
+  </DrawingGroup.Transform>
+  <GeometryDrawing Geometry="F1 M0,0 H10 V10 H0 Z">
+    <GeometryDrawing.Brush>
+      <LinearGradientBrush StartPoint="0,0" EndPoint="1,1" MappingMode="RelativeToBoundingBox">
+        <GradientStop Color="#FF0000" Offset="0" />
+        <GradientStop Color="#800000FF" Offset="1" />
+      </LinearGradientBrush>
+    </GeometryDrawing.Brush>
+  </GeometryDrawing>
+</DrawingGroup>"""
+
+    def test_drawing_group_is_written_as_a_gradient_drawing_image(self) -> None:
+        icon = {
+            "svgShortKey": "S0#0", "nodeId": "10:2", "dslName": "GradientIcon",
+            "userName": "icon_gradient", "width": 24, "height": 24,
+            "paths": [], "sourceKind": "vector", "drawingXaml": self.DRAWING,
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = write_input(Path(directory), base_payload(icon))
+            out_dir = Path(directory) / "out"
+            result = run_cli("--input", str(input_path), "--out", str(out_dir))
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            xaml = (out_dir / "Icons.xaml").read_text(encoding="utf-8")
+            self.assertIn('x:Key="IconGradientImage"', xaml)
+            self.assertIn('<LinearGradientBrush StartPoint="0,0" EndPoint="1,1"', xaml)
+            self.assertIn('<MatrixTransform Matrix="1,0,0,1,12,8" />', xaml)
+            manifest = json.loads((out_dir / "icons-manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["icons"][0]["format"], "drawing-image")
+
+    def test_non_drawing_group_fragment_is_rejected_before_output(self) -> None:
+        icon = single_vector_icon(paths=[], drawingXaml='<GeometryDrawing Geometry="F1 M0,0 Z" />')
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = write_input(Path(directory), base_payload(icon))
+            out_dir = Path(directory) / "out"
+            result = run_cli("--input", str(input_path), "--out", str(out_dir))
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("DrawingGroup", result.stderr)
+        self.assertFalse(out_dir.exists())
+
+
 if __name__ == "__main__":
     unittest.main()

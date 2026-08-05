@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0] - 2026-08-05
+
+### Added
+- 支持 `drawingXaml` 输入契约：将 sibling Skill 生成的 `DrawingGroup` 原样写入 `DrawingImage`，保留 `LinearGradientBrush` 和父级坐标变换。
+- 新增 `fallback-png` 输入类型：矢量转换失败后可复制 MasterGo D2C 产出的完整图标 PNG 到 `Images/`。
+- 清单新增 `fallbackFrom`、`fallbackReason`，区分原生位图和矢量 PNG 降级。
+- 新增 DrawingGroup、PNG 降级复制、降级失败不影响同批资源的回归测试。
+
+### Changed
+- Step 3 改为以完整图标父节点为单位转换；不再把局部 PATH 当作可交付图标。
+- 明确 SVG 不支持项、D2C 无权限和 PNG 缺失时为 `needs-manual`，不允许假报导出成功。
+
 ## [1.0.0] - 2026-08-04
 
 ### Added

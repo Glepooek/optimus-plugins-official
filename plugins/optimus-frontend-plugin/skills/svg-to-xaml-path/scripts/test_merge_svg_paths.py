@@ -846,5 +846,57 @@ class SampleIconTests(CliTestCase):
         self.assertIn('Data="F1 M3 3h18v18H3V3zm2 2v14h14V5H5z M7 11h10v2H7v-2z"', result.stdout)
 
 
+class LinearGradientTests(CliTestCase):
+    """SVG linear gradients must remain vectors in XAML and DrawingGroup output."""
+
+    SVG = """<svg xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="warm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF0000" />
+      <stop offset="100%" stop-color="rgba(0, 0, 255, 0.5)" />
+    </linearGradient>
+  </defs>
+  <path d="M0,0 H10 V10 H0 Z" fill="url(#warm)" />
+</svg>"""
+
+    def test_gradient_xaml_emits_a_linear_gradient_brush(self) -> None:
+        result = self.run_cli("--stdin", "--format", "xaml", stdin=self.SVG)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("<Path.Fill>", result.stdout)
+        self.assertIn('LinearGradientBrush StartPoint="0,0" EndPoint="1,1" MappingMode="RelativeToBoundingBox"', result.stdout)
+        self.assertIn('GradientStop Color="#FF0000" Offset="0"', result.stdout)
+        self.assertIn('GradientStop Color="#800000FF" Offset="1"', result.stdout)
+
+    def test_drawing_output_wraps_parent_coordinates_in_a_drawing_group(self) -> None:
+        result = self.run_cli(
+            "--stdin", "--format", "drawing", "--parent-transform", "translate(12 8)", stdin=self.SVG
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(result.stdout.startswith("<DrawingGroup>"), result.stdout)
+        self.assertIn('<MatrixTransform Matrix="1,0,0,1,12,8" />', result.stdout)
+        self.assertIn("<GeometryDrawing Geometry=", result.stdout)
+        self.assertIn("<GeometryDrawing.Brush>", result.stdout)
+        self.assertIn("<LinearGradientBrush", result.stdout)
+
+    def test_data_output_refuses_a_gradient_instead_of_losing_its_paint(self) -> None:
+        result = self.run_cli("--stdin", "--format", "data", stdin=self.SVG)
+
+        self.assertEqual(result.returncode, 2, result.stdout)
+        self.assertIn("linear gradients cannot be represented", result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test_user_space_gradient_uses_absolute_wpf_coordinates(self) -> None:
+        svg = self.SVG.replace(
+            'id="warm" x1="0%" y1="0%" x2="100%" y2="100%"',
+            'id="warm" gradientUnits="userSpaceOnUse" x1="2" y1="3" x2="12" y2="13"',
+        )
+        result = self.run_cli("--stdin", "--format", "drawing", stdin=svg)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('StartPoint="2,3" EndPoint="12,13" MappingMode="Absolute"', result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

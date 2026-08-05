@@ -318,3 +318,23 @@ Application.Current.Resources.MergedDictionaries.Add(
 - [BitmapScalingMode](https://learn.microsoft.com/en-us/dotnet/api/system.windows.media.bitmapscalingmode)
 - [Segoe Fluent Icons font](https://learn.microsoft.com/en-us/windows/apps/design/iconography/segoe-fluent-icons-font)
 - [SVG support for Image.ImageSource · dotnet/wpf#86](https://github.com/dotnet/wpf/issues/86)（原生 SVG 仍未实现）
+
+
+## 十二、矢量失败的 PNG 降级契约
+
+当 SVG 不能由 `svg-to-xaml-path` 无损转换（例如 radialGradient、pattern、filter、无法解析的外部资源），导出 Skill 必须尝试对**同一完整图标父节点**执行 MasterGo D2C PNG 导出；不得对其中一个 PATH、椭圆或局部图层截图后冒充完整图标。
+
+成功降级的 `icons-manifest.json` 记录必须为：
+
+```json
+{
+  "format": "png",
+  "status": "exported",
+  "fallbackFrom": "vector",
+  "fallbackReason": "svg-to-xaml-path failed: ..."
+}
+```
+
+D2C 无权限、不能定位完整父节点、没有返回 PNG，或返回路径不存在时，记录 `status: "needs-manual"` 和原始失败原因。PNG 降级不能让失败项显示为 `exported`。
+
+已经转换为 `DrawingGroup` 的线性渐变仍是矢量输出，不属于 PNG 降级；其 `LinearGradientBrush` 的相对/绝对坐标和父级 `DrawingGroup.Transform` 必须由 `svg-to-xaml-path --format drawing --parent-transform ...` 的 stdout 原样保留。

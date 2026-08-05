@@ -1,6 +1,6 @@
 # mastergo-icon-expoter
 
-> 版本：1.0.0 | 分类：generator
+> 版本：1.1.0 | 分类：generator
 
 从 MasterGo 设计稿导出图标、背景等视觉资产，产出 WPF 可直接引用的资源字典、位图和决策清单。
 
@@ -33,7 +33,7 @@ Step 1  拉取目录，扫描 PATH/IMAGE 节点
    ↓
 Step 2  🔴 CHECKPOINT：范围 + 待命名项 + 输出目录
    ↓
-Step 3  逐图标委派 svg-to-xaml-path，组装 input.json
+Step 3  按完整图标委派 svg-to-xaml-path（DrawingGroup/PNG 降级），组装 input.json
    ↓
 Step 4  运行 icon_exporter.py（契约校验 → 格式决策 → 命名 → 渲染 → 自检 → 原子写入）
    ↓

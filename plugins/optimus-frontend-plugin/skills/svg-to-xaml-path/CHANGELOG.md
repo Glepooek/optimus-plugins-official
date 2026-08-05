@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.5.0] - 2026-08-05
+
+### Added
+- 新增 `--format drawing`：输出可嵌入 WPF `DrawingImage` 的 `DrawingGroup`，按 SVG 文档顺序保留多个图元。
+- 新增本地 `linearGradient` → `LinearGradientBrush` 转换，支持 stop、`stop-opacity`、`gradientTransform`、`objectBoundingBox` 与 `userSpaceOnUse` 坐标映射。
+- 新增 `--parent-transform`，将 MasterGo DSL 的父级坐标写为外层 `DrawingGroup.Transform`，子路径自身变换保留为嵌套 DrawingGroup。
+- 新增 4 条渐变/DrawingGroup 黑盒契约测试。
+
+### Changed
+- `--format data` 遇到渐变时硬失败并引导使用 `drawing` 或 PNG 降级，避免丢失 Brush 信息。
+
 ## [1.4.0] - 2026-08-02
 
 对抗性验收（独立 agent，45 次工具调用）在文档四轮优化后转而攻击脚本，
