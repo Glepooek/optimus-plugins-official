@@ -422,6 +422,7 @@ FodyWeavers.xsd
 .claude/**/*.local.*
 .claude/memory/
 .claude/plans/
+.claude/worktrees/
 .claude/skills/darwin-skill/
 .claude/skills/sync-cc-docs-to-youdaonote/data/.catalog-staging.md
 .playwright-mcp/
