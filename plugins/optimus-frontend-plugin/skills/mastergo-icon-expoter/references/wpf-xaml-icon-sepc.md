@@ -6,14 +6,14 @@ SVG → `Path.Data` 的转换机理、告警与静默陷阱不在本文件范围
 
 ## 一、WPF 原生支持哪些图标承载形式
 
-**WPF 至今（含 .NET 10）没有原生 SVG 支持。** `Image.Source` 不接受 `.svg`，`dotnet/wpf#86` 仍是未实现的 API 提案。凡"在 XAML 里直接用 svg"的方案都依赖第三方库（SharpVectors、DotNetProjects.SVGImage）或商业控件库——引入运行时依赖属于项目级决策，**skill 不得代替用户选择**，默认走构建期转换路线。
+**WPF 至今（含 .NET 10）没有原生 SVG 支持。** `Image.Source` 不接受 `.svg`格式文件。凡"在 XAML 里直接用 svg"的方案都依赖第三方库（如SharpVectors）或商业控件库——引入运行时依赖属于项目级决策，**skill 不得代替用户选择**，默认走构建期转换路线。
 
-WPF Imaging 内置的 codec 覆盖 BMP、JPEG、PNG、TIFF、Windows Media Photo（WDP）、GIF、ICON 七种格式。**关键限制：ICON 只能解码，不能编码**——其余六种都有对应的 `XxxBitmapEncoder`，ICO 没有。
+WPF Imaging 内置的 codec 覆盖 BMP、JPEG、PNG、TIFF、Windows Media Photo（WMP）、GIF、ICON 七种格式。**关键限制：ICON 只能解码，不能编码**——其余六种都有对应的 `XxxBitmapEncoder`，ICO 没有。
 
 | 承载形式 | XAML 类型 | 矢量 | 可换色 | 适用 |
 |---|---|---|---|---|
 | 路径几何 | `Path` + `Data`，或 `Geometry` 资源 | 是 | 是（`Fill` 可绑定/换资源） | 单色图标，绝大多数场景的首选 |
-| 绘图图像 | `DrawingImage` 包 `GeometryDrawing`/`DrawingGroup`，作 `Image.Source` | 是 | 否（颜色烧死在 Drawing 里） | 多色矢量图标、插画 |
+| 绘图图像 | `DrawingImage` 包 `GeometryDrawing`/`DrawingGroup`，作为 `Image.Source` | 是 | 否（颜色定死在 Drawing 里） | 多色矢量图标、插画 |
 | 绘图画刷 | `DrawingBrush` | 是 | 否 | 矢量背景、可平铺纹理 |
 | 位图 | `BitmapImage` 作 `Image.Source` | 否 | 否 | 照片、渐变/滤镜/阴影无法矢量化的图 |
 | 位图画刷 | `ImageBrush` | 否 | 否 | 位图背景、水印 |
@@ -27,15 +27,15 @@ WPF **没有** WinUI 的 `PathIcon`、`FontIcon`、`SvgImageSource`、`Image.Nin
 对每个图标节点按序判定，命中即停：
 
 ```
-1. 该资源是「窗口/任务栏图标」？          → .ico（唯一必须用 ico 的场景，见第五节）
-2. DSL 是纯色矢量（单一 fill，无渐变/位图/滤镜）？ → Path.Data（+ Geometry 资源）
-3. DSL 是多色矢量（多 fill 或含渐变，但全是矢量图元）？ → DrawingImage / DrawingGroup
+1. 该资源是「窗口/任务栏/程序图标」？          → .ico（唯一必须用 ico 的场景，见第五节）
+2. DSL 是纯色矢量（单一 fill 或多 fill 颜色相同，无渐变/位图/滤镜）？ → Path.Data（+ Geometry 资源）
+3. DSL 是多色矢量（多 fill 颜色不同 或含渐变，但全是矢量图元）？ → DrawingImage / DrawingGroup
 4. 该资源用作背景且需平铺？               → DrawingBrush（矢量）/ ImageBrush（位图）
 5. 含位图填充、滤镜、阴影或复杂渐变网格？   → .png（带 alpha）
 6. 以上都不成立（无法判定）？             → 不猜测，列入待人工确认清单
 ```
 
-**第 2 步与第 3 步的分界必须看 DSL，不能看渲染结果。** MasterGo DSL 中一个 icon 组件常含多个 `PATH` 子节点，各自有独立 `_color`；`svg-to-xaml-path` 的合并键（`Fill`+`Stroke`+`fill-rule`+`transform` 四项全同）会把它们输出为**多个** `Path` 而不是一个。这种"多路径异色"图标属于第 3 步，不是第 2 步。
+**第 2 步与第 3 步的分界必须看 DSL，不能看渲染结果。** MasterGo DSL 中一个 icon 组件常含多个 `PATH` 子节点，各自有独立 `_color`；`svg-to-xaml-path` 的可将单一路径或多路径 fill 颜色相同的路径转为 `Path.Data`。
 
 **不允许的迂回：** 多色图标不得为了凑成"一个 Path"而改用 `--format data`——那会静默丢弃所有颜色。这条禁令的完整机理见 `svg-to-xaml-path` 的静默陷阱二。
 
@@ -43,18 +43,24 @@ WPF **没有** WinUI 的 `PathIcon`、`FontIcon`、`SvgImageSource`、`Image.Nin
 
 ## 三、Path 与 Geometry 的落地形态
 
-单色图标有三种写法，按复用度递增：
+单色图标有三种写法，按复用度由高到低：
 
 ```xml
-<!-- A. 就地内联：一次性使用，位置固定 -->
-<Path Data="F1 M3,3 H21 V21 H3 Z" Fill="{DynamicResource IconBrush}"
-      Width="16" Height="16" Stretch="Uniform" />
-
-<!-- B. Geometry 资源：几何复用，颜色由使用方决定（推荐默认形态） -->
+<!-- A. Geometry 资源：几何复用，颜色由使用方决定（推荐默认形态） -->
 <Geometry x:Key="IconSearchGeometry">F1 M3,3 H21 V21 H3 Z</Geometry>
 <!-- 使用： -->
-<Path Data="{StaticResource IconSearchGeometry}" Fill="{DynamicResource IconBrush}"
-      Width="16" Height="16" Stretch="Uniform" />
+<Path Data="{StaticResource IconSearchGeometry}"
+      Fill="{DynamicResource IconBrush}"
+      Width="16"
+      Height="16"
+      Stretch="Uniform" />
+
+<!-- B. 就地内联：一次性使用，位置固定 -->
+<Path Data="F1 M3,3 H21 V21 H3 Z"
+      Fill="{DynamicResource IconBrush}"
+      Width="16"
+      Height="16"
+      Stretch="Uniform" />
 
 <!-- C. DrawingImage 资源：整图复用，颜色烧死 -->
 <DrawingImage x:Key="IconSearchImage">
