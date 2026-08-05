@@ -330,5 +330,89 @@ class RenderManifestTests(unittest.TestCase):
         self.assertEqual(manifest["icons"][0]["format"], "png")
 
 
+def _manifest_with(records: list[dict]) -> dict:
+    return {"icons": records}
+
+
+class SelfCheckTests(unittest.TestCase):
+    def test_missing_fill_rule_prefix_is_caught(self) -> None:
+        from icon_exporter import self_check
+        xaml = '<ResourceDictionary xmlns="a" xmlns:x="b">\n  <Geometry x:Key="IconSearchGeometry">M0,0 Z</Geometry>\n</ResourceDictionary>\n'
+        manifest = _manifest_with([{"resourceKey": "IconSearchGeometry", "fileName": "icon_search", "format": "path", "status": "exported", "reason": None}])
+        violations = self_check(xaml, manifest, {}, None)
+        self.assertTrue(any("F0" in v or "F1" in v for v in violations))
+
+    def test_valid_geometry_passes_rule_one(self) -> None:
+        from icon_exporter import self_check
+        xaml = '<ResourceDictionary xmlns="a" xmlns:x="b">\n  <Geometry x:Key="IconSearchGeometry">F1 M0,0 Z</Geometry>\n</ResourceDictionary>\n'
+        manifest = _manifest_with([{"resourceKey": "IconSearchGeometry", "fileName": "icon_search", "format": "path", "status": "exported", "reason": None}])
+        violations = self_check(xaml, manifest, {}, None)
+        self.assertEqual(violations, [])
+
+    def test_duplicate_x_key_within_new_xaml_is_caught(self) -> None:
+        from icon_exporter import self_check
+        xaml = (
+            '<ResourceDictionary xmlns="a" xmlns:x="b">\n'
+            '  <Geometry x:Key="IconCloseGeometry">F1 M0,0 Z</Geometry>\n'
+            '  <Geometry x:Key="IconCloseGeometry">F1 M1,1 Z</Geometry>\n'
+            '</ResourceDictionary>\n'
+        )
+        manifest = _manifest_with([
+            {"resourceKey": "IconCloseGeometry", "fileName": "icon_close", "format": "path", "status": "exported", "reason": None},
+            {"resourceKey": "IconCloseGeometry", "fileName": "icon_close_alt", "format": "path", "status": "exported", "reason": None},
+        ])
+        violations = self_check(xaml, manifest, {}, None)
+        self.assertTrue(any("IconCloseGeometry" in v for v in violations))
+
+    def test_duplicate_key_against_existing_xaml_is_caught_when_merging(self) -> None:
+        from icon_exporter import self_check
+        new_xaml = '<ResourceDictionary xmlns="a" xmlns:x="b">\n  <Geometry x:Key="IconSearchGeometry">F1 M0,0 Z</Geometry>\n</ResourceDictionary>\n'
+        existing_xaml = '<ResourceDictionary xmlns="a" xmlns:x="b">\n  <Geometry x:Key="IconSearchGeometry">F1 M9,9 Z</Geometry>\n</ResourceDictionary>\n'
+        manifest = _manifest_with([{"resourceKey": "IconSearchGeometry", "fileName": "icon_search", "format": "path", "status": "exported", "reason": None}])
+        violations = self_check(new_xaml, manifest, {}, existing_xaml)
+        self.assertTrue(any("IconSearchGeometry" in v for v in violations))
+
+    def test_same_key_is_fine_when_not_merging(self) -> None:
+        from icon_exporter import self_check
+        new_xaml = '<ResourceDictionary xmlns="a" xmlns:x="b">\n  <Geometry x:Key="IconSearchGeometry">F1 M0,0 Z</Geometry>\n</ResourceDictionary>\n'
+        manifest = _manifest_with([{"resourceKey": "IconSearchGeometry", "fileName": "icon_search", "format": "path", "status": "exported", "reason": None}])
+        violations = self_check(new_xaml, manifest, {}, existing_xaml=None)
+        self.assertEqual(violations, [])
+
+    def test_manifest_resource_key_absent_from_xaml_is_caught(self) -> None:
+        from icon_exporter import self_check
+        xaml = '<ResourceDictionary xmlns="a" xmlns:x="b">\n</ResourceDictionary>\n'
+        manifest = _manifest_with([{"resourceKey": "IconGhostGeometry", "fileName": "icon_ghost", "format": "path", "status": "exported", "reason": None}])
+        violations = self_check(xaml, manifest, {}, None)
+        self.assertTrue(any("IconGhostGeometry" in v for v in violations))
+
+    def test_needs_manual_without_reason_is_caught(self) -> None:
+        from icon_exporter import self_check
+        manifest = _manifest_with([{"resourceKey": None, "fileName": None, "format": "unresolved", "status": "needs-manual", "reason": None}])
+        violations = self_check("<ResourceDictionary xmlns=\"a\" xmlns:x=\"b\"></ResourceDictionary>\n", manifest, {}, None)
+        self.assertTrue(any("reason" in v for v in violations))
+
+    def test_needs_manual_with_reason_passes(self) -> None:
+        from icon_exporter import self_check
+        manifest = _manifest_with([{"resourceKey": None, "fileName": None, "format": "unresolved", "status": "needs-manual", "reason": "could not derive a file name; needs a userName"}])
+        violations = self_check("<ResourceDictionary xmlns=\"a\" xmlns:x=\"b\"></ResourceDictionary>\n", manifest, {}, None)
+        self.assertEqual(violations, [])
+
+    def test_zero_dimension_png_is_caught(self) -> None:
+        from icon_exporter import self_check
+        manifest = _manifest_with([{"resourceKey": None, "fileName": "bg_photo", "format": "png", "width": 0, "height": 40, "status": "exported", "reason": None}])
+        violations = self_check("<ResourceDictionary xmlns=\"a\" xmlns:x=\"b\"></ResourceDictionary>\n", manifest, {"bg_photo.png": b"\x89PNG"}, None)
+        self.assertTrue(any("width" in v or "height" in v for v in violations))
+
+    def test_ico_fallback_reported_as_exported_is_caught(self) -> None:
+        from icon_exporter import self_check
+        manifest = _manifest_with([{
+            "resourceKey": None, "fileName": "app_icon", "format": "ico-fallback-png",
+            "status": "exported", "reason": "Pillow not installed", "width": 16, "height": 16,
+        }])
+        violations = self_check("<ResourceDictionary xmlns=\"a\" xmlns:x=\"b\"></ResourceDictionary>\n", manifest, {}, None)
+        self.assertTrue(any("ico-fallback-png" in v or "exported" in v for v in violations))
+
+
 if __name__ == "__main__":
     unittest.main()

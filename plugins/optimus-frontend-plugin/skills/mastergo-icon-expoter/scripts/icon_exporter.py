@@ -244,6 +244,73 @@ def render_manifest(entries: list[dict[str, Any]], unnamed: list[dict[str, Any]]
     return {"icons": records}
 
 
+_X_KEY = re.compile(r'x:Key="([^"]+)"')
+_GEOMETRY_DATA = re.compile(r'<Geometry x:Key="([^"]+)">([^<]*)</Geometry>')
+_GEOMETRY_DRAWING_DATA = re.compile(r'<GeometryDrawing[^>]* Geometry="([^"]*)"')
+
+
+def self_check(
+    icons_xaml: str,
+    manifest: dict[str, Any],
+    png_files: dict[str, bytes],
+    existing_xaml: str | None,
+) -> list[str]:
+    """Check the about-to-be-written content for internal consistency.
+
+    Every rule here maps to a named silent trap in the design doc; this
+    function inspects in-memory content only and never touches disk.
+    """
+    violations: list[str] = []
+
+    # Rule 1: every Geometry/GeometryDrawing Data must carry a literal F0/F1 prefix.
+    for key, data in _GEOMETRY_DATA.findall(icons_xaml):
+        if not FILL_RULE_PREFIX.match(data):
+            violations.append(f"{key}: Data missing F0/F1 prefix")
+    for data in _GEOMETRY_DRAWING_DATA.findall(icons_xaml):
+        if not FILL_RULE_PREFIX.match(data):
+            violations.append(f"GeometryDrawing Data missing F0/F1 prefix: {data[:40]!r}")
+
+    # Rule 3: x:Key must be unique within the new file, and against an existing
+    # file when mergeMode is "merge" (existing_xaml is only passed in that case).
+    new_keys = _X_KEY.findall(icons_xaml)
+    seen: set[str] = set()
+    for key in new_keys:
+        if key in seen:
+            violations.append(f'duplicate x:Key "{key}" within the generated Icons.xaml')
+        seen.add(key)
+    if existing_xaml is not None:
+        existing_keys = set(_X_KEY.findall(existing_xaml))
+        for key in seen:
+            if key in existing_keys:
+                violations.append(f'duplicate x:Key "{key}" already present in the existing Icons.xaml')
+
+    # Rule 4: every manifest resourceKey must correspond to a key actually in the XAML.
+    xaml_keys = set(new_keys)
+    for record in manifest.get("icons", []):
+        resource_key_value = record.get("resourceKey")
+        if resource_key_value and resource_key_value not in xaml_keys:
+            violations.append(f"manifest references resourceKey {resource_key_value!r} not found in Icons.xaml")
+
+    # Rule 5: needs-manual records must always carry a non-empty reason.
+    for record in manifest.get("icons", []):
+        if record.get("status") == "needs-manual" and not record.get("reason"):
+            violations.append(f"{record.get('fileName') or record.get('nodeId')}: needs-manual record has no reason")
+
+    # Rule 6: planned PNGs must have a determinate, positive width and height.
+    for record in manifest.get("icons", []):
+        if record.get("format") in {"png", "ico-fallback-png"} and record.get("fileName"):
+            width, height = record.get("width"), record.get("height")
+            if not isinstance(width, (int, float)) or width <= 0 or not isinstance(height, (int, float)) or height <= 0:
+                violations.append(f"{record.get('fileName')}: width/height must be positive, got {width}x{height}")
+
+    # Rule 7: an .ico that was downgraded to PNG fallback must never be reported as exported.
+    for record in manifest.get("icons", []):
+        if record.get("format") == "ico-fallback-png" and record.get("status") == "exported":
+            violations.append(f"{record.get('fileName')}: ico fallback to PNG must be status=needs-manual, not exported")
+
+    return violations
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Convert MasterGo icon export contract JSON into WPF icon assets.")
     parser.add_argument("--input", required=True, metavar="PATH", help="path to input.json")
