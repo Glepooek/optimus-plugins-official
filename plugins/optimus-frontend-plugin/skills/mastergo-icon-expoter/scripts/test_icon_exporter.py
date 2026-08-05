@@ -182,5 +182,77 @@ class FormatDecisionTests(unittest.TestCase):
         self.assertEqual(fmt, "drawing-image")
 
 
+class NameDerivationTests(unittest.TestCase):
+    def test_camel_case_search_icon_gets_icon_prefix(self) -> None:
+        from icon_exporter import derive_file_name
+        self.assertEqual(derive_file_name("SearchIcon"), "icon_search")
+
+    def test_kebab_case_search_icon_gets_icon_prefix(self) -> None:
+        from icon_exporter import derive_file_name
+        self.assertEqual(derive_file_name("search-icon"), "icon_search")
+
+    def test_slash_separated_icon_search_normalizes(self) -> None:
+        from icon_exporter import derive_file_name
+        self.assertEqual(derive_file_name("Icon/Search"), "icon_search")
+
+    def test_existing_bg_prefix_is_not_doubled(self) -> None:
+        from icon_exporter import derive_file_name
+        self.assertEqual(derive_file_name("bg-header-gradient"), "bg_header_gradient")
+
+    def test_non_ascii_name_fails_derivation(self) -> None:
+        from icon_exporter import derive_file_name
+        self.assertIsNone(derive_file_name("搜索图标"))
+
+    def test_frame_number_fails_derivation(self) -> None:
+        from icon_exporter import derive_file_name
+        self.assertIsNone(derive_file_name("Frame 427"))
+
+    def test_name_without_category_keyword_fails_derivation(self) -> None:
+        # Lexical match only — CloseButton is "obviously" an icon but the rule
+        # must not guess semantics; it should fail and be routed to CHECKPOINT.
+        from icon_exporter import derive_file_name
+        self.assertIsNone(derive_file_name("CloseButton"))
+
+    def test_resource_key_from_file_name(self) -> None:
+        from icon_exporter import resource_key
+        self.assertEqual(resource_key("icon_search", "Geometry"), "IconSearchGeometry")
+        self.assertEqual(resource_key("icon_folder_color", "Image"), "IconFolderColorImage")
+        self.assertEqual(resource_key("bg_grid", "Brush"), "BgGridBrush")
+
+
+class AssignNamesTests(unittest.TestCase):
+    def test_user_name_wins_over_derivation(self) -> None:
+        from icon_exporter import assign_names
+        icons = [{"dslName": "Frame 427", "userName": "icon_close_alt", "nodeId": "1"}]
+        named, unnamed = assign_names(icons)
+        self.assertEqual(unnamed, [])
+        self.assertEqual(named[0]["fileName"], "icon_close_alt")
+
+    def test_derivation_success_needs_no_user_name(self) -> None:
+        from icon_exporter import assign_names
+        icons = [{"dslName": "SearchIcon", "userName": None, "nodeId": "1"}]
+        named, unnamed = assign_names(icons)
+        self.assertEqual(unnamed, [])
+        self.assertEqual(named[0]["fileName"], "icon_search")
+
+    def test_failed_derivation_without_user_name_is_routed_to_checkpoint(self) -> None:
+        from icon_exporter import assign_names
+        icons = [{"dslName": "搜索图标", "userName": None, "nodeId": "1"}]
+        named, unnamed = assign_names(icons)
+        self.assertEqual(named, [])
+        self.assertEqual(len(unnamed), 1)
+        self.assertEqual(unnamed[0]["nodeId"], "1")
+
+    def test_colliding_file_names_from_different_sources_are_fatal(self) -> None:
+        from icon_exporter import assign_names, ConversionError
+        icons = [
+            {"dslName": "SearchIcon", "userName": None, "nodeId": "1"},
+            {"dslName": "search-icon", "userName": None, "nodeId": "2"},
+        ]
+        with self.assertRaises(ConversionError) as context:
+            assign_names(icons)
+        self.assertIn("icon_search", str(context.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

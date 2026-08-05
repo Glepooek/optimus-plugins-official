@@ -93,6 +93,74 @@ def decide_format(icon: dict[str, Any]) -> tuple[str, str]:
     return "drawing-image", f"{len(paths)} paths after svg-to-xaml-path merge; multi-colour vector"
 
 
+_NOISE_WORDS = re.compile(r"\b(Frame|Group|Vector|Rectangle|Ellipse)\b", re.IGNORECASE)
+_WORD_SPLIT = re.compile(r"[/_\-\s]+|(?<=[a-z0-9])(?=[A-Z])")
+_ASCII_ALNUM = re.compile(r"\A[A-Za-z0-9_]+\Z")
+_CATEGORY_KEYWORDS: dict[str, str] = {
+    "icon": "icon", "图标": "icon",
+    "bg": "bg", "background": "bg", "背景": "bg",
+    "logo": "logo",
+}
+
+
+def _snake_words(name: str) -> list[str]:
+    stripped = _NOISE_WORDS.sub(" ", name).strip()
+    return [word.lower() for word in _WORD_SPLIT.split(stripped) if word]
+
+
+def derive_file_name(dsl_name: str) -> str | None:
+    """Lexically derive a snake_case, category-prefixed file name — never guesses semantics."""
+    words = _snake_words(dsl_name)
+    if not words:
+        return None
+    prefix = None
+    remaining: list[str] = []
+    for word in words:
+        category = _CATEGORY_KEYWORDS.get(word)
+        if category and prefix is None:
+            prefix = category
+        else:
+            remaining.append(word)
+    if prefix is None:
+        return None
+    if not remaining:
+        return None
+    candidate = "_".join([prefix, *remaining])
+    if not _ASCII_ALNUM.match(candidate):
+        return None
+    return candidate
+
+
+def resource_key(file_name: str, suffix: str) -> str:
+    """Turn a snake_case file name into a PascalCase WPF resource key with a type suffix."""
+    parts = [part for part in file_name.split("_") if part]
+    pascal = "".join(part[:1].upper() + part[1:] for part in parts)
+    return f"{pascal}{suffix}"
+
+
+def assign_names(icons: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Assign fileName to each icon; split into named and needs-CHECKPOINT-naming groups."""
+    named: list[dict[str, Any]] = []
+    unnamed: list[dict[str, Any]] = []
+    seen: dict[str, str] = {}
+    for icon in icons:
+        user_name = icon.get("userName")
+        file_name = user_name if user_name else derive_file_name(str(icon.get("dslName", "")))
+        if not file_name:
+            unnamed.append(icon)
+            continue
+        if file_name in seen and seen[file_name] != icon.get("dslName"):
+            raise ConversionError(
+                f"file name collision: {file_name!r} would be used for both "
+                f"{seen[file_name]!r} and {icon.get('dslName')!r}; rename one via userName"
+            )
+        seen[file_name] = icon.get("dslName", "")
+        icon_with_name = dict(icon)
+        icon_with_name["fileName"] = file_name
+        named.append(icon_with_name)
+    return named, unnamed
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Convert MasterGo icon export contract JSON into WPF icon assets.")
     parser.add_argument("--input", required=True, metavar="PATH", help="path to input.json")
