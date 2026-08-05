@@ -66,6 +66,9 @@ git clone https://github.com/Glepooek/optimus-plugins-official ~/.claude/plugins
 
 # 调用其他 skills
 /optimus-frontend-plugin:optimus-design-ui
+
+# 从 MasterGo 设计稿导出图标/背景资产为 WPF Icons.xaml
+/optimus-frontend-plugin:mastergo-icon-expoter
 ```
 
 ## 📄 许可证
