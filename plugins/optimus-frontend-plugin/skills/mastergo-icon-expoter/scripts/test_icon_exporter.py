@@ -254,5 +254,81 @@ class AssignNamesTests(unittest.TestCase):
         self.assertIn("icon_search", str(context.exception))
 
 
+class RenderIconsXamlTests(unittest.TestCase):
+    def test_single_path_entry_becomes_a_geometry_resource_with_stretch_note(self) -> None:
+        from icon_exporter import render_icons_xaml
+        entries = [{
+            "fileName": "icon_search", "format": "path",
+            "paths": [{"data": "F1 M3,3 H21 V21 H3 Z", "fill": "#4E5969", "stroke": None}],
+        }]
+        xaml = render_icons_xaml(entries)
+        self.assertIn('<Geometry x:Key="IconSearchGeometry">F1 M3,3 H21 V21 H3 Z</Geometry>', xaml)
+
+    def test_multi_path_entry_becomes_a_drawing_image_with_drawing_group(self) -> None:
+        from icon_exporter import render_icons_xaml
+        entries = [{
+            "fileName": "icon_folder_color", "format": "drawing-image",
+            "paths": [
+                {"data": "F1 M2,4 H10 L12,7 H22 V20 H2 Z", "fill": "#FFB800", "stroke": None},
+                {"data": "F1 M2,9 H22 V20 H2 Z", "fill": "#FFD666", "stroke": None},
+            ],
+        }]
+        xaml = render_icons_xaml(entries)
+        self.assertIn('<DrawingImage x:Key="IconFolderColorImage">', xaml)
+        self.assertIn('<DrawingGroup>', xaml)
+        self.assertIn('<GeometryDrawing Brush="#FFB800" Geometry="F1 M2,4 H10 L12,7 H22 V20 H2 Z" />', xaml)
+        self.assertIn('<GeometryDrawing Brush="#FFD666" Geometry="F1 M2,9 H22 V20 H2 Z" />', xaml)
+
+    def test_xaml_is_a_well_formed_resource_dictionary(self) -> None:
+        from icon_exporter import render_icons_xaml
+        entries = [{
+            "fileName": "icon_search", "format": "path",
+            "paths": [{"data": "F1 M0,0 Z", "fill": "#000", "stroke": None}],
+        }]
+        xaml = render_icons_xaml(entries)
+        self.assertTrue(xaml.startswith("<ResourceDictionary"))
+        self.assertTrue(xaml.rstrip().endswith("</ResourceDictionary>"))
+
+    def test_png_format_entries_are_not_written_into_icons_xaml(self) -> None:
+        from icon_exporter import render_icons_xaml
+        entries = [{"fileName": "bg_photo", "format": "png", "paths": []}]
+        xaml = render_icons_xaml(entries)
+        self.assertNotIn("bg_photo", xaml)
+
+
+class RenderManifestTests(unittest.TestCase):
+    def test_named_entry_becomes_an_exported_record(self) -> None:
+        from icon_exporter import render_manifest
+        entries = [{
+            "svgShortKey": "S0#0", "nodeId": "10:2", "dslName": "SearchIcon",
+            "fileName": "icon_search", "format": "path", "decision": "single fill, no gradient",
+            "width": 16, "height": 16,
+            "paths": [{"data": "F1 M0,0 Z", "fill": "#4E5969", "stroke": None}],
+        }]
+        manifest = render_manifest(entries, [])
+        record = manifest["icons"][0]
+        self.assertEqual(record["resourceKey"], "IconSearchGeometry")
+        self.assertEqual(record["status"], "exported")
+        self.assertEqual(record["color"], "#4E5969")
+
+    def test_unnamed_entry_becomes_needs_manual_with_reason(self) -> None:
+        from icon_exporter import render_manifest
+        unnamed = [{"nodeId": "1", "dslName": "搜索图标", "svgShortKey": "S0#3"}]
+        manifest = render_manifest([], unnamed)
+        record = manifest["icons"][0]
+        self.assertEqual(record["status"], "needs-manual")
+        self.assertTrue(record["reason"])
+
+    def test_png_entry_records_png_format(self) -> None:
+        from icon_exporter import render_manifest
+        entries = [{
+            "nodeId": "i:1", "dslName": "Avatar", "fileName": "avatar_default",
+            "format": "png", "decision": "bitmap source; no vector geometry available",
+            "width": 40, "height": 40, "paths": [],
+        }]
+        manifest = render_manifest(entries, [])
+        self.assertEqual(manifest["icons"][0]["format"], "png")
+
+
 if __name__ == "__main__":
     unittest.main()

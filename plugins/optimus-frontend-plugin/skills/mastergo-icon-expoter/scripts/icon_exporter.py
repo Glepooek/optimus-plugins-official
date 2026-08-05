@@ -161,6 +161,89 @@ def assign_names(icons: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], lis
     return named, unnamed
 
 
+def _escape_xml(value: str) -> str:
+    return (
+        str(value).replace("&", "&amp;").replace("<", "&lt;")
+        .replace(">", "&gt;").replace('"', "&quot;")
+    )
+
+
+def render_icons_xaml(entries: list[dict[str, Any]]) -> str:
+    """Assemble Icons.xaml: one Geometry per single-path entry, one DrawingImage per multi-path entry.
+
+    PNG-format entries have no vector representation and are intentionally
+    absent from this resource dictionary — they ship as loose files instead.
+    """
+    lines = [
+        '<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"',
+        '                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">',
+    ]
+    for entry in entries:
+        file_name = entry["fileName"]
+        fmt = entry["format"]
+        paths = entry.get("paths") or []
+        if fmt == "path":
+            key = resource_key(file_name, "Geometry")
+            lines.append(f'  <Geometry x:Key="{key}">{_escape_xml(paths[0]["data"])}</Geometry>')
+        elif fmt == "drawing-image":
+            key = resource_key(file_name, "Image")
+            lines.append(f'  <DrawingImage x:Key="{key}">')
+            lines.append('    <DrawingImage.Drawing>')
+            lines.append('      <DrawingGroup>')
+            for path_entry in paths:
+                fill = _escape_xml(path_entry.get("fill") or "#000000")
+                data = _escape_xml(path_entry["data"])
+                lines.append(f'        <GeometryDrawing Brush="{fill}" Geometry="{data}" />')
+            lines.append('      </DrawingGroup>')
+            lines.append('    </DrawingImage.Drawing>')
+            lines.append('  </DrawingImage>')
+        # "png" entries carry no vector representation and are skipped here by design.
+    lines.append("</ResourceDictionary>")
+    return "\n".join(lines) + "\n"
+
+
+def render_manifest(entries: list[dict[str, Any]], unnamed: list[dict[str, Any]]) -> dict[str, Any]:
+    """Build the icons-manifest.json structure from named and needs-naming entries."""
+    records: list[dict[str, Any]] = []
+    for entry in entries:
+        fmt = entry["format"]
+        suffix = {"path": "Geometry", "drawing-image": "Image", "png": "Png"}[fmt]
+        colour = None
+        paths = entry.get("paths") or []
+        if len(paths) == 1:
+            colour = paths[0].get("fill")
+        records.append({
+            "svgShortKey": entry.get("svgShortKey"),
+            "nodeId": entry.get("nodeId"),
+            "name": entry.get("dslName"),
+            "fileName": entry["fileName"],
+            "resourceKey": resource_key(entry["fileName"], suffix) if fmt != "png" else None,
+            "format": fmt,
+            "decision": entry.get("decision", ""),
+            "width": entry.get("width"),
+            "height": entry.get("height"),
+            "color": colour,
+            "status": "exported",
+            "reason": None,
+        })
+    for icon in unnamed:
+        records.append({
+            "svgShortKey": icon.get("svgShortKey"),
+            "nodeId": icon.get("nodeId"),
+            "name": icon.get("dslName"),
+            "fileName": None,
+            "resourceKey": None,
+            "format": "unresolved",
+            "decision": None,
+            "width": icon.get("width"),
+            "height": icon.get("height"),
+            "color": None,
+            "status": "needs-manual",
+            "reason": "could not derive a file name; needs a userName",
+        })
+    return {"icons": records}
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Convert MasterGo icon export contract JSON into WPF icon assets.")
     parser.add_argument("--input", required=True, metavar="PATH", help="path to input.json")
