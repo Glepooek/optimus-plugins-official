@@ -53,6 +53,13 @@ def base_payload(*icons: dict) -> dict:
     }
 
 
+def assert_hard_failure(test_case: unittest.TestCase, result: subprocess.CompletedProcess[str], out_dir: Path) -> None:
+    test_case.assertEqual(result.returncode, 2)
+    test_case.assertEqual(result.stdout, "")
+    test_case.assertTrue(result.stderr.startswith("error: "), result.stderr)
+    test_case.assertFalse(out_dir.exists())
+
+
 class ContractValidationTests(unittest.TestCase):
     def test_missing_input_file_fails_without_stdout(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -404,6 +411,14 @@ class SelfCheckTests(unittest.TestCase):
         violations = self_check("<ResourceDictionary xmlns=\"a\" xmlns:x=\"b\"></ResourceDictionary>\n", manifest, {"bg_photo.png": b"\x89PNG"}, None)
         self.assertTrue(any("width" in v or "height" in v for v in violations))
 
+    def test_boolean_width_is_not_accepted_as_a_number(self) -> None:
+        # bool is an int subclass; isinstance(True, int) is True, so a naive
+        # numeric check would silently accept width: True as if it were 1.
+        from icon_exporter import self_check
+        manifest = _manifest_with([{"resourceKey": None, "fileName": "bg_photo", "format": "png", "width": True, "height": 40, "status": "exported", "reason": None}])
+        violations = self_check("<ResourceDictionary xmlns=\"a\" xmlns:x=\"b\"></ResourceDictionary>\n", manifest, {"bg_photo.png": b"\x89PNG"}, None)
+        self.assertTrue(any("width" in v or "height" in v for v in violations))
+
     def test_ico_fallback_reported_as_exported_is_caught(self) -> None:
         from icon_exporter import self_check
         manifest = _manifest_with([{
@@ -485,6 +500,172 @@ class FullPipelineTests(unittest.TestCase):
             result = run_cli("--input", str(input_path), "--out", str(out_dir), "--source-root", str(directory))
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertTrue((out_dir / "Images" / "avatar_default.png").exists())
+
+
+def _payload_with_merge_mode(icon: dict, merge_mode: str | None) -> dict:
+    meta = {"fileId": "1", "layerId": "2:3", "outDir": "Assets"}
+    if merge_mode is not None:
+        meta["mergeMode"] = merge_mode
+    return {"meta": meta, "icons": [icon]}
+
+
+class MergeModeTests(unittest.TestCase):
+    def test_merge_mode_combines_new_and_existing_non_colliding_resources(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            out_dir = Path(directory) / "out"
+            first_icon = single_vector_icon()
+            first_input = write_input(Path(directory), _payload_with_merge_mode(first_icon, "separate"))
+            first_result = run_cli("--input", str(first_input), "--out", str(out_dir))
+            self.assertEqual(first_result.returncode, 0, first_result.stderr)
+
+            second_icon = single_vector_icon(
+                svgShortKey="S0#9", nodeId="20:2", dslName="CloseButton", userName="icon_close",
+            )
+            second_input = write_input(Path(directory), _payload_with_merge_mode(second_icon, "merge"))
+            second_result = run_cli("--input", str(second_input), "--out", str(out_dir))
+            self.assertEqual(second_result.returncode, 0, second_result.stderr)
+
+            icons_xaml = (out_dir / "Icons.xaml").read_text(encoding="utf-8")
+            self.assertIn("IconSearchGeometry", icons_xaml)
+            self.assertIn("IconCloseGeometry", icons_xaml)
+
+    def test_merge_mode_with_colliding_key_aborts_and_leaves_existing_file_untouched(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            out_dir = Path(directory) / "out"
+            first_icon = single_vector_icon()
+            first_input = write_input(Path(directory), _payload_with_merge_mode(first_icon, "separate"))
+            first_result = run_cli("--input", str(first_input), "--out", str(out_dir))
+            self.assertEqual(first_result.returncode, 0, first_result.stderr)
+            before = (out_dir / "Icons.xaml").read_bytes()
+
+            colliding_icon = single_vector_icon()  # same dslName -> same fileName -> same x:Key
+            second_input = write_input(Path(directory), _payload_with_merge_mode(colliding_icon, "merge"))
+            second_result = run_cli("--input", str(second_input), "--out", str(out_dir))
+
+            self.assertEqual(second_result.returncode, 2)
+            self.assertEqual(second_result.stdout, "")
+            after = (out_dir / "Icons.xaml").read_bytes()
+            self.assertEqual(before, after)
+
+    def test_existing_icons_xaml_with_default_merge_mode_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            out_dir = Path(directory) / "out"
+            first_icon = single_vector_icon()
+            first_input = write_input(Path(directory), _payload_with_merge_mode(first_icon, "separate"))
+            first_result = run_cli("--input", str(first_input), "--out", str(out_dir))
+            self.assertEqual(first_result.returncode, 0, first_result.stderr)
+            before = (out_dir / "Icons.xaml").read_bytes()
+
+            second_icon = single_vector_icon(
+                svgShortKey="S0#9", nodeId="20:2", dslName="CloseButton", userName="icon_close",
+            )
+            second_input = write_input(Path(directory), _payload_with_merge_mode(second_icon, None))
+            second_result = run_cli("--input", str(second_input), "--out", str(out_dir))
+
+            self.assertEqual(second_result.returncode, 2)
+            self.assertEqual(second_result.stdout, "")
+            self.assertTrue(second_result.stderr.startswith("error: "), second_result.stderr)
+            after = (out_dir / "Icons.xaml").read_bytes()
+            self.assertEqual(before, after)
+
+    def test_existing_icons_xaml_with_explicit_separate_mode_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            out_dir = Path(directory) / "out"
+            first_icon = single_vector_icon()
+            first_input = write_input(Path(directory), _payload_with_merge_mode(first_icon, "separate"))
+            first_result = run_cli("--input", str(first_input), "--out", str(out_dir))
+            self.assertEqual(first_result.returncode, 0, first_result.stderr)
+
+            second_icon = single_vector_icon(
+                svgShortKey="S0#9", nodeId="20:2", dslName="CloseButton", userName="icon_close",
+            )
+            second_input = write_input(Path(directory), _payload_with_merge_mode(second_icon, "separate"))
+            second_result = run_cli("--input", str(second_input), "--out", str(out_dir))
+
+            self.assertEqual(second_result.returncode, 2)
+            self.assertEqual(second_result.stdout, "")
+
+    def test_overwrite_mode_replaces_existing_icons_xaml_entirely(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            out_dir = Path(directory) / "out"
+            first_icon = single_vector_icon()
+            first_input = write_input(Path(directory), _payload_with_merge_mode(first_icon, "separate"))
+            first_result = run_cli("--input", str(first_input), "--out", str(out_dir))
+            self.assertEqual(first_result.returncode, 0, first_result.stderr)
+
+            second_icon = single_vector_icon(
+                svgShortKey="S0#9", nodeId="20:2", dslName="CloseButton", userName="icon_close",
+            )
+            second_input = write_input(Path(directory), _payload_with_merge_mode(second_icon, "overwrite"))
+            second_result = run_cli("--input", str(second_input), "--out", str(out_dir))
+            self.assertEqual(second_result.returncode, 0, second_result.stderr)
+
+            icons_xaml = (out_dir / "Icons.xaml").read_text(encoding="utf-8")
+            self.assertNotIn("IconSearchGeometry", icons_xaml)
+            self.assertIn("IconCloseGeometry", icons_xaml)
+
+
+class BitmapDegradationTests(unittest.TestCase):
+    def test_bitmap_icon_with_no_source_root_degrades_without_aborting_batch(self) -> None:
+        bitmap_icon = {
+            "nodeId": "i:1", "dslName": "Avatar", "userName": "avatar_default",
+            "width": 40, "height": 40, "paths": [], "warnings": [],
+            "sourceKind": "bitmap", "bitmapPath": "raw/avatar.png",
+        }
+        vector_icon = single_vector_icon()
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = write_input(Path(directory), base_payload(vector_icon, bitmap_icon))
+            out_dir = Path(directory) / "out"
+            result = run_cli("--input", str(input_path), "--out", str(out_dir))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertFalse((out_dir / "Images" / "avatar_default.png").exists())
+            manifest = json.loads((out_dir / "icons-manifest.json").read_text(encoding="utf-8"))
+            records = {record["fileName"] or record["name"]: record for record in manifest["icons"]}
+            self.assertEqual(records["icon_search"]["status"], "exported")
+            degraded_record = records["avatar_default"]
+            self.assertEqual(degraded_record["status"], "needs-manual")
+            self.assertTrue(degraded_record["reason"])
+            self.assertIn("--source-root", degraded_record["reason"])
+
+    def test_bitmap_icon_with_missing_source_file_degrades_without_aborting_batch(self) -> None:
+        bitmap_icon = {
+            "nodeId": "i:1", "dslName": "Avatar", "userName": "avatar_default",
+            "width": 40, "height": 40, "paths": [], "warnings": [],
+            "sourceKind": "bitmap", "bitmapPath": "raw/missing.png",
+        }
+        vector_icon = single_vector_icon()
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = write_input(Path(directory), base_payload(vector_icon, bitmap_icon))
+            out_dir = Path(directory) / "out"
+            result = run_cli("--input", str(input_path), "--out", str(out_dir), "--source-root", str(directory))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertFalse((out_dir / "Images" / "avatar_default.png").exists())
+            manifest = json.loads((out_dir / "icons-manifest.json").read_text(encoding="utf-8"))
+            records = {record["fileName"] or record["name"]: record for record in manifest["icons"]}
+            self.assertEqual(records["icon_search"]["status"], "exported")
+            degraded_record = records["avatar_default"]
+            self.assertEqual(degraded_record["status"], "needs-manual")
+            self.assertIn("raw/missing.png", degraded_record["reason"])
+
+
+class ExceptionContractTests(unittest.TestCase):
+    def test_non_utf8_input_json_fails_hard_not_with_a_traceback(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = Path(directory) / "input.json"
+            input_path.write_text(json.dumps(base_payload(single_vector_icon())), encoding="utf-16")
+            out_dir = Path(directory) / "out"
+            result = run_cli("--input", str(input_path), "--out", str(out_dir))
+        assert_hard_failure(self, result, out_dir)
+
+    def test_out_path_that_is_an_existing_file_fails_hard(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = write_input(Path(directory), base_payload(single_vector_icon()))
+            out_dir = Path(directory) / "out"
+            out_dir.write_text("not a directory", encoding="utf-8")
+            result = run_cli("--input", str(input_path), "--out", str(out_dir))
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout, "")
+        self.assertTrue(result.stderr.startswith("error: "), result.stderr)
 
 
 if __name__ == "__main__":

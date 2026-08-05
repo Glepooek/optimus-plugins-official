@@ -205,7 +205,11 @@ def render_icons_xaml(entries: list[dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def render_manifest(entries: list[dict[str, Any]], unnamed: list[dict[str, Any]]) -> dict[str, Any]:
+def render_manifest(
+    entries: list[dict[str, Any]],
+    unnamed: list[dict[str, Any]],
+    degraded: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """Build the icons-manifest.json structure from named and needs-naming entries."""
     records: list[dict[str, Any]] = []
     for entry in entries:
@@ -244,7 +248,39 @@ def render_manifest(entries: list[dict[str, Any]], unnamed: list[dict[str, Any]]
             "status": "needs-manual",
             "reason": "could not derive a file name; needs a userName",
         })
+    for icon in degraded or []:
+        records.append({
+            "svgShortKey": icon.get("svgShortKey"),
+            "nodeId": icon.get("nodeId"),
+            "name": icon.get("dslName"),
+            "fileName": icon.get("fileName"),
+            "resourceKey": None,
+            "format": icon.get("format", "unresolved"),
+            "decision": icon.get("decision"),
+            "width": icon.get("width"),
+            "height": icon.get("height"),
+            "color": None,
+            "status": "needs-manual",
+            "reason": icon.get("reason") or "could not resolve source asset",
+        })
     return {"icons": records}
+
+
+def merge_xaml_resources(new_xaml: str, existing_xaml: str) -> str:
+    """Combine an existing Icons.xaml's resources with newly rendered ones.
+
+    Only called after self_check has confirmed no x:Key collisions between
+    new_xaml and existing_xaml, so this is always a safe non-colliding union.
+    """
+    def _inner(xaml: str) -> str:
+        start = xaml.index(">", xaml.index("<ResourceDictionary")) + 1
+        end = xaml.rindex("</ResourceDictionary>")
+        return xaml[start:end].strip("\n")
+
+    header_end = new_xaml.index(">", new_xaml.index("<ResourceDictionary")) + 1
+    header = new_xaml[:header_end]
+    parts = [part for part in (_inner(existing_xaml), _inner(new_xaml)) if part]
+    return header + "\n" + "\n".join(parts) + "\n</ResourceDictionary>\n"
 
 
 _X_KEY = re.compile(r'x:Key="([^"]+)"')
@@ -300,10 +336,13 @@ def self_check(
             violations.append(f"{record.get('fileName') or record.get('nodeId')}: needs-manual record has no reason")
 
     # Rule 6: planned PNGs must have a determinate, positive width and height.
+    def _is_positive_number(value: Any) -> bool:
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0
+
     for record in manifest.get("icons", []):
         if record.get("format") in {"png", "ico-fallback-png"} and record.get("fileName"):
             width, height = record.get("width"), record.get("height")
-            if not isinstance(width, (int, float)) or width <= 0 or not isinstance(height, (int, float)) or height <= 0:
+            if not _is_positive_number(width) or not _is_positive_number(height):
                 violations.append(f"{record.get('fileName')}: width/height must be positive, got {width}x{height}")
 
     # Rule 7: an .ico that was downgraded to PNG fallback must never be reported as exported.
@@ -387,40 +426,62 @@ def main(argv: list[str] | None = None) -> int:
 
         named, unnamed = assign_names(decided)
 
-        icons_xaml = render_icons_xaml(named)
-        manifest = render_manifest(named, unnamed)
-
-        png_files: dict[str, bytes] = {}
         source_root = Path(arguments.source_root) if arguments.source_root else None
+        resolved_named: list[dict[str, Any]] = []
+        degraded: list[dict[str, Any]] = []
+        png_files: dict[str, bytes] = {}
         for entry in named:
             if entry["format"] != "png":
+                resolved_named.append(entry)
                 continue
             bitmap_path = entry.get("bitmapPath")
-            if not bitmap_path or source_root is None:
+            if source_root is None:
+                degraded.append({**entry, "reason": "no --source-root provided for a bitmap icon"})
+                continue
+            if not bitmap_path:
+                degraded.append({**entry, "reason": "bitmapPath is missing"})
                 continue
             source_file = source_root / bitmap_path
             if not source_file.is_file():
-                raise ConversionError(f"{entry['fileName']}: bitmapPath {bitmap_path!r} does not exist under --source-root")
+                degraded.append({
+                    **entry,
+                    "reason": f"bitmapPath {bitmap_path!r} does not exist under --source-root",
+                })
+                continue
             png_files[f"Images/{entry['fileName']}.png"] = source_file.read_bytes()
+            resolved_named.append(entry)
+
+        icons_xaml = render_icons_xaml(resolved_named)
+        manifest = render_manifest(resolved_named, unnamed, degraded)
 
         existing_xaml_path = out_dir / "Icons.xaml"
-        existing_xaml = (
-            existing_xaml_path.read_text(encoding="utf-8")
-            if merge_mode == "merge" and existing_xaml_path.is_file()
-            else None
-        )
+        existing_xaml_present = existing_xaml_path.is_file()
+        if existing_xaml_present and merge_mode not in {"overwrite", "merge"}:
+            raise ConversionError(
+                f"{existing_xaml_path}: already exists; meta.mergeMode must be "
+                "'overwrite' or 'merge' to proceed when an Icons.xaml already exists"
+            )
+        existing_xaml_text = existing_xaml_path.read_text(encoding="utf-8") if existing_xaml_present else None
+        existing_xaml_for_check = existing_xaml_text if merge_mode == "merge" else None
 
-        violations = self_check(icons_xaml, manifest, png_files, existing_xaml)
+        violations = self_check(icons_xaml, manifest, png_files, existing_xaml_for_check)
         if violations:
             raise ConversionError("self-check failed:\n  - " + "\n  - ".join(violations))
 
+        final_xaml = icons_xaml
+        if merge_mode == "merge" and existing_xaml_present:
+            final_xaml = merge_xaml_resources(icons_xaml, existing_xaml_text)
+
         files: dict[str, bytes | str] = {
-            "Icons.xaml": icons_xaml,
+            "Icons.xaml": final_xaml,
             "icons-manifest.json": json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
         }
         files.update(png_files)
         atomic_write_outputs(out_dir, files)
     except ConversionError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    except (OSError, UnicodeError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
     return 0
