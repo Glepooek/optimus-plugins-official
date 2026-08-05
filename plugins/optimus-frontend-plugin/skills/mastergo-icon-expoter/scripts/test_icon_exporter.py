@@ -414,5 +414,78 @@ class SelfCheckTests(unittest.TestCase):
         self.assertTrue(any("ico-fallback-png" in v or "exported" in v for v in violations))
 
 
+class IcoSynthesisTests(unittest.TestCase):
+    def test_synthesize_ico_returns_none_when_pillow_unavailable(self) -> None:
+        import icon_exporter
+        original = icon_exporter.sys.modules.get("PIL")
+        icon_exporter.sys.modules["PIL"] = None  # forces ImportError on `import PIL`
+        try:
+            result = icon_exporter.synthesize_ico({16: b"\x89PNG16", 32: b"\x89PNG32"})
+        finally:
+            if original is not None:
+                icon_exporter.sys.modules["PIL"] = original
+            else:
+                icon_exporter.sys.modules.pop("PIL", None)
+        self.assertIsNone(result)
+
+
+class FullPipelineTests(unittest.TestCase):
+    def test_single_color_icon_and_multi_color_icon_and_unnamed_icon_all_land_correctly(self) -> None:
+        icons = [
+            single_vector_icon(),
+            single_vector_icon(
+                svgShortKey="S0#3", nodeId="10:9", dslName="搜索图标", userName="icon_search_alt",
+                width=24, height=24,
+                paths=[
+                    {"data": "F1 M2,4 H10 L12,7 H22 V20 H2 Z", "fill": "#FFB800", "stroke": None},
+                    {"data": "F1 M2,9 H22 V20 H2 Z", "fill": "#FFD666", "stroke": None},
+                ],
+                warnings=["class attributes were encountered; CSS classes were not converted."],
+            ),
+            single_vector_icon(svgShortKey="S0#7", nodeId="10:20", dslName="CloseButton", userName=None),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = write_input(Path(directory), base_payload(*icons))
+            out_dir = Path(directory) / "out"
+            result = run_cli("--input", str(input_path), "--out", str(out_dir))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, "")
+            icons_xaml = (out_dir / "Icons.xaml").read_text(encoding="utf-8")
+            self.assertIn("IconSearchGeometry", icons_xaml)
+            self.assertIn("IconSearchAltImage", icons_xaml)
+            manifest = json.loads((out_dir / "icons-manifest.json").read_text(encoding="utf-8"))
+            statuses = {record["fileName"] or record["name"]: record["status"] for record in manifest["icons"]}
+            self.assertEqual(statuses["icon_search"], "exported")
+            self.assertEqual(statuses["icon_search_alt"], "exported")
+            self.assertEqual(statuses["CloseButton"], "needs-manual")
+
+    def test_self_check_failure_leaves_output_directory_untouched(self) -> None:
+        # Regression guard: a bad path.data (missing F0/F1) must be caught by
+        # validate_contract before render even runs, so nothing is ever written.
+        icon = single_vector_icon(paths=[{"data": "M0,0 Z", "fill": "#000", "stroke": None}])
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = write_input(Path(directory), base_payload(icon))
+            out_dir = Path(directory) / "out"
+            result = run_cli("--input", str(input_path), "--out", str(out_dir))
+        self.assertEqual(result.returncode, 2)
+        self.assertFalse(out_dir.exists())
+
+    def test_bitmap_only_icon_produces_a_needs_manual_manifest_entry_without_pillow_target(self) -> None:
+        icon = {
+            "nodeId": "i:1", "dslName": "Avatar", "userName": "avatar_default",
+            "width": 40, "height": 40, "paths": [], "warnings": [],
+            "sourceKind": "bitmap", "bitmapPath": "raw/avatar.png",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            raw_dir = Path(directory) / "raw"
+            raw_dir.mkdir()
+            (raw_dir / "avatar.png").write_bytes(b"\x89PNGDATA")
+            input_path = write_input(Path(directory), base_payload(icon))
+            out_dir = Path(directory) / "out"
+            result = run_cli("--input", str(input_path), "--out", str(out_dir), "--source-root", str(directory))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((out_dir / "Images" / "avatar_default.png").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

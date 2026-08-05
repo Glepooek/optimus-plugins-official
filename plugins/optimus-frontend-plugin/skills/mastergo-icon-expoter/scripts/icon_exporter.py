@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -311,10 +314,57 @@ def self_check(
     return violations
 
 
+def synthesize_ico(png_frames: dict[int, bytes]) -> bytes | None:
+    """Combine same-icon PNG frames into one .ico if Pillow is available, else None.
+
+    Import is local and lazy: a user who never asks for .ico output must not
+    need Pillow installed for the rest of the CLI to work.
+    """
+    try:
+        import PIL  # noqa: F401
+        from PIL import Image
+        import io
+    except ImportError:
+        return None
+    images = []
+    for size in sorted(png_frames):
+        images.append(Image.open(io.BytesIO(png_frames[size])))
+    buffer = io.BytesIO()
+    images[0].save(buffer, format="ICO", sizes=[(size, size) for size in sorted(png_frames)])
+    return buffer.getvalue()
+
+
+def atomic_write_outputs(out_dir: Path, files: dict[str, bytes | str]) -> None:
+    """Write a fully rendered output set only after all validation succeeds."""
+    parent = out_dir.parent
+    if not parent.exists():
+        parent.mkdir(parents=True, exist_ok=True)
+    stage = Path(tempfile.mkdtemp(prefix=f".{out_dir.name}.", dir=parent))
+    try:
+        for name, content in files.items():
+            target = stage / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if isinstance(content, bytes):
+                target.write_bytes(content)
+            else:
+                target.write_text(content, encoding="utf-8")
+        if not out_dir.exists():
+            os.replace(stage, out_dir)
+            return
+        for name in files:
+            destination = out_dir / name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(stage / name, destination)
+    finally:
+        if stage.exists():
+            shutil.rmtree(stage, ignore_errors=True)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Convert MasterGo icon export contract JSON into WPF icon assets.")
     parser.add_argument("--input", required=True, metavar="PATH", help="path to input.json")
     parser.add_argument("--out", required=True, metavar="PATH", help="output directory")
+    parser.add_argument("--source-root", metavar="PATH", help="base directory bitmapPath entries are relative to")
     return parser
 
 
@@ -322,7 +372,54 @@ def main(argv: list[str] | None = None) -> int:
     arguments = build_parser().parse_args(argv)
     try:
         payload = load_input(Path(arguments.input))
-        validate_contract(payload)
+        icons = validate_contract(payload)
+        meta = payload.get("meta") or {}
+        merge_mode = meta.get("mergeMode", "separate")
+        out_dir = Path(arguments.out)
+
+        decided = []
+        for icon in icons:
+            fmt, decision = decide_format(icon)
+            entry = dict(icon)
+            entry["format"] = fmt
+            entry["decision"] = decision
+            decided.append(entry)
+
+        named, unnamed = assign_names(decided)
+
+        icons_xaml = render_icons_xaml(named)
+        manifest = render_manifest(named, unnamed)
+
+        png_files: dict[str, bytes] = {}
+        source_root = Path(arguments.source_root) if arguments.source_root else None
+        for entry in named:
+            if entry["format"] != "png":
+                continue
+            bitmap_path = entry.get("bitmapPath")
+            if not bitmap_path or source_root is None:
+                continue
+            source_file = source_root / bitmap_path
+            if not source_file.is_file():
+                raise ConversionError(f"{entry['fileName']}: bitmapPath {bitmap_path!r} does not exist under --source-root")
+            png_files[f"Images/{entry['fileName']}.png"] = source_file.read_bytes()
+
+        existing_xaml_path = out_dir / "Icons.xaml"
+        existing_xaml = (
+            existing_xaml_path.read_text(encoding="utf-8")
+            if merge_mode == "merge" and existing_xaml_path.is_file()
+            else None
+        )
+
+        violations = self_check(icons_xaml, manifest, png_files, existing_xaml)
+        if violations:
+            raise ConversionError("self-check failed:\n  - " + "\n  - ".join(violations))
+
+        files: dict[str, bytes | str] = {
+            "Icons.xaml": icons_xaml,
+            "icons-manifest.json": json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        }
+        files.update(png_files)
+        atomic_write_outputs(out_dir, files)
     except ConversionError as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
