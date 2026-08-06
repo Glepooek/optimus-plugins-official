@@ -76,7 +76,7 @@ WPF **没有** WinUI 的 `PathIcon`、`FontIcon`、`SvgImageSource`、`Image.Nin
 
 **三条硬约束：**
 
-- **`F0`/`F1` 前缀必须保留。** 无前缀时 WPF 按 EvenOdd 解析，而 SVG 默认 nonzero；删掉前缀会改变自相交路径和孔洞的渲染结果。
+- **`F0`/`F1` 前缀必须保留，但只对 `Path.Data`/`Geometry` 资源的紧凑字符串形式有效。** 无前缀时 WPF 按 EvenOdd 解析，而 SVG 默认 nonzero；删掉前缀会改变自相交路径和孔洞的渲染结果。这套带前缀的迷你语言是 `StreamGeometry` 语法（`Path.Data`、`<Geometry x:Key="...">` 用的就是它）；如果改写成更冗长的 `<PathGeometry><PathGeometry.Figures>...</PathGeometry.Figures></PathGeometry>` 形式，`Figures` 属性用的是另一套"非常相似但不相同"的 `PathFigureCollection` 迷你语言，**不支持 `F` 前缀**——生成这类冗长形式时改用 `PathGeometry.FillRule="Nonzero"` 属性显式指定，不要把前缀字符串硬塞进 `Figures`。
 - **Path.Data 没有固有尺寸。** `viewBox` 不参与转换，坐标按源图原样保留（`viewBox="0 0 1024 1024"` 的图标就是 1024 单位跨度）。必须显式给 `Width`/`Height` + `Stretch="Uniform"`，或包一层 `Viewbox`。**不要替用户臆造尺寸**——尺寸应来自 DSL 的 `layoutStyle.width/height`。
 - **`Stretch` 默认值是 `None`。** 不写 `Stretch` 时 `Width`/`Height` 只裁剪不缩放，1024 单位的图标塞进 16×16 只会显示左上角一小块，且**不报任何错**。这是最容易漏的一条。
 
@@ -314,7 +314,7 @@ Application.Current.Resources.MergedDictionaries.Add(
 ## 参考
 
 - [Imaging Overview - WPF](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/graphics-multimedia/imaging-overview)（codec 清单、ICON 无编码器）
-- [Path Markup Syntax](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/graphics-multimedia/path-markup-syntax)（`F0`/`F1` 与默认 EvenOdd）
+- [Path Markup Syntax](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/graphics-multimedia/path-markup-syntax)（`F0`/`F1` 与默认 EvenOdd；`StreamGeometry` 与 `PathFigureCollection` 是两套"非常相似但不相同"的迷你语言，仅前者支持 FillRule 前缀）
 - [Geometry Overview](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/graphics-multimedia/geometry-overview)
 - [Drawing Objects Overview](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/graphics-multimedia/drawing-objects-overview)（`DrawingGroup` 操作顺序）
 - [Pack URIs in WPF](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/app-development/pack-uris-in-wpf)

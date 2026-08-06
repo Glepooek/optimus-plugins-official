@@ -2,7 +2,7 @@
 name: mastergo-icon-expoter
 description: 当用户要求从 MasterGo 设计稿导出图标、背景等视觉资产用于 WPF XAML 项目时使用此 Skill；产出 Geometry/DrawingImage 资源字典、位图与决策清单，不生成页面代码。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: generator
 compatibility: Python 3 标准库；可选 Pillow（为未来 .ico 合成功能预留，本版本尚未接入任何调用路径）；需 mastergo-magic-mcp（本仓库 plugins/optimus-mcp-servers/.mcp.json 内置）与 MASTERGO_TOKEN；委派 optimus-frontend-plugin:svg-to-xaml-path 完成 SVG→Path.Data 转换。

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] - 2026-08-06
+
+### Fixed
+- `references/wpf-xaml-icon-sepc.md`：修正 `F0`/`F1` FillRule 前缀的适用范围——该前缀只属于 `Path.Data`/`Geometry` 资源使用的 `StreamGeometry` 迷你语言；若改写为 `<PathGeometry><PathGeometry.Figures>` 冗长形式，`Figures` 属性用的是不支持该前缀的 `PathFigureCollection` 迷你语言，需改用 `PathGeometry.FillRule` 属性显式指定。
+
 ## [1.1.0] - 2026-08-05
 
 ### Added

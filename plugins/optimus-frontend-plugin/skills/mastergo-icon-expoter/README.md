@@ -1,6 +1,6 @@
 # mastergo-icon-expoter
 
-> 版本：1.1.0 | 分类：generator
+> 版本：1.1.1 | 分类：generator
 
 从 MasterGo 设计稿导出图标、背景等视觉资产，产出 WPF 可直接引用的资源字典、位图和决策清单。
 
