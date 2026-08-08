@@ -6,6 +6,7 @@
 
 - **网址**：https://github.com/microsoft/playwright-mcp
 - **简介**：Microsoft 官方推出的 Model Context Protocol (MCP) server，基于 Playwright 提供浏览器自动化能力；通过结构化的 accessibility snapshot 让 LLM 与网页交互，无需截图或视觉模型。
+- **开发语言**：TypeScript
 - **核心能力**：
   - 基于 accessibility tree 而非像素/截图的浏览器自动化，快速轻量、LLM 友好
   - 确定性工具调用，避免截图方案常见的歧义
@@ -55,6 +56,7 @@
 
 - **网址**：https://github.com/microsoft/playwright-cli
 - **简介**：Microsoft 官方推出的 Playwright 命令行工具，用命令行方式执行浏览器自动化操作（打开页面、点击、填表、截图、生成PDF等），相比 MCP 方式更省 token——不会把整页数据强塞进 LLM 上下文。
+- **开发语言**：TypeScript
 - **核心能力**：
   - 完整浏览器操作命令集：导航、点击、填表、拖拽、截图、生成 PDF 等
   - 多会话管理，可同时管理多个浏览器实例（`-s=<session>`）
@@ -75,6 +77,7 @@
 
 - **网址**：https://github.com/larksuite/cli
 - **简介**：Lark/Feishu 官方命令行工具，由 larksuite 团队维护，专为人类与 AI Agent 设计，覆盖日历、IM消息、文档、云盘、多维表格、电子表格、幻灯片、任务、知识库、通讯录、邮件、会议纪要、审批、OKR 等 18 个业务域，200+ 精选命令。
+- **开发语言**：Go
 - **核心能力**：
   - Agent-Native 设计：24 个开箱即用的结构化 Skills，兼容主流 AI 工具，Agent 零配置即可操作 Lark/Feishu
   - 三层命令体系：Shortcuts（`+`前缀，人类和AI友好，含 dry-run 预览）→ API Commands（自动生成，1:1 映射平台端点，100+ 命令）→ Raw API（直调任意端点，覆盖 2500+ API）
@@ -87,6 +90,22 @@
   - 配置与登录：`lark-cli config init` → `lark-cli auth login --recommend`
 - **更新方式**：重新执行 `npx @larksuite/cli@latest install`（README 未单独给出更新命令，安装命令本身用的是 `@latest` tag，重新执行即会覆盖为最新版本）
 - **备注**：⚠️ 官方 README 专设"Security & Risk Warnings"章节明确提示：该工具可被 AI Agent 调用以自动化操作 Lark/Feishu 开放平台，存在模型幻觉、不可预测执行、prompt injection 等固有风险；授权后 Agent 将以用户身份在授权范围内操作，可能导致敏感数据泄露或未授权操作，官方建议不要主动放宽默认安全设置。与本仓库 `optimus-feishu-plugin`（飞书文档读写、上传、自动化）属相关领域，是潜在的补充/替代方案，尚未集成。MIT 许可，GitHub 15.5k star，最新版本 v1.0.68（2026-07-09）。
+
+### MarkItDown
+
+- **网址**：https://github.com/microsoft/markitdown
+- **简介**：Microsoft 官方推出的轻量级 Python 工具，将各类文件转换为 Markdown，供 LLM 及文本分析流水线使用；定位类似 textract，但更注重保留标题、列表、表格、链接等重要文档结构。
+- **开发语言**：Python
+- **核心能力**：
+  - 支持多种文件格式转换为 Markdown（含 Office 文档、PDF、图片、音频、YouTube 等，具体依赖安装的 extras）
+  - LLM 图片描述：可配置 `mlm_client`/`mlm_model`（如 OpenAI GPT-4o），为文档中嵌入的图片生成描述
+  - OCR 插件（`markitdown-ocr`）：为 PDF/DOCX/PPTX/XLSX 转换器新增 OCR 能力，复用已有的 `llm_client`/`llm_model` 模式提取图片中的文字
+  - Azure Content Understanding 集成：支持结构化字段提取（YAML front matter）、多模态（文档/图片/音频/视频）及可按文件类型自动选择或自定义分析器
+  - 提供 Python 包与命令行两种使用方式
+- **安装方式**：
+  - `pip install 'markitdown[all]'`
+  - 源码安装：`git clone git@github.com:microsoft/markitdown.git`，`cd markitdown`，`pip install -e 'packages/markitdown[all]'`
+- **备注**：需要 Python 3.10 及以上版本，官方建议在虚拟环境中安装以避免依赖冲突；官方安全提示 MarkItDown 以当前进程权限执行 I/O（如 `open()`、`requests.get()`），在不可信环境中使用需自行做输入校验，并按需调用最窄的 `convert_*` 方法（如 `convert_stream()`、`convert_local()`）。本仓库 `optimus-office-plugin` 的 `web-to-markdown` skill 已将其列为一级抓取依赖（`python -m markitdown`），抓取失败时才降级到 Playwright CLI 或 WebFetch。本次归档因本机网络无法直连 GitHub，playwright-cli 与 WebFetch 均连接失败，内容改由 WebSearch 检索到的官方信息整理，License 类型、更新/移除方式未能从可靠来源确认，故未填写对应字段。
 
 ## Agent
 
