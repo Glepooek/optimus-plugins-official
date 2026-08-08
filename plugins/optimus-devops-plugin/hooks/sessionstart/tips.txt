@@ -192,7 +192,7 @@
 ---
 [工具] 📋 CronList 列出定时任务\n功能：列出所有活跃的 cron 定时任务\n效果：查看哪些任务在定期运行，何时触发\n例子：CronList 查看所有定时任务的状态和下次执行时间
 ---
-[工具] 💬 SendMessage 发送消息\n功能：向团队中的其他 agent 发送消息\n效果：团队协作中进行 agent 间通信\n例子：SendMessage(to="tester", message="测试完成") 通知测试员
+[工具] 💬 SendMessage 发送消息\n功能：向团队中的其他 agent 发送消息；v2.1.224 起支持跨机器发送——同一账号下任意机器上的 Claude Code 会话都可互相收发，用 ListAgents 发现可联系的会话（macOS/Linux）\n效果：团队协作中进行 agent 间通信；配合 crossSessionInbound、dialogExpiry 设置可控制陌生会话或 bypass 权限会话下的消息是否需人工审批\n例子：SendMessage(to="tester", message="测试完成") 通知测试员；ListAgents 列出其他机器上运行的会话后再跨机器发消息过去
 ---
 [工具] 🎯 Skill 调用技能\n功能：调用预定义的 skill 执行特定工作流\n效果：使用专家级工作流确保质量和一致性\n例子：Skill(skill="brainstorming") 在编码前进行设计头脑风暴
 ---
@@ -232,7 +232,7 @@
 ---
 [Skill] 🧹 /simplify 清理式审查并应用修复\n功能：v2.1.154 起 /simplify 只做 cleanup 类审查（复用、简化、效率、抽象层级）并直接把修改应用到工作区，不再排查 bug——找正确性缺陷请改用 /code-review\n效果：重构或改完功能后一键收敛代码质量，改动直接落到工作区无需手动誊抄；与 /code-review 职责明确分离，各跑各的互不干扰\n例子：/simplify 清理最近改动并应用修复；找 bug 改用 /code-review high
 ---
-[Skill] 🔌 claude-api 构建 API 应用\n功能：构建、调试、优化 Claude API 应用\n效果：使用最佳实践开发 Claude API 应用\n例子：claude-api 开发使用 Claude 的应用
+[Skill] 🔌 claude-api 构建 API 应用\n功能：构建、调试、优化 Claude API 应用；v2.1.221 起新增 prompt-audit 子命令，审计提示词和工具描述中是否存在针对旧模型编写的过时模式\n效果：使用最佳实践开发 Claude API 应用；prompt-audit 帮助在升级模型后发现需要更新的提示词写法\n例子：claude-api 开发使用 Claude 的应用；claude-api prompt-audit 检查现有提示词是否有旧模型时代的过时写法
 ---
 [Skill] 🔓 fewer-permission-prompts 减少权限提示\n功能：分析常用命令并配置权限白名单\n效果：减少重复的权限确认提示\n例子：fewer-permission-prompts 优化权限配置
 ---
@@ -240,7 +240,7 @@
 ---
 [Skill] 🆕 init 初始化项目\n功能：为项目创建 CLAUDE.md 文档\n效果：初始化项目配置和指令\n例子：init 新项目初始化 Claude Code 配置
 ---
-[Skill] 📋 /review PR 快速审查\n功能：/review <pr> 对 PR 进行快速单次审查（v2.1.202 起改回单次模式）；需要多代理深度审查时改用 /code-review <level> <pr#>，level 支持 low/medium/high/xhigh/max 五档努力程度\n效果：/review 响应更快适合日常检查；/code-review 配合更高 effort 级别可获得更全面但更慢的多代理审查结果\n例子：/review 1234 快速审查 PR#1234；/code-review high 1234 用高强度多代理模式深度审查同一 PR
+[Skill] 📋 /review 与 /code-review 合并\n功能：v2.1.223 起 /review 已改为 /code-review 的别名，统一走 /code-review 审查当前 diff 或 PR，语法 /code-review <level> <pr#>，level 支持 low/medium/high/xhigh/max 五档努力程度，用 /code-review ultra 触发云端深度审查；不带 level 直接输入 /code-review 会复用上一次使用的级别\n效果：不再需要区分"快速审查"和"深度审查"两个命令，只需切换 effort 级别即可覆盖日常检查到全面审计的全部场景\n例子：/review 1234 等价于 /code-review 1234；/code-review high 1234 用高强度多代理模式深度审查 PR#1234；/code-review ultra 发起云端深度审查
 ---
 [Skill] 🔒 security-review 安全审查\n功能：对当前分支进行安全审查\n效果：检查安全漏洞、敏感信息泄露\n例子：security-review 合并前进行安全检查
 ---
@@ -512,8 +512,6 @@
 ---
 [高级] 🔍 CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION 搜索次数上限\n功能：环境变量 CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION 设置单个会话内 WebSearch 工具调用次数上限，默认 200\n效果：防止 WebSearch 陷入失控循环导致意外消耗大量请求配额\n例子：CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION=50 claude 降低单会话搜索次数上限
 ---
-[高级] 🧮 CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION 子代理派生上限\n功能：环境变量 CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION 设置单个会话内可派生子代理总数上限，默认 200；/clear 会重置该计数\n效果：防止委派循环失控导致子代理数量爆炸；长会话可用 /clear 重新获得完整配额\n例子：CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION=500 claude 提高单会话子代理派生上限
----
 [高级] ⏲️ CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS MCP自动转后台\n功能：MCP 工具调用运行超过阈值（默认 2 分钟）会自动转入后台，避免阻塞会话；用 CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS 调整阈值或设为极大值禁用\n效果：耗时较长的 MCP 工具调用不会卡住整个会话，可以继续其他操作\n例子：CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS=300000 claude 将阈值调整为 5 分钟
 ---
 [CLI] 📡 --forward-subagent-text 转发子代理文本\n功能：--forward-subagent-text 或环境变量 CLAUDE_CODE_FORWARD_SUBAGENT_TEXT，在 stream-json 输出中包含子代理的文本和思考内容；v2.1.219 起深度2+的嵌套子代理也会显示，按其派生 Agent 的 tool_use id 归类\n效果：脚本化消费 stream-json 时可以完整观察子代理的思考过程，不只是最终结果\n例子：claude -p --output-format stream-json --forward-subagent-text "复杂任务" 完整捕获子代理输出
@@ -537,4 +535,14 @@
 [Skill] 🔤 frontmatter 布尔值写法兼容\n功能：v2.1.218 起 SKILL.md 和 plugin frontmatter 的布尔字段除 true/false 外，还接受 yes/no、on/off、1/0，且大小写不敏感；与已有的键名三种命名格式（kebab-case / snake_case / camelCase）兼容互为补充\n效果：键名和取值两侧都不再需要死记格式，从其他配置体系（YAML、Ansible 等）迁移 skill 时可直接沿用习惯写法，减少 frontmatter 解析失败\n例子：background: no 等价于 background: false（关闭 context: fork 的后台执行）；default-enabled: YES 等价于 default_enabled: true
 ---
 [Hook] 🍴 SessionStart source="fork"\n功能：v2.1.214 起会话由 /fork 派生时，SessionStart hook 收到的 source 字段为 "fork"，此前一律上报为 "resume"；source 其余取值为 startup、resume、clear、compact\n效果：hook 脚本可区分"派生的副本会话"与"恢复的原会话"，避免 fork 出的后台会话重复执行只该跑一次的初始化（如发通知、写日志、启动服务）\n例子：SessionStart hook 中判断 [ "$(jq -r .source)" = "fork" ] 时跳过欢迎语和环境初始化，只有 startup 才完整执行
+---
+[高级] 🖥️ self-hosted-runner 自托管环境\n功能：v2.1.224 起 claude self-hosted-runner 让你自己的机器或容器成为承载 Claude Code web/mobile/desktop 会话的运行环境，Team 和 Enterprise 计划可用\n效果：把云端会话调度到企业自控的基础设施上执行，兼顾云端协作体验与本地算力/网络合规要求\n例子：claude self-hosted-runner 在自有服务器上启动 runner，之后云端会话即可路由到这台机器执行
+---
+[CLI] 📦 archive 插件源\n功能：v2.1.224 起 marketplace.json 支持 source: "archive"，直接从 HTTPS 上的 zip 包安装插件，无需 git 或 npm；可选 sha256 字段做完整性校验（校验失败会拒绝安装并报错 integrity check failed）\n效果：内网或无 git/npm 环境也能分发插件，配合 sha256 锁定版本防止 zip 被篡改\n例子：marketplace.json 中配置 {"source": "archive", "url": "https://example.com/plugin.zip", "sha256": "abc123..."} 安装并锁定该插件版本
+---
+[配置] 🔐 owner 通配符 marketplace 白名单\n功能：v2.1.223 起 settings.json 的 strictKnownMarketplaces 和 blockedMarketplaces 支持 "owner/*" 通配写法\n效果：一次性放行或屏蔽某个 GitHub 组织下的全部 marketplace 仓库，不必逐个列出仓库名\n例子：{"strictKnownMarketplaces": ["my-org/*"]} 只允许安装 my-org 组织下的所有 marketplace；{"blockedMarketplaces": ["untrusted-org/*"]} 屏蔽整个组织
+---
+[交互] 🔭 VSCode Focus view 焦点视图\n功能：v2.1.221 起 VS Code 扩展新增 Focus view，用聊天菜单开关将工具调用细节折叠进可展开的逐 turn 摘要，并显示实时运行中工具指示器；用 Ctrl+Alt+F 或命令面板 "Claude Code: Toggle Focus view" 切换\n效果：日常查看对话时不被大量工具调用日志淹没，需要细节时再展开查看\n例子：在 VS Code 中按 Ctrl+Alt+F 开启 Focus view，只看对话摘要和当前运行中的工具
+---
+[配置] 🎭 sandbox 凭证 mask 模式\n功能：v2.1.221 起 Linux/WSL 沙箱凭证文件配置支持 mode: "mask"，沙箱内命令读到整份文件或 extract 正则捕获片段的哨兵占位副本，沙箱代理在出站流量中再替换回真实值；macOS 上该模式会回退为 deny\n效果：沙箱脚本无需接触真实密钥即可完成需要"文件存在且格式正确"的逻辑，同时出站请求仍带上真实凭证\n例子：sandbox 凭证配置中对某个 credential 文件设置 mode: "mask"，脚本读到的是占位内容，实际网络请求由代理注入真值
 ---
