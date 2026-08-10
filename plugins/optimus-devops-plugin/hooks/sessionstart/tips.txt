@@ -192,7 +192,7 @@
 ---
 [工具] 📋 CronList 列出定时任务\n功能：列出所有活跃的 cron 定时任务\n效果：查看哪些任务在定期运行，何时触发\n例子：CronList 查看所有定时任务的状态和下次执行时间
 ---
-[工具] 💬 SendMessage 发送消息\n功能：向团队中的其他 agent 发送消息；v2.1.224 起支持跨机器发送——同一账号下任意机器上的 Claude Code 会话都可互相收发，用 ListAgents 发现可联系的会话（macOS/Linux）\n效果：团队协作中进行 agent 间通信；配合 crossSessionInbound、dialogExpiry 设置可控制陌生会话或 bypass 权限会话下的消息是否需人工审批\n例子：SendMessage(to="tester", message="测试完成") 通知测试员；ListAgents 列出其他机器上运行的会话后再跨机器发消息过去
+[工具] 💬 SendMessage 发送消息\n功能：向团队中的其他 agent 发送消息；v2.1.224 起支持跨机器发送——同一账号下任意机器上的 Claude Code 会话都可互相收发，用 ListAgents 发现可联系的会话（macOS/Linux）；v2.1.225 起可以按名称主动发起对话（ListAgents 中显示为 "name [ref]"），不必等对方先发消息\n效果：团队协作中进行 agent 间通信；配合 crossSessionInbound、dialogExpiry 设置可控制陌生会话或 bypass 权限会话下的消息是否需人工审批\n例子：SendMessage(to="tester", message="测试完成") 通知测试员；ListAgents 列出其他机器上运行的会话后按名称主动发起跨机器对话
 ---
 [工具] 🎯 Skill 调用技能\n功能：调用预定义的 skill 执行特定工作流\n效果：使用专家级工作流确保质量和一致性\n例子：Skill(skill="brainstorming") 在编码前进行设计头脑风暴
 ---
@@ -464,7 +464,7 @@
 ---
 [Hook] 🔔 后台代理通知 Hook\n功能：后台代理需要输入或完成任务时，触发 Notification hook（事件类型为 agent_needs_input 或 agent_completed）\n效果：后台代理状态变更时自动通知用户，无需手动轮询检查\n例子：后台代理完成代码生成后通过 Notification hook 发送桌面通知提醒你检查结果
 ---
-[高级] 🤖 后台子代理默认自动化\n功能：v2.1.198 起子代理默认在后台运行（此前为渐进灰度）；在 worktree 中完成代码任务后自动 commit、push 并创建 draft PR，不再停下来询问\n效果：主任务无需等待子代理完成即可继续工作；代码类子代理任务完成后直接产出可审查的 PR，减少人工确认步骤\n例子：Agent 派生一个后台代码修复任务，完成后自动生成 draft PR 供审查，无需手动执行 git commit/push
+[高级] 🤖 后台子代理默认自动化\n功能：v2.1.198 起子代理默认在后台运行（此前为渐进灰度）；v2.1.221 起细化为：在 worktree 中完成任务后自动 commit、push 以保留工作成果，仅当任务确实需要时才开 draft PR，遵循项目 CLAUDE.md 的 git 指令，并始终在结束时报告工作产出的位置\n效果：主任务无需等待子代理完成即可继续工作；不再无条件开 PR，减少不必要的 PR 噪音，同时保证工作成果不会因为没有报告而被忽视\n例子：Agent 派生一个后台代码修复任务，完成后按需生成 draft PR 或仅推送分支，并在结束时明确告知代码所在分支/PR
 ---
 [配置] 🌊 Dynamic workflow size 工作流规模\n功能：在 /config 中设置动态工作流的规模指引（advisory guideline，非硬性上限），控制 Claude 创建动态工作流时的 agent 数量倾向\n效果：small（精简）适合快速任务减少 token 开销；medium（平衡）适合日常开发；large（全面）适合复杂审计和需要高覆盖的场景\n例子：/config 设置 workflowSizeGuideline 为 small 获得精简工作流；设为 large 让 Claude 倾向使用更多 agent 并行
 ---
@@ -506,11 +506,13 @@
 ---
 [配置] 🗄️ sandbox.filesystem.disabled 跳过文件系统隔离\n功能：settings.json 中设置 sandbox.filesystem.disabled: true，跳过文件系统层面的沙箱隔离，同时保留网络出站控制\n效果：适合信任本地文件系统但仍需限制网络访问的场景，减少沙箱对文件操作的性能开销\n例子：{"sandbox": {"filesystem": {"disabled": true}}} 只保留网络隔离，不限制文件读写
 ---
-[交互] 🍴 /fork 与 /subtask 职责拆分\n功能：v2.1.212 起 /fork 将当前对话复制为一个新的后台会话（在 claude agents 中有独立行），你可以继续在原会话工作；原来 /fork 派生的会话内子代理改名为 /subtask\n效果：需要"复制当前进度另起分支探索"时用 /fork；需要"在本会话内派生一个子任务"时用 /subtask，职责更清晰\n例子：/fork 复制当前会话到后台继续探索另一种方案；/subtask 在本会话内派生一个子代理处理独立任务
+[交互] 🍴 /fork 与 /subtask 职责拆分\n功能：v2.1.212 起 /fork 将当前对话复制为一个新的后台会话（在 claude agents 中有独立行），你可以继续在原会话工作；原来 /fork 派生的会话内子代理改名为 /subtask；v2.1.221 起 /fork 派生的会话会创建自己独立的 worktree，不再复用原会话的 checkout\n效果：需要"复制当前进度另起分支探索"时用 /fork；需要"在本会话内派生一个子任务"时用 /subtask，职责更清晰；独立 worktree 避免了两个会话同时改动同一份文件产生冲突\n例子：/fork 复制当前会话到后台继续探索另一种方案（在独立 worktree 中进行，不影响原会话的工作区）；/subtask 在本会话内派生一个子代理处理独立任务
 ---
 [CLI] 🔄 claude auto-mode reset 重置自动模式\n功能：claude auto-mode reset 将自动模式配置恢复为默认值，执行前会有确认提示，加 --yes 跳过确认\n效果：auto-mode 规则被改乱或调试出问题时，一键恢复到官方默认配置\n例子：claude auto-mode reset 恢复默认配置；claude auto-mode reset --yes 跳过确认直接重置
 ---
 [高级] 🔍 CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION 搜索次数上限\n功能：环境变量 CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION 设置单个会话内 WebSearch 工具调用次数上限，默认 200\n效果：防止 WebSearch 陷入失控循环导致意外消耗大量请求配额\n例子：CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION=50 claude 降低单会话搜索次数上限
+---
+[高级] 🧮 200-子代理硬上限已移除\n功能：v2.1.224 起移除了单会话 200 个子代理的派生上限，长会话不再因达到该数字而拒绝新 agent；并发数与嵌套深度上限（CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS、CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH）仍然生效\n效果：长时间运行、需要大量子代理委派的会话不再中途被总数限制打断\n例子：长会话累计派生超过 200 个子代理后依然可以继续，只受并发上限和嵌套深度上限约束
 ---
 [高级] ⏲️ CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS MCP自动转后台\n功能：MCP 工具调用运行超过阈值（默认 2 分钟）会自动转入后台，避免阻塞会话；用 CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS 调整阈值或设为极大值禁用\n效果：耗时较长的 MCP 工具调用不会卡住整个会话，可以继续其他操作\n例子：CLAUDE_CODE_MCP_AUTO_BACKGROUND_MS=300000 claude 将阈值调整为 5 分钟
 ---
@@ -536,13 +538,21 @@
 ---
 [Hook] 🍴 SessionStart source="fork"\n功能：v2.1.214 起会话由 /fork 派生时，SessionStart hook 收到的 source 字段为 "fork"，此前一律上报为 "resume"；source 其余取值为 startup、resume、clear、compact\n效果：hook 脚本可区分"派生的副本会话"与"恢复的原会话"，避免 fork 出的后台会话重复执行只该跑一次的初始化（如发通知、写日志、启动服务）\n例子：SessionStart hook 中判断 [ "$(jq -r .source)" = "fork" ] 时跳过欢迎语和环境初始化，只有 startup 才完整执行
 ---
-[高级] 🖥️ self-hosted-runner 自托管环境\n功能：v2.1.224 起 claude self-hosted-runner 让你自己的机器或容器成为承载 Claude Code web/mobile/desktop 会话的运行环境，Team 和 Enterprise 计划可用\n效果：把云端会话调度到企业自控的基础设施上执行，兼顾云端协作体验与本地算力/网络合规要求\n例子：claude self-hosted-runner 在自有服务器上启动 runner，之后云端会话即可路由到这台机器执行
----
 [CLI] 📦 archive 插件源\n功能：v2.1.224 起 marketplace.json 支持 source: "archive"，直接从 HTTPS 上的 zip 包安装插件，无需 git 或 npm；可选 sha256 字段做完整性校验（校验失败会拒绝安装并报错 integrity check failed）\n效果：内网或无 git/npm 环境也能分发插件，配合 sha256 锁定版本防止 zip 被篡改\n例子：marketplace.json 中配置 {"source": "archive", "url": "https://example.com/plugin.zip", "sha256": "abc123..."} 安装并锁定该插件版本
 ---
 [配置] 🔐 owner 通配符 marketplace 白名单\n功能：v2.1.223 起 settings.json 的 strictKnownMarketplaces 和 blockedMarketplaces 支持 "owner/*" 通配写法\n效果：一次性放行或屏蔽某个 GitHub 组织下的全部 marketplace 仓库，不必逐个列出仓库名\n例子：{"strictKnownMarketplaces": ["my-org/*"]} 只允许安装 my-org 组织下的所有 marketplace；{"blockedMarketplaces": ["untrusted-org/*"]} 屏蔽整个组织
 ---
 [交互] 🔭 VSCode Focus view 焦点视图\n功能：v2.1.221 起 VS Code 扩展新增 Focus view，用聊天菜单开关将工具调用细节折叠进可展开的逐 turn 摘要，并显示实时运行中工具指示器；用 Ctrl+Alt+F 或命令面板 "Claude Code: Toggle Focus view" 切换\n效果：日常查看对话时不被大量工具调用日志淹没，需要细节时再展开查看\n例子：在 VS Code 中按 Ctrl+Alt+F 开启 Focus view，只看对话摘要和当前运行中的工具
 ---
-[配置] 🎭 sandbox 凭证 mask 模式\n功能：v2.1.221 起 Linux/WSL 沙箱凭证文件配置支持 mode: "mask"，沙箱内命令读到整份文件或 extract 正则捕获片段的哨兵占位副本，沙箱代理在出站流量中再替换回真实值；macOS 上该模式会回退为 deny\n效果：沙箱脚本无需接触真实密钥即可完成需要"文件存在且格式正确"的逻辑，同时出站请求仍带上真实凭证\n例子：sandbox 凭证配置中对某个 credential 文件设置 mode: "mask"，脚本读到的是占位内容，实际网络请求由代理注入真值
+[配置] 🔒 sandbox 凭证脱敏高级选项\n功能：v2.1.221/224 起 sandbox 凭证文件支持 mode: "mask"（沙箱内读到脱敏后的哨兵值，代理层在出网时换回真实值）；配合 extract 正则只脱敏结构化值中的特定片段，decode: "jwt" + maskClaims 对 JWT 按声明脱敏，awsPairs/sigv4 对 AWS 请求重新签名；这些选项需要 network.tlsTerminate，且只在用户级、managed 或 --settings 配置中生效\n效果：沙箱命令能正常读取凭证文件跑通逻辑，但看不到真实密钥内容，出网请求仍能通过代理层补回正确的签名/取值\n例子：settings.json 配置 sandbox.credentials 的 mode: "mask" 搭配 decode: "jwt", maskClaims: true，沙箱内看到的 JWT 声明已脱敏但请求仍可正常签名发出
+---
+[Skill] 🚫 disable-model-invocation frontmatter\n功能：在 SKILL.md frontmatter 中声明 disable-model-invocation: true，禁止 Claude 自主调用该 skill；用户仍可通过斜杠命令手动触发；Claude 尝试调用时会被引导告知用户"请手动运行该 skill"，而不是自己模仿其工作流\n效果：适合只应由人工决定时机的高风险或高成本 skill（如生产部署、大规模重构），防止模型在未被要求时擅自触发\n例子：frontmatter 加入 disable-model-invocation: true 后，Claude 判断该场景适用该 skill 时会提示"建议你运行 /该skill"，而不是自己执行同等逻辑
+---
+[CLI] 🖥️ claude self-hosted-runner 自托管环境\n功能：Team/Enterprise 计划新增 claude self-hosted-runner，把自己的机器或容器变成 Claude Code web/mobile/desktop 会话可以运行的环境；--base-dir 指定基础目录，无法创建/写入时启动即报错退出而非静默失败\n效果：企业可以把云端发起的任务实际调度到自己控制的机器上执行，满足数据不出内网等合规要求\n例子：claude self-hosted-runner --base-dir /opt/claude-runner 在自己的服务器上注册一个可供云端会话调度的运行环境
+---
+[配置] 📂 plugin skills 路径 "." 与校验提示优化\n功能：v2.1.221 起 plugin.json 的 skills 路径字段接受 "."，表示插件根目录本身就是 skill 目录；根目录直接放 SKILL.md 时的校验报错会提示改用插件根目录写法\n效果：单 skill 插件不必再额外建一层子目录，plugin 结构可以更扁平\n例子：plugin.json 中 "skills": ["."] 让插件根目录直接作为唯一 skill 的目录
+---
+[交互] 🔌 /plugin install 立即激活\n功能：v2.1.221 起通过 /plugin 安装的插件，在安全的情况下立即激活，不再要求先手动 /reload-plugins\n效果：装完插件马上可用，减少一步手动操作\n例子：/plugin 搜索安装某插件后，无需再输入 /reload-plugins 即可直接使用其 skill
+---
+[配置] 🪟 CLAUDE_CODE_DISABLE_1M_CONTEXT 覆盖范围澄清\n功能：v2.1.223 起该环境变量会让每一个原生支持 1M 上下文窗口的 Claude 模型都通过自动压缩被限制在 200K，而不仅是固定的旧模型列表；若自动压缩未能把会话稳定控制在 200K 以内，启动时会打印警告\n效果：企业统一限制上下文预算时，新发布的 1M 模型也会自动纳入限制范围，无需每次发布新模型都更新配置\n例子：CLAUDE_CODE_DISABLE_1M_CONTEXT=1 claude 让当前及未来任何 1M 上下文模型都被压缩控制在 200K
 ---
