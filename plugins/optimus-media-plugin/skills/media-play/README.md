@@ -10,7 +10,7 @@
 ┌─────────────┐
 │  platform    │
 ├─────────────┤
-│★ tool        │  media-analyze、media-resize、media-compress、media-trim、media-play（本 skill）
+│★ tool        │  media-analyze、media-resize、media-compress、media-trim、media-play（本 skill）、media-framerate
 ├─────────────┤
 │  quality     │
 ├─────────────┤

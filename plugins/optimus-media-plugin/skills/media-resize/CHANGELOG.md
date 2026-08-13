@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.1] - 2026-08-13
+
+### Changed
+- "不要做什么"章节的跨 skill 边界声明补充 `-r`/`minterpolate` 帧率参数，用户同时提出帧率转换诉求时应另行调用新增的 `media-framerate` skill
+
 ## [1.2.0] - 2026-08-13
 
 ### Added

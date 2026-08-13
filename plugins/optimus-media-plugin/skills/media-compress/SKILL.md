@@ -2,7 +2,7 @@
 name: media-compress
 description: Use when user wants to reduce a media file's size while keeping the same resolution — 压缩视频、压缩音频、音视频压缩、减小文件体积、CRF调画质。Not for resolution changes, clip trimming, or pure codec/format inspection.
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -64,7 +64,7 @@ ffmpeg -i <input> -c:v libx264 -crf <取值> -preset medium -c:a aac -b:a 128k <
 
 参见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。
 
-若用户同时提出分辨率转换或片段截取诉求，不要在本 skill 命令中叠加 `-vf scale`/`-ss`/`-to` 等参数，应分别调用对应 skill；组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"。
+若用户同时提出分辨率转换、片段截取或帧率转换诉求，不要在本 skill 命令中叠加 `-vf scale`/`-ss`/`-to`/`-r` 等参数，应分别调用对应 skill；组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"。
 
 ## 不要做什么
 

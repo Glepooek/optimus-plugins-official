@@ -1,6 +1,6 @@
 # ffmpeg 命令行参数速查
 
-仅覆盖 media-analyze/media-resize/media-compress/media-trim/media-play 五个 skill 实际用到的参数，不是 ffmpeg 完整参数手册。
+仅覆盖 media-analyze/media-resize/media-compress/media-trim/media-play/media-framerate 六个 skill 实际用到的参数，不是 ffmpeg 完整参数手册。
 
 | 参数 | 用途 | 使用场景 |
 |---|---|---|
@@ -16,3 +16,5 @@
 | `-y` | 覆盖已存在的输出文件，不交互询问 | 全部 |
 | `-window_title <标题>` | 设置 ffplay 播放窗口标题 | media-play |
 | `-autoexit` | 播放结束后自动关闭窗口退出，无需手动操作 | media-play |
+| `-r <帧率>` | 设定输出帧率；高于原始帧率时机械复制已有帧，低于原始帧率时均匀丢帧 | media-framerate 简单模式 |
+| `-filter:v "minterpolate=fps=<帧率>"` | 运动补偿插帧滤镜，分析相邻帧运动矢量生成中间帧，仅用于提高帧率 | media-framerate 运动插帧模式 |

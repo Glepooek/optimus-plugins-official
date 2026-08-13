@@ -1,6 +1,6 @@
 # media-compress
 
-> 版本：1.1.0 | 分类：tool
+> 版本：1.1.1 | 分类：tool
 
 在不改变分辨率的前提下压缩音视频文件体积，使用 CRF 画质因子控制压缩程度。
 
@@ -10,7 +10,7 @@
 ┌─────────────┐
 │  platform    │
 ├─────────────┤
-│★ tool        │  media-analyze、media-resize、media-compress（本 skill）、media-trim
+│★ tool        │  media-analyze、media-resize、media-compress（本 skill）、media-trim、media-play、media-framerate
 ├─────────────┤
 │  quality     │
 ├─────────────┤

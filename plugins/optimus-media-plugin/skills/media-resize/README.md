@@ -1,6 +1,6 @@
 # media-resize
 
-> 版本：1.2.0 | 分类：tool
+> 版本：1.2.1 | 分类：tool
 
 将视频文件转换到指定分辨率（如 1080p 转 720p），音频流透传不重新编码。
 
@@ -10,7 +10,7 @@
 ┌─────────────┐
 │  platform    │
 ├─────────────┤
-│★ tool        │  media-analyze、media-resize（本 skill）、media-compress、media-trim
+│★ tool        │  media-analyze、media-resize（本 skill）、media-compress、media-trim、media-play、media-framerate
 ├─────────────┤
 │  quality     │
 ├─────────────┤

@@ -1,6 +1,6 @@
 # ffmpeg / ffprobe / ffplay 安装与环境变量配置
 
-本仓库的 media-* 系列 skill（media-analyze/media-resize/media-compress/media-trim）依赖用户本机已安装 ffmpeg 与 ffprobe，media-play 额外依赖 ffplay，均需加入系统 PATH。以下按平台给出安装步骤。
+本仓库的 media-* 系列 skill（media-analyze/media-resize/media-compress/media-trim/media-framerate）依赖用户本机已安装 ffmpeg 与 ffprobe，media-play 额外依赖 ffplay，均需加入系统 PATH。以下按平台给出安装步骤。
 
 部分精简版 ffmpeg 发行包不包含 ffplay（如仅裁剪编解码功能的发行版），若 `ffplay -version` 提示命令不存在但 `ffmpeg`/`ffprobe` 正常，需改用下方"手动下载全量构建"或确认所选发行版包含 ffplay。
 

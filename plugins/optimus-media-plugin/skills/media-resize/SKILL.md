@@ -2,7 +2,7 @@
 name: media-resize
 description: Use when user wants to change a video's resolution — 分辨率转换、1080p转720p、改分辨率、缩放视频、视频转清晰度。Not for compression at the same resolution, trimming, or codec/format analysis.
 metadata:
-  version: "1.2.0"
+  version: "1.2.1"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -77,4 +77,4 @@ ffmpeg -i <input> -vf scale=-2:<目标高度> -c:a copy <output>
 - 不要在用户未确认放大画质损失前直接执行放大命令（Step 4 的检查点）
 - 不要在宽高比不一致时静默拉伸画面而不告知用户
 - 不要凭空假设输入文件名或路径——用户描述模糊时应先向用户确认具体文件
-- 不要在本 skill 的命令中叠加 `-crf`/`-preset` 等压缩参数——用户同时提出压缩体积诉求时，压缩部分应另行调用 `media-compress` skill 处理，组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"
+- 不要在本 skill 的命令中叠加 `-crf`/`-preset` 等压缩参数或 `-r`/`minterpolate` 等帧率参数——用户同时提出压缩体积或帧率转换诉求时，应分别另行调用 `media-compress`/`media-framerate` skill 处理，组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"
