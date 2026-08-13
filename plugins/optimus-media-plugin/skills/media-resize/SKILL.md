@@ -2,7 +2,7 @@
 name: media-resize
 description: Use when user wants to change a video's resolution — 分辨率转换、1080p转720p、改分辨率、缩放视频、视频转清晰度。Not for compression at the same resolution, trimming, or codec/format analysis.
 metadata:
-  version: "1.0.1"
+  version: "1.2.0"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -17,22 +17,37 @@ allowed-tools: Bash
 
 ## 使用方法
 
+### Step 0：需求预告
+
+处理用户请求的第一步：对比本 skill 需要的信息与用户在触发语句或上下文中已提供的信息，一次性列出缺失项统一询问，不逐个 Step 反应式追问。
+
+- 需要比对的信息：输入文件路径、目标分辨率、输出文件路径——用户已明确提供的项不重复询问，若这三项已经齐全，跳过本步骤直接进入 Step 1
+- ffmpeg 依赖是否安装**不参与本环节比对**：这是系统状态而非用户可主动提供的信息，不作为缺失项询问用户，也不影响"是否跳过本步骤"的判断；依赖状态由 Step 1 实际检测，需要时可提示"执行时会自动检测 ffmpeg 环境"，但不构成阻塞
+
+本步骤不做实际系统调用（不检测 ffmpeg 是否真的安装、不检测文件是否真的存在），仅做信息是否齐全的静态比对，实际检测由 Step 1-4 完成。
+
 ### Step 1：确认环境
 
-执行 `../media-ffmpeg-common/REFERENCE.md` 中的环境检测命令，确认 `ffmpeg` 可用。
+执行 `../media-ffmpeg-common/REFERENCE.md` 中的环境检测命令，确认 `ffmpeg` 可用。检查失败（命令不存在）：引导用户参考 `../media-ffmpeg-common/INSTALL.md` 安装，返回错误信息并终止任务，不进入后续步骤。
 
-### Step 2：确认输出路径
+### Step 2：校验输入文件
 
-🔴 CHECKPOINT：向用户确认或由 Claude 根据上下文给出明确的输出文件路径，不得省略 `-o`/输出参数直接执行；未确认前不得进入 Step 3。
+检查用户提供的输入文件路径是否存在。不存在时返回错误信息告知用户核对路径，终止任务，不进入后续步骤。
 
-### Step 3：执行前校验
+### Step 3：确认输出路径
 
-🔴 CHECKPOINT：先无条件执行 media-analyze 对应的 `ffprobe` 命令确认原始分辨率，再判断以下两种情况——命中任一情况都需在执行前主动确认，而非等 ffmpeg 报错后处理，未确认前不得进入 Step 4：
+🔴 CHECKPOINT：向用户确认或由 Claude 根据上下文给出明确的输出文件路径，不得省略 `-o`/输出参数直接执行；未确认前不得进入 Step 4。
+
+确认路径后校验其父目录是否存在且可写。父目录不存在或无写权限时返回错误信息告知用户，终止任务；输出文件本身此刻不存在属正常状态，不作为失败条件。
+
+### Step 4：执行前校验
+
+🔴 CHECKPOINT：先无条件执行 media-analyze 对应的 `ffprobe` 命令确认原始分辨率，再判断以下两种情况——命中任一情况都需在执行前主动确认，而非等 ffmpeg 报错后处理，未确认前不得进入 Step 5：
 
 - **放大**：若目标分辨率高于原始分辨率，告知用户放大会损失画质，需用户明确确认后才能继续
 - **宽高比不一致**：若用户给出的目标宽高比与原始视频不一致，告知用户画面会被拉伸变形，询问是否改为等比例缩放（用 `-2` 占位一边）；用户坚持强制双边宽高则按指定值执行，但需在执行前明确告知会拉伸变形
 
-### Step 4：执行转换
+### Step 5：执行转换
 
 ```bash
 ffmpeg -i <input> -vf scale=-2:<目标高度> -c:a copy <output>
@@ -55,8 +70,11 @@ ffmpeg -i <input> -vf scale=-2:<目标高度> -c:a copy <output>
 
 ## 不要做什么
 
-- 不要在用户未确认输出路径前执行命令（Step 2 的检查点）
-- 不要在用户未确认放大画质损失前直接执行放大命令（Step 3 的检查点）
+- 不要在 ffmpeg 环境检测失败时继续执行，应立即返回错误信息并终止（Step 1）
+- 不要在输入文件路径不存在时继续执行，应立即返回错误信息并终止（Step 2）
+- 不要在用户未确认输出路径前执行命令（Step 3 的检查点）
+- 不要在输出目录不存在或不可写时继续执行，应立即返回错误信息并终止（Step 3）
+- 不要在用户未确认放大画质损失前直接执行放大命令（Step 4 的检查点）
 - 不要在宽高比不一致时静默拉伸画面而不告知用户
 - 不要凭空假设输入文件名或路径——用户描述模糊时应先向用户确认具体文件
 - 不要在本 skill 的命令中叠加 `-crf`/`-preset` 等压缩参数——用户同时提出压缩体积诉求时，压缩部分应另行调用 `media-compress` skill 处理，组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"

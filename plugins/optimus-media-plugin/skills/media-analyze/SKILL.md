@@ -2,7 +2,7 @@
 name: media-analyze
 description: Use when user wants to inspect a media file's codec, resolution, bitrate, frame rate, or duration — 分析视频、分析音频、查看编码格式、查看分辨率码率帧率、这个视频什么编码、ffprobe。Not for editing, converting, compressing, or trimming media.
 metadata:
-  version: "1.0.1"
+  version: "1.1.0"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg/ffprobe 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -17,11 +17,24 @@ allowed-tools: Bash
 
 ## 使用方法
 
+### Step 0：需求预告
+
+处理用户请求的第一步：对比本 skill 需要的信息与用户在触发语句或上下文中已提供的信息，一次性列出缺失项统一询问，不逐个 Step 反应式追问。
+
+- 需要比对的信息：输入文件路径——用户已明确提供则跳过本步骤直接进入 Step 1
+- ffprobe 依赖是否安装**不参与本环节比对**：这是系统状态而非用户可主动提供的信息，不作为缺失项询问用户，也不影响是否跳过本步骤的判断；依赖状态由 Step 1 实际检测
+
+本步骤不做实际系统调用，仅做信息是否齐全的静态比对。
+
 ### Step 1：确认环境
 
-执行 `../media-ffmpeg-common/REFERENCE.md` 中的环境检测命令，确认 `ffprobe` 可用。若不可用，引导用户参考 `../media-ffmpeg-common/INSTALL.md` 安装。
+执行 `../media-ffmpeg-common/REFERENCE.md` 中的环境检测命令，确认 `ffprobe` 可用。检查失败（命令不存在）：引导用户参考 `../media-ffmpeg-common/INSTALL.md` 安装，返回错误信息并终止任务，不进入后续步骤。
 
-### Step 2：执行分析
+### Step 2：校验输入文件
+
+检查用户提供的输入文件路径是否存在。不存在时返回错误信息告知用户核对路径，终止任务，不进入后续步骤。
+
+### Step 3：执行分析
 
 ```bash
 ffprobe -v quiet -print_format json -show_format -show_streams <input>
@@ -29,7 +42,7 @@ ffprobe -v quiet -print_format json -show_format -show_streams <input>
 
 参数说明见 `../media-ffmpeg-common/CLI-REFERENCE.md`。
 
-### Step 3：整理输出
+### Step 4：整理输出
 
 解析上一步的 JSON 输出，提取以下字段整理为表格展示给用户，不直接把原始 JSON 贴给用户：
 
@@ -52,3 +65,9 @@ ffprobe -v quiet -print_format json -show_format -show_streams <input>
 参见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。
 
 本 skill 为只读查询，可在组合请求（分辨率转换/压缩/截取的组合）中随时按需先行调用以确认原始参数，不参与 `../media-ffmpeg-common/REFERENCE.md` "组合请求处理约定"中的顺序编排。
+
+## 不要做什么
+
+- 不要在 ffprobe 环境检测失败时继续执行，应立即返回错误信息并终止（Step 1）
+- 不要在输入文件路径不存在时继续执行，应立即返回错误信息并终止（Step 2）
+- 不要把原始 JSON 直接贴给用户，应整理为结构化表格（Step 4）

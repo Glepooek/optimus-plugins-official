@@ -1,6 +1,6 @@
 # media-compress
 
-> 版本：1.0.1 | 分类：tool
+> 版本：1.1.0 | 分类：tool
 
 在不改变分辨率的前提下压缩音视频文件体积，使用 CRF 画质因子控制压缩程度。
 
@@ -27,13 +27,17 @@
 ## 业务逻辑流程图
 
 ```
-Step 1  确认 ffmpeg 环境可用
+Step 0  需求预告：一次性列出缺失信息并询问（信息已齐全则跳过）
    ↓
-Step 2  确认输出路径（必须显式指定）
+Step 1  确认 ffmpeg 环境可用（依赖检查）
    ↓
-Step 3  按用户描述映射 CRF 取值
+Step 2  校验输入文件是否存在（输入参数检查）
    ↓
-Step 4  执行 ffmpeg -crf <取值> -preset medium
+Step 3  确认输出路径 🔴 CHECKPOINT + 校验输出目录可写（输出参数检查）
+   ↓
+Step 4  按用户描述映射 CRF 取值
+   ↓
+Step 5  执行 ffmpeg -crf <取值> -preset medium
 ```
 
 ## 产出物数据流
