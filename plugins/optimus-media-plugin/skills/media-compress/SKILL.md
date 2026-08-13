@@ -1,8 +1,8 @@
 ---
 name: media-compress
-description: Use when user wants to reduce a media file's size while keeping the same resolution — 压缩视频、压缩音频、音视频压缩、减小文件体积、CRF调画质。Not for resolution changes, clip trimming, or pure codec/format inspection.
+description: Use when user wants to reduce a media file's size while keeping the same resolution — 压缩视频、压缩音频、音视频压缩、减小文件体积、CRF调画质、压缩到指定大小、压缩到多少MB。Not for resolution changes, clip trimming, or pure codec/format inspection.
 metadata:
-  version: "1.1.1"
+  version: "1.2.0"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -13,7 +13,7 @@ allowed-tools: Bash
 
 ## 功能概述
 
-在不改变分辨率的前提下压缩单个音视频文件体积。仅支持 CRF（画质因子）模式，不支持"压缩到指定文件大小"的目标码率模式——后者需要二次编码估算码率，复杂度与当前定位不匹配。输出路径必须由用户或 Claude 显式指定。
+在不改变分辨率的前提下压缩单个音视频文件体积。支持两种模式：默认的 CRF（画质因子）模式，与用户明确指定目标体积时的两轮编码（two-pass）目标码率模式。两者互斥，只能二选一，不支持同时指定。相同目标体积下 CRF 模式画质通常更优（详见 Step 4），目标码率模式仅在用户对文件大小有硬性要求时使用。输出路径必须由用户或 Claude 显式指定。
 
 ## 使用方法
 
@@ -22,6 +22,7 @@ allowed-tools: Bash
 处理用户请求的第一步：对比本 skill 需要的信息与用户在触发语句或上下文中已提供的信息，一次性列出缺失项统一询问，不逐个 Step 反应式追问。
 
 - 需要比对的信息：输入文件路径、输出文件路径——用户已明确提供的项不重复询问，若已经齐全，跳过本步骤直接进入 Step 1；画质偏好描述（如"画质优先"）有默认取值（CRF 23），不属于必需信息，缺失不阻塞
+- 用户明确要求"压缩到指定大小/多少 MB"时，目标体积数值属于必需信息，缺失需询问；视频总时长无需询问用户，由 Step 4 自动调用 media-analyze 查询
 - ffmpeg 依赖是否安装**不参与本环节比对**：这是系统状态而非用户可主动提供的信息，不作为缺失项询问用户，也不影响是否跳过本步骤的判断；依赖状态由 Step 1 实际检测
 
 本步骤不做实际系统调用，仅做信息是否齐全的静态比对。
@@ -40,7 +41,11 @@ allowed-tools: Bash
 
 确认路径后校验其父目录是否存在且可写。父目录不存在或无写权限时返回错误信息告知用户，终止任务；输出文件本身此刻不存在属正常状态，不作为失败条件。
 
-### Step 4：确定 CRF 取值
+### Step 4：确定压缩模式与参数
+
+默认使用 CRF 模式；仅当用户明确要求"压缩到指定大小/多少 MB"等目标体积诉求时，使用目标码率模式。
+
+**CRF 模式（默认）：**
 
 默认 CRF 23（视觉无损与体积的常见平衡点）。根据用户口语化描述调整：
 
@@ -50,7 +55,21 @@ allowed-tools: Bash
 | 默认 / 没有特殊要求 | 23 |
 | 体积优先 / 压缩狠一点 | 26-28 |
 
+**目标码率模式（用户明确要求指定体积时）：**
+
+🔴 CHECKPOINT：告知用户"相同目标体积下，CRF 模式通常画质更优——CRF 按画面复杂度自由分配比特，不受体积上限约束；目标码率模式受限于固定预算，画质会随之打折扣"，询问用户是否仍要继续目标体积模式，还是改用 CRF 模式配合"体积优先"档位（CRF 26-28）间接控制体积。用户坚持目标体积模式则继续；改选 CRF 则回退到上方 CRF 分支。未确认前不得进入 Step 5。
+
+确认继续后，调用 media-analyze 对应的 `ffprobe` 命令查询视频总时长，按以下公式计算目标视频码率：
+
+```
+目标视频码率(kbps) = 目标大小(MB) × 8192 / 时长(秒) − 音频码率(128 kbps)
+```
+
+**硬约束**：若算出的目标视频码率 ≤ 0（目标体积过小，扣除音频码率后已无空间容纳视频），说明该目标体积在物理上不可行，无法通过用户确认绕过。返回错误信息告知用户当前时长与音频码率下的最小可行体积，请求提高目标大小或接受更低的音频码率，终止任务，不进入 Step 5。
+
 ### Step 5：执行压缩
+
+**CRF 模式：**
 
 ```bash
 ffmpeg -i <input> -c:v libx264 -crf <取值> -preset medium -c:a aac -b:a 128k <output>
@@ -58,11 +77,28 @@ ffmpeg -i <input> -c:v libx264 -crf <取值> -preset medium -c:a aac -b:a 128k <
 
 `-preset medium` 是编码速度与压缩率的常见平衡点，用户明确要求"更快"可改为 `fast`，要求"压缩率更高不介意慢"可改为 `slow`。
 
+**目标码率模式（两轮编码）：**
+
+```bash
+# 第一轮：分析画面复杂度分布，不产出可用文件
+ffmpeg -y -i <input> -c:v libx264 -b:v <目标视频码率>k -preset medium -pass 1 -an -f mp4 /dev/null
+
+# 第二轮：依据第一轮分析结果精确分配码率
+ffmpeg -i <input> -c:v libx264 -b:v <目标视频码率>k -preset medium -pass 2 -c:a aac -b:a 128k <output>
+```
+
+Windows 环境下第一轮命令末尾的 `/dev/null` 替换为 `NUL`。两轮编码会在当前目录生成 `ffmpeg2pass-0.log` 等临时日志文件，任务完成后清理。
+
 参数说明见 `../media-ffmpeg-common/CLI-REFERENCE.md`。
 
 ## 失败处理
 
-参见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。
+参见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。以下是本 skill 特有的失败场景：
+
+| 触发条件 | 原因 | 处理建议 |
+|---|---|---|
+| 目标码率模式下最终文件大小与目标体积有小幅偏差（通常 ±5% 以内） | 两轮编码是基于码率的估算控制，非逐字节精确匹配 | 属正常现象，告知用户该偏差范围；若用户要求更严格的精确匹配，说明当前定位下无法保证逐字节精确 |
+| 第二轮命令报错找不到 `ffmpeg2pass-0.log` | 第一轮命令未成功执行或提前被中断 | 重新按顺序执行第一轮命令后再执行第二轮，不得跳过第一轮直接执行第二轮 |
 
 若用户同时提出分辨率转换、片段截取或帧率转换诉求，不要在本 skill 命令中叠加 `-vf scale`/`-ss`/`-to`/`-r` 等参数，应分别调用对应 skill；组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"。
 
@@ -72,3 +108,7 @@ ffmpeg -i <input> -c:v libx264 -crf <取值> -preset medium -c:a aac -b:a 128k <
 - 不要在输入文件路径不存在时继续执行，应立即返回错误信息并终止（Step 2）
 - 不要在用户未确认输出路径前执行命令（Step 3 的检查点）
 - 不要在输出目录不存在或不可写时继续执行，应立即返回错误信息并终止（Step 3）
+- 不要在用户未确认继续目标码率模式前直接执行两轮编码——应先告知 CRF 模式画质通常更优（Step 4 的检查点）
+- 不要在目标视频码率计算结果 ≤ 0 时继续执行，应立即返回错误信息并终止（Step 4，硬约束不可用户确认绕过）
+- 不要同时在命令中指定 `-crf` 与 `-b:v`——两者是互斥的码率控制模式，必须二选一
+- 不要跳过第一轮编码直接执行第二轮，两轮编码命令必须按顺序完整执行
