@@ -1,6 +1,6 @@
 # media-resize
 
-> 版本：1.0.0 | 分类：tool
+> 版本：1.0.1 | 分类：tool
 
 将视频文件转换到指定分辨率（如 1080p 转 720p），音频流透传不重新编码。
 
@@ -29,9 +29,11 @@
 ```
 Step 1  确认 ffmpeg 环境可用
    ↓
-Step 2  确认输出路径（必须显式指定）
+Step 2  确认输出路径（必须显式指定）🔴 CHECKPOINT
    ↓
-Step 3  执行 ffmpeg -vf scale=-2:H -c:a copy
+Step 3  执行前校验：放大画质损失 / 宽高比不一致 🔴 CHECKPOINT
+   ↓
+Step 4  执行 ffmpeg -vf scale=-2:H -c:a copy
 ```
 
 ## 产出物数据流

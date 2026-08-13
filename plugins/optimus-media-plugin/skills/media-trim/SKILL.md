@@ -2,7 +2,7 @@
 name: media-trim
 description: Use when user wants to cut a specific segment out of a media file — 片段截取、截取视频、剪切一段、掐头去尾、截取某个时间段。Not for resolution changes, compression, or codec/format inspection.
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -51,3 +51,5 @@ ffmpeg -i <input> -ss <start> -to <end> -c:v libx264 -crf 18 -c:a aac <output>
 |---|---|
 | 起始时间超过视频总时长 | 提示用户核对时间戳，可用 media-analyze skill 先查看视频的准确时长 |
 | 快速模式下截取起点画面出现绿屏/花屏 | 说明是因为对齐到了非关键帧附近，建议改用精确模式重新截取 |
+
+若用户同时提出分辨率转换或压缩体积诉求，不要在本 skill 命令中叠加 `-vf scale`/`-crf` 等参数，应分别调用对应 skill；组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"。

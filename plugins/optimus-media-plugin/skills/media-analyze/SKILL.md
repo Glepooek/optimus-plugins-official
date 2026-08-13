@@ -2,7 +2,7 @@
 name: media-analyze
 description: Use when user wants to inspect a media file's codec, resolution, bitrate, frame rate, or duration — 分析视频、分析音频、查看编码格式、查看分辨率码率帧率、这个视频什么编码、ffprobe。Not for editing, converting, compressing, or trimming media.
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg/ffprobe 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -50,3 +50,5 @@ ffprobe -v quiet -print_format json -show_format -show_streams <input>
 ## 失败处理
 
 参见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。
+
+本 skill 为只读查询，可在组合请求（分辨率转换/压缩/截取的组合）中随时按需先行调用以确认原始参数，不参与 `../media-ffmpeg-common/REFERENCE.md` "组合请求处理约定"中的顺序编排。

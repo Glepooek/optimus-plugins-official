@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.1] - 2026-08-13
+
+### Added
+- 失败处理章节新增组合请求边界说明，指向 `media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"
+
 ## [1.0.0] - 2026-08-12
 
 ### Added
