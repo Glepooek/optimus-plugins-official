@@ -14,7 +14,7 @@ winget install ffmpeg
 
 **方式二：手动下载全量构建**
 
-1. 从 [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) 或 [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds/releases) 下载 `ffmpeg-release-full.7z`
+1. 从 [gyan.dev](https://www.gyan.dev/ffmpeg/builds/) 下载 `ffmpeg-release-full.7z`，或从 [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds/releases) 下载 `ffmpeg-*-win64-gpl.zip`（文件名含版本号/commit hash，非固定文件名；`gyan.dev` 为 `.7z`，`BtbN` 为 `.zip`，解压工具需对应）
 2. 解压到固定目录，如 `C:\ffmpeg`
 3. 将 `C:\ffmpeg\bin` 加入系统 PATH：
    - 右键"此电脑" → "属性" → "高级系统设置" → "环境变量"
