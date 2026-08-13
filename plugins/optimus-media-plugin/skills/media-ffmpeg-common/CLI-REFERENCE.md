@@ -1,6 +1,6 @@
 # ffmpeg 命令行参数速查
 
-仅覆盖 media-analyze/media-resize/media-compress/media-trim 四个 skill 实际用到的参数，不是 ffmpeg 完整参数手册。
+仅覆盖 media-analyze/media-resize/media-compress/media-trim/media-play 五个 skill 实际用到的参数，不是 ffmpeg 完整参数手册。
 
 | 参数 | 用途 | 使用场景 |
 |---|---|---|
@@ -14,3 +14,5 @@
 | `-to <时间点>` | 结束时间点，格式同 `-ss` | media-trim |
 | `-c copy` | 流复制，不重新编码，速度极快 | media-trim 快速模式、media-resize 音频透传（`-c:a copy`） |
 | `-y` | 覆盖已存在的输出文件，不交互询问 | 全部 |
+| `-window_title <标题>` | 设置 ffplay 播放窗口标题 | media-play |
+| `-autoexit` | 播放结束后自动关闭窗口退出，无需手动操作 | media-play |

@@ -1,6 +1,8 @@
-# ffmpeg / ffprobe 安装与环境变量配置
+# ffmpeg / ffprobe / ffplay 安装与环境变量配置
 
-本仓库的 media-* 系列 skill（media-analyze/media-resize/media-compress/media-trim）依赖用户本机已安装 ffmpeg 与 ffprobe，并加入系统 PATH。以下按平台给出安装步骤。
+本仓库的 media-* 系列 skill（media-analyze/media-resize/media-compress/media-trim）依赖用户本机已安装 ffmpeg 与 ffprobe，media-play 额外依赖 ffplay，均需加入系统 PATH。以下按平台给出安装步骤。
+
+部分精简版 ffmpeg 发行包不包含 ffplay（如仅裁剪编解码功能的发行版），若 `ffplay -version` 提示命令不存在但 `ffmpeg`/`ffprobe` 正常，需改用下方"手动下载全量构建"或确认所选发行版包含 ffplay。
 
 ## Windows
 
@@ -42,6 +44,9 @@ sudo dnf install ffmpeg
 ```bash
 ffmpeg -version
 ffprobe -version
+ffplay -version
 ```
 
-两个命令均应输出版本号（如 `ffmpeg version 6.1...`）。若提示命令不存在，说明安装未完成或 PATH 未生效，请重新打开终端或检查上述步骤。
+三个命令均应输出版本号（如 `ffmpeg version 6.1...`）。若提示命令不存在，说明安装未完成或 PATH 未生效，请重新打开终端或检查上述步骤；若仅 `ffplay` 提示不存在，参见上方关于精简发行版的说明。
+
+`ffplay` 弹出的播放窗口依赖本机图形显示环境，无 GUI 的远程终端会话（如纯 SSH 连接、无桌面的容器）即使安装成功也无法弹出播放窗口。
