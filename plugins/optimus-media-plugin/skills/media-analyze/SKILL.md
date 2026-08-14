@@ -2,7 +2,7 @@
 name: media-analyze
 description: Use when user wants to inspect a media file's codec, resolution, bitrate, frame rate, or duration — 分析视频、分析音频、查看编码格式、查看分辨率码率帧率、这个视频什么编码、ffprobe。Not for editing, converting, compressing, or trimming media.
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg/ffprobe 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -48,6 +48,8 @@ ffprobe -v quiet -print_format json -show_format -show_streams <input>
 
 参数说明见 `../media-ffmpeg-common/CLI-REFERENCE.md`。
 
+⛔ **STOP**：命令返回非零退出码，或输出 JSON 中 `streams` 为空数组（文件已损坏、格式不受支持、非媒体文件）时，返回错误信息告知用户该文件无法被 ffprobe 解析，终止任务，不进入 Step 4。
+
 ### Step 4：整理输出
 
 解析上一步的 JSON 输出，提取以下字段整理为表格展示给用户，不直接把原始 JSON 贴给用户：
@@ -76,4 +78,5 @@ ffprobe -v quiet -print_format json -show_format -show_streams <input>
 
 - 不要在 ffprobe 环境检测失败时继续执行，应立即返回错误信息并终止（Step 1）
 - 不要在输入文件路径不存在时继续执行，应立即返回错误信息并终止（Step 2）
+- 不要在 ffprobe 返回非零退出码或 `streams` 为空时继续解析，应立即返回错误信息并终止（Step 3）
 - 不要把原始 JSON 直接贴给用户，应整理为结构化表格（Step 4）
