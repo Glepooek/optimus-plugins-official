@@ -2,7 +2,7 @@
 name: media-trim
 description: Use when user wants to cut a specific segment out of a media file — 片段截取、截取视频、剪切一段、掐头去尾、截取某个时间段。Not for resolution changes, compression, or codec/format inspection.
 metadata:
-  version: "1.1.1"
+  version: "1.1.2"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -44,6 +44,7 @@ allowed-tools: Bash
 
 先执行 media-analyze 对应的 `ffprobe` 命令确认视频总时长，再判断起始/结束时间点是否落在合法区间内：
 
+- **ffprobe 命令本身执行失败（无输出或报错，查不出总时长）**：说明文件可能已损坏或编码格式不受当前 ffmpeg 构建支持，而非时间戳问题。返回错误信息告知用户文件可能已损坏，建议先用 media-analyze 单独排查，终止任务，不进入 Step 5
 - **起始或结束时间超过视频总时长**：属于硬约束——截取区间在物理上不存在，无法通过用户确认绕过。返回错误信息告知用户核对时间戳（可参考刚查得的总时长），终止任务，不进入 Step 5
 
 ### Step 5：执行截取
@@ -81,3 +82,4 @@ ffmpeg -i <input> -ss <start> -to <end> -c:v libx264 -crf 18 -c:a aac <output>
 - 不要在用户未确认输出路径前执行命令（Step 3 的检查点）
 - 不要在输出目录不存在或不可写时继续执行，应立即返回错误信息并终止（Step 3）
 - 不要在起始/结束时间超过视频总时长时继续执行，应立即返回错误信息并终止（Step 4，硬约束不可用户确认绕过）
+- 不要在 ffprobe 查询总时长本身失败时，误判为时间戳问题并要求用户核对时间戳，应告知文件可能已损坏（Step 4）
