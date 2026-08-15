@@ -2,7 +2,7 @@
 name: media-download
 description: Use when user wants to download a single online video or audio by URL — 下载视频、下载这个视频、视频下载、帮我下载这个链接的视频、yt-dlp。Not for playlist/channel batch downloads, content requiring login credentials, or local file transcoding/compression/trimming.
 metadata:
-  version: "1.0.1"
+  version: "1.0.2"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 yt-dlp 并加入 PATH（见下方安装指引），以及 ffmpeg（供 yt-dlp 合并分离的音视频流），参见 ../media-ffmpeg-common/INSTALL.md。
@@ -13,7 +13,7 @@ allowed-tools: Bash
 
 ## 功能概述
 
-基于 yt-dlp 下载单个在线视频/音频链接到本地指定路径。下载前先查询该链接所有可用格式供用户选择，不臆测清晰度。仅支持单个链接，不支持播放列表/频道批量下载；仅下载用户本人有权访问且平台允许下载的公开内容，不支持需要登录凭据（cookies）才能访问的内容（会员专享、地区限制等），遇到此类内容直接报错终止，不引导用户配置 cookies。下载完成即任务终态，不自动衔接 media-trim/media-resize/media-compress/media-framerate 等后续处理，如需继续编辑请另行触发对应 skill。
+基于 yt-dlp 下载单个在线视频/音频链接到本地指定路径。下载前先查询该链接所有可用格式供用户选择，不臆测清晰度。仅支持单个链接，不支持播放列表/频道批量下载；仅下载用户本人有权访问且遵守所在平台服务条款的公开内容，不用于规避版权保护措施，不支持需要登录凭据（cookies）才能访问的内容（会员专享、地区限制等），遇到此类内容直接报错终止，不引导用户配置 cookies。下载完成即任务终态，不自动衔接 media-trim/media-resize/media-compress/media-framerate 等后续处理，如需继续编辑请另行触发对应 skill。
 
 ## 使用方法
 
@@ -22,6 +22,7 @@ allowed-tools: Bash
 处理用户请求的第一步：对比本 skill 需要的信息与用户在触发语句或上下文中已提供的信息，一次性列出缺失项统一询问，不逐个 Step 反应式追问。
 
 - 需要比对的信息：视频/音频链接 URL、输出保存路径——用户已明确提供的项不重复询问，若这两项已经齐全，跳过本步骤直接进入 Step 1
+- 若用户的自然语言描述本身已明确表达批量/合集/全部下载意图（如"合集""全部下载""这个频道所有视频"等措辞），无需等待用户提供具体链接，直接告知不支持播放列表/频道批量下载并终止，不进入 Step 1
 - 清晰度/格式**不参与本环节比对**：必须先在 Step 4 查询该链接实际可用格式后才能让用户选择，不能在需求预告阶段要求用户凭空报一个可能不存在的清晰度，缺失不阻塞本步骤
 - yt-dlp/ffmpeg 依赖是否安装**不参与本环节比对**：这是系统状态而非用户可主动提供的信息，不作为缺失项询问用户，也不影响是否跳过本步骤的判断；依赖状态由 Step 1 实际检测
 
@@ -44,6 +45,8 @@ yt-dlp --version
 检查用户提供的字符串是否为合法 URL 格式（包含协议头 `http://`/`https://` 及基本结构）。这一步是**格式校验**，不是本地文件是否存在的检查——与其他 media-* skill 的"校验输入文件"步骤有本质区别，不要混用判断逻辑。
 
 格式不合法：返回错误信息告知用户核对链接，终止任务，不进入后续步骤。
+
+若 URL 本身是纯播放列表/合集链接（结构上只含播放列表标识、不含具体单条视频 ID，如 `.../playlist?list=...`）：这类链接即使加 `--no-playlist` 参数，yt-dlp 也会因找不到可回退的单条视频而直接下载整个播放列表，无法通过命令参数拦截。识别到此类链接应直接告知用户本 skill 不支持播放列表/频道批量下载并终止，不进入 Step 3，不依赖 Step 4/5 的 `--no-playlist` 被动兜底。
 
 ### Step 3：确认输出路径
 
@@ -93,6 +96,6 @@ yt-dlp -f <format_id> -o <output> --no-playlist <url>
 - 不要在输出目录不存在或不可写时继续执行，应立即返回错误信息并终止（Step 3）
 - 不要跳过 Step 4 的格式查询直接下载"最佳画质"，必须让用户从实际可用列表中选择具体 format id
 - 不要在 Step 4 查询格式失败时臆测原因强行重试，应如实报告 yt-dlp 返回的错误信息并终止
-- 不要支持播放列表/频道批量下载，仅处理单个视频/音频链接
+- 不要支持播放列表/频道批量下载，仅处理单个视频/音频链接；用户表述或链接结构已能识别为批量下载意图时，不要等到 Step 4/5 才被动发现，应在 Step 0/Step 2 主动识别并终止
 - 不要支持需要登录凭据（cookies）才能访问的内容，遇到直接报错终止，不引导用户提供 cookies
 - 不要在下载完成后自动调用 media-trim/media-resize/media-compress/media-framerate 做后续处理，也不写入组合请求编排链条
