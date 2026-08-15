@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "帮我下载 https://example.com/watch?v=abc123 这个视频，保存到 D:/downloads/video.mp4",
+    "expected": "信息已齐全（URL、输出路径都给了），跳过 Step 0 询问；依次做 yt-dlp/ffmpeg 环境检测、URL 格式校验、CHECKPOINT 确认输出路径、Step 4 查询可用格式并展示列表要求用户选择 format id，不跳过格式选择直接下载"
+  },
+  {
+    "id": 2,
+    "prompt": "帮我把这个网站上的一个视频合集全部下载下来",
+    "expected": "识别为播放列表/批量下载诉求，超出本 skill 范围（仅支持单个视频链接），应告知用户不支持批量下载并终止，不尝试变通实现"
+  },
+  {
+    "id": 3,
+    "prompt": "帮我下载 https://example.com/members-only-video 这个会员专享视频",
+    "expected": "Step 4 查询格式时 yt-dlp 报需要登录/会员权限，应识别为硬约束直接终止并告知用户本 skill 不支持需要登录凭据的内容，不引导用户提供 cookies 或账号密码"
+  }
+]
