@@ -1,6 +1,6 @@
 # media-download
 
-> 版本：1.0.0 | 分类：tool
+> 版本：1.0.1 | 分类：tool
 
 基于 yt-dlp 下载单个在线视频/音频链接到本地指定路径，下载前查询可用格式供用户选择。
 
@@ -38,7 +38,7 @@ Step 3  确认输出路径 🔴 CHECKPOINT + 校验输出目录可写（输出�
 Step 4  执行前校验：查询该链接所有可用格式 🔴 CHECKPOINT 用户选择 format id
          （运行条件检查，查询失败/需要登录凭据均为硬约束直接终止）
    ↓
-Step 5  执行下载：yt-dlp -f <format_id> -o <output> <url>
+Step 5  执行下载：yt-dlp -f <format_id> -o <output> --no-playlist <url>
 ```
 
 ## 产出物数据流
