@@ -2,7 +2,7 @@
 name: media-download
 description: Use when user wants to download a single online video or audio by URL — 下载视频、下载这个视频、视频下载、帮我下载这个链接的视频、yt-dlp。Not for playlist/channel batch downloads, content requiring login credentials, or local file transcoding/compression/trimming.
 metadata:
-  version: "1.0.3"
+  version: "1.1.0"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 yt-dlp 并加入 PATH（见下方安装指引），以及 ffmpeg（供 yt-dlp 合并分离的音视频流），参见 ../media-ffmpeg-common/INSTALL.md。
@@ -65,21 +65,31 @@ yt-dlp -F --no-playlist <url>
 - **查询失败**（网络错误、站点不支持、链接失效、需要登录凭据）：属于硬约束——无法通过用户确认绕过。如实报告 yt-dlp 返回的具体错误原因，终止任务，不进入 Step 5：
   - 提示 `Unsupported URL`：说明该站点不在 yt-dlp 支持列表内，告知用户并终止，不尝试降级为通用网页抓取
   - 提示需要登录/年龄验证/会员专享等信息（如 `Sign in to confirm your age`）：明确告知用户本 skill 不支持需要登录凭据的内容，终止任务，不引导用户配置 cookies
-- **查询成功**：向用户展示 yt-dlp 原生输出的格式列表（含 format id、分辨率、编码、文件大小等），🔴 CHECKPOINT 用户从列表中选择具体 format id 后才能进入 Step 5；用户选择的 format id 不在列表内时，提示核对列表重新选择，不代为猜测最接近的格式。
+- **查询成功**：向用户展示 yt-dlp 原生输出的格式列表（含 format id、分辨率、编码、文件大小等），🔴 CHECKPOINT 用户从列表中选择具体 format id 后才能进入 Step 5；用户选择的 format id 不在列表内时，提示核对列表重新选择，不代为猜测最接近的格式。记录用户所选 format id 对应行的 FILESIZE 原始值（如 `~470.22MiB`），供 Step 5 换算并发数使用。
 
 ### Step 5：执行下载
 
 ```bash
-yt-dlp -f <format_id> -o <output> --no-playlist <url>
+yt-dlp -f <format_id> -N <concurrent_fragments> -o <output> --no-playlist <url>
 ```
 
 若所选格式为分离的视频流+音频流，yt-dlp 会自动调用本机 ffmpeg 合并封装，本 skill 不需要手动拼接额外的 ffmpeg 合并命令。
+
+`<concurrent_fragments>` 取值参照 Step 4 中已记录的 FILESIZE，按下表分档（统一换算为 MiB：GiB×1024；`~` 预估前缀不影响取档）：
+
+| 预估文件大小（换算为 MiB 后） | `-N` 取值 |
+|---|---|
+| 未知（无具体大小或无法解析） | 4（默认） |
+| < 50 MiB | 2 |
+| 50 MiB ~ 300 MiB | 4 |
+| > 300 MiB | 8 |
 
 参数说明：
 
 | 参数 | 用途 |
 |---|---|
 | `-f <format_id>` | 指定 Step 4 中用户选择的 format id |
+| `-N <concurrent_fragments>` | 按上表设置并发分片数，加速 HLS/DASH 等分片协议下载；对直链等非分片协议 yt-dlp 会静默忽略，因此统一追加、不按协议区分；不引入 aria2c 等外部依赖 |
 | `-o <output>` | 指定 Step 3 确认的输出路径；yt-dlp 语法支持模板变量，但本 skill 场景下始终传入用户确认的具体路径，不使用模板变量 |
 | `--no-playlist` | 确保即使 URL 同时指向单条视频与其所属播放列表（如从播放列表页面复制的单条视频链接），也只下载该单条视频，这是从命令层面强制落实"不支持播放列表批量下载"边界的关键参数，不可省略 |
 
@@ -105,3 +115,4 @@ yt-dlp -f <format_id> -o <output> --no-playlist <url>
 - 不要支持播放列表/频道批量下载，仅处理单个视频/音频链接；用户表述或链接结构已能识别为批量下载意图时，不要等到 Step 4/5 才被动发现，应在 Step 0/Step 2 主动识别并终止
 - 不要支持需要登录凭据（cookies）才能访问的内容，遇到直接报错终止，不引导用户提供 cookies
 - 不要在下载完成后自动调用 media-trim/media-resize/media-compress/media-framerate 做后续处理，也不写入组合请求编排链条
+- 不要在 Step 5 的 FILESIZE 无法解析出具体数值时反复向用户追问，应直接按未知档位取默认并发数 4 继续执行
