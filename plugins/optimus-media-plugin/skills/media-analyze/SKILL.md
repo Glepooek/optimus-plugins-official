@@ -2,7 +2,7 @@
 name: media-analyze
 description: Use when user wants to inspect a media file's codec, resolution, bitrate, frame rate, or duration — 分析视频、分析音频、查看编码格式、查看分辨率码率帧率、这个视频什么编码、ffprobe。Not for editing, converting, compressing, or trimming media.
 metadata:
-  version: "1.1.1"
+  version: "1.1.2"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg/ffprobe 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -68,6 +68,8 @@ ffprobe -v quiet -print_format json -show_format -show_streams <input>
 
 无视频流（纯音频文件）时省略视频相关行；无音频流同理。
 
+流本身存在但某个字段缺失（如 PCM 等无损编码的音频流通常不提供 `bit_rate` 字段）时，与"无该流"是两种不同情况：该字段对应值展示为"未知"，不展示 `undefined`/`null`，也不因单个字段缺失判定为整体解析失败——判定解析失败仅适用于 Step 3 中 `streams` 为空数组的场景。
+
 ## 失败处理
 
 参见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。
@@ -80,3 +82,4 @@ ffprobe -v quiet -print_format json -show_format -show_streams <input>
 - 不要在输入文件路径不存在时继续执行，应立即返回错误信息并终止（Step 2）
 - 不要在 ffprobe 返回非零退出码或 `streams` 为空时继续解析，应立即返回错误信息并终止（Step 3）
 - 不要把原始 JSON 直接贴给用户，应整理为结构化表格（Step 4）
+- 不要把"流存在但字段缺失"（如 PCM 音频无 `bit_rate`）误判为整体解析失败或展示为 `undefined`/`null`，应展示"未知"（Step 4）
