@@ -2,7 +2,7 @@
 name: media-compress
 description: Use when user wants to reduce a media file's size while keeping the same resolution — 压缩视频、压缩音频、音视频压缩、减小文件体积、CRF调画质、压缩到指定大小、压缩到多少MB。Not for resolution changes, clip trimming, or pure codec/format inspection.
 metadata:
-  version: "1.2.0"
+  version: "1.2.1"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -59,7 +59,9 @@ allowed-tools: Bash
 
 🔴 CHECKPOINT：告知用户"相同目标体积下，CRF 模式通常画质更优——CRF 按画面复杂度自由分配比特，不受体积上限约束；目标码率模式受限于固定预算，画质会随之打折扣"，询问用户是否仍要继续目标体积模式，还是改用 CRF 模式配合"体积优先"档位（CRF 26-28）间接控制体积。用户坚持目标体积模式则继续；改选 CRF 则回退到上方 CRF 分支。未确认前不得进入 Step 5。
 
-确认继续后，调用 media-analyze 对应的 `ffprobe` 命令查询视频总时长，按以下公式计算目标视频码率：
+确认继续后，调用 media-analyze 对应的 `ffprobe` 命令查询视频总时长。查询失败（命令非零退出码，或输出中无法解析出时长，如文件已损坏、格式不受支持）时，返回错误信息告知用户该文件无法被解析，终止任务，不进入后续计算与 Step 5；此为硬约束，与文件路径存在性检查（Step 2）是两个独立环节，不能相互替代。
+
+查询成功后按以下公式计算目标视频码率：
 
 ```
 目标视频码率(kbps) = 目标大小(MB) × 8192 / 时长(秒) − 音频码率(128 kbps)
@@ -110,5 +112,6 @@ Windows 环境下第一轮命令末尾的 `/dev/null` 替换为 `NUL`。两轮�
 - 不要在输出目录不存在或不可写时继续执行，应立即返回错误信息并终止（Step 3）
 - 不要在用户未确认继续目标码率模式前直接执行两轮编码——应先告知 CRF 模式画质通常更优（Step 4 的检查点）
 - 不要在目标视频码率计算结果 ≤ 0 时继续执行，应立即返回错误信息并终止（Step 4，硬约束不可用户确认绕过）
+- 不要在目标码率模式下 media-analyze 查询视频时长失败时继续计算或执行，应立即返回错误信息并终止（Step 4，与 Step 2 的路径存在性检查是两个独立环节）
 - 不要同时在命令中指定 `-crf` 与 `-b:v`——两者是互斥的码率控制模式，必须二选一
 - 不要跳过第一轮编码直接执行第二轮，两轮编码命令必须按顺序完整执行

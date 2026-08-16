@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "帮我压缩一下 F:\\videos\\demo.mp4，输出到 F:\\videos\\demo-small.mp4",
+    "expected": "信息齐全（输入/输出路径已给），跳过 Step 0；默认走 CRF 23 模式，依次环境检测、输入文件校验、CHECKPOINT 确认输出路径、执行压缩命令，不擅自询问不必要的画质偏好"
+  },
+  {
+    "id": 2,
+    "prompt": "把这个视频压缩到 50MB 以内",
+    "expected": "识别为目标体积诉求，触发目标码率模式；Step 4 的 CHECKPOINT 必须先告知用户 CRF 模式画质通常更优，再询问是否坚持目标体积模式，不能跳过确认直接执行两轮编码"
+  },
+  {
+    "id": 3,
+    "prompt": "帮我把这个视频压缩一下，顺便改成 720p",
+    "expected": "识别为压缩 + 分辨率转换的组合请求，不在 ffmpeg 命令里叠加 -vf scale 参数，应分别调用 media-compress 和 media-resize，不擅自合并成一条命令"
+  }
+]
