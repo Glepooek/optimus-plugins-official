@@ -146,7 +146,7 @@
 ---
 [工具] ✏️ Edit 精确编辑\n功能：通过精确匹配字符串替换来编辑文件\n效果：只修改需要变更的部分，保留其他内容不变\n例子：Edit 修改函数实现，保持格式和注释不变
 ---
-[工具] 📝 Write 创建文件\n功能：创建新文件或完全重写现有文件\n效果：适合生成新代码、配置文件或文档\n例子：Write 创建新的组件文件或配置文件
+[工具] 📝 Write 创建文件\n功能：创建新文件或完全重写现有文件；v2.1.228 起新模型（如 Sonnet 5、Opus 5 等）可以覆盖本会话未读取过的已有文件，规则与 Edit 工具对齐，较旧模型仍需先 Read 该文件\n效果：适合生成新代码、配置文件或文档；新模型省去了"必须先 Read 才能 Write"的强制步骤\n例子：Write 创建新的组件文件或配置文件；Sonnet 5 等新模型可直接 Write 覆盖未读取过的已有文件
 ---
 [工具] 💻 Bash 命令执行\n功能：执行 shell 命令并获取输出\n效果：运行构建、测试、部署等任何命令行操作\n例子：Bash 运行 npm test 查看测试结果
 ---
@@ -555,4 +555,20 @@
 [交互] 🔌 /plugin install 立即激活\n功能：v2.1.221 起通过 /plugin 安装的插件，在安全的情况下立即激活，不再要求先手动 /reload-plugins\n效果：装完插件马上可用，减少一步手动操作\n例子：/plugin 搜索安装某插件后，无需再输入 /reload-plugins 即可直接使用其 skill
 ---
 [配置] 🪟 CLAUDE_CODE_DISABLE_1M_CONTEXT 覆盖范围澄清\n功能：v2.1.223 起该环境变量会让每一个原生支持 1M 上下文窗口的 Claude 模型都通过自动压缩被限制在 200K，而不仅是固定的旧模型列表；若自动压缩未能把会话稳定控制在 200K 以内，启动时会打印警告\n效果：企业统一限制上下文预算时，新发布的 1M 模型也会自动纳入限制范围，无需每次发布新模型都更新配置\n例子：CLAUDE_CODE_DISABLE_1M_CONTEXT=1 claude 让当前及未来任何 1M 上下文模型都被压缩控制在 200K
+---
+[配置] ✅ CLAUDE_CODE_ENABLE_TODO_TOOLS 恢复任务工具\n功能：Opus 4.8、Sonnet 5、Fable 5、Mythos 5 等更新模型上，TaskCreate/TaskGet/TaskUpdate/TaskList、TodoWrite 默认不再可用；设置环境变量 CLAUDE_CODE_ENABLE_TODO_TOOLS=1 可恢复\n效果：依赖这些工具做任务跟踪的工作流升级模型后若发现任务列表消失，可通过此变量找回\n例子：CLAUDE_CODE_ENABLE_TODO_TOOLS=1 claude 在新模型上重新启用 TodoWrite 等任务跟踪工具
+---
+[高级] 🍴 Agent fork 默认开启与后台默认派生\n功能：v2.1.232 起 subagent_type: "fork" 的子代理默认继承完整对话与 prompt cache；交互会话中非 teammate 的 agent 派生默认转为后台运行\n效果：fork 子代理复用缓存更省成本，普通派生不再阻塞主对话，可以边聊边等子代理完成\n例子：Agent(subagent_type="fork") 派生的子代理直接复用当前会话上下文和缓存，无需重新构建
+---
+[交互] 📨 @ 提及其他会话\n功能：在输入框中输入 @ 加会话名可以提及另一个 Claude 会话，Claude 随后会用 SendMessage 直接联系该会话\n效果：多会话协作时无需手动切换到目标会话再发消息，在当前对话里 @ 一下即可转发\n例子：@refactor-auth 帮我看看这个函数是否受影响 让当前会话直接向 refactor-auth 会话发消息
+---
+[CLI] 🦊 GitLab 支持扩展\n功能：v2.1.232/233 起插件市场支持裸 gitlab.com 仓库 URL（含嵌套子组）像 GitHub URL 一样克隆；--worktree 标志和 claude agents 视图现在也支持 GitLab merge request URL，MR 显示为 !N 格式\n效果：GitLab 用户获得与 GitHub 同等的插件安装和工作树/MR 集成体验，无需额外适配\n例子：claude -w https://gitlab.com/group/subgroup/repo/-/merge_requests/42 直接检出该 MR 对应分支
+---
+[配置] 🧠 CLAUDE_CODE_TOOL_MEMORY_LIMIT 内存限制\n功能：v2.1.233 起新增 opt-in 环境变量，为 Linux 上的 Bash 工具命令设置 cgroup 内存上限\n效果：防止失控的构建或命令耗尽内存拖垮整个会话，适合运行不可信或资源密集型命令的场景\n例子：CLAUDE_CODE_TOOL_MEMORY_LIMIT=2G claude 限制 Bash 命令最多使用 2GB 内存
+---
+[配置] 🌐 CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS 缓存时长\n功能：v2.1.233 起新增环境变量，配置 WebFetch 工具的会话级 URL 缓存存活时间，默认保持不变（15 分钟）\n效果：需要更频繁获取最新页面内容，或反过来延长缓存减少重复请求时可按需调整\n例子：CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS=60000 claude 将 WebFetch 缓存时长缩短为 1 分钟
+---
+[集成] 📦 插件市场 command 源\n功能：v2.1.229 起 marketplace.json 支持 command 类插件源：本地命令（如某个 IDE）打印插件目录路径，每次会话重新解析并应用，无需重启；mode: "link" 直接就地使用该目录\n效果：IDE 或其他工具可以动态提供插件目录，插件内容变化后下次会话自动生效\n例子：marketplace.json 中配置 source: "command" 让某个本地脚本的输出路径作为插件目录来源
+---
+[Skill] ⚠️ /commit-push-pr 危险标志需人工确认\n功能：v2.1.229 起 /commit-push-pr 中带危险标志的 git/gh 命令（如 --force、--amend、--no-verify）不再自动批准，需要人工确认后才执行\n效果：防止自动化提交流程中意外强推、修改历史提交或跳过校验钩子造成不可逆后果\n例子：/commit-push-pr 流程中若涉及 git push --force，会先弹出确认提示而非直接执行
 ---
