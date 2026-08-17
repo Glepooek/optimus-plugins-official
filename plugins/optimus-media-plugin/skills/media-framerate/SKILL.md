@@ -2,7 +2,7 @@
 name: media-framerate
 description: Use when user wants to change a video's frame rate — 帧率转换、改帧率、转帧率、60fps转30fps、提高帧率、降低帧率、补帧。Not for resolution changes, compression, trimming, or codec/format inspection.
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -70,12 +70,17 @@ ffmpeg -i <input> -filter:v "minterpolate=fps=<目标帧率>" -c:v libx264 -crf 
 
 ## 失败处理
 
-参见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。以下是本 skill 特有的失败场景：
+参见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。以下是本 skill 特有的失败场景，按"触发条件 / 一线修复 / 仍失败兜底"三段式列出：
 
-| 触发条件 | 原因 | 处理建议 |
+| 触发条件 | 一线修复 | 仍失败兜底 |
 |---|---|---|
-| 运动插帧模式下命令长时间无输出 | `minterpolate` 计算量远高于普通编码，处理时长可能是简单模式的数倍到数十倍 | 告知用户该模式耗时较长属正常现象，如不能接受可改用简单复制模式 |
-| 运动插帧结果出现画面扭曲/伪影 | 运动矢量估算在高速运动、遮挡、场景切换处容易失真，属该算法固有局限 | 说明这是插帧算法的已知局限，无法通过调参完全消除，建议改用简单复制模式或接受该权衡 |
+| Step 1：`ffmpeg`/`ffprobe` 命令不存在 | 引导用户参考 `../media-ffmpeg-common/INSTALL.md` 安装，安装后需重新打开终端使 PATH 生效 | 已按文档安装仍报命令不存在：提示检查 PATH 环境变量是否真正写入生效，或改用完整可执行文件路径调用 |
+| Step 2：输入文件路径不存在 | 提示用户核对路径拼写、盘符、多余引号或转义字符 | 路径含中文/空格导致解析异常：改用不含特殊字符的路径，或确认终端编码设置正确 |
+| Step 3：输出目录不存在 | 提示用户确认目录路径或改用已存在的目录 | 用户坚持要求写入不存在的目录：明确询问是否需要 Claude 代为创建该目录，不得未经确认擅自 `mkdir` |
+| Step 3：输出目录存在但无写权限 | 提示用户更换有写权限的输出目录 | 权限问题实为目标文件被其他程序占用（非目录权限本身）：参考 `../media-ffmpeg-common/REFERENCE.md` 的 `Permission denied` 处理建议 |
+| Step 4：ffprobe 查询原始帧率失败或返回空 | 该异常与 media-analyze 判定文件损坏/格式不支持为同一类问题，先按 media-analyze 的失败处理排查该文件是否可读 | media-analyze 判定文件确实无法解析：终止本次帧率转换任务，不得跳过帧率判断直接假设"提高"或"降低"场景 |
+| Step 5：运动插帧模式下命令长时间无输出 | 告知用户 `minterpolate` 计算量远高于普通编码，处理时长可能是简单模式的数倍到数十倍，属正常现象 | 用户明确表示无法接受该等待时长：改用简单复制模式重新执行 Step 5 |
+| Step 5：运动插帧结果出现画面扭曲/伪影 | 说明运动矢量估算在高速运动、遮挡、场景切换处容易失真，属算法固有局限 | 用户要求消除伪影：告知无法通过调参完全消除，需在"改用简单复制模式"与"接受该权衡"之间二选一 |
 
 若用户同时提出分辨率转换或压缩体积诉求，不要在本 skill 命令中叠加 `-vf scale`/`-crf` 等参数，应分别调用对应 skill；组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"。
 
