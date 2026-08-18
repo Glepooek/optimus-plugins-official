@@ -2,7 +2,7 @@
 name: media-resize
 description: Use when user wants to change a video's resolution — 分辨率转换、1080p转720p、改分辨率、缩放视频、视频转清晰度。Not for compression at the same resolution, trimming, or codec/format analysis.
 metadata:
-  version: "1.2.1"
+  version: "1.2.2"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -42,7 +42,11 @@ allowed-tools: Bash
 
 ### Step 4：执行前校验
 
-🔴 CHECKPOINT：先无条件执行 media-analyze 对应的 `ffprobe` 命令确认原始分辨率，再判断以下两种情况——命中任一情况都需在执行前主动确认，而非等 ffmpeg 报错后处理，未确认前不得进入 Step 5：
+先无条件执行 media-analyze 对应的 `ffprobe` 命令确认原始分辨率：
+
+- **ffprobe 命令本身执行失败（无输出或报错，查不出原始分辨率）**：说明文件可能已损坏或编码格式不受当前 ffmpeg 构建支持，而非放大/宽高比判断问题。返回错误信息告知用户文件可能已损坏，建议先用 media-analyze 单独排查，终止任务，不进入 Step 5
+
+ffprobe 查询成功后，🔴 CHECKPOINT：判断以下两种情况——命中任一情况都需在执行前主动确认，而非等 ffmpeg 报错后处理，未确认前不得进入 Step 5：
 
 - **放大**：若目标分辨率高于原始分辨率，告知用户放大会损失画质，需用户明确确认后才能继续
 - **宽高比不一致**：若用户给出的目标宽高比与原始视频不一致，告知用户画面会被拉伸变形，询问是否改为等比例缩放（用 `-2` 占位一边）；用户坚持强制双边宽高则按指定值执行，但需在执行前明确告知会拉伸变形
@@ -74,6 +78,7 @@ ffmpeg -i <input> -vf scale=-2:<目标高度> -c:a copy <output>
 - 不要在输入文件路径不存在时继续执行，应立即返回错误信息并终止（Step 2）
 - 不要在用户未确认输出路径前执行命令（Step 3 的检查点）
 - 不要在输出目录不存在或不可写时继续执行，应立即返回错误信息并终止（Step 3）
+- 不要在 ffprobe 查询原始分辨率本身失败时，误判为放大/宽高比问题并要求用户核对目标分辨率，应告知文件可能已损坏（Step 4）
 - 不要在用户未确认放大画质损失前直接执行放大命令（Step 4 的检查点）
 - 不要在宽高比不一致时静默拉伸画面而不告知用户
 - 不要凭空假设输入文件名或路径——用户描述模糊时应先向用户确认具体文件
