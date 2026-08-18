@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "播放一下这个视频 D:\\media\\demo.mp4",
+    "expected": "信息齐全（路径已给）→ Step 0 跳过 → Step 1 检测 ffplay（ffplay -version，不复用 ffmpeg/ffprobe 检测）→ Step 2 校验文件存在 → Step 3 后台非阻塞启动 ffplay -window_title \"demo.mp4\" -autoexit \"D:\\media\\demo.mp4\"，告知用户播放窗口已打开、播放结束自动退出、可手动关闭提前结束；不得前台阻塞等待播放结束"
+  },
+  {
+    "id": 2,
+    "prompt": "帮我听一下这段音频",
+    "expected": "Step 0 需求预告：识别输入文件路径缺失，一次性列出缺失项统一询问，不做任何系统调用；ffplay 依赖是否安装是系统状态，不作为缺失项询问用户"
+  },
+  {
+    "id": 3,
+    "prompt": "先把这段视频截取前10秒，再播放给我看",
+    "expected": "识别为组合请求（trim + play）：按 media-ffmpeg-common/REFERENCE.md 约定 trim 在前产出中间文件，media-play 作为只读终态操作在 trim 完成后预览效果；不得把截取与播放合并进同一条命令；向用户说明多步重编码的画质损耗权衡"
+  }
+]
