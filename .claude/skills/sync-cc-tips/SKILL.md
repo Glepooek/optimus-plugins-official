@@ -59,25 +59,36 @@ fi
 
 ## 第二步 — 读取现有 tips.txt
 
+**grep 预提取标识符清单（取代通读全文凭印象判重）：**
+
+```bash
+f=plugins/optimus-devops-plugin/hooks/sessionstart/tips.txt
+
+echo "=== CLI flags ==="
+grep -oE -- '--[a-z][a-z-]*' "$f" | sort -u
+
+echo "=== 交互命令 ==="
+grep -oE '/[a-z][a-z-]*' "$f" | sort -u
+
+echo "=== 环境变量 ==="
+grep -oE '\b(CLAUDE_CODE|OTEL|ANTHROPIC)_[A-Z_]+\b' "$f" | sort -u
+
+echo "=== settings.json 键名 ==="
+grep -oE '\b[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z]*\b|\b[a-z][a-zA-Z]{3,}\b' "$f" | sort -u
+
+echo "=== 子命令/CLI 命令名 ==="
+grep -oE 'claude [a-z][a-z-]*( [a-z][a-z-]*)?' "$f" | sort -u
 ```
-Read: plugins/optimus-devops-plugin/hooks/sessionstart/tips.txt
-```
 
-逐条扫描 tips.txt 的**完整内容**（每条是单行压缩格式，包含标题、功能、效果、例子字段），从中提取所有出现的标识符，构建「已覆盖标识符集」：
+执行后得到五类去重排序的候选标识符清单。**settings.json 键名与交互命令两类正则较宽泛**，会混入噪音（如路径片段 `/another-project`、普通英文单词 `advisory`、`agentic`）——生成清单后过一遍做可读性清洗，只保留看起来像真实 flag/设置项/命令的项，不追求正则完美。清洗后的清单即为「已覆盖标识符集」，进入对话上下文供 Step 3 逐条查表，不落盘。
 
-- `--[a-z-]+` 形式的 CLI flag（如 `--safe-mode`）
-- `/[a-z-]+` 形式的交互命令（如 `/cd`、`/btw`）
-- `CLAUDE_CODE_[A-Z_]+` 或 `OTEL_[A-Z_]+` 形式的环境变量
-- settings.json 键名（camelCase 标识符，如 `respondToBashCommands`、`autoMode.classifyAllShell`）
-- 子命令名（如 `daemon`、`attach`、`mcp login`）
-- 条目标题中的功能主名
-
-**覆盖判断基准**：一个 changelog 功能点的任意一个主标识符在已覆盖标识符集中命中 → 视为已覆盖，不新增。
+**覆盖判断基准**：一个 changelog 功能点的任意一个主标识符在清洗后的清单中命中 → 视为已覆盖，不新增。判重方式从"通读全文凭印象比对"改为"对照显式清单查找"，成本和漏判风险不再随 tips.txt 篇幅增长而上升。
 
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
 | 文件不存在 / Read 报错 | 确认路径 `plugins/optimus-devops-plugin/hooks/sessionstart/tips.txt` 是否正确 | 停止整个流程，报告路径错误，不做任何修改 |
 | 文件存在但内容为空 | 🔴 CHECKPOINT：停下询问用户是否为全新初始化场景 | 若用户确认，继续（视为无旧条目）；否则停止 |
+| grep 提取的候选标识符里混入明显噪音 | 生成清单后做一次可读性清洗，剔除路径片段、通用英文单词等非真实标识符 | 若某一类别噪音过多难以人工清洗，仍以清洗后的清单为准，不因噪音多而放弃该类别的判重 |
 
 ## 第三步 — 三类差异识别
 
