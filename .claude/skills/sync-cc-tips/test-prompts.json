@@ -23,5 +23,25 @@
     "id": 5,
     "prompt": "本次 changelog 中某功能被明确标注 Deprecated 且已彻底移除，tips.txt 中存在对应的旧条目，运行 /sync-cc-tips",
     "expected": "命中🗑️删除条件：在第四步变更预览中列出该条目为待删项（含删除原因），等待用户确认后再从 tips.txt 移除条目及其 --- 分隔符，而不是跳过删除判定或未经预览直接删除"
+  },
+  {
+    "id": 6,
+    "prompt": "已存在 .last-synced-version 内容为某个较早版本号，运行 /sync-cc-tips",
+    "expected": "第一步读取该文件作为锚点，用 awk 截断 changelog 到锚点为止（锚点版本本身不含在输出中），只处理锚点之后的新版本，而不是固定处理最近 10 个版本"
+  },
+  {
+    "id": 7,
+    "prompt": ".last-synced-version 文件不存在，运行 /sync-cc-tips",
+    "expected": "回退到「最新 10 个版本」默认窗口抓取（原有行为兜底），本轮成功完成后应写入 .last-synced-version 记录本次处理到的最新版本号"
+  },
+  {
+    "id": 8,
+    "prompt": "本轮识别出的 changelog 条目中，部分是纯 bug fix（无用户可操作标识符），部分已被 tips.txt 现有条目覆盖，运行 /sync-cc-tips",
+    "expected": "第三步生成差异识别中间过程表，覆盖窗口内每一条 bullet；纯 bug fix 判定为「⏭️ 跳过（非用户可操作功能）」，已覆盖条目判定为「⏭️ 跳过（已覆盖）」，两者均计入摘要的「跳过 N 条」栏，而非被静默丢弃不体现在任何统计中"
+  },
+  {
+    "id": 9,
+    "prompt": "识别出 2 条新增 + 1 条修改，展示变更预览后，通过 AskUserQuestion 选择「取消，不做任何修改」，继续执行 /sync-cc-tips",
+    "expected": "命中第四步 CHECKPOINT 的取消分支：立即停止，输出「操作已取消，tips.txt 未修改」，不执行 Edit 写入、不进行第五步数字同步、不调用 commit-cc-plugin、不更新 .last-synced-version（而不是要求用户手打 y/n 自由文本）"
   }
 ]
