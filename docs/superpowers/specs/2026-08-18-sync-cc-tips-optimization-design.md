@@ -103,6 +103,7 @@ curl -s --max-time 15 https://raw.githubusercontent.com/anthropics/claude-code/m
 | 锚点版本在 changelog 中找不到（如相隔太久，CHANGELOG.md 只保留近期版本，锚点已被滚出文件） | awk 跑到文件末尾都没 exit，等于输出了全部可见内容 —— 检测输出的版本数，若 > 30，通过 `AskUserQuestion` 提示「距离上次同步已超过 30 个版本，changelog 中未找到锚点版本，是否继续处理全部可见版本」 |
 | 输出为空（锚点就是最新版本，无新版本） | 直接判定为 0 新版本，等同于触发「🚦零变更总闸」，跳过后续所有步骤 |
 | 用户仍传入 `/sync-cc-tips N` 参数 | 忽略锚点截断逻辑，改为强制只处理最新 N 个版本（用于"重新看看最近 N 个版本"的手动场景），且**不更新** `.last-synced-version`（范围受限的临时查看，不代表真实进度） |
+| 本轮 changelog 有版本可处理，但全部 bullet 均判定为 ⏭️ 跳过（已覆盖/非用户可操作），无任何新增/修改/删除 | 仍推进 `.last-synced-version` 到本轮处理到的最新版本，并单独提交（不写入 tips.txt，不触发 marketplace 版本升级）——避免下次运行重新扫描这段已确认无实质变更的区间 |
 
 ---
 
