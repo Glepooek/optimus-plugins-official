@@ -268,7 +268,7 @@
 ---
 [配置] 🔧 环境变量配置\n功能：通过环境变量控制 Claude Code 行为，包括 ANTHROPIC_BASE_URL（API端点）、BASH_DEFAULT_TIMEOUT_MS（命令超时）、MAX_MCP_OUTPUT_TOKENS（MCP输出限制）等\n效果：精细控制运行时行为和资源限制\n例子：CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 减少网络流量
 ---
-[交互] 🎯 /goal 目标驱动模式\n功能：设置完成条件，Claude 跨轮次持续工作直到目标达成\n效果：适合复杂多步骤任务，Claude 会自动判断目标是否完成，无需手动监控每一步\n例子：/goal "所有测试通过且代码覆盖率 > 80%" 让 Claude 自动完成并验证
+[交互] 🎯 /goal 目标驱动模式\n功能：设置完成条件，Claude 跨轮次持续工作直到目标达成；后台任务卡住 30+ 分钟会主动 check-in（可用 CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0 关闭）；遇到不可恢复错误（如登录失效、额度耗尽、上下文溢出）时自动清除目标并提示，而非继续空转\n效果：适合复杂多步骤任务，Claude 会自动判断目标是否完成，无需手动监控每一步；异常场景下不会无意义地保持目标待命状态\n例子：/goal "所有测试通过且代码覆盖率 > 80%" 让 Claude 自动完成并验证；CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0 claude 关闭后台任务超时主动检查
 ---
 [交互] 🔍 /ultrareview 并行代码审查\n功能：启动云端多代理并行代码审查\n效果：多个专门审查代理同时检查不同方面（安全、性能、可读性），比单次审查更全面\n例子：/ultrareview 在提交重要功能前进行全面并行审查
 ---
@@ -560,7 +560,7 @@
 ---
 [交互] 📨 @ 提及其他会话\n功能：在输入框中输入 @ 加会话名可以提及另一个 Claude 会话，Claude 随后会用 SendMessage 直接联系该会话\n效果：多会话协作时无需手动切换到目标会话再发消息，在当前对话里 @ 一下即可转发\n例子：@refactor-auth 帮我看看这个函数是否受影响 让当前会话直接向 refactor-auth 会话发消息
 ---
-[CLI] 🦊 GitLab 支持扩展\n功能：v2.1.232/233 起插件市场支持裸 gitlab.com 仓库 URL（含嵌套子组）像 GitHub URL 一样克隆；--worktree 标志和 claude agents 视图现在也支持 GitLab merge request URL，MR 显示为 !N 格式\n效果：GitLab 用户获得与 GitHub 同等的插件安装和工作树/MR 集成体验，无需额外适配\n例子：claude -w https://gitlab.com/group/subgroup/repo/-/merge_requests/42 直接检出该 MR 对应分支
+[CLI] 🦊 GitLab 支持扩展\n功能：v2.1.232/233 起插件市场支持裸 gitlab.com 仓库 URL（含嵌套子组）像 GitHub URL 一样克隆；--worktree 标志和 claude agents 视图现在也支持 GitLab merge request URL，MR 显示为 !N 格式；v2.1.234 起 footer 和状态栏新增 GitLab MR 徽章，配置了 GitLab remote 且已认证 glab CLI 时显示 MR !N 及 draft/pending/green 状态\n效果：GitLab 用户获得与 GitHub 同等的插件安装、工作树/MR 集成体验，以及 PR/MR 状态可视化\n例子：claude -w https://gitlab.com/group/subgroup/repo/-/merge_requests/42 直接检出该 MR 对应分支；配置好 glab CLI 认证后 footer 自动显示当前分支关联 MR 的状态徽章
 ---
 [配置] 🧠 CLAUDE_CODE_TOOL_MEMORY_LIMIT 内存限制\n功能：v2.1.233 起新增 opt-in 环境变量，为 Linux 上的 Bash 工具命令设置 cgroup 内存上限\n效果：防止失控的构建或命令耗尽内存拖垮整个会话，适合运行不可信或资源密集型命令的场景\n例子：CLAUDE_CODE_TOOL_MEMORY_LIMIT=2G claude 限制 Bash 命令最多使用 2GB 内存
 ---
@@ -569,4 +569,12 @@
 [集成] 📦 插件市场 command 源\n功能：v2.1.229 起 marketplace.json 支持 command 类插件源：本地命令（如某个 IDE）打印插件目录路径，每次会话重新解析并应用，无需重启；mode: "link" 直接就地使用该目录\n效果：IDE 或其他工具可以动态提供插件目录，插件内容变化后下次会话自动生效\n例子：marketplace.json 中配置 source: "command" 让某个本地脚本的输出路径作为插件目录来源
 ---
 [Skill] ⚠️ /commit-push-pr 危险标志需人工确认\n功能：v2.1.229 起 /commit-push-pr 中带危险标志的 git/gh 命令（如 --force、--amend、--no-verify）不再自动批准，需要人工确认后才执行\n效果：防止自动化提交流程中意外强推、修改历史提交或跳过校验钩子造成不可逆后果\n例子：/commit-push-pr 流程中若涉及 git push --force，会先弹出确认提示而非直接执行
+---
+[交互] ⏳ 用量限额到期自动续接\n功能：v2.1.234 起 claude.ai 使用限额重置后，Claude Code 自动继续之前中断的会话；可在 /config 的 "Continue automatically at usage limit" 关闭\n效果：额度耗尽导致会话暂停后无需手动盯着重置时间再手动恢复，节省等待成本\n例子：额度用尽后会话自动挂起，限额重置时刻一到自动续接工作；/config 找到该开关按需关闭
+---
+[交互] 🪟 工作中打开常用面板\n功能：v2.1.234 起 /permissions 可在 Claude 工作时打开，规则改动立即应用到当前轮次；/add-dir、/autocompact、/theme、/help、/config、/advisor 弹窗也支持在全屏 TUI 模式下工作时打开\n效果：不必等当前任务跑完才能查看或调整权限、主题等设置，减少等待和打断\n例子：Claude 正在执行长任务时直接输入 /permissions 调整规则，改动立即对本轮生效
+---
+[配置] 🏷️ marketplace 设置别名\n功能：v2.1.232 起 settings.json 的 additionalMarketplaces、allowedMarketplaces 作为 extraKnownMarketplaces、strictKnownMarketplaces 的更友好别名被接受\n效果：新写法语义更直观，降低配置插件市场白名单时的理解成本\n例子：{"additionalMarketplaces": ["my-org/*"]} 等价于旧写法 {"extraKnownMarketplaces": ["my-org/*"]}
+---
+[交互] 📁 VSCode 会话分组\n功能：v2.1.229 起 VS Code 扩展侧边栏支持会话分组，右键创建/重命名/删除分组，Cmd/Ctrl 或 Shift 点击可批量移动多个会话\n效果：并行开发多个功能或项目时，按主题归类会话，侧边栏更易导航\n例子：右键新建 "auth-refactor" 分组，Shift 点击选中多个相关会话一起拖入该分组
 ---
