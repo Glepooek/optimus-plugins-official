@@ -15,23 +15,47 @@ disable-model-invocation: true
 
 ## 第一步 — 抓取 changelog
 
+**读取同步锚点：**
+
+```bash
+if [ -f .claude/skills/sync-cc-tips/.last-synced-version ]; then
+  anchor=$(cat .claude/skills/sync-cc-tips/.last-synced-version)
+else
+  anchor=""
+fi
+```
+
+- 文件不存在（首次运行）→ `anchor` 为空，回退到「最新 10 个版本」默认窗口（见下方兜底逻辑）
+- 文件存在 → `anchor` 为上次同步到的版本号（如 `2.1.224`），用于下方 awk 截断
+
 直接读取仓库根目录的 `CHANGELOG.md`（纯 Markdown 文本源头，按版本从新到旧排列，无需处理页面折叠块或 JS 渲染，比 releases 页面更完整可靠）。
 
 **按顺序执行，命中即停，不要跳步：**
-1. `curl -s --max-time 15 https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md`
-2. 若步骤 1 失败（超时 / 连接被拒绝）→ 输出 `⚠️ curl 不可达，降级为 WebFetch`，改为 `WebFetch: https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md`
-3. 若步骤 2 也失败 → 等待 2 秒，重试一次步骤 1（同一条 curl 命令，不再等待更久）
+1. 若 `anchor` 非空，用 awk 管道截断到锚点为止（命中即停，锚点版本本身不含在输出中，因为已在上次同步中处理过）：
+   ```bash
+   curl -s --max-time 15 https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md \
+     | awk -v anchor="## $anchor" '/^## /{ if ($0 == anchor) exit } { print }'
+   ```
+   若 `anchor` 为空（首次运行），改用无截断的完整抓取，后续按「最新 10 个版本」处理：
+   ```bash
+   curl -s --max-time 15 https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md
+   ```
+2. 若步骤 1 失败（超时 / 连接被拒绝）→ 输出 `⚠️ curl 不可达，降级为 WebFetch`，改为 `WebFetch: https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md`（WebFetch 抓取完整内容后，锚点截断改为在读取到的文本上用相同的"遇到 `## {anchor}` 停止"规则人工执行，不依赖 awk）
+3. 若步骤 2 也失败 → 等待 2 秒，重试一次步骤 1（同一条命令，不再等待更久）
 4. 若步骤 3 仍失败 → **停止整个流程**，报告网络不可达（curl 与 WebFetch 均无法访问），不执行任何写入操作
 
 **成功拿到内容后：**
 - 文件中每个版本以 `## {版本号}` 标记（如 `## 2.1.197`），紧随其后为该版本的完整 bullet 列表
-- 默认提取最靠前（最新）的 **10 个版本**段落
-- 若用户指定数量（如 `/sync-cc-tips 5`），按指定数量提取
+- 若 `anchor` 非空：awk 截断后的全部输出即为待处理版本（数量不固定，取决于锚点距今发布了多少个版本）
+- 若 `anchor` 为空（首次运行）：提取最靠前（最新）的 **10 个版本**段落作为默认窗口
 - 记录版本范围（如 v2.1.183 → v2.1.197），用于摘要展示
 
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
 | CHANGELOG.md 内容为空或找不到 `##` 版本标记 | 确认 URL 是否正确（分支名可能变更） | 停止流程，报告解析失败 |
+| 锚点版本在 changelog 中找不到（相隔太久，CHANGELOG.md 只保留近期版本，锚点已被滚出文件） | awk 跑到文件末尾都没 exit，等于输出了全部可见内容——检测输出的版本数（`grep -c '^## '`），若 > 30 | 通过 `AskUserQuestion` 询问「距离上次同步已超过 30 个版本，changelog 中未找到锚点版本 v{anchor}，是否继续处理全部可见的 {N} 个版本？」，选项：「继续处理全部可见版本」（推荐）／「取消，我需要先确认是否漏看了历史内容」；选后者立即停止整个流程 |
+| awk 截断后输出为空（锚点就是最新版本，无新版本可处理） | 直接判定为 0 新版本 | 等同于触发下方「🚦零变更总闸」，跳过后续所有步骤 |
+| 用户传入 `/sync-cc-tips N` 参数 | 忽略锚点截断逻辑，改为无条件抓取完整 CHANGELOG.md 后只取最新 N 个版本段落 | 本次运行结束时**不更新** `.last-synced-version`（范围受限的临时查看，不代表真实同步进度，详见第五步） |
 
 ## 第二步 — 读取现有 tips.txt
 
