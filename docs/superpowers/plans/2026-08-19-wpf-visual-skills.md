@@ -376,10 +376,10 @@ if __name__ == "__main__":
 - [ ] **Step 2: 运行测试，确认失败**
 
 ```powershell
-python -m unittest plugins.optimus-frontend-plugin.skills.mastergo-to-wpf-components.scripts.test_extract_components -v
+python -m unittest discover -s plugins/optimus-frontend-plugin/skills/mastergo-to-wpf-components/scripts -p "test_*.py" -v
 ```
 
-预期：全部 FAIL，错误为 `ModuleNotFoundError: No module named '...extract_components'`。
+预期：全部 ERROR/FAIL，`subprocess.run` 因 `extract_components.py` 不存在抛 `FileNotFoundError`。
 
 - [ ] **Step 3: 实现 extract_components.py**
 
@@ -668,7 +668,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: 运行测试，确认全部通过**
 
 ```powershell
-python -m unittest plugins.optimus-frontend-plugin.skills.mastergo-to-wpf-components.scripts.test_extract_components -v
+python -m unittest discover -s plugins/optimus-frontend-plugin/skills/mastergo-to-wpf-components/scripts -p "test_*.py" -v
 ```
 
 预期：5 个测试全部 PASS（`test_broken_token_hard_stops` 断言 returncode 2 且 stderr 以 `error: ` 开头）。
@@ -1010,10 +1010,10 @@ if __name__ == "__main__":
 - [ ] **Step 2: 运行测试，确认失败**
 
 ```powershell
-python -m unittest plugins.optimus-frontend-plugin.skills.mastergo-to-wpf.scripts.test_match_components -v
+python -m unittest discover -s plugins/optimus-frontend-plugin/skills/mastergo-to-wpf/scripts -p "test_*.py" -v
 ```
 
-预期：全部 FAIL，`ModuleNotFoundError`。
+预期：全部 ERROR/FAIL，`subprocess.run` 因 `match_components.py` 不存在抛 `FileNotFoundError`。
 
 - [ ] **Step 3: 实现 match_components.py**
 
@@ -1149,7 +1149,7 @@ if __name__ == "__main__":
 - [ ] **Step 4: 运行测试，确认通过**
 
 ```powershell
-python -m unittest plugins.optimus-frontend-plugin.skills.mastergo-to-wpf.scripts.test_match_components -v
+python -m unittest discover -s plugins/optimus-frontend-plugin/skills/mastergo-to-wpf/scripts -p "test_*.py" -v
 ```
 
 预期：2 个测试全部 PASS。
