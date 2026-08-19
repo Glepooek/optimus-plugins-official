@@ -2,7 +2,7 @@
   "name": "optimus-plugins-official",
   "displayName": "Optimus 官方插件仓库",
   "description": "自定义 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强、权限通知等企业级开发工具链",
-  "version": "8.12.9",
+  "version": "8.13.0",
   "owner": {
     "name": "optimus",
     "url": "https://www.optimus.cn"
@@ -71,7 +71,7 @@
     {
       "name": "optimus-media-plugin",
       "source": "./plugins/optimus-media-plugin",
-      "description": "音视频处理工具集：基于 ffmpeg/ffprobe 的音视频编解码分析、分辨率转换、压缩、片段截取、帧率转换、ffplay 播放预览"
+      "description": "音视频处理工具集：基于 ffmpeg/ffprobe 的音视频编解码分析、分辨率转换、压缩、片段截取、帧率转换、格式转换、ffplay 播放预览"
     }
   ]
 }

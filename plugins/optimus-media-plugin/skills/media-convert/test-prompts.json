@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "prompt": "帮我把 D:/videos/raw.mkv 转成 mp4 格式，输出到 D:/videos/raw.mp4",
+    "expected": "信息已齐全（输入/目标格式/输出路径都给了），跳过 Step 0 询问；依次做环境检测、输入文件校验、CHECKPOINT 确认输出路径，直接尝试 remux 模式 `ffmpeg -i <input> -c copy <output>`"
+  },
+  {
+    "id": 2,
+    "prompt": "帮我转一下格式",
+    "expected": "缺少输入文件路径、目标格式、输出路径，Step 0 应一次性列出这些缺失项统一询问，而不是逐步反应式追问"
+  },
+  {
+    "id": 3,
+    "prompt": "把 D:/videos/hevc_10bit.mov 转成 avi，输出到 D:/videos/out.avi，remux 时 ffmpeg 报错提示该编码不支持写入 avi 容器",
+    "expected": "remux 失败属于编码与目标容器不兼容，应触发 🔴 CHECKPOINT 告知用户需要重新编码才能转换、会有画质损失，询问是否接受转码继续或改选其他目标格式；未经用户确认不得直接切换为 `-c:v libx264 -crf 18 -c:a aac` 转码命令"
+  },
+  {
+    "id": 4,
+    "prompt": "把 D:/videos/raw.mp4 截取 00:00:10 到 00:01:00，再转成 mkv 格式，输出到 D:/videos/final.mkv",
+    "expected": "属于组合请求（trim + convert），应识别跨 skill 边界，遵循 trim → convert 固定顺序分步产出中间文件，不应把 `-ss`/`-to` 与 convert 的 `-c copy` 合并进同一条命令"
+  }
+]
