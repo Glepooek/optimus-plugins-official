@@ -578,3 +578,5 @@
 ---
 [交互] 📁 VSCode 会话分组\n功能：v2.1.229 起 VS Code 扩展侧边栏支持会话分组，右键创建/重命名/删除分组，Cmd/Ctrl 或 Shift 点击可批量移动多个会话\n效果：并行开发多个功能或项目时，按主题归类会话，侧边栏更易导航\n例子：右键新建 "auth-refactor" 分组，Shift 点击选中多个相关会话一起拖入该分组
 ---
+[配置] 🔤 spellcheck 拼写检查\n功能：v2.1.235 起新增可选的 settings.json 设置项 spellcheck，开启后输入提示词时会用本机已安装的 aspell、hunspell 或 ispell 之一，对拼错的单词加下划线标记\n效果：编写长提示词时能实时发现拼写错误，无需额外插件，直接复用本机现成的拼写检查工具\n例子：{"spellcheck": true}，需预先安装 aspell/hunspell/ispell 三者之一；输入拼错单词时会被下划线标出
+---
