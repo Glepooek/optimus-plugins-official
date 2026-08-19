@@ -4,7 +4,7 @@
 
 ## 仓库概览
 
-自定义的 Claude Code 插件仓库，8 个领域插件提供企业级开发工具链。
+自定义的 Claude Code 插件仓库，9 个领域插件提供企业级开发工具链。
 
 各插件职责见 `.claude-plugin/marketplace.json` 的 `description` 字段。
 

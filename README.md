@@ -15,6 +15,7 @@
 | [optimus-office-plugin](plugins/optimus-office-plugin) | Word/Excel/PPT/PDF 生成与处理 |
 | [optimus-devops-plugin](plugins/optimus-devops-plugin) | Jenkins CI/CD、项目分析、工作周报转写；内置 SessionStart（技巧轮播）+ Notification hooks |
 | [optimus-mcp-servers](plugins/optimus-mcp-servers) | GitHub Copilot MCP、MasterGo、飞书项目等 MCP 集成 |
+| [optimus-media-plugin](plugins/optimus-media-plugin) | 音视频处理工具集：基于 ffmpeg/ffprobe 的编解码分析、分辨率转换、压缩、片段截取、帧率转换、格式转换，ffplay 播放预览，yt-dlp 在线下载 |
 
 ## 🔧 外部依赖
 
@@ -30,6 +31,7 @@
 | optimus-office-plugin | markitdown、Playwright CLI（网页转 Markdown）、PptxGenJS（PPT 生成）、reportlab + pypdf（PDF 生成）、pandas + openpyxl（Excel 处理）、LibreOffice（文档转换/重算）、.NET SDK + OpenXML SDK（docx-writer） |
 | optimus-devops-plugin | Jenkins（需账号/API Token）、Python `requests` + `pyyaml` |
 | optimus-mcp-servers | GitHub Copilot MCP（`GITHUB_TOKEN`）、MasterGo Magic MCP（`MASTERGO_TOKEN`）、飞书项目 MCP（`FEISHU_PROJECT_TOKEN`）、Playwright CLI |
+| optimus-media-plugin | ffmpeg/ffprobe（编解码分析与处理）、ffplay（播放预览，需图形显示环境）、yt-dlp（在线视频/音频下载） |
 
 ## 🚀 快速开始
 
@@ -69,6 +71,14 @@ git clone https://github.com/Glepooek/optimus-plugins-official ~/.claude/plugins
 
 # 从 MasterGo 设计稿导出图标/背景资产为 WPF Icons.xaml
 /optimus-frontend-plugin:mastergo-icon-expoter
+
+# 分析音视频编码/分辨率/码率/时长
+/optimus-media-plugin:media-analyze
+
+# 音视频压缩、分辨率转换、片段截取
+/optimus-media-plugin:media-compress
+/optimus-media-plugin:media-resize
+/optimus-media-plugin:media-trim
 ```
 
 ## 📄 许可证
