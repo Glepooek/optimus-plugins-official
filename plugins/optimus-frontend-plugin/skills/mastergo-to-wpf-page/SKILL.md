@@ -1,8 +1,8 @@
 ---
 name: mastergo-to-wpf-page
-description: Generate MasterGo WPF pages from design links, with verifiable XAML, resource manifests, and conversion reports.
+description: Generate MasterGo WPF pages from design links, with verifiable XAML, resource manifests, and conversion reports. 触发词："转 WPF 页面"、"MasterGo 转 WPF"、"设计稿转 WPF"、"这个设计稿转成 WPF"、"MasterGo 页面转换"、"WPF 页面生成"。
 metadata:
-  version: "2.0.0"
+  version: "2.0.1"
   author: desktop client team
   category: generator
 compatibility: Python 3；需 mastergo-magic-mcp（本仓库 plugins/optimus-mcp-servers/.mcp.json 内置）与 MASTERGO_TOKEN；需 MasterGo Team 版及以上，草稿箱文件不可用。

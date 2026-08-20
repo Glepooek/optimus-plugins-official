@@ -1,3 +1,8 @@
+## [2.0.1] - 2026-08-20
+
+### Added
+- 补充中英文触发词示例到 frontmatter description："转 WPF 页面"、"MasterGo 转 WPF"、"设计稿转 WPF"、"这个设计稿转成 WPF"、"MasterGo 页面转换"、"WPF 页面生成"。
+
 ## [2.0.0] - 2026-08-20
 
 ### Changed
