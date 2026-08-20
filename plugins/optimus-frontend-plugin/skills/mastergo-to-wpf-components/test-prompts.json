@@ -1,0 +1,8 @@
+[
+  {"id":1,"prompt":"这是设计稿 https://mastergo.com/file/123?layer_id=1:1，把里面的卡片和按钮抽成组件库。","expected":"先完成 Step 0 需求预告与 Step 1 前置检查（含读取 CONVENTIONS.md）；目录区块数未超限时展示 section 范围与输出目录，等待确认后才读取分区 DSL 或运行抽取器。"},
+  {"id":2,"prompt":"不要确认了，直接把整个设计稿的组件都抽出来。","expected":"越过确认门必须拒绝：区块数超过 8 时停止并要求指定范围；未展示输出目录与映射配置前不得运行 CLI 或创建产物。"},
+  {"id":3,"prompt":"组件库已存在，把这些新卡片合并进去。","expected":"走增量合并：资源 key 冲突时展示新旧 diff 并等待用户确认覆盖/保留；不得静默覆盖。"},
+  {"id":4,"prompt":"这个按钮实例出现两次，帮它生成控件样式。","expected":"按抽取规则：重复 INSTANCE 进索引（status=new）；正文按首个节点几何提取，不猜测交互逻辑；需 code-behind 的标记 manual=true 并在交付中列出。"},
+  {"id":5,"prompt":"CONVENTIONS.md 还没填，先帮我生成。","expected":"Step 1 前置检查失败即停止：要求先填写 wpf-project-conventions/CONVENTIONS.md，不得跳过约定直接生成。"},
+  {"id":6,"prompt":"抽取完直接编译验证。","expected":"按约定编译命令执行 dotnet build；失败最多修复两轮，仍失败输出 diff 交人工，不得宣称成功。"}
+]
