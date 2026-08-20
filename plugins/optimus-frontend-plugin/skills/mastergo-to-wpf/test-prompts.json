@@ -6,5 +6,7 @@
   {"id":5,"prompt":"MASTERGO_TOKEN 没配，但请直接读设计稿并生成页面。","expected":"在任何 MCP 调用前停止，说明 token 未配置，不猜测或编造设计稿。"},
   {"id":6,"prompt":"设计层名有 <--@ActionButton.Primary-->，直接写我们的自定义按钮。","expected":"仅在用户确认的严格 --mapping 已注册控件、xmlns、Variant 白名单后生成自定义控件；否则回退原生 WPF 并写报告。Anchor 不能直接拼进 XAML。"},
   {"id":7,"prompt":"启用 Meta Rules 自动复用项目 Token 和组件。","expected":"仅在目录确认后可读 getMeta；Meta 不可用、空或格式错误时安全降级纯 DSL，并记录原因。Meta 候选须经项目资产扫描和用户确认后写入严格 JSON mapping。"},
-  {"id":8,"prompt":"我给了截图，生成后自动反复修到和设计稿一模一样。","expected":"截图验证须有可运行项目和明确 opt-in；先输出差异报告，自动返工最多 3 轮并可中止，反馈只写项目 .mastergo-dsl/feedback，绝不隐式改插件文件或保证分数。"}
+  {"id":8,"prompt":"我给了截图，生成后自动反复修到和设计稿一模一样。","expected":"截图验证须有可运行项目和明确 opt-in；先输出差异报告，自动返工最多 3 轮并可中止，反馈只写项目 .mastergo-dsl/feedback，绝不隐式改插件文件或保证分数。"},
+  {"id":9,"prompt":"这个页面的卡片组件库里有，按钮没有，直接生成页面。","expected":"运行组件匹配后展示缺失清单（按钮），默认返回建议先跑 mastergo-to-wpf-components；用户明确选择原生回退前不得生成页面。"},
+  {"id":10,"prompt":"CONVENTIONS.md 没填，直接转页面。","expected":"组件匹配 Step 前置检查失败即停止，要求先填写 wpf-project-conventions/CONVENTIONS.md；不跳过约定。"}
 ]

@@ -1,5 +1,7 @@
 # WPF 项目映射契约
 
+> 本映射与 `wpf-project-conventions/CONVENTIONS.md` 的关系：映射是“设计稿组件名 → 项目控件/资源”的严格白名单；约定是项目级基线（目录/命名/编译）。两者缺一不可：先读约定确定落盘位置与命名，再用映射决定控件语义。
+
 `dsl_to_xaml.py --mapping PATH` 只接受 UTF-8 JSON 数据，不接受 Markdown、自由 XAML、任意属性或事件处理器。映射错误会降级为纯 DSL 转换，并在 `conversion-report.json` 的 `fallbacks` 中说明，不会阻断基础转换。
 
 ```json

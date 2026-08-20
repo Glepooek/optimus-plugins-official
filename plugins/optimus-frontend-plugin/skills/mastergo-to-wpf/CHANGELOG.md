@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.0] - 2026-08-19
+
+### Added
+- 组件优先组装：读取 wpf-project-conventions 与组件库索引，新增 match_components.py 命中/缺失报告。
+- 缺失组件确认门：默认返回缺失清单并建议先跑 mastergo-to-wpf-components；用户显式选择时才原生回退。
+- ViewModel 骨架生成（仅当约定声明 MVVM 框架；数据源/命令标注 TODO）。
+
+### Changed
+- 生成流程插入组件匹配 Step；原 Step 4-6 顺延。
+
 ## [1.1.0] - 2026-08-04
 
 ### Added
