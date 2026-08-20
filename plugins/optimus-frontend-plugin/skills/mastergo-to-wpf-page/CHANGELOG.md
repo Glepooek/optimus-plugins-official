@@ -1,3 +1,8 @@
+## [2.0.0] - 2026-08-20
+
+### Changed
+- **Breaking:** Renamed the Skill and slash command from /optimus-frontend-plugin:mastergo-to-wpf to /optimus-frontend-plugin:mastergo-to-wpf-page for MasterGo WPF pages.
+
 # Changelog
 
 ## [1.2.0] - 2026-08-19

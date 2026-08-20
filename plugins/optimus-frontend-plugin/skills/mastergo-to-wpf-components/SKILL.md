@@ -1,6 +1,6 @@
 ---
 name: mastergo-to-wpf-components
-description: 当用户提供 MasterGo 设计稿链接并要求抽取可复用视觉组件、生成组件库、沉淀样式/DataTemplate/自定义控件时使用此 Skill；产出组件索引、颜色资源与 DataTemplate 资源，并可按严格映射登记控件。Not for page generation (use mastergo-to-wpf) or icon export (use mastergo-icon-expoter).
+description: 当用户提供 MasterGo 设计稿链接并要求抽取可复用视觉组件、生成组件库、沉淀样式/DataTemplate/自定义控件时使用此 Skill；产出组件索引、颜色资源与 DataTemplate 资源，并可按严格映射登记控件。Not for page generation (use mastergo-to-wpf-page) or icon export (use mastergo-icon-expoter).
 metadata:
   version: "1.0.0"
   author: desktop client team

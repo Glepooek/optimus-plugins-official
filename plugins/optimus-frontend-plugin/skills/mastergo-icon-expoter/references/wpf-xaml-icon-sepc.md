@@ -288,7 +288,7 @@ Application.Current.Resources.MergedDictionaries.Add(
 
 ## 十一、给 skill 实现的契约建议
 
-产出清单建议沿用 `mastergo-to-wpf` 的 `icons.json` 字段风格并扩展，让两个 skill 的产物可以互相消费：
+产出清单建议沿用 `mastergo-to-wpf-page` 的 `icons.json` 字段风格并扩展，让两个 skill 的产物可以互相消费：
 
 ```json
 {
@@ -309,7 +309,7 @@ Application.Current.Resources.MergedDictionaries.Add(
 - `decision` 记录判定依据。判为 `png`/`ico`/`unresolved` 时**必须**有依据，不能空着——这是用户推翻自动判定的唯一入口。
 - `status` 区分 `exported` / `needs-manual`（如 ico 需外部工具合成）/ `failed`。**不得把 `needs-manual` 包装成 `exported`。**
 
-与相邻 skill 的边界：本 skill 负责**格式决策、命名、清单和工程接入形态**；SVG → `Path.Data` 的实际转换调用 `svg-to-xaml-path`，不自行实现路径解析；整页 XAML 生成属于 `mastergo-to-wpf`，本 skill 不生成页面。
+与相邻 skill 的边界：本 skill 负责**格式决策、命名、清单和工程接入形态**；SVG → `Path.Data` 的实际转换调用 `svg-to-xaml-path`，不自行实现路径解析；整页 XAML 生成属于 `mastergo-to-wpf-page`，本 skill 不生成页面。
 
 ## 参考
 

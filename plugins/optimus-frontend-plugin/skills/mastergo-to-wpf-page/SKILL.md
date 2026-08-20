@@ -1,8 +1,8 @@
 ---
-name: mastergo-to-wpf
-description: 当用户提供 MasterGo 设计稿链接并要求生成 WPF 界面、XAML 页面或把设计稿转成 WPF 代码时使用此 Skill；组件优先组装可验证的 XAML、资源清单与转换报告，并可选复用经白名单验证的项目资源和控件。
+name: mastergo-to-wpf-page
+description: Generate MasterGo WPF pages from design links, with verifiable XAML, resource manifests, and conversion reports.
 metadata:
-  version: "1.2.0"
+  version: "2.0.0"
   author: desktop client team
   category: generator
 compatibility: Python 3；需 mastergo-magic-mcp（本仓库 plugins/optimus-mcp-servers/.mcp.json 内置）与 MASTERGO_TOKEN；需 MasterGo Team 版及以上，草稿箱文件不可用。
@@ -99,7 +99,7 @@ python "$SkillDir\scripts\dsl_to_xaml.py" --input .mastergo-dsl --out src\Views 
 ## 本地测试
 
 ```powershell
-python -m unittest discover -s plugins/optimus-frontend-plugin/skills/mastergo-to-wpf/scripts -p "test_*.py"
+python -m unittest discover -s plugins/optimus-frontend-plugin/skills/mastergo-to-wpf-page/scripts -p "test_*.py"
 ```
 
 映射字段、精确转换规则和错误契约见 [`references/dsl-mapping.md`](references/dsl-mapping.md)。

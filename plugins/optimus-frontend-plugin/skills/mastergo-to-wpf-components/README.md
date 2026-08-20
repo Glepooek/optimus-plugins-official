@@ -19,7 +19,7 @@
 │ platform                     │
 └──────────────────────────────┘
 
-下游：`mastergo-to-wpf`（页面组装，读取组件索引）；上游：`mastergo-icon-expoter`（图标导出，不参与抽取）。
+下游：`mastergo-to-wpf-page`（页面组装，读取组件索引）；上游：`mastergo-icon-expoter`（图标导出，不参与抽取）。
 
 ## 触发词 / 内部触发条件
 
@@ -33,12 +33,12 @@ Step 0 需求预告 → Step 1 前置检查（约定/环境） → Step 2 目录
 ## 产出物数据流
 
 MasterGo DSL → 本 Skill → `components-index.json` + `Colors.generated.xaml` + `DataTemplates.generated.xaml`
-→ `mastergo-to-wpf`（读取索引组装页面）/ 人工接管（Style/Control 正文、code-behind、动画）
+→ `mastergo-to-wpf-page`（读取索引组装页面）/ 人工接管（Style/Control 正文、code-behind、动画）
 
 ## Skill 依赖关系图
 
 ┌─────────────────────────┐      ┌──────────────────────┐
-│ mastergo-to-wpf         │◄─────│ mastergo-to-wpf-     │
+│ mastergo-to-wpf-page    │◄─────│ mastergo-to-wpf-     │
 │ （页面组装）            │ 读取 │ components ★         │
 └─────────────────────────┘      └──────────┬───────────┘
                                             │ 读取

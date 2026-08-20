@@ -16,7 +16,7 @@
 ├─────────────┤
 │★ generator   │  mastergo-icon-expoter（本 skill）
 ├─────────────┤
-│  workflow    │  mastergo-to-wpf（整页转换，独立流程，不消费本 skill 产物）
+│  workflow    │  mastergo-to-wpf-page（整页转换，独立流程，不消费本 skill 产物）
 └─────────────┘
 ```
 
@@ -52,4 +52,4 @@ MasterGo 设计稿链接 → 本 skill → `Icons.xaml` + `Images/*.png` + `icon
                        └──调用──▶ mastergo-magic-mcp（getDesignSections / extractSvg / getD2c）
 ```
 
-不被其他 skill 调度；不消费也不产出 `mastergo-to-wpf` 的 `icons.json`（两者是不同的产物形态，互不依赖）。
+不被其他 skill 调度；不消费也不产出 `mastergo-to-wpf-page` 的 `icons.json`（两者是不同的产物形态，互不依赖）。

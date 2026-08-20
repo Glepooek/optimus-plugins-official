@@ -1,6 +1,6 @@
 # WPF 项目工程约定（wpf-project-conventions）
 
-本文件是 `mastergo-to-wpf-components` 与 `mastergo-to-wpf` 两个 skill 的共享事实来源。
+本文件是 `mastergo-to-wpf-components` 与 `mastergo-to-wpf-page` 两个 skill 的共享事实来源。
 **首次使用前必须由项目负责人填写并提交**；文件缺失或关键项为空时，两个 skill 在 Step 1 拒绝生成。
 
 ## 1. MVVM 框架
