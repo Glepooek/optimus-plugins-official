@@ -1,0 +1,159 @@
+"""Contract tests for extract_components.py (offline, unittest only)."""
+
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+ASSETS = Path(__file__).parent / "assets"
+SCRIPT = Path(__file__).parent / "extract_components.py"
+
+
+def run_cli(
+    test_case: unittest.TestCase, asset: str, mapping: str | None = None
+) -> tuple[subprocess.CompletedProcess, Path]:
+    tmp = Path(tempfile.mkdtemp())
+    test_case.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+    src = tmp / "input"
+    out = tmp / "out"
+    src.mkdir()
+    payload = json.loads((ASSETS / asset).read_text(encoding="utf-8"))
+    listing = payload.get("list", {})
+    (src / "sections-list.json").write_text(
+        json.dumps({"rootMetadata": listing.get("rootMetadata", {})}, ensure_ascii=False), encoding="utf-8"
+    )
+    for i, section in enumerate(payload["sections"]):
+        (src / f"section-{i}.json").write_text(json.dumps(section, ensure_ascii=False), encoding="utf-8")
+    if mapping:
+        mapping_path = tmp / "mapping.json"
+        mapping_path.write_text(mapping, encoding="utf-8")
+        return subprocess.run(
+            [sys.executable, str(SCRIPT), "--input", str(src), "--out", str(out), "--mapping", str(mapping_path)],
+            capture_output=True, text=True,
+        ), out
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), "--input", str(src), "--out", str(out)],
+        capture_output=True, text=True,
+    ), out
+
+
+class ExtractCliTestCase(unittest.TestCase):
+    def test_instance_repeated_extracts_style(self):
+        proc, out = run_cli(self, "instance-repeated.json")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        index = json.loads((out / "components-index.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(index["components"]), 1)
+        item = index["components"][0]
+        self.assertEqual(item["kind"], "style")
+        self.assertEqual(item["status"], "new")
+        self.assertEqual(item["occurrences"], 2)
+
+    def test_single_instance_not_extracted(self):
+        proc, out = run_cli(self, "single-instance.json")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        index = json.loads((out / "components-index.json").read_text(encoding="utf-8"))
+        self.assertEqual(index["components"], [])
+
+    def test_repeated_frames_extract_datatemplate(self):
+        proc, out = run_cli(self, "repeated-frames.json")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        index = json.loads((out / "components-index.json").read_text(encoding="utf-8"))
+        self.assertEqual(index["components"][0]["kind"], "datatemplate")
+        self.assertIn("FRAME.Card", (out / "DataTemplates.generated.xaml").read_text(encoding="utf-8"))
+        self.assertIn("FillFill2", (out / "Colors.generated.xaml").read_text(encoding="utf-8"))
+
+    def test_mapped_instance_uses_mapping(self):
+        mapping = json.dumps({
+            "resources": {},
+            "xmlns": {"c": "clr-namespace:Optimus.Controls;assembly=Optimus.Desktop"},
+            "components": {
+                "ActionButton.Primary": {
+                    "control": "c:ActionButton",
+                    "variants": {"Default": ["Background", "CornerRadius"]},
+                }
+            },
+        }, ensure_ascii=False)
+        proc, out = run_cli(self, "mapped-instance.json", mapping)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        index = json.loads((out / "components-index.json").read_text(encoding="utf-8"))
+        item = index["components"][0]
+        self.assertEqual(item["status"], "mapped")
+        self.assertEqual(item["kind"], "control")
+
+    def test_broken_token_hard_stops(self):
+        proc, _ = run_cli(self, "broken-token.json")
+        self.assertEqual(proc.returncode, 2)
+        self.assertTrue(proc.stderr.startswith("error: "), proc.stderr)
+
+    def test_unextracted_broken_token_hard_stops(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        src = tmp / "input"
+        src.mkdir()
+        (src / "sections-list.json").write_text('{"rootMetadata": {}}', encoding="utf-8")
+        (src / "section-0.json").write_text(
+            '{"styles": {}, "nodes": [{"type": "FRAME", "name": "OneOff", "fill": "paint_missing", "children": []}]}',
+            encoding="utf-8",
+        )
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPT), "--input", str(src), "--out", str(tmp / "out")],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(proc.returncode, 2)
+        self.assertTrue(proc.stderr.startswith("error: "), proc.stderr)
+
+    def test_missing_sections_list_hard_stops(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        src = tmp / "input"
+        src.mkdir()
+        (src / "section-0.json").write_text('{"styles": {}, "nodes": []}', encoding="utf-8")
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPT), "--input", str(src), "--out", str(tmp / "out")],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(proc.returncode, 2)
+        self.assertTrue(proc.stderr.startswith("error: "), proc.stderr)
+
+    def test_token_node_with_broken_fill_hard_stops(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        src = tmp / "input"
+        src.mkdir()
+        (src / "sections-list.json").write_text('{"rootMetadata": {}}', encoding="utf-8")
+        (src / "section-0.json").write_text(
+            '{"styles": {}, "nodes": [{"type": "FRAME", "name": "OneOff", "_token": "Fill/Primary", "_color": "#FFFFFF", "fill": "paint_missing", "children": []}]}',
+            encoding="utf-8",
+        )
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPT), "--input", str(src), "--out", str(tmp / "out")],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(proc.returncode, 2)
+        self.assertEqual(proc.stdout, "")
+        self.assertTrue(proc.stderr.startswith("error: "), proc.stderr)
+
+    def test_malformed_section_filename_hard_stops(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        src = tmp / "input"
+        src.mkdir()
+        (src / "sections-list.json").write_text('{"rootMetadata": {}}', encoding="utf-8")
+        (src / "section-1-extra.json").write_text('{"styles": {}, "nodes": []}', encoding="utf-8")
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPT), "--input", str(src), "--out", str(tmp / "out")],
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(proc.returncode, 2)
+        self.assertTrue(proc.stderr.startswith("error: "), proc.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()
