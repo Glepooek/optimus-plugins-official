@@ -4,7 +4,7 @@
 
 ## 仓库概览
 
-自定义的 Claude Code 插件仓库，9 个领域插件提供企业级开发工具链。
+自定义的 Claude Code 插件仓库，8 个领域插件提供企业级开发工具链。
 
 各插件职责见 `.claude-plugin/marketplace.json` 的 `description` 字段。
 
@@ -34,7 +34,6 @@
 
 - 简单 skill：`/plugin-name:skill-name`
 - 复合 skill：`/plugin-name:skill-name:substep`
-- `optimus-fe-dev` 是唯一的复合 skill（5 阶段工作流），触发词：`/optimus-frontend-plugin:optimus-fe-dev`，详见 `plugins/optimus-frontend-plugin/skills/optimus-fe-dev/ARCHITECTURE.md`
 
 ---
 
@@ -82,7 +81,6 @@ Skill frontmatter / CHANGELOG 规范见 `.claude/rules/skill-authoring.md`（编
 | 文件 | 用途 |
 |---|---|
 | `.claude-plugin/marketplace.json` | 插件仓库元数据和版本号 |
-| `plugins/optimus-frontend-plugin/skills/optimus-fe-dev/ARCHITECTURE.md` | 复合 skill 模式参考实现 |
 | `.claude/rules/skill-authoring.md` | SKILL.md frontmatter / CHANGELOG 规范（按路径自动加载） |
 
 **已被 gitignore 的目录（有意排除，非缺失）：** `.claude/skills/darwin-skill/`（评估产物）、`.remember/`、`.codegraph/`

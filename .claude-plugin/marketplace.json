@@ -2,7 +2,7 @@
   "name": "optimus-plugins-official",
   "displayName": "Optimus 官方插件仓库",
   "description": "自定义 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强、权限通知等企业级开发工具链",
-  "version": "9.0.0",
+  "version": "10.0.0",
   "owner": {
     "name": "optimus",
     "url": "https://www.optimus.cn"
@@ -21,7 +21,6 @@
     "frontend",
     "backend",
     "office",
-    "feishu",
     "prd",
     "ci-cd",
     "mcp"
@@ -31,7 +30,7 @@
     {
       "name": "optimus-frontend-plugin",
       "source": "./plugins/optimus-frontend-plugin",
-      "description": "前端开发工具集：React/Vue 开发、WPF XAML 性能优化、UI 设计规范、组件库、前端架构文档、SVG `<path d>` 提取并生成 WPF `Path.Data`/XAML；有效样式不同时输出多个 WPF `Path` 元素，以保留支持的 Fill/Stroke 区分等；MasterGo 设计稿转 WPF 页面组装（mastergo-to-wpf-page）；MasterGo 设计稿图标/背景资产导出为 WPF Icons.xaml；MasterGo 设计稿组件抽取生成组件库（mastergo-to-wpf-components），页面组装优先复用组件库"
+      "description": "WPF 前端开发工具集：SVG `<path d>` 提取并生成 WPF `Path.Data`/XAML；WPF XAML 性能优化；MasterGo 设计稿转 WPF 页面组装（mastergo-to-wpf-page）；MasterGo 设计稿图标/背景资产导出为 WPF Icons.xaml；MasterGo 设计稿组件抽取生成组件库（mastergo-to-wpf-components），页面组装优先复用组件库"
     },
     {
       "name": "optimus-backend-plugin",
@@ -47,11 +46,6 @@
       "name": "optimus-prd-plugin",
       "source": "./plugins/optimus-prd-plugin",
       "description": "PRD 管理工具集：PRD 文档创建、优化、审查，产品需求全流程管理"
-    },
-    {
-      "name": "optimus-feishu-plugin",
-      "source": "./plugins/optimus-feishu-plugin",
-      "description": "飞书集成工具集：飞书文档读写、文档上传、文档加载等自动化操作"
     },
     {
       "name": "optimus-office-plugin",
