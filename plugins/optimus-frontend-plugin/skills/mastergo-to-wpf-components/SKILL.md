@@ -1,8 +1,8 @@
 ---
 name: mastergo-to-wpf-components
-description: 当用户提供 MasterGo 设计稿链接并要求抽取可复用视觉组件、生成组件库、沉淀样式/DataTemplate/自定义控件时使用此 Skill；产出组件索引、颜色资源与 DataTemplate 资源，并可按严格映射登记控件。Not for page generation (use mastergo-to-wpf-page) or icon export (use mastergo-icon-expoter).
+description: 当用户提供 MasterGo 设计稿链接并要求抽取可复用视觉组件、生成组件库、沉淀样式/DataTemplate/自定义控件时使用此 Skill；产出组件索引、颜色资源与 DataTemplate 资源，并可按严格映射登记控件。触发词："抽组件"、"生成组件库"、"抽取可复用组件"、"设计稿转组件"、"WPF 组件库"、"沉淀样式"。Not for page generation (use mastergo-to-wpf-page) or icon export (use mastergo-icon-expoter).
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
   category: generator
 compatibility: Python 3；需 mastergo-magic-mcp（本仓库 plugins/optimus-mcp-servers/.mcp.json 内置）与 MASTERGO_TOKEN；需 MasterGo Team 版及以上，草稿箱文件不可用；首次使用前须填写 plugins/optimus-frontend-plugin/skills/wpf-project-conventions/CONVENTIONS.md。
@@ -48,7 +48,11 @@ exit `0` 时据实报告抽取数量；exit `2` 时原样转达 stderr 单行 `e
 
 ## Step 5：增量合并与冲突确认
 
-逐条展示 `components-index.json` 中 `status=new` 的设计稿来源和资源 key。资源 key 冲突时展示新旧 diff，### 🔴 CHECKPOINT：等待用户选择覆盖或保留；不得自动覆盖。
+逐条展示 `components-index.json` 中 `status=new` 的设计稿来源和资源 key。资源 key 冲突时展示新旧 diff。
+
+### 🔴 CHECKPOINT：冲突处理
+
+等待用户选择覆盖或保留；不得自动覆盖。
 
 `status=mapped` 的组件仅按严格映射白名单生成控件引用。`Background`、`BorderBrush`、`CornerRadius` 等正文仅从首个出现节点依 DSL 映射规则提取，不猜测。
 

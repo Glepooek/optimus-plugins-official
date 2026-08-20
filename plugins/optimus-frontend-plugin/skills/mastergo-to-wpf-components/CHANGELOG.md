@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1] - 2026-08-20
+
+### Added
+- 补充中英文触发词示例到 frontmatter description："抽组件"、"生成组件库"、"抽取可复用组件"、"设计稿转组件"、"WPF 组件库"、"沉淀样式"。
+
+### Changed
+- 修正 Step 5 CHECKPOINT 格式为独立段落，与 Step 2 保持一致。
+
 ## [1.0.0] - 2026-08-19
 
 ### Added
