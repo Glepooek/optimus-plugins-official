@@ -546,7 +546,7 @@
 ---
 [Skill] 🚫 disable-model-invocation frontmatter\n功能：在 SKILL.md frontmatter 中声明 disable-model-invocation: true，禁止 Claude 自主调用该 skill；用户仍可通过斜杠命令手动触发；Claude 尝试调用时会被引导告知用户"请手动运行该 skill"，而不是自己模仿其工作流\n效果：适合只应由人工决定时机的高风险或高成本 skill（如生产部署、大规模重构），防止模型在未被要求时擅自触发\n例子：frontmatter 加入 disable-model-invocation: true 后，Claude 判断该场景适用该 skill 时会提示"建议你运行 /该skill"，而不是自己执行同等逻辑
 ---
-[CLI] 🖥️ claude self-hosted-runner 自托管环境\n功能：Team/Enterprise 计划新增 claude self-hosted-runner，把自己的机器或容器变成 Claude Code web/mobile/desktop 会话可以运行的环境；--base-dir 指定基础目录，无法创建/写入时启动即报错退出而非静默失败\n效果：企业可以把云端发起的任务实际调度到自己控制的机器上执行，满足数据不出内网等合规要求\n例子：claude self-hosted-runner --base-dir /opt/claude-runner 在自己的服务器上注册一个可供云端会话调度的运行环境
+[CLI] 🖥️ claude self-hosted-runner 自托管环境\n功能：Team/Enterprise 计划新增 claude self-hosted-runner，把自己的机器或容器变成 Claude Code web/mobile/desktop 会话可以运行的环境；--base-dir 指定基础目录，无法创建/写入时启动即报错退出而非静默失败；--defer-shutdown-max-min <分钟> 在收到 SIGTERM 后继续服务已附着的会话，超过分钟数后停车再退出；--proxy-authorization-command <命令> / --proxy-authorization-file <文件> 为要求每次连接都新鲜签发 Proxy-Authorization header 的出口代理提供认证\n效果：企业可以把云端发起的任务实际调度到自己控制的机器上执行，满足数据不出内网等合规要求；退出时优雅保留运行中会话，代理后端的自托管环境也能正确完成认证\n例子：claude self-hosted-runner --base-dir /opt/claude-runner 在自己的服务器上注册一个可供云端会话调度的运行环境；claude self-hosted-runner --defer-shutdown-max-min 30 收 SIGTERM 后最多服务 30 分钟再退出；claude self-hosted-runner --proxy-authorization-command 'cat /tmp/proxy-token' 为需要动态认证的出口代理提供 header
 ---
 [配置] 📂 plugin skills 路径 "." 与校验提示优化\n功能：v2.1.221 起 plugin.json 的 skills 路径字段接受 "."，表示插件根目录本身就是 skill 目录；根目录直接放 SKILL.md 时的校验报错会提示改用插件根目录写法\n效果：单 skill 插件不必再额外建一层子目录，plugin 结构可以更扁平\n例子：plugin.json 中 "skills": ["."] 让插件根目录直接作为唯一 skill 的目录
 ---
@@ -595,4 +595,9 @@
 功能：v2.1.236 起 SendMessage 支持 notify_when_idle 参数：请求目标会话在下次空闲时发送一次通知，仅 macOS/Linux 可用；opt-in、一次性、无轮询
 效果：跨会话协作时不必反复轮询检查对方状态，空闲时自动收到通知
 例子：SendMessage(to="code-review", notify_when_idle=true, message="PR ready for review") 让 code-review 会话空闲时通知你
+---
+[配置] ⌨️ keybindingFlavor 键位偏好
+功能：v2.1.238 起 settings.json 新增 keybindingFlavor 设置，设为 "readline" 时 Ctrl+W 在提示符中删除到前一个空白（类似 Bash）；默认 "classic" 行为不变
+效果：习惯 Bash/readline 键位的用户可获得一致的删除体验，不必迁就默认行为
+例子：{"keybindingFlavor": "readline"} 让 Ctrl+W 删除到前一个空白；不设置则保持 classic 默认
 ---
