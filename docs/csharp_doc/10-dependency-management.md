@@ -11,10 +11,40 @@
 - **禁止**：项目内单独写包版本（版本漂移的根源）
 - **应该**：通用依赖提升为全局（无条件）条目，项目特有依赖放入对应的条件 ItemGroup
 
+```xml
+<!-- ❌ 项目内写版本：10 个项目各自引 8.0.x，升级要逐个改，漂移失控 -->
+<ItemGroup>
+  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
+  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+</ItemGroup>
+
+<!-- ✅ 版本只在 Directory.Packages.props，项目引用不写 Version -->
+<ItemGroup>
+  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  <PackageReference Include="Newtonsoft.Json" />
+</ItemGroup>
+```
+
+```xml
+<!-- Directory.Packages.props：唯一版本来源，升级只改这一处 -->
+<ItemGroup>
+  <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
+  <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+</ItemGroup>
+```
+
 ## 2. 版本策略
 
 - **必须**：锁定精确版本，禁止浮动版本（`*`、`1.x`）
 - **必须**：生产依赖禁止预发布包（`-preview` / `-rc` / `-beta`），评审通过除外
+
+```xml
+<!-- ❌ 浮动版本：每次还原可能拉到不同版本，构建不可复现，行为时好时坏 -->
+<PackageReference Include="Newtonsoft.Json" Version="13.*" />
+
+<!-- ✅ 锁定精确版本：可复现构建，升级走显式 PR + review -->
+<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+```
 - **应该**：定期检查过期依赖（`dotnet list package --outdated`），升级走 PR + review
 - **必须**：升级依赖后运行全量构建与测试，验证兼容性
 - **应该**：依赖升级记录到 CHANGELOG（联动 `16` 章）

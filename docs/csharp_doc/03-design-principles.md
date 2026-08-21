@@ -53,11 +53,61 @@
 - **应该**：结构体保持不可变，字段只读；可变 `struct` 是反模式
 - **禁止**：结构体过大或含托管引用导致隐式拷贝陷阱——超过 16~24 字节或语义上更像引用时，改用 `class`/`record`
 
+```csharp
+// ❌ 可变实体误用 record：用户改个状态就得重建，相等语义还被滥用
+public record User
+{
+    public string Name { get; set; }        // 可变 record：改 set 就违背值语义
+    public void ChangeEmail(string email) => Email = email;
+}
+var a = user with { Name = "bob" };         // 每次变更新建实例，代价高、易错
+
+// ✅ 有身份的领域实体用 class：就地变更，身份（引用）不变
+public class User
+{
+    public string Name { get; private set; }
+    public void ChangeEmail(string email) => Email = email;
+}
+```
+
+```csharp
+// ❌ 可变 struct：一次隐式拷贝就能"改了副本原值没变"，防不胜防
+public struct Point
+{
+    public int X; public int Y;             // 公开可变字段
+}
+var a = points[0]; a.X = 5;                 // 改的是副本，points[0] 没变
+
+// ✅ 不可变 struct：字段只读，构造即定，拷贝也不会出"改了没生效"
+public readonly struct Point
+{
+    public Point(int x, int y) { X = x; Y = y; }
+    public int X { get; }
+    public int Y { get; }
+}
+```
+
 ## 5. 不可变性
 
 - **必须**：不可变模型用 `init` 或构造函数一次性设置，暴露属性只读
 - **应该**：需要变更时返回新实例（`with` 表达式 / 拷贝），而非内部就地修改
 - **禁止**：公共可写集合属性直接暴露内部 `List<T>`——用 `IReadOnlyCollection<T>`、`ImmutableArray<T>` 暴露只读视图，或返回副本
+
+```csharp
+// ❌ 直接暴露内部 List<T>：调用方可 Add/Remove，绕过所有校验，内部状态被外部改写
+public class Order
+{
+    public List<OrderItem> Items { get; } = new();   // 外部直接 items.Add(...)
+}
+
+// ✅ 只读视图：外部只能读，修改必须走领域方法（可校验、可通知）
+public class Order
+{
+    private readonly List<OrderItem> _items = new();
+    public IReadOnlyCollection<OrderItem> Items => _items;   // 只读视图
+    public void AddItem(OrderItem item) { /* 校验 + 添加 */ }
+}
+```
 
 ## 6. 依赖注入
 
@@ -66,6 +116,52 @@
 - **应该**：生命周期贴近真实用途：短命状态用 `Transient`，复用连接 / 客户端用 `Singleton`，请求级上下文用 `Scoped`；不确定时选最短合理生命周期
 - **必须**：`HttpClient` 等设计为复用的客户端注册为 `Singleton`（类型化 / 命名客户端），禁止逐次 `new`
 - **禁止**：在构造函数内做耗时 / 阻塞工作；依赖应立即可用，昂贵代价用 `Lazy<T>` 惰性推迟
+
+```csharp
+// ❌ ServiceLocator / 静态服务：依赖藏在代码里，测试无法替换，谁改了服务全乱
+public class OrderService
+{
+    public async Task Create(Order order)
+    {
+        var repo = ServiceLocator.Get<IOrderRepository>();   // 全局取，隐式依赖
+        var mailer = Mailer.Instance;                         // 静态服务，不可替
+        await repo.Add(order);
+        await mailer.Send(order);
+    }
+}
+
+// ✅ 构造函数注入：签名即依赖清单，测试可换实现，显式无隐藏
+public class OrderService
+{
+    private readonly IOrderRepository _repo;
+    private readonly INotifier _notifier;
+    public OrderService(IOrderRepository repo, INotifier notifier)
+    {
+        _repo = repo;
+        _notifier = notifier;
+    }
+    public async Task Create(Order order)
+    {
+        await _repo.Add(order);
+        await _notifier.Send(order);
+    }
+}
+```
+
+```csharp
+// ❌ 逐次 new HttpClient：每个实例独立连接池，高并发下 socket 耗尽
+public class WeatherClient
+{
+    public async Task<string> Get() {
+        using var http = new HttpClient();   // 每次调用新建，连接不复用
+        return await http.GetStringAsync("https://api.example.com/now");
+    }
+}
+
+// ✅ 注册为 Singleton / 类型化客户端：连接池复用，由 DI 管理生命周期
+services.AddHttpClient<WeatherClient>()
+        .ConfigureHttpClient(c => c.BaseAddress = new Uri("https://api.example.com"));
+```
 
 ## 7. 设计模式适度使用
 

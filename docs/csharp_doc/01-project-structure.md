@@ -26,6 +26,23 @@
   - **禁止**：用 `#nullable disable` 关闭可空分析；存量代码迁移期例外，但需登记并限期收敛（迁移方法见 `dotnet-upgrade:migrate-nullable-references`）
 - **LangVersion**：不显式固定，跟随目标框架默认值；仅在确实需要（且团队认可）时经评审后调整
 
+```csharp
+// ❌ 关闭可空分析：文件内丢失所有空引用告警，可空 null 直接运行期炸
+#nullable disable
+public User FindUser(int id)
+{
+    var users = _repo.GetUsers();          // 返回 IEnumerable<User?>，被当成非空
+    return users.FirstOrDefault(u => u.Id == id);   // 可能返回 null，调用方不知情
+}
+
+// ✅ 保持可空并修正确实的问题：签名诚实表达"可能为空"，调用方被迫处理
+public User? FindUser(int id)
+{
+    var users = _repo.GetUsers();
+    return users.FirstOrDefault(u => u.Id == id);   // 返回类型带 ?，调用方须判空
+}
+```
+
 ## 3. 静态分析与编辑配置
 
 - **必须**：仓库根提供 `.editorconfig`，覆盖缩进（4 空格）、字符集（UTF-8）、花括号风格、`using` 排序等规则，并随 `.gitignore` 一并提交
@@ -74,6 +91,29 @@
 - **必须**：依赖单向向内——表现层 → 应用层 → 领域层；内层不得引用外层
 - **禁止**：循环引用（编译器兜底，但分层上更早拦截）
 - **禁止**：越层引用——如 UI 直接引用 `Infrastructure` 中的仓储实现类
+
+```csharp
+// ❌ 表现层直接 new 仓储实现：越过 Application/领域接口，依赖方向被打破
+// Presentation 项目引用 Infrastructure，后续替换实现要改所有调用点
+public class OrderController
+{
+    public async Task<Order?> Get(int id)
+    {
+        var repo = new SqlOrderRepository();   // Infrastructure 具体类
+        return await repo.FindAsync(id);
+    }
+}
+
+// ✅ 跨层只依赖接口，实现由组合根（DI 注册）装配
+// Presentation 只引用 Application/Domain 的 IOrderRepository
+public class OrderController
+{
+    private readonly IOrderRepository _repo;   // 依赖抽象
+    public OrderController(IOrderRepository repo) => _repo = repo;
+
+    public async Task<Order?> Get(int id) => await _repo.FindAsync(id);
+}
+```
 - **必须**：跨层边界用接口定义契约，实现细节由组合根（DI 注册处）装配
 - **禁止**：测试项目引用无关实现项目；测试只引用被测项目及其必要依赖
 

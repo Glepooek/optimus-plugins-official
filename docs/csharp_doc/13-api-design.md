@@ -25,6 +25,23 @@
 - **禁止**：公共 API 直接返回 EF 实体（懒加载序列化异常、字段泄漏）
 - **应该**：DTO 设边界职责，不承载业务逻辑
 
+```csharp
+// ❌ 公共 API 返回 EF 实体：懒加载代理出序列化异常，导航属性把内部结构全暴露
+public Order GetOrder(int id)
+{
+    return _ctx.Orders.Include(o => o.Items).First(o => o.Id == id);  // 直接甩实体出去
+}
+
+// ✅ 边界用 DTO：只暴露该传的字段，序列化稳定，实体演进不波及契约
+public record OrderDto(int Id, decimal Amount, IReadOnlyList<OrderItemDto> Items);
+public OrderDto GetOrder(int id)
+{
+    var order = _ctx.Orders.Include(o => o.Items).First(o => o.Id == id);
+    return new OrderDto(order.Id, order.Amount,
+        order.Items.Select(i => new OrderItemDto(i.Id, i.Name)).ToArray());
+}
+```
+
 ## 4. 版本化与兼容
 
 遵循语义化版本（semver）：`major` 破坏性、`minor` 新特性、`patch` 修复。
@@ -40,6 +57,15 @@
 - **必须**：移除公共成员先标 `[Obsolete]`，给过渡期再移除
 - **禁止**：直接删除被使用的公共成员（`[Obsolete]` 不是立即移除的许可）
 - **应该**：`[Obsolete]` 消息说明替代方案
+
+```csharp
+// ❌ 直接删除：所有消费者编译失败，库升级即破坏，无过渡期
+public Task<Order> GetOrderByNumber(string orderNo) { /* ... */ }   // 下一版本直接删掉
+
+// ✅ 先标 Obsolete 给过渡期：消费者有编译告警指引替代，下个大版本再移除
+[Obsolete("请使用 GetOrderAsync(int id) 替代", false)]
+public Task<Order> GetOrderByNumber(string orderNo) { /* ... */ }
+```
 
 ## 6. 契约测试
 

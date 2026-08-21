@@ -38,10 +38,41 @@
 - **禁止**公共成员使用 `_` 前缀或 `camelCase`
 - **禁止**同一标识符在相邻作用域内语义漂移（同名不同义）
 
+```csharp
+// ❌ 匈牙利前缀 + 无意义命名：类型变了名字就过期，读者看不出语义
+private string strName;          // "str" 前缀：将来改 StringBuilder 怎么办？
+var data = GetOrders();          // data 是订单还是别的？调用处根本无法判断
+
+// ✅ 名称表达语义，类型留给编译器
+private string _name;            // 直接用领域词
+var orders = GetOrders();        // 一眼可知是订单集合
+```
+
+```csharp
+// ❌ 同一标识符语义漂移：两个 isLoaded 含义不同，读到第二个会误以为同一状态
+public bool isLoaded => _state == State.Loaded;      // "加载完成"
+public bool isLoaded = File.Exists(path);            // "文件存在"，同名不同义
+
+// ✅ 各用各的名，语义唯一
+public bool IsLoaded => _state == State.Loaded;
+public bool FileExists => File.Exists(path);
+```
+
 ### 1.3 布尔命名
 
 - **应该**：布尔属性 / 方法 / 局部变量以 `Is` / `Has` / `Can` / `Should` / `Contains` 等动词开头：`IsValid`、`HasItems`、`CanEdit`、`IsEnabled`
 - **禁止**：布尔变量用无动词名词（`Flag`、`Status` 不表达真假）
+
+```csharp
+// ❌ 无动词名词：Flag/Status 不回答"真假"，读到用法才懂
+public bool Flag { get; set; }          // 什么旗？是开是关？
+if (Status) { ... }                     // Status 是"状态"还是"是否活跃"？歧义
+
+// ✅ 动词开头：一读即知是布尔
+public bool IsActive { get; set; }
+if (CanEdit) { ... }
+if (HasItems) { ... }
+```
 
 ### 1.4 缩写与复合词
 
@@ -67,6 +98,14 @@
 - **必须**：逻辑运算使用短路运算符 `&&` / `||`；只有真正的整数位运算才用 `&` / `|`
 - **必须**：判空优先用模式匹配 `is null` / `is not null`，不用 `== null`（可读性 + 分析器友好）
 
+```csharp
+// ❌ == null：读者要花半秒确认不是某个重载了 == 的类型
+if (user == null) { throw new ArgumentNullException(nameof(user)); }
+
+// ✅ is null：显式模式匹配，编译器可识别，分析器友好
+if (user is null) { throw new ArgumentNullException(nameof(user)); }
+```
+
 ### 2.3 字符串处理
 
 | 场景 | 使用 | 避免 | 原因 |
@@ -76,12 +115,33 @@
 | 多行 / 转义密集 | 原始字符串 `"""..."""`（若支持） | `@"..."` 层层转义 | 免转义，更清晰 |
 | 国际化 | `string.Format` + 资源 | 硬编码拼接 | 占位符与资源可翻译 |
 
+```csharp
+// ❌ 循环内 += ：每次拼接都新建字符串并复制，O(n²) 分配，大量垃圾
+string result = "";
+foreach (var item in items)
+    result += $"{item.Name},";          // 1000 项 = 1000 次全量复制
+
+// ✅ StringBuilder：原地追加，O(n)，无中间垃圾
+var sb = new StringBuilder();
+foreach (var item in items)
+    sb.Append(item.Name).Append(',');
+var result = sb.ToString();
+```
+
 ### 2.4 `var` 与对象创建
 
 - **应该**：类型从右侧立即可见时用 `var`：`var user = new User();`
 - **禁止**：右侧返回 `object` / 基类 / 匿名无法推断时用 `var` 掩盖真实类型：`object data = GetComplexData();`
 - **应该**：字段 / 局部变量优先目标类型 `new()`：`User user = new();`
 - **禁止**：冗余类型重复：`User user = new User();`
+
+```csharp
+// ❌ var 掩盖真实类型：reader 无法从右侧看出返回什么，语义藏在方法签名里
+var result = GetComplexData();          // 是 List<Order>？OrderReport？根本看不出来
+
+// ✅ 右侧推断不出时显式类型：读者不看方法也知道拿的是什么
+OrderReport result = GetComplexData();
+```
 
 ### 2.5 注释风格
 
@@ -90,6 +150,16 @@
 - **禁止**：使用块注释 `/* */` 做行内说明（影响本地化工具）
 - **禁止**：注释描述"是什么"，应描述"为什么"（见 `17` 章注释哲学）
 - **禁止**：在注释里留未使用的过期代码（用版本控制，而非注释）
+
+```csharp
+// ❌ 逐行翻译代码：代码改了一处，注释立刻过期成为噪音
+// 把用户名转换为小写
+var lower = username.ToLowerInvariant();
+
+// ✅ 注释解释 WHY：代码自明，注释补充翻译做不到的信息
+// 邮箱匹配大小写不敏感，统一小写后做后续比较
+var lower = username.ToLowerInvariant();
+```
 
 ## 3. 语言特性使用准则（版本中立）
 

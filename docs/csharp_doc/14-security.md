@@ -16,6 +16,16 @@
 - **禁止**：将用户输入直接拼接 SQL（SQL 注入）
 - **禁止**：存储过程 / 动态 SQL 拼接未经校验的输入
 
+```csharp
+// ❌ 字符串拼接 SQL：用户输入变成 SQL 代码，' OR 1=1 -- 直接注入
+var sql = $"SELECT * FROM Users WHERE Name = '{userInput}'";    // userInput: alice' OR '1'='1
+return _conn.Query<User>(sql).ToList();
+
+// ✅ 参数化：输入永远是"值"，永远不能变成 SQL 代码
+var sql = "SELECT * FROM Users WHERE Name = @name";
+return _conn.Query<User>(sql, new { name = userInput }).ToList();
+```
+
 ## 3. 密钥与配置
 
 - **必须**：密钥 / 连接串 / Token 走密钥管理（环境变量、Secret Manager、Key Vault 等），**禁止**硬编码
@@ -23,12 +33,33 @@
 - **必须**：Git 历史中的密钥视为已泄露，立即轮换
 - **应该**：环境（开发 / 测试 / 生产）配置隔离，生产密钥不进入开发环境
 
+```csharp
+// ❌ 硬编码密钥：代码反编译即得，一旦提交 git 历史永久泄露
+const string ApiKey = "sk-9f8e7d6c5b4a...";     // 或连接串里带密码
+var client = new PaymentClient(ApiKey);
+
+// ✅ 从环境变量 / 密钥管理读取：运行时注入，仓库零密钥
+var apiKey = Environment.GetEnvironmentVariable("PAYMENT_API_KEY")
+    ?? throw new InvalidOperationException("缺少 PAYMENT_API_KEY 配置");
+var client = new PaymentClient(apiKey);
+```
+
 ## 4. 序列化安全
 
 - **必须**：JSON 反序列化设深度与大小限制（防反序列化攻击与资源耗尽）
 - **禁止**：把用户可控数据反序列化到危险类型（类型混淆攻击）
 - **应该**：明确反序列化允许的类型集合（如 `TypeNameHandling` 仅允许安全白名单）
 - **禁止**：用默认宽松配置的 `JavaScriptSerializer` / 旧 `XmlSerializer` 处理不可信数据
+
+```csharp
+// ❌ 宽松反序列化：TypeNameHandling.All 让载荷里的类型名任意实例化，可远程执行代码
+var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };   // 危险
+var obj = JsonConvert.DeserializeObject(userPayload, settings);   // 载荷可指向任意类型构造
+
+// ✅ 限制类型与尺寸：关闭类型注入，只解析预期的强类型
+var options = new JsonSerializerOptions { MaxDepth = 64 };        // 限制深度
+var dto = JsonSerializer.Deserialize<UserDto>(userPayload, options);   // 类型固定，不可注入
+```
 
 ## 5. 认证与授权
 
@@ -56,6 +87,14 @@
 - **必须**：日志脱敏——**禁止**记录密码、Token、完整 PII（联动 `11` 章第 3 节）
 - **必须**：对最终用户隐藏内部错误细节（堆栈、连接串、SQL 语句）
 - **应该**：实现统一脱敏中间件 / 过滤器，而非逐处手工处理
+
+```csharp
+// ❌ 日志打 Token：认证令牌落日志，日志文件即泄密源
+_logger.LogInformation("调用支付接口，Authorization: {Token}", authToken);
+
+// ✅ 只记脱敏信息：令牌本体不进日志，可记录是否携带/前缀摘要
+_logger.LogInformation("调用支付接口，已携带令牌（长度 {Length}）", authToken?.Length);
+```
 
 ## 9. 威胁模型与响应
 

@@ -24,12 +24,36 @@
 - **必须**：错误日志携带异常对象（`Log.Error(ex, "...")`），保留堆栈与内部异常（联动 `05` 章第 8 节）
 - **禁止**：把正常业务路径打成 `Error` / `Warning`（日志噪音的根源）
 
+```csharp
+// ❌ 正常业务路径打 Error：用户取消/重试成功都算 Error，告警噪音淹没真故障
+catch (TimeoutException ex)
+{
+    await RetryAsync();
+    _logger.LogError(ex, "首次超时（已重试成功）");   // 已恢复却记 Error
+}
+
+// ✅ 级别对语义：正常路径 Information，可恢复降级 Warning，真正故障才 Error
+catch (TimeoutException ex)
+{
+    _logger.LogWarning(ex, "首次超时，开始重试");
+    await RetryAsync();
+}
+```
+
 ## 3. 结构化日志
 
 - **必须**：使用结构化日志——消息模板 + 命名参数，禁止字符串拼接拼消息
 - **应该**：`Log.Information("Order {OrderId} created", orderId)`，而非 `$"Order {orderId} created"`
 - **禁止**：日志中出现敏感数据（密码、Token、完整 PII）——见 `14` 章
 - **应该**：模板参数名保持稳定（日志查询与告警依赖字段名）
+
+```csharp
+// ❌ 字符串拼接：消息变成一整串，字段不可检索，改模板就要改代码
+_logger.LogInformation($"Order {order.Id} created by {order.UserId}");
+
+// ✅ 结构化模板：{OrderId} / {UserId} 是独立字段，可按字段查询、聚合
+_logger.LogInformation("Order {OrderId} created by {UserId}", order.Id, order.UserId);
+```
 
 ## 4. 上下文关联
 
@@ -43,6 +67,14 @@
 - **必须**：热路径日志控制在合理级别，避免高频 `Information`
 - **应该**：结构化日志天然延迟求值——未启用的级别不渲染消息体，利用这一点而非手动拼接
 - **禁止**：日志调用内做昂贵计算（即使该级别被过滤）
+
+```csharp
+// ❌ 日志内做昂贵计算：即使 Debug 级别被过滤，Serialize 已经执行了
+_logger.LogDebug($"支付回调解析结果：{JsonSerializer.Serialize(payload)}");
+
+// ✅ 参数延迟求值：级别未启用时，Serialize 根本不会执行
+_logger.LogDebug("支付回调解析结果：{Payload}", JsonSerializer.Serialize(payload));
+```
 
 ## 6. 日志噪声控制
 

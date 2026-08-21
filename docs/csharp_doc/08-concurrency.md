@@ -20,11 +20,63 @@
 - **禁止**：锁内 `await`（`Monitor` 不支持异步重入，必死锁；需要异步互斥用 `SemaphoreSlim`）
 - **必须**：涉及多个锁时，全仓库统一获取顺序（防死锁，见第 8 节）
 
+```csharp
+// ❌ lock 内 await：Monitor 是线程持锁，await 释放线程后锁无人持、也无人可再进 → 死锁
+lock (_lock)
+{
+    var data = await _repo.GetAsync();   // 持锁线程被 await 放走，锁永远释放不了
+}
+
+// ✅ 异步互斥用 SemaphoreSlim：可 await 等待，不绑定线程
+private readonly SemaphoreSlim _gate = new(1, 1);
+await _gate.WaitAsync();
+try
+{
+    var data = await _repo.GetAsync();
+}
+finally
+{
+    _gate.Release();
+}
+```
+
+```csharp
+// ❌ 锁 this / typeof：锁的是可被外部接触的公共对象，别人也能 lock 同一个 → 误锁、死锁
+public class Counter
+{
+    public void Increment() { lock (this) { /* ... */ } }        // 实例可能被外部传出去锁
+    public static void Reset() { lock (typeof(Counter)) { /* ... */ } }  // 类型对象全局唯一，处处可锁
+}
+
+// ✅ 私有锁对象：只有本类能拿到引用，杜绝外部误锁
+public class Counter
+{
+    private readonly object _lock = new();
+    public void Increment() { lock (_lock) { /* ... */ } }
+}
+```
+
 ## 3. 原子操作
 
 - **必须**：简单计数 / 标志用 `Interlocked`（`Increment`、`Decrement`、`CompareExchange`、`Exchange`）
 - **禁止**：多线程裸 `count++` / `count--`（非原子）
 - **应该**：复杂状态用锁或并发集合，不强行原子化
+
+```csharp
+// ❌ 裸 count++：读→加→写三步非原子，两个线程同时走会丢更新（竞态）
+public class Metrics
+{
+    private int _total;
+    public void Record() => _total++;        // 两线程各 Record 一次，结果可能只 +1
+}
+
+// ✅ Interlocked.Increment：单指令原子完成，无锁无竞态
+public class Metrics
+{
+    private int _total;
+    public void Record() => Interlocked.Increment(ref _total);
+}
+```
 
 ## 4. 并发集合选择
 
@@ -38,6 +90,18 @@
 
 - **必须**：需要"读-改-写"原子时用并发集合提供的方法（`GetOrAdd`、`AddOrUpdate`），禁止先 `TryGetValue` 再 `Add`（非原子）
 - **禁止**：迭代并发集合时并发修改——需快照时先 `ToList()` / `ToArray()`
+
+```csharp
+// ❌ TryGetValue 再 Add：两步之间另一个线程已插入，重复键、覆盖、异常都有可能
+if (!_cache.TryGetValue(key, out var value))
+{
+    value = Load(key);
+    _cache.Add(key, value);      // 并发下可能已存在 → 抛异常或覆盖
+}
+
+// ✅ GetOrAdd：查+插在一个原子操作内完成，由并发字典保证
+var value = _cache.GetOrAdd(key, k => Load(k));
+```
 
 ## 5. 可见性
 

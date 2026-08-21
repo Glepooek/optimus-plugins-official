@@ -11,6 +11,19 @@
 - **应该**：能通过命名表达意图就不写注释（命名是第一文档，联动 `02` 章）
 - **必须**：注释与代码保持同步——改代码时检查受影响注释
 
+```csharp
+// ❌ 注释补坏命名：名字不清，靠注释解释"是什么"，命名应自己说话
+// 处理临时数据的临时变量（用来在循环里存最小值）
+int temp = int.MaxValue;
+foreach (var v in values)
+    if (v < temp) temp = v;      // 一看便知是"取最小"，但命名 temp 完全没表达
+
+// ✅ 命名即文档：无需注释读者也懂，删掉注释也不损失信息
+int min = int.MaxValue;
+foreach (var v in values)
+    if (v < min) min = v;
+```
+
 ## 2. XML 注释
 
 - **必须**：公共 API 配 XML 注释，用于生成 API 文档（联动 `13` 章）
@@ -19,12 +32,32 @@
 - **禁止**：XML 注释留空或复制签名（`<summary>Gets or sets the name.</summary>` 无信息价值）
 - **应该**：私有成员不强制 XML，用行注释说明 WHY
 
+```csharp
+// ❌ 复制签名：摘要只是属性名的英文复述，文档 API 看到的全是废话
+/// <summary>Gets or sets the name.</summary>
+public string Name { get; set; }
+
+// ✅ 有信息的注释：说用途、说约束（非显而易见的部分）
+/// <summary>订单显示名；为空时界面回退为订单号。</summary>
+/// <remarks>本地化文案在 <see cref="Resources.Order.Name"/>，勿在代码内拼接。</remarks>
+public string? Name { get; set; }
+```
+
 ## 3. 标记注释（TODO 等）
 
 - **应该**：用统一标记：`TODO`（待办）、`HACK`（临时方案）、`XXX`（有问题待查）
 - **必须**：标记注释带上下文（原因 + 关联 issue 编号），**禁止**裸 `// TODO`
 - **禁止**：遗留标记无跟踪——登记 issue，定期清理（联动 `15` 章技术债）
 - **禁止**：用注释保留禁用代码（禁用代码走版本控制，注释里不留垃圾）
+
+```csharp
+// ❌ 裸 TODO：无原因、无编号，没人知道要做什么、何时做，一挂几年
+// TODO: 优化这里的查询
+
+// ✅ 带上下文 + issue：原因、编号、责任人可追踪，可排期清理
+// TODO(#1234): 当前 OrderId 无索引，量上来后走全表扫描，按性能规范建索引
+var order = await _ctx.Orders.FirstOrDefaultAsync(o => o.Id == id);
+```
 
 ## 4. 仓库文档
 

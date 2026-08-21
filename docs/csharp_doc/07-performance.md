@@ -24,6 +24,20 @@
 - **禁止**：LINQ 每元素执行高成本调用（如循环内做 I/O）
 - **应该**：大数据集投影避免匿名类型逐元素分配
 
+```csharp
+// ❌ LINQ 延迟执行被多次枚举：Count、First、foreach 各自重跑一遍管道
+var query = source.Where(x => x.IsActive);       // 惰性
+var total = query.Count();                       // 第 1 次完整跑
+var first = query.First();                       // 第 2 次重跑
+foreach (var x in query) { /* ... */ }           // 第 3 次重跑
+
+// ✅ 先快照再复用：一次枚举，内存换重复计算
+var snapshot = source.Where(x => x.IsActive).ToList();
+var total = snapshot.Count;
+var first = snapshot[0];
+foreach (var x in snapshot) { /* ... */ }
+```
+
 ## 4. 字符串
 
 - **必须**：循环 / 多次拼接用 `StringBuilder`
@@ -31,11 +45,44 @@
 - **必须**：字符串比较显式指定 `StringComparison`（`Ordinal` / `OrdinalIgnoreCase`），避免文化差异带来的开销与错误
 - **禁止**：热路径逐次 `new Regex(pattern)`——复用静态编译正则或使用 Regex Source Generator
 
+```csharp
+// ❌ 热路径逐次 new Regex：每次匹配都重新编译正则表达式
+public IEnumerable<string> MatchEmail(IEnumerable<string> lines)
+{
+    foreach (var line in lines)
+    {
+        var m = new Regex(@"\w+@\w+\.\w+").Match(line);   // 每行都 new 一次
+        if (m.Success) yield return m.Value;
+    }
+}
+
+// ✅ 静态编译正则：一次编译，反复复用
+private static readonly Regex EmailRegex = new(@"\w+@\w+\.\w+", RegexOptions.Compiled);
+public IEnumerable<string> MatchEmail(IEnumerable<string> lines)
+{
+    foreach (var line in lines)
+    {
+        var m = EmailRegex.Match(line);
+        if (m.Success) yield return m.Value;
+    }
+}
+```
+
 ## 5. 集合预分配
 
 - **必须**：已知规模时用构造函数 `capacity` 预分配（`List` / `Array` / `Dictionary`）
 - **应该**：高频增长的集合给合理初始容量，避免反复扩容拷贝
 - **禁止**：可预估规模的集合不设容量，导致 O(n) 扩容
+
+```csharp
+// ❌ 不设容量：默认容量 4，填满后 4→8→16→32 逐次扩容拷贝，10 万项触发十几次全量复制
+var ids = new List<int>();
+foreach (var row in source) ids.Add(row.Id);   // source 有 10 万行，未预分配
+
+// ✅ 已知规模预分配：一次到位，零扩容拷贝
+var ids = new List<int>(source.Count);         // 初始容量 = 规模
+foreach (var row in source) ids.Add(row.Id);
+```
 
 ## 6. 避免装箱
 
@@ -56,6 +103,20 @@
 - **禁止**：热路径使用反射（`Activator.CreateInstance`、`GetMethod` 等）
 - **应该**：用编译期替代：泛型、接口、source generator、预编译表达式树
 - **必须**：确实需要反射时缓存 `MethodInfo` / `Delegate`，不逐次查找
+
+```csharp
+// ❌ 热路径逐次反射：GetMethod + Invoke 每次都要做元数据查找与调用包装
+public object InvokeHandler(object target, string method)
+{
+    var mi = target.GetType().GetMethod(method);       // 每次反射查找
+    return mi.Invoke(target, null);                     // 调用包装开销大
+}
+
+// ✅ 泛型/接口让编译器干活：无反射，编译期类型安全
+public interface IHandler { object Run(); }
+public T InvokeHandler<T>(T target) where T : IHandler
+    => target.Run();                                    // 编译期直接调用
+```
 
 ## 9. 异步性能
 

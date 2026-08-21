@@ -22,11 +22,41 @@
 | `async` 但无 `await` | 编译器警告 + 误导调用方 | 删 `async`，返回 `Task.FromResult` 或改同步 |
 | 循环内串行 `await` 独立请求 | 慢、串行化 | 评估 `Task.WhenAll`（注意并发上限） |
 
+```csharp
+// ❌ .Result / .Wait()：阻塞 UI/请求线程，同步上下文被占死锁
+public string Load()
+{
+    var html = httpClient.GetStringAsync(url).Result;   // UI 线程：GetResult 等 I/O，I/O 完成想回 UI 线程却回不来 → 死锁
+    return html;
+}
+
+// ✅ 全链路 await：线程释放给调用方，I/O 完成再续跑
+public async Task<string> LoadAsync()
+{
+    var html = await httpClient.GetStringAsync(url);
+    return html;
+}
+```
+
 ## 3. ConfigureAwait 策略
 
 - **必须**：类库 / 库代码使用 `Task.ConfigureAwait(false)`，避免捕获同步上下文，防死锁、提性能
 - **应该**：需要回到特定线程上下文的代码（UI）不使用 `ConfigureAwait(false)`
 - **必须**：团队统一策略——类库一律 `false`，入口层不设；**禁止**在同一代码库内混用导致行为不一致
+
+```csharp
+// ❌ 类库代码不 ConfigureAwait：捕获调用方同步上下文，死锁风险 + 无谓开销
+public async Task<Order> GetAsync(int id)
+{
+    return await _repo.FindAsync(id);          // 类库不应关心 UI/请求上下文
+}
+
+// ✅ 类库一律 ConfigureAwait(false)：不捕获上下文，防死锁、提性能
+public async Task<Order> GetAsync(int id)
+{
+    return await _repo.FindAsync(id).ConfigureAwait(false);
+}
+```
 
 ## 4. Task vs ValueTask
 
@@ -46,6 +76,19 @@
 - **必须**：`SemaphoreSlim` 等可异步等待的原语配套 `await using` 或 `finally` 释放
 - **禁止**：同步 `lock` 内 `await`（死锁）；需要异步互斥用 `SemaphoreSlim` 或 `Channel<T>`
 
+```csharp
+// ❌ 循环内串行 await 独立请求：一个接一个，N 个请求 N 倍延迟
+foreach (var userId in userIds)
+{
+    var user = await api.GetUserAsync(userId);   // 每个都等上一个完成
+    users.Add(user);
+}
+
+// ✅ 独立请求并行：Task.WhenAll 同时发起，总耗时 ≈ 最慢单个
+var tasks = userIds.Select(api.GetUserAsync);
+var users = await Task.WhenAll(tasks);           // 注意并发上限，超大列表用分区/SemaphoreSlim
+```
+
 ## 6. CancellationToken 传播
 
 - **必须**：所有 I/O 绑定异步方法接受 `CancellationToken cancellationToken = default` 并向下传递（公共 API 尤其，见 `13` 章）
@@ -64,6 +107,33 @@
 
 - **必须**：`async void` 仅允许用于事件处理器，且处理器内用 `try/catch` 包裹全部逻辑，防止未观察异常
 - **禁止**：`async void` 用于公共方法、库 API、构造函数
+
+```csharp
+// ❌ async void 公共方法：异常逃逸到调用方之外，无人能捕获，直接崩进程
+public async void Save(Order order)
+{
+    await _repo.Add(order);       // 抛异常 → 未观察异常 → 进程崩溃
+}
+
+// ✅ 公共方法返回 Task：异常进入 Task，由 await 的调用方捕获
+public async Task Save(Order order)
+{
+    await _repo.Add(order);
+}
+
+// ✅ 事件处理器是唯一例外：必须 try/catch 兜底，防止异常逃逸
+public async void OnSaveClick(object? sender, RoutedEventArgs e)
+{
+    try
+    {
+        await Save(CurrentOrder);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "保存订单失败");
+    }
+}
+```
 
 ## 9. 资源与泄漏
 

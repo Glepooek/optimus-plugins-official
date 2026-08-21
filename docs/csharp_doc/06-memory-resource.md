@@ -25,17 +25,78 @@
 - **必须**：异步资源（`IAsyncDisposable`）用 `await using`
 - **禁止**：`using` 块内 return 资源对象，使其生命周期超出释放点（调用方拿到已释放对象）
 
+```csharp
+// ❌ using 块内 return 资源：流在 return 前已 Dispose，调用方拿到已关闭的流
+public Stream GetDataStream()
+{
+    using var stream = File.OpenRead("data.bin");   // 返回前流被释放
+    return stream;                                   // 调用方 Read 直接 ObjectDisposedException
+}
+
+// ✅ 生命周期由调用方管理：方法只创建并转移所有权，谁接收谁负责释放
+public Stream OpenDataStream()
+{
+    return File.OpenRead("data.bin");   // 不 using，调用方负责 using
+}
+```
+
 ## 4. 事件与委托泄漏
 
 - **必须**：短命对象订阅长命对象的事件后，不再使用时 `-=` 退订——否则长命对象通过事件引用保持短命对象不回收
 - **应该**：优先弱事件模式，或一次性订阅（如 `CancellationToken.Register` 返回的 `IDisposable`）
 - **禁止**：静态事件不加订阅管理（静态引用永存，最常见的泄漏源）
 
+```csharp
+// ❌ 只订阅不退订：长命的 domainService 持有短命 window 的引用，window 永不回收
+public class MainWindow : Window
+{
+    public MainWindow()
+    {
+        _domainService.OrderChanged += OnOrderChanged;   // 一直加，从不减
+    }
+    private void OnOrderChanged(object? s, EventArgs e) { /* ... */ }
+}
+// 窗口关闭后 _domainService.OrderChanged 仍指向它 → 内存泄漏
+
+// ✅ 配对退订：Dispose / Closed 时 -=，引用断开，对象可回收
+public class MainWindow : Window
+{
+    public MainWindow()
+    {
+        _domainService.OrderChanged += OnOrderChanged;
+        Closed += OnClosed;
+    }
+    private void OnClosed(object? s, EventArgs e)
+        => _domainService.OrderChanged -= OnOrderChanged;   // 退订，断开引用
+    private void OnOrderChanged(object? s, EventArgs e) { /* ... */ }
+}
+```
+
 ## 5. 静态引用
 
 - **必须**：静态字段持有实例引用时，该实例成为 GC 根对象不被回收
 - **必须**：静态集合（`List`、`ConcurrentDictionary` 缓存）设大小上限与过期策略
 - **禁止**：无界增长的静态缓存（内存泄漏的经典来源）
+
+```csharp
+// ❌ 无界静态缓存：每次查询都往静态字典塞，只增不减，进程退出前不回收
+private static readonly Dictionary<int, Report> _cache = new();
+public Report GetReport(int id)
+{
+    if (!_cache.TryGetValue(id, out var r))
+        _cache[id] = r = _repo.Load(id);     // 永不清理，内存持续增长
+    return r;
+}
+
+// ✅ 有界 + 过期：MemoryCache 内置上限与过期，超限自动淘汰
+private static readonly MemoryCache _cache =
+    new(new MemoryCacheOptions { SizeLimit = 1000 });   // 上限 + 滑动过期
+public Report GetReport(int id) => _cache.GetOrCreate(id, entry =>
+{
+    entry.SetSlidingExpiration(TimeSpan.FromMinutes(10));  // 过期策略
+    return _repo.Load(id);
+});
+```
 
 ## 6. 大对象堆（LOH）
 
@@ -54,6 +115,31 @@
 - **必须**：`ArrayPool` 租借的数组在 `finally` / `using` 中归还
 - **禁止**：租借数组被长期持有或忘记归还——池耗尽时退化为新建数组，性能反噬
 - **应该**：仅性能热点引入 `Span`/`ArrayPool`；普通业务代码不必（复杂度高、易错）
+
+```csharp
+// ❌ 租借不归还：池里数组被拿走不放回，池子耗尽后每次都是 new，性能反噬
+public byte[] ReadBlock(Stream s, int size)
+{
+    var buffer = ArrayPool<byte>.Shared.Rent(size);
+    s.Read(buffer, 0, size);
+    return buffer;              // 忘记 Return，数组脱离池管理且长期占用
+}
+
+// ✅ finally 保证归还：异常路径也归还，池保持健康
+public void ReadBlock(Stream s, int size)
+{
+    var buffer = ArrayPool<byte>.Shared.Rent(size);
+    try
+    {
+        s.Read(buffer, 0, size);
+        Process(buffer);
+    }
+    finally
+    {
+        ArrayPool<byte>.Shared.Return(buffer);   // 无论成败都归还
+    }
+}
+```
 
 ## 8. 弱引用
 

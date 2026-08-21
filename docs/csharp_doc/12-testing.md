@@ -32,6 +32,20 @@
 - **应该**：协作对象可真实使用时优先真实使用（优先真实小对象）
 - **应该**：依赖注入 + 纯函数让被测单元更易测（联动 `03` 章）
 
+```csharp
+// ❌ 把被测类自身 mock 掉：测的是 mock 的"预设返回值"，不是真实逻辑，测了等于没测
+var sut = Substitute.For<OrderService>(_repo, _notifier);   // 整个被测对象是替身
+sut.Create(Arg.Any<Order>()).Returns(Task.CompletedTask);   // 预设成功
+await sut.Create(order);
+_repo.Received(1).Add(order);   // 只是验证了预设被调用，实际校验/发通知逻辑全没跑到
+
+// ✅ 只 mock 外部边界（repo/notifier），被测类用真实实现
+var sut = new OrderService(_repo, _notifier);   // 真实 OrderService
+await sut.Create(order);
+_repo.Received(1).Add(Arg.Is<Order>(o => o.Amount > 0));   // 真实校验逻辑被执行
+_notifier.Received(1).Send(order);
+```
+
 ## 5. 断言风格
 
 - **必须**：断言库团队统一（xUnit 断言 或 FluentAssertions/Shouldly 二选一）
@@ -44,6 +58,36 @@
 - **必须**：测试数据库隔离（每测试清理 / 事务回滚）
 - **禁止**：跨测试共享静态可变状态（需要并行时必须是线程安全的）
 - **应该**：并行测试保持确定性（不共享资源、不共享固定端口）
+
+```csharp
+// ❌ 依赖前序测试留下的状态：TestA 先跑则 TestB 通过，单独跑 TestB 就挂
+[Fact]
+public void TestA_AddsUser() => UserRegistry.Add("alice");       // 污染静态状态
+
+[Fact]
+public void TestB_ExpectsUser() => Assert.Contains("alice", UserRegistry.All);  // 依赖 TestA
+
+// ✅ 测试自包含：各自构造所需状态，不读共享可变数据
+[Fact]
+public void AddUser_AddsToOwnList()   { var reg = new UserRegistry(); reg.Add("alice"); /* 断言 reg 自身 */ }
+[Fact]
+public void FindUser_ReturnsAdded()   { var reg = new UserRegistry(); reg.Add("bob");   /* 断言 reg 自身 */ }
+```
+
+```csharp
+// ❌ 时间依赖：凌晨 00:00 跑的测试结果不同，CI 随机红
+[Fact]
+public void Invoice_IsLate_WhenPastDue()
+    => Assert.True(Invoice.IsLate(new DateTime(2026, 1, 1)));    // 内部用 DateTime.Now 比较 → 时过境迁就挂
+
+// ✅ 注入时钟：固定时刻，任何时候跑结果一致
+[Fact]
+public void Invoice_IsLate_WhenPastDue()
+{
+    var clock = new FixedClock(new DateTime(2026, 2, 1));        // 测试固定"现在"
+    Assert.True(Invoice.IsLate(new DateTime(2026, 1, 1), clock));
+}
+```
 
 ## 7. 集成测试
 
@@ -297,4 +341,3 @@ dotnet test -c Release --collect:"XPlat Code Coverage"
 - 运行单个测试：`dotnet test --filter "FullyQualifiedName=Namespace.Tests.CalculatorTests.Add_TwoNumbers_ReturnsSum"`
 - xUnit 限制并行线程：`dotnet test -- xUnit.MaxParallelThreads=4`（需要时用，配合 `[assembly: CollectionBehavior]` 细化）
 - 失败快速回归：修完后 `dotnet test --no-build`，复用上一轮构建产物
-```

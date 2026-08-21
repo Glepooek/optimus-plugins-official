@@ -16,6 +16,23 @@
 - **应该**：业务规则失败（校验不过、资源不存在）用显式返回 / Result；程序错误（参数非法、状态错乱）抛异常
 - **禁止**：用异常做常规控制流（如用 `try/catch` 判断文件是否存在——用 `File.Exists`）
 
+```csharp
+// ❌ 用异常做常规控制流：预期"文件不存在"是正常分支，却走异常路径（性能 + 语义错）
+try
+{
+    File.ReadAllText(path);      // 每次探测都抛/接异常
+    return true;
+}
+catch (FileNotFoundException) { return false; }
+
+// ✅ 常规分支用返回判断，异常留给真正的意外
+if (File.Exists(path))
+{
+    return File.ReadAllText(path);
+}
+return null;
+```
+
 ## 2. 异常类型选择
 
 - **必须**：优先内置异常，语义对得上就用：`ArgumentException`（含 `ArgumentNullException`、`ArgumentOutOfRangeException`）、`InvalidOperationException`、`NotSupportedException`、`TimeoutException`
@@ -23,6 +40,16 @@
 - **必须**：自定义异常提供默认 / 带消息 / 带消息+内部异常三种构造函数
 - **禁止**：直接抛 `Exception` 基类型；禁止 `ApplicationException`（历史遗留，不应用）
 - **必须**：`throw new Exception("...")` 一律替换为具体类型
+
+```csharp
+// ❌ 裸 Exception / ApplicationException：调用方无法按类型区分，只能 catch(Exception)
+throw new Exception("用户不存在");          // 用户不存在 vs 参数非法，catch 无从分辨
+
+// ✅ 语义具体的内置异常：调用方可精确捕获
+throw new ArgumentException("用户 id 不能为空", nameof(userId));
+throw new InvalidOperationException("订单已支付，不能重复支付");
+throw new TimeoutException("调用支付网关超时");
+```
 
 ## 3. 异常消息
 
@@ -37,6 +64,42 @@
 - **禁止**：静默吞异常——空 catch、只 `Console.WriteLine` 后继续 = 让调用方误以为成功
 - **应该**：条件性处理用异常过滤器 `catch (XException ex) when (condition)`
 - **必须**：`catch` 后原样上抛用 `throw;` 保留堆栈；**禁止** `throw ex;`（重置堆栈）
+
+```csharp
+// ❌ 空 catch：失败被吞掉，调用方以为成功，故障无从定位
+try
+{
+    await _payment.ChargeAsync(order);
+}
+catch (Exception) { }               // 支付失败无声，用户看到"已支付"
+
+// ✅ 有实质处理：记录后重抛，或包装后上抛，绝不静默
+try
+{
+    await _payment.ChargeAsync(order);
+}
+catch (PaymentException ex)
+{
+    _logger.LogError(ex, "支付失败，订单 {OrderId}", order.Id);
+    throw;                          // 保留原始堆栈，让上层决定恢复
+}
+```
+
+```csharp
+// ❌ throw ex：堆栈从这一行重新开始，原始抛出点丢失，排查无从下手
+catch (Exception ex)
+{
+    Log(ex);
+    throw ex;      // 堆栈变成这里，看不到真实的失败位置
+}
+
+// ✅ throw：原样重抛，堆栈完整保留
+catch (Exception ex)
+{
+    Log(ex);
+    throw;         // 保留原始调用链
+}
+```
 
 ## 5. 包装与保留上下文
 
