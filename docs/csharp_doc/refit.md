@@ -1,3 +1,14 @@
+> **本文件在 C# 开发规范中的定位**
+>
+> 本文件是 [Refit](https://github.com/reactiveui/refit) 的权威技术参考（翻译自官方文档），记录 Refit 的完整 API 用法。
+> 在规范体系中，它属于 **`13-api-design.md`（API 设计与版本化）** 的配套参考，被 13 章第 7 节"与仓库资产"引用。
+>
+> - **适用场景**：团队用 Refit 定义 REST 客户端契约——接口即契约（见 `13` 章第 7 节）
+> - **如何结合**：接口定义与契约演进遵守 `13` 章；异常处理语义（`ApiResponse` / `ApiException`）遵守 `05` 章；取消令牌传播遵守 `04` 章第 6 节；JSON 序列化安全遵守 `14` 章第 4 节
+> - **维护**：本文件随 Refit 官方文档同步更新，不承载团队专属规范——团队约束请写在各规范篇目
+
+---
+
 ## Refit：适用于 .NET Core、Xamarin 和 .NET 的自动类型安全 REST 库
 
 Refit 是一个深受 Square 的 [Retrofit](http://square.github.io/retrofit) 库启发的库，它能将你的 REST API 转换为一个可用的接口：

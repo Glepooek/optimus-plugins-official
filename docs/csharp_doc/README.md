@@ -1,0 +1,82 @@
+# C# 开发规范
+
+> 面向团队的全覆盖 C# 开发总纲。**版本中立**——不绑定特定 .NET 版本，适用于所有主流 .NET 版本；编码风格与工程实践并重。
+
+## 文档目的
+
+本规范统一团队 C# 项目的编码风格、设计原则与工程实践，目标是让代码**可读、可维护、可演进**。它不是约束的堆砌，而是对"什么样的代码算好代码"的团队共识。
+
+## 适用范围与读者
+
+- **适用范围**：所有 C# / .NET 代码库；新增代码、存量代码改造、Code Review 与 CI 门禁均适用
+- **读者**：团队全部开发者。新人用于建立基线，资深成员用于对齐边界
+
+## 规范级别
+
+沿用 [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) 语义。各篇正文使用对应措辞，级别决定违反后的处置：
+
+| 级别 | 措辞 | 含义 | 违反处置 |
+|---|---|---|---|
+| **必须 MUST** | "必须"、"禁止" | 硬性要求，无正当理由不得违反 | 视为缺陷，CI / review 拦截 |
+| **应该 SHOULD** | "应该"、"不应" | 推荐做法，除非有明确理由 | review 说明理由后可豁免 |
+| **建议 MAY** | "可以"、"建议" | 可选做法，团队不强制 | 无 |
+
+## 规范如何执行
+
+规范不是纸面文档，通过以下手段落地：
+
+1. **静态分析门禁**：`.editorconfig` + Roslyn 分析器（见 `01-project-structure.md`），严重级别告警按 **warnings-as-errors** 处理
+2. **CI 校验**：`restore → build(-warnaserror) → test` 三关
+3. **Code Review**：按 `15-quality-review.md` 流程执行；编码层面问题由 `csharp-code-review` skill 辅助检出
+4. **模板兜底**：新增项目 / 文件按 `01-project-structure.md` 的布局约定生成
+
+## 阅读路径
+
+| 读者 | 必读 | 选读 |
+|---|---|---|
+| 新人（前两周） | `01` `02` `04` | `03` `12` |
+| 资深成员 | `03` `07` `08` `14` | 其余 |
+| 全部成员 | 本文件、`02` | — |
+
+## 文件地图
+
+| 编号 | 文件 | 主题 |
+|---|---|---|
+| — | `README.md` | 总则、级别、执行、索引 |
+| 01 | `01-project-structure.md` | 环境与技术选型、解决方案与项目结构 |
+| 02 | `02-coding-style.md` | 命名规范、编码风格、语言特性使用准则 |
+| 03 | `03-design-principles.md` | 面向对象与设计原则 |
+| 04 | `04-async-programming.md` | 异步编程 |
+| 05 | `05-error-handling.md` | 异常处理与错误设计 |
+| 06 | `06-memory-resource.md` | 内存与资源管理 |
+| 07 | `07-performance.md` | 性能 |
+| 08 | `08-concurrency.md` | 并发与线程安全 |
+| 09 | `09-data-access.md` | 数据访问与数据库 |
+| 10 | `10-dependency-management.md` | 依赖管理与 NuGet（CPM） |
+| 11 | `11-observability.md` | 日志与可观测性 |
+| 12 | `12-testing.md` | 测试规范 |
+| 13 | `13-api-design.md` | API 设计与版本化 |
+| 14 | `14-security.md` | 安全规范 |
+| 15 | `15-quality-review.md` | 代码质量与审查流程 |
+| 16 | `16-collaboration.md` | 版本控制与协作 |
+| 17 | `17-comments-docs.md` | 注释与文档 |
+
+## 更新与豁免
+
+- 每篇文件头部记录本文件更新历史（日期 + 变更摘要），随变更提交
+- 规范修订走 PR，review 通过后合入，并同步更新本文件的地图与阅读路径
+- **豁免**：遇规范与场景冲突，在 PR 中显式注明"豁免原因"，由 reviewer 裁量；系统性豁免需求应推动规范修订，而非长期例外
+
+## 与仓库已有资产的关系
+
+- `csharp-code-review` skill：本规范 `02` 章的编码层面是它的审查依据；review 流程见 `15`
+- `dotnet-upgrade` 系列 skills：版本升级与迁移以它们为准，本规范保持版本中立，不重复迁移细节
+- `dotnet-nuget:convert-to-cpm`：`10` 章强制中央包管理（CPM），落地用该 skill
+- `refit.md`：Refit REST 客户端实践参考，见 `13` 章 API 设计相关条目
+
+## 权威参考
+
+- [Microsoft C# 编码规范](https://learn.microsoft.com/zh-cn/dotnet/csharp/fundamentals/coding-style/coding-conventions)
+- [Microsoft 标识符命名准则](https://learn.microsoft.com/zh-cn/dotnet/csharp/fundamentals/coding-style/identifier-names)
+- [Framework Design Guidelines](https://learn.microsoft.com/zh-cn/dotnet/standard/design-guidelines/)
+- [.NET Runtime 编码风格](https://github.com/dotnet/runtime/blob/main/docs/coding-guidelines/coding-style.md)
