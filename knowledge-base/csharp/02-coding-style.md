@@ -143,7 +143,21 @@ var result = GetComplexData();          // 是 List<Order>？OrderReport？根�
 OrderReport result = GetComplexData();
 ```
 
-### 2.5 注释风格
+### 2.5 委托选择
+
+- **应该**：优先使用 `Func<>` / `Action<>` 而非自定义委托类型，减少无谓的类型定义
+- **应该**：仅当委托需要具名语义（提升可读性）或涉及 `ref`/`out` 参数（`Func`/`Action` 不支持）时才自定义委托类型
+
+```csharp
+// ❌ 自定义委托类型：仅为传递一个简单回调却多定义一个类型
+public delegate void OrderProcessedHandler(Order order);
+public event OrderProcessedHandler OrderProcessed;
+
+// ✅ Action<> 标准化：无需额外类型定义
+public event Action<Order> OrderProcessed;
+```
+
+### 2.6 注释风格
 
 - **必须**：公共 API 使用 XML 注释 `///`（生成文档，内容规范见 `17` 章）
 - **必须**：行内说明用 `//`，注释独占一行，以大写开头、句点结尾

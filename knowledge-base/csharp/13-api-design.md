@@ -17,6 +17,27 @@
 - **必须**：I/O 绑定公共 API 接受并传播 `CancellationToken`（联动 `04` 章第 6 节）
 - **必须**：公共 API 配 XML 文档注释（联动 `17` 章）
 - **应该**：返回只读 / 不可变视图，不暴露可写集合（联动 `03` 章第 5 节）
+- **应该**：方法依赖调用方预先配置好的外部状态时（如注入的 `HttpClient` 必须已设置 `BaseAddress`），通过构造函数校验或 XML 注释明确该前提
+
+```csharp
+// ❌ 隐式依赖调用方配置：BaseAddress 未设置时运行期才报错，且报错信息与"配置遗漏"无关
+public class WeatherClient(HttpClient http)
+{
+    public Task<string> GetAsync() => http.GetStringAsync("current");   // 依赖 http.BaseAddress 已设置
+}
+
+// ✅ 构造函数显式校验前提：配置遗漏在启动期就能定位
+public class WeatherClient
+{
+    public WeatherClient(HttpClient http)
+    {
+        if (http.BaseAddress is null)
+            throw new ArgumentException("HttpClient.BaseAddress 必须预先配置", nameof(http));
+        _http = http;
+    }
+    private readonly HttpClient _http;
+}
+```
 
 ## 3. DTO 与模型分离
 
