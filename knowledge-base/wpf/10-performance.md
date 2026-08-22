@@ -1,8 +1,8 @@
 # 10 · 性能优化
 
-> 更新历史：2026-08-21 创建。本篇是性能**原则**层；诊断与修复操作以 `wpf-xaml-performance` skill 为准（检查点 1-10 对应本条款）。
+> 更新历史：2026-08-21 创建。2026-08-22 引用 skill 改名（`wpf-xaml-performance` → `wpf-code-review`）。本篇是性能**原则**层；诊断与修复操作以 `wpf-code-review` skill 的性能专项诊断速查为准，速查条目对应本条款。
 
-性能优化分原则与操作两层：本篇约束"何时优化、优化的优先级、达标线"；具体扫描模式与修复代码见 `wpf-xaml-performance` skill。
+性能优化分原则与操作两层：本篇约束"何时优化、优化的优先级、达标线"；具体扫描模式与修复代码见 `wpf-code-review` skill 的性能专项诊断速查。
 
 ## 1. 先测量再优化
 
@@ -21,7 +21,7 @@
 4. **启动时间**——`SplashScreen` + 延迟初始化可改善 ~90% 启动时间
 5. **布局 / 资源 / 事件泄漏**等次级项
 
-- **必须**：按上述优先级扫描（联动 `wpf-xaml-performance` 检查点顺序），**禁止**跳过前三级直接优化低级项
+- **必须**：按上述优先级扫描（联动 `wpf-code-review` 性能专项诊断速查条目顺序），**禁止**跳过前三级直接优化低级项
 - **应该**：优化按"先修影响面大的、后修小的"推进，报告注明预期收益与实测差异
 
 ## 3. 数据绑定性能
@@ -49,7 +49,7 @@ public object Convert(object value, Type t, object p, CultureInfo c)
 ## 4. 虚拟化
 
 - **必须**：长列表（`ListBox` / `ListView` / `DataGrid` / `TreeView`）开启虚拟化，并设 `VirtualizationMode="Recycling"`
-- **必须**：确认列表数据量确实超出可视区域再讨论虚拟化（数据都在一屏内时虚拟化无收益，联动 `wpf-xaml-performance` 边界场景第 2 条）
+- **必须**：确认列表数据量确实超出可视区域再讨论虚拟化（数据都在一屏内时虚拟化无收益，联动 `wpf-code-review` 反例黑名单相关条目）
 - **必须**：虚拟化容器内 ItemTemplate 用轻量布局（`StackPanel`），**禁止** `ScrollViewer.CanContentScroll="False"` 禁用虚拟化
 - **应该**：`TreeView` 显式开启虚拟化（`VirtualizingPanel.IsVirtualizing="True"`）
 - **禁止**：列表项模板内嵌 `ItemsControl`（嵌套集合破坏虚拟化）
@@ -117,7 +117,7 @@ public object Convert(object value, Type t, object p, CultureInfo c)
 - **必须**：主题敏感资源才用 `DynamicResource`（联动 `07` 章第 4 节）
 - **应该**：页面加载时的资源查找路径短（就近定义），避免长链查找
 
-## 10. 工具推荐（联动 `wpf-xaml-performance`）
+## 10. 工具推荐（联动 `wpf-code-review` 性能专项诊断速查）
 
 - **WPF Performance Suite**：渲染性能分析
 - **Visual Studio Profiler**：CPU / 内存分析

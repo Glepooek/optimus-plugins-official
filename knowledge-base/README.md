@@ -1,6 +1,6 @@
 # 知识库（knowledge-base）
 
-> 版本：1.3.1
+> 版本：1.3.2
 
 跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`csharp`、`wpf`、`skill-authoring`。
 
@@ -44,5 +44,5 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
 ## 与仓库已有资产的关系
 
 - `plugins/optimus-backend-plugin/skills/csharp-code-review`：审查规则以 `knowledge-base/csharp/` 为准，见该 skill 的"权威参考"章节。
-- `plugins/optimus-frontend-plugin/skills/wpf-xaml-performance`、`wpf-project-conventions`：性能与项目结构判断依据见 `knowledge-base/wpf/`。
+- `plugins/optimus-frontend-plugin/skills/wpf-code-review`、`wpf-project-conventions`：代码审查与项目结构判断依据见 `knowledge-base/wpf/`。
 - `.claude/rules/skill-conventions.md`：skill 的仓库专属约定（版本号、author、category、前置校验、需求预告、CHANGELOG、README）；通用规范引用 `knowledge-base/skill-authoring/`。

@@ -1,6 +1,6 @@
 # 08 · 布局与渲染
 
-> 更新历史：2026-08-21 创建。性能相关约束与 `wpf-xaml-performance` skill 检查点互为印证。
+> 更新历史：2026-08-21 创建。2026-08-22 引用 skill 改名（`wpf-xaml-performance` → `wpf-code-review`）。性能相关约束与 `wpf-code-review` skill 的性能专项诊断速查互为印证。
 
 布局决定元素位置与尺寸，渲染决定显示质量与性能。本篇约束面板选型、布局系统理解、DPI 感知与绘制方式。
 
@@ -25,7 +25,7 @@
 - **必须**：默认用 `Grid` 构建布局骨架，简单方向排列用 `StackPanel`，**禁止**全用 `Canvas` 绝对定位（不可自适应）
 - **必须**：列表项 ItemTemplate 内优先 `StackPanel`（轻量，配合虚拟化，联动 `10` 章）
 - **禁止**：`Grid` 嵌套过深（>8 层）——布局计算指数级增长，用相对布局 / 合并行减层
-- **应该**：布局性能优先级 `Canvas > StackPanel > DockPanel > Grid`，简单场景用更轻面板（联动 `wpf-xaml-performance` 检查点 6）
+- **应该**：布局性能优先级 `Canvas > StackPanel > DockPanel > Grid`，简单场景用更轻面板（联动 `wpf-code-review` 性能专项诊断速查之布局性能）
 
 ## 3. 可视化树 vs 逻辑树
 
@@ -89,7 +89,7 @@
 
 ## 7. Shape 与 Drawing
 
-- **必须**：静态图形用 `Path` + `StreamGeometry`（只读快），**禁止**大量 `Ellipse` / `Rectangle` 堆叠（每个都是 UI 元素，联动 `wpf-xaml-performance` 检查点 3）
+- **必须**：静态图形用 `Path` + `StreamGeometry`（只读快），**禁止**大量 `Ellipse` / `Rectangle` 堆叠（每个都是 UI 元素，联动 `wpf-code-review` 性能专项诊断速查之图形渲染）
 - **必须**：动态高频图形（图表、动画数据）用 `DrawingVisual` + `VisualCollection` 或 `DrawingGroup`（非 UI 元素，批量绘制）
 - **必须**：`Brush` / `Pen` 在循环外创建并 `Freeze()` 后共享（联动 `07` 章第 5 节）
 - **禁止**：循环中 `new SolidColorBrush` / `new Pen`（每个实例都有事件监听，性能差）
@@ -98,7 +98,7 @@
 ## 8. 渲染性能（联动 `10` 章）
 
 - **必须**：图层合成用 `Opacity` / 平移 / 缩放等 GPU 友好属性，**禁止**逐帧改布局（`LayoutTransform` / 重排）
-- **必须**：元素 `Opacity` 替代透明画刷的场景正确选择（元素级透明度需临时表面，`Brush` 的 Alpha 更高效，联动 `wpf-xaml-performance` 检查点 8）
+- **必须**：元素 `Opacity` 替代透明画刷的场景正确选择（元素级透明度需临时表面，`Brush` 的 Alpha 更高效，联动 `wpf-code-review` 性能专项诊断速查之资源）
 - **禁止**：`BitmapEffect`（已过时，性能差），用 `Effect`（`DropShadowEffect` 等）
 
 ```xml

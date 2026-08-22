@@ -5,7 +5,7 @@
 **Skills:**
 - `optimus-fe-dev` — 前端全流程开发（唯一复合 Skill，5阶段：需求收集→分析规划→代码生成→交付物生成→验证完成）
 - `optimus-design-ui` — UI 设计规范管理
-- `wpf-xaml-performance` — WPF XAML 性能优化
+- `wpf-code-review` — WPF 全量代码审查
 
 **特色:** 复合 Skill 采用 Subagent 驱动并行生成，详见 ARCHITECTURE.md。
 

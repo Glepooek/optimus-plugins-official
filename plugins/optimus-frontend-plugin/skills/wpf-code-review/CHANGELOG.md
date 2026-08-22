@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0] - 2026-08-22
+
+### Changed
+- skill 从「WPF XAML 性能优化」重命名为「wpf 代码全量审查」`wpf-code-review`（原名 `wpf-xaml-performance`），目录同步重命名
+- 内容从性能专项扩展为覆盖 `knowledge-base/wpf/` 全量规范：新增 12 类审查清单（逐类引用知识库锚点）、两档审查（完整/快速初审）、报告格式模板、反例黑名单，格式对齐 csharp-code-review
+- 原 10 个性能检查点（grep 模式 + 修复代码 + 性能指标）保留为「性能专项诊断速查」内嵌章节，维持知识库 10 章"原则层 + skill 操作层"分层
+- 审查模式：支持扫描本地代码库（Grep/Glob）与粘贴代码审查
+
+### Removed
+- 移除原描述前缀 `optimus-frontend-`（frontmatter name 与目录名统一为 `wpf-code-review`）
+
 ## [1.1.0] - 2026-07-09
 
 ### Added

@@ -1,6 +1,6 @@
 # 07 · 资源、样式与主题
 
-> 更新历史：2026-08-21 创建。资源字典合并清单与 `wpf-project-conventions` skill 第 4 节互为事实来源。
+> 更新历史：2026-08-21 创建。2026-08-22 引用 skill 改名（`wpf-xaml-performance` → `wpf-code-review`）。资源字典合并清单与 `wpf-project-conventions` skill 第 4 节互为事实来源。
 
 资源字典是 WPF 的可复用资产库。本篇约束资源组织、样式体系、主题切换与 Freezable 使用。
 
@@ -35,7 +35,7 @@
 ## 5. Freezable 与资源共享
 
 - **必须**：静态使用的 `Brush` / `Pen` / `Transform` / `Geometry` 等 `Freezable` 对象 `Freeze()`，多个元素共享同一实例（性能提升 4-5 倍，联动 `10` 章）
-- **必须**：`Freeze()` 只在对象确认不再修改时调用（主题切换会变色的 Brush **禁止**冻结，联动 `wpf-xaml-performance` 边界场景第 4 条）
+- **必须**：`Freeze()` 只在对象确认不再修改时调用（主题切换会变色的 Brush **禁止**冻结，联动 `wpf-code-review` 反例黑名单相关条目）
 - **必须**：循环 / 动态场景中的 `SolidColorBrush` 等在循环外创建并冻结，**禁止**每次 `new`
 - **禁止**：冻结后的对象再尝试修改（抛 `InvalidOperationException`）
 

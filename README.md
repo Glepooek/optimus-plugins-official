@@ -67,8 +67,8 @@ git clone https://github.com/Glepooek/optimus-plugins-official ~/.claude/plugins
 # 从 SVG 提取并合并路径，转换为 WPF Path.Data
 /optimus-frontend-plugin:svg-to-xaml-path
 
-# 调用 WPF XAML 性能优化
-/optimus-frontend-plugin:wpf-xaml-performance
+# 调用 WPF 代码审查
+/optimus-frontend-plugin:wpf-code-review
 
 # 分析音视频编码/分辨率/码率/时长
 /optimus-media-plugin:media-analyze

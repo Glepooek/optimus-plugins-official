@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.2] - 2026-08-22
+
+### Changed
+- wpf 规范引用 skill 改名同步：`wpf-xaml-performance` → `wpf-code-review`（wpf/00-README、10/08/07 篇头部与联动措辞更新，性能操作层改为指向 skill 的「性能专项诊断速查」章节）
+
 ## [1.3.1] - 2026-08-22
 
 ### Changed

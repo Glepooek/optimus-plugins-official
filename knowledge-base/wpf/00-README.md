@@ -28,7 +28,7 @@
 1. **XAML 编译验证**：XAML 默认编译为 BAML（`x:Class` 编译期绑定类名），绑定路径错误虽不报编译错，但应启用设计期绑定诊断与运行期跟踪（见 `05` 章）
 2. **静态分析门禁**：`.editorconfig` + Roslyn 分析器 + XAML 分析器（`04` 章），严重级别告警按 **warnings-as-errors** 处理
 3. **CI 校验**：`restore → build(-warnaserror) → test` 三关（见 `01` 章）
-4. **Code Review**：按团队 review 约定执行；性能层面问题由 `wpf-xaml-performance` skill 辅助检出
+4. **Code Review**：按团队 review 约定执行；代码层面问题由 `wpf-code-review` skill 辅助检出
 5. **模板兜底**：新增项目 / 页面按 `02` 章布局约定与 `wpf-project-conventions` skill 生成
 
 ## 阅读路径
@@ -74,7 +74,7 @@
 
 ## 与仓库已有 WPF 资产的关系
 
-- `wpf-xaml-performance` skill：本规范 `10` 章的性能原则是它的审查依据，性能问题的诊断与修复操作以该 skill 为准
+- `wpf-code-review` skill：本规范全篇是它的审查依据，其中 `10` 章性能原则对应其「性能专项诊断速查」章节，性能问题的诊断与修复操作以该 skill 为准
 - `wpf-project-conventions` skill：`02` 章目录 / 资源 / 命名约定与它互为事实来源——它是生成侧的执行工具，本篇是原则侧
 - `mastergo-to-wpf-components` / `mastergo-to-wpf-page`：设计稿转 WPF 的生成工具，生成结果须符合本规范 `04` `05` `07` 章约定
 - `svg-to-xaml-path` / `mastergo-icon-expoter`：图标与矢量资源生成工具，产物遵循 `07` 章资源与 `06` 章图形约定
