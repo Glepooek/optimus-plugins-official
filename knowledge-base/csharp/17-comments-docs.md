@@ -65,7 +65,7 @@ var order = await _ctx.Orders.FirstOrDefaultAsync(o => o.Id == id);
 - **必须**：模块 / 服务文档就近存放（与被说明代码同目录，或 `docs/` 对应结构）
 - **应该**：架构决策用 ADR（Architecture Decision Record）记录：背景、决策、后果；**追加不改写**，保留演进轨迹
 - **禁止**：文档与代码脱节——过期文档比没有文档更糟
-- **应该**：规范类文档遵循团队规范（如本套 `docs/csharp_doc/` 的更新机制）
+- **应该**：规范类文档遵循团队规范（如本套 `knowledge-base/csharp/` 的更新机制）
 
 ## 5. 文档质量
 
