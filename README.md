@@ -93,9 +93,16 @@ codex plugin add optimus-frontend-plugin@optimus-plugins-official
 **更新已安装的插件：**
 
 ```bash
-# 刷新 Git marketplace 快照（codex 的 plugin 安装基于本地快照，add 后需 upgrade 才拉到新插件）
+# 刷新指定市场（远程添加的市场才有快照可刷；add 后需 upgrade 才拉到新插件）
+codex plugin marketplace upgrade optimus-plugins-official
+```
+
+```bash
+# 省略市场名 → 刷新所有已配置的 Git 市场
 codex plugin marketplace upgrade
 ```
+
+注意：`upgrade` 只对 Git 市场生效（远程添加的）；「方式 2」本地路径添加的市场没有可刷新的快照，无需 upgrade。
 
 Codex 中调用插件 skill（自动带 `plugin:` 前缀）：
 
