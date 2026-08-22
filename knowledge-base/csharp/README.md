@@ -61,6 +61,10 @@
 | 16 | `16-collaboration.md` | 版本控制与协作 |
 | 17 | `17-comments-docs.md` | 注释与文档 |
 
+## 索引与机器消费
+
+本领域下的 `index.jsonl` 是供 skill 编程式检索的索引（不重复正文，只做定位），字段说明与维护约定见仓库根 `knowledge-base/README.md`。`reference/` 目录存放不带 MUST/SHOULD/MAY 语气的描述性知识（语法讲解、API 用法），与本篇编号规范文件是并列关系，不是从属关系——新增/修改任一类内容都需同步 `index.jsonl`，建议通过 `/knowledge-base-maintain` skill 完成。
+
 ## 更新与豁免
 
 - 每篇文件头部记录本文件更新历史（日期 + 变更摘要），随变更提交
