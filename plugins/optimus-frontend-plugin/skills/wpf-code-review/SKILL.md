@@ -2,7 +2,7 @@
 name: wpf-code-review
 description: 用于审查 WPF 代码的 MVVM 架构、XAML 编写规范、数据绑定、控件/依赖属性、资源主题、布局渲染、线程调度、性能、异常/安全等全量规范，并覆盖虚拟化、Freezable 冻结、Shape 优化等性能诊断。当用户提到：审查/检查/review WPF 代码、.xaml 文件、WPF 项目代码规范、准备合并/PR、代码质量检查、界面卡顿、滚动慢、内存高、MVVM 规范、绑定规范时，务必使用此 skill。
 metadata:
-  version: "2.0.1"
+  version: "2.0.2"
   author: desktop client team
   category: quality
 compatibility: 需要 .NET/WPF/XAML 代码库；支持基于用户粘贴代码审查，也可扫描本地代码库（Grep/Glob）；可直接编辑修复（Edit）；无需额外 CLI/MCP。
@@ -36,7 +36,7 @@ allowed-tools: Read Grep Glob Edit
 
 审查范围必须可追溯、不肆意扩大：
 
-- **先定边界再扫描**：任何 Glob/Grep 扫描前先确定目录边界；确需全仓扫描时，须用户明确同意
+- **先定边界再扫描**：任何 Glob/Grep 扫描前先确定目录边界。🔴 **CHECKPOINT**——确需全仓扫描时，须用户明确同意后才继续（默认只审第 2 步收敛出的范围，绝不擅自扩大到全仓）
 - **单次审查文件数可控**：扫描文件过多（如约 20 个 XAML 相关文件以上）时，提示用户圈定更小范围，避免报告失控、耗时超预期
 - **范围写进报告**：报告"审查摘要"需注明本次覆盖了哪些文件/目录，让用户明确知道审了哪些、未审哪些
 
@@ -83,7 +83,7 @@ allowed-tools: Read Grep Glob Edit
 
 | # | 类别 | knowledge-base 参考 | 核对要点 |
 |---|---|---|---|
-| 1 | 项目结构与 MVVM 架构 | `02-project-structure.md` §4、§5；`03-mvvm.md` §2、§3、§4、§7 | View 与 code-behind 职责、命名规范；ViewModel 基类可绑定属性、ICommand、View/ViewModel 配对、事件订阅与取消 |
+| 1 | 项目结构与 MVVM 架构 | `02-project-structure.md` §4、§5；`03-mvvm.md` §2、§3、§4、§7 | View 与 code-behind 职责、命名规范；ViewModel 基类可绑定属性、ICommand、View/ViewModel 配对、事件订阅与取消、**View 访问 ViewModel 的时机**（构造函数内 `DataContext` 未就绪时访问 VM 数据会空引用） |
 | 2 | XAML 编写规范 | `04-xaml.md` §1、§2、§4、§5、§8 | 命名空间与根元素、StaticResource vs DynamicResource、x:Name 与 x:Key、DataTemplate 组织、事件与命令 |
 | 3 | 数据绑定 | `05-data-binding.md` §1-§5 | Binding 模式选择、INotifyPropertyChanged/ObservableCollection、绑定路径深度、IValueConverter、绑定静默失败 |
 | 4 | 控件与依赖属性 | `06-controls.md` §2-§5、§8 | 自定义控件约定、DependencyProperty/AttachedProperty、模板与样式、绘制与图形 |
