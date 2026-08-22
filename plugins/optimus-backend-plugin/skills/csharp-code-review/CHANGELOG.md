@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1] - 2026-08-22
+
+### Changed
+- 审查清单 12 类别改为引用 `knowledge-base/csharp/` 规范条款，不再自建重复规则文本
+- 删除与审查清单重复的"常见违规速查表"整节
+- 权威参考改为以 `knowledge-base/csharp/` 为团队规范准绳，Microsoft 官方文档降级为背景参考
+
 ## [1.4.0] - 2026-07-08
 
 ### Added
