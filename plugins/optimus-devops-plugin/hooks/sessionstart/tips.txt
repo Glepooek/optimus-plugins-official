@@ -204,31 +204,31 @@
 ---
 [Skill] 📖 Skills 使用指南\n功能：Skills 是预定义的专家级工作流程\n效果：确保复杂任务按最佳实践执行\n例子：通过斜杠命令（如 /tdd）或 Skill 工具调用，部分需完整名称如 Skill(skill="superpowers:brainstorming")
 ---
-[Skill] 📝 writing-plans 编写计划\n功能：为多步骤任务编写详细实施计划\n效果：进入计划模式，编写结构化实施方案\n例子：大型重构前使用 writing-plans 制定详细计划
+[Skill·superpowers] 📝 writing-plans 编写计划\n功能：为多步骤任务编写详细实施计划\n效果：进入计划模式，编写结构化实施方案\n例子：大型重构前使用 writing-plans 制定详细计划
 ---
-[Skill] ✅ executing-plans 执行计划\n功能：执行已批准的实施计划，带检查点\n效果：按计划逐步实施，每步完成后验证\n例子：executing-plans 执行重构计划，分步验证
+[Skill·superpowers] ✅ executing-plans 执行计划\n功能：执行已批准的实施计划，带检查点\n效果：按计划逐步实施，每步完成后验证\n例子：executing-plans 执行重构计划，分步验证
 ---
-[Skill] 🧪 test-driven-development TDD\n功能：测试驱动开发，先写测试再写实现\n效果：确保代码可测试性和质量\n例子：tdd 实现新功能前先编写测试用例
+[Skill·superpowers] 🧪 test-driven-development TDD\n功能：测试驱动开发，先写测试再写实现\n效果：确保代码可测试性和质量\n例子：tdd 实现新功能前先编写测试用例
 ---
-[Skill] 🐛 systematic-debugging 系统化调试\n功能：系统化调试流程，从症状到根因\n效果：科学定位 bug，避免盲目猜测\n例子：debugging 遇到 bug 时系统化排查原因
+[Skill·superpowers] 🐛 systematic-debugging 系统化调试\n功能：系统化调试流程，从症状到根因\n效果：科学定位 bug，避免盲目猜测\n例子：debugging 遇到 bug 时系统化排查原因
 ---
-[Skill] 🔍 verification-before-completion 完成前验证\n功能：声称完成前强制验证和测试\n效果：防止"看起来对"但实际有问题的代码\n例子：verification 在说"完成"前必须运行测试
+[Skill·superpowers] 🔍 verification-before-completion 完成前验证\n功能：声称完成前强制验证和测试\n效果：防止"看起来对"但实际有问题的代码\n例子：verification 在说"完成"前必须运行测试
 ---
-[Skill] 📤 requesting-code-review 请求代码审查\n功能：完成任务后请求代码审查\n效果：提交前获取反馈，提高代码质量\n例子：requesting-code-review 功能完成后请求审查
+[Skill·superpowers] 📤 requesting-code-review 请求代码审查\n功能：完成任务后请求代码审查\n效果：提交前获取反馈，提高代码质量\n例子：requesting-code-review 功能完成后请求审查
 ---
-[Skill] 📥 receiving-code-review 接收代码审查\n功能：接收并响应代码审查反馈\n效果：理解反馈意图，正确实施修改建议\n例子：receiving-code-review 收到审查意见时使用
+[Skill·superpowers] 📥 receiving-code-review 接收代码审查\n功能：接收并响应代码审查反馈\n效果：理解反馈意图，正确实施修改建议\n例子：receiving-code-review 收到审查意见时使用
 ---
-[Skill] 🏁 finishing-a-development-branch 完成分支\n功能：完成开发分支，决定如何集成\n效果：指导合并、PR、清理的最佳实践\n例子：finishing-branch 功能完成后整合到主分支
+[Skill·superpowers] 🏁 finishing-a-development-branch 完成分支\n功能：完成开发分支，决定如何集成\n效果：指导合并、PR、清理的最佳实践\n例子：finishing-branch 功能完成后整合到主分支
 ---
-[Skill] 🚀 dispatching-parallel-agents 并行派发\n功能：将独立任务派发给多个 agent 并行处理\n效果：加速开发，多任务同时进行\n例子：parallel-agents 前端后端同时开发
+[Skill·superpowers] 🚀 dispatching-parallel-agents 并行派发\n功能：将独立任务派发给多个 agent 并行处理\n效果：加速开发，多任务同时进行\n例子：parallel-agents 前端后端同时开发
 ---
-[Skill] 🤖 subagent-driven-development 子代理驱动\n功能：在当前会话中派生子 agent 协作\n效果：复杂任务分解，多 agent 协同工作\n例子：subagent-driven 大型功能拆分给多个子 agent
+[Skill·superpowers] 🤖 subagent-driven-development 子代理驱动\n功能：在当前会话中派生子 agent 协作\n效果：复杂任务分解，多 agent 协同工作\n例子：subagent-driven 大型功能拆分给多个子 agent
 ---
-[Skill] 🌳 using-git-worktrees 使用工作树\n功能：使用 git worktree 隔离开发环境\n效果：多分支并行开发，互不干扰\n例子：git-worktrees 同时修 bug 和开发新功能
+[Skill·superpowers] 🌳 using-git-worktrees 使用工作树\n功能：使用 git worktree 隔离开发环境\n效果：多分支并行开发，互不干扰\n例子：git-worktrees 同时修 bug 和开发新功能
 ---
-[Skill] 👁️ code-review 代码审查\n功能：对 PR 进行全面代码审查\n效果：检查代码质量、安全性、最佳实践\n例子：code-review 审查团队成员的 PR
+[Skill·code-review] 👁️ code-review 代码审查\n功能：对 PR 进行全面代码审查\n效果：检查代码质量、安全性、最佳实践\n例子：code-review 审查团队成员的 PR
 ---
-[Skill] 🎨 frontend-design 前端设计\n功能：创建高质量、独特的前端界面\n效果：根据需求设计并实现生产级 UI\n例子：frontend-design 设计新的用户界面
+[Skill·frontend-design] 🎨 frontend-design 前端设计\n功能：创建高质量、独特的前端界面\n效果：根据需求设计并实现生产级 UI\n例子：frontend-design 设计新的用户界面
 ---
 [Skill] 🧹 /simplify 清理式审查并应用修复\n功能：v2.1.154 起 /simplify 只做 cleanup 类审查（复用、简化、效率、抽象层级）并直接把修改应用到工作区，不再排查 bug——找正确性缺陷请改用 /code-review\n效果：重构或改完功能后一键收敛代码质量，改动直接落到工作区无需手动誊抄；与 /code-review 职责明确分离，各跑各的互不干扰\n例子：/simplify 清理最近改动并应用修复；找 bug 改用 /code-review high
 ---
@@ -240,7 +240,7 @@
 ---
 [Skill] 🆕 init 初始化项目\n功能：为项目创建 CLAUDE.md 文档\n效果：初始化项目配置和指令\n例子：init 新项目初始化 Claude Code 配置
 ---
-[Skill] 📋 /review 与 /code-review 合并\n功能：v2.1.223 起 /review 已改为 /code-review 的别名，统一走 /code-review 审查当前 diff 或 PR，语法 /code-review <level> <pr#>，level 支持 low/medium/high/xhigh/max 五档努力程度，用 /code-review ultra 触发云端深度审查；不带 level 直接输入 /code-review 会复用上一次使用的级别\n效果：不再需要区分"快速审查"和"深度审查"两个命令，只需切换 effort 级别即可覆盖日常检查到全面审计的全部场景\n例子：/review 1234 等价于 /code-review 1234；/code-review high 1234 用高强度多代理模式深度审查 PR#1234；/code-review ultra 发起云端深度审查
+[Skill·code-review] 📋 /review 与 /code-review 合并\n功能：v2.1.223 起 /review 已改为 /code-review 的别名，统一走 /code-review 审查当前 diff 或 PR，语法 /code-review <level> <pr#>，level 支持 low/medium/high/xhigh/max 五档努力程度，用 /code-review ultra 触发云端深度审查；不带 level 直接输入 /code-review 会复用上一次使用的级别\n效果：不再需要区分"快速审查"和"深度审查"两个命令，只需切换 effort 级别即可覆盖日常检查到全面审计的全部场景\n例子：/review 1234 等价于 /code-review 1234；/code-review high 1234 用高强度多代理模式深度审查 PR#1234；/code-review ultra 发起云端深度审查
 ---
 [Skill] 🔒 security-review 安全审查\n功能：对当前分支进行安全审查\n效果：检查安全漏洞、敏感信息泄露\n例子：security-review 合并前进行安全检查
 ---
@@ -328,7 +328,7 @@
 ---
 [交互] 🔀 /workflows 工作流记录\n功能：查看 ultracode 动态工作流的运行记录和实时进度；在工作流 agent 详情视图中按 f 键可按状态过滤 agent 列表\n效果：了解多 agent 并行工作流各阶段的执行状态、耗时和结果；按 f 筛选运行中/完成/等待中的 agent\n例子：/workflows 在 ultracode 运行期间查看各子 agent 的执行进度；进入 agent 详情后按 f 只看失败的 agent
 ---
-[Skill] 🔍 /code-review 后台执行与 --fix / --comment\n功能：v2.1.218 起 /code-review 默认作为后台子代理运行，不再占用当前对话；支持 --fix 自动应用修复，--comment 将审查意见发为 GitHub PR 内联评论\n效果：审查耗时不阻塞你继续对话；--fix 直接修代码，--comment 让团队在 PR 中看到详细意见\n例子：/code-review --comment 在提 PR 前将审查意见同步为 GitHub 内联评论，同时在后台执行不阻塞主对话
+[Skill·code-review] 🔍 /code-review 后台执行与 --fix / --comment\n功能：v2.1.218 起 /code-review 默认作为后台子代理运行，不再占用当前对话；支持 --fix 自动应用修复，--comment 将审查意见发为 GitHub PR 内联评论\n效果：审查耗时不阻塞你继续对话；--fix 直接修代码，--comment 让团队在 PR 中看到详细意见\n例子：/code-review --comment 在提 PR 前将审查意见同步为 GitHub 内联评论，同时在后台执行不阻塞主对话
 ---
 [交互] 📊 /usage 分类明细\n功能：/usage 按 skills/subagents/plugins/MCP 服务器分类展示 token 消耗明细\n效果：精准定位哪类操作消耗最多，优化高消耗工作流\n例子：/usage 查看本次会话中哪个 skill 或 MCP 服务器消耗了最多 token
 ---
@@ -568,7 +568,7 @@
 ---
 [集成] 📦 插件市场 command 源\n功能：v2.1.229 起 marketplace.json 支持 command 类插件源：本地命令（如某个 IDE）打印插件目录路径，每次会话重新解析并应用，无需重启；mode: "link" 直接就地使用该目录\n效果：IDE 或其他工具可以动态提供插件目录，插件内容变化后下次会话自动生效\n例子：marketplace.json 中配置 source: "command" 让某个本地脚本的输出路径作为插件目录来源
 ---
-[Skill] ⚠️ /commit-push-pr 危险标志需人工确认\n功能：v2.1.229 起 /commit-push-pr 中带危险标志的 git/gh 命令（如 --force、--amend、--no-verify）不再自动批准，需要人工确认后才执行\n效果：防止自动化提交流程中意外强推、修改历史提交或跳过校验钩子造成不可逆后果\n例子：/commit-push-pr 流程中若涉及 git push --force，会先弹出确认提示而非直接执行
+[Skill·commit-commands] ⚠️ /commit-push-pr 危险标志需人工确认\n功能：v2.1.229 起 /commit-push-pr 中带危险标志的 git/gh 命令（如 --force、--amend、--no-verify）不再自动批准，需要人工确认后才执行\n效果：防止自动化提交流程中意外强推、修改历史提交或跳过校验钩子造成不可逆后果\n例子：/commit-push-pr 流程中若涉及 git push --force，会先弹出确认提示而非直接执行
 ---
 [交互] ⏳ 用量限额到期自动续接\n功能：v2.1.234 起 claude.ai 使用限额重置后，Claude Code 自动继续之前中断的会话；可在 /config 的 "Continue automatically at usage limit" 关闭\n效果：额度耗尽导致会话暂停后无需手动盯着重置时间再手动恢复，节省等待成本\n例子：额度用尽后会话自动挂起，限额重置时刻一到自动续接工作；/config 找到该开关按需关闭
 ---
