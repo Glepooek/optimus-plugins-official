@@ -2,7 +2,9 @@
 """校验 knowledge-base/<domain>/index.jsonl 与实际文件的一致性。
 
 三类检查：file 是否存在、anchor 对应标题是否存在、id 是否全局唯一。
-用法：python check_index.py [domain ...]（无参数时扫描所有含 index.jsonl 的子目录）
+用法：python check_index.py [domain ...]（无参数时扫描所有含 index.jsonl 的子目录）。
+脚本随 knowledge-base-maintain skill 存放于 .claude/skills/knowledge-base-maintain/scripts/ 下，
+运行时自动以仓库根的 knowledge-base/ 为基准目录。
 """
 import json
 import re
@@ -94,7 +96,8 @@ def run_checks(base_dir, domains):
 
 
 def main():
-    base_dir = Path(__file__).resolve().parent
+    # 脚本位于 .claude/skills/knowledge-base-maintain/scripts/，parents[4] 即仓库根，再进 knowledge-base/
+    base_dir = Path(__file__).resolve().parents[4] / "knowledge-base"
     domains = sys.argv[1:]
     if not domains:
         domains = sorted(

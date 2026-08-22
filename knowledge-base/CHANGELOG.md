@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] - 2026-08-22
+
+### Changed
+- 校验脚本 `check_index.py`、`test_check_index.py` 迁至 `knowledge-base-maintain` skill 的 `scripts/` 子目录，随 skill 分发；`base_dir` 定位逻辑相应调整（`parents[4]` 定位仓库根再进 `knowledge-base/`）；运行命令更新为 `python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" <domain>`
+
 ## [1.1.0] - 2026-08-22
 
 ### Added

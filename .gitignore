@@ -431,3 +431,7 @@ FodyWeavers.xsd
 .codegraph/
 .superpowers/
 .mastergo-dsl/
+
+# Python bytecode cache
+__pycache__/
+*.py[cod]

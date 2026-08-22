@@ -1,6 +1,6 @@
 # 知识库（knowledge-base）
 
-> 版本：1.1.0
+> 版本：1.1.1
 
 跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`csharp`、`wpf`。
 
@@ -36,7 +36,7 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
 ## 维护约定
 
 - 新增/修改一条规范/reference 时，同一次提交里必须同步更新对应 `index.jsonl`。
-- 改动后运行 `python check_index.py <domain>` 做一致性自检（file 存在、anchor 存在、id 不重复）。
+- 改动后运行 `python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" <domain>` 做一致性自检（file 存在、anchor 存在、id 不重复；脚本随 `knowledge-base-maintain` skill 分发）。
 - 规范条款可选择性引用 `reference/*.md` 加强依据；引用单向，reference 不反向声明被谁引用。
 - 版本号见本文件顶部，变更规则与 CHANGELOG 格式见 `CHANGELOG.md`；日常新增/修改建议通过 `/knowledge-base-maintain` skill 完成，会自动同步索引与版本号。
 - 不做自动生成索引的脚本——`tags`/`summary`/`level` 需要语义判断，机械提取质量不可靠。

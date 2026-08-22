@@ -2,10 +2,10 @@
 name: knowledge-base-maintain
 description: 新增、修改、迁移 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"校验知识库索引"。
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
   category: tool
-compatibility: 需要本机 Python 3（跑 knowledge-base/check_index.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
+compatibility: 需要本机 Python 3（跑本 skill scripts/check_index.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
 allowed-tools: Read Write Edit Bash Grep Glob
 ---
 
@@ -53,7 +53,7 @@ python --version
 ## Step 5：运行一致性校验
 
 ```bash
-cd knowledge-base && python check_index.py <domain>
+python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" <domain>
 ```
 
 - 输出 `OK: 共检查 N 条记录，未发现问题` → 继续 Step 6。
