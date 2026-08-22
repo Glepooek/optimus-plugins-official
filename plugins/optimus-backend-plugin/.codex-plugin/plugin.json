@@ -1,0 +1,8 @@
+{
+  "name": "optimus-backend-plugin",
+  "version": "12.0.0",
+  "description": "后端开发工具集：API 开发、后端架构设计、数据库设计、API 文档生成等",
+  "skills": "./skills/",
+  "author": "optimus",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official"
+}

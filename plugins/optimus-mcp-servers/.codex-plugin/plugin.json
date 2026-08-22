@@ -1,0 +1,7 @@
+{
+  "name": "optimus-mcp-servers",
+  "version": "12.0.0",
+  "description": "MCP 服务器集成：GitHub Copilot MCP、MasterGo 设计协作、飞书项目等企业级 MCP 服务",
+  "mcpServers": "./.mcp.json",
+  "author": "optimus"
+}

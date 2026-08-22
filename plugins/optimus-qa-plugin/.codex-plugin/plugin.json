@@ -1,0 +1,8 @@
+{
+  "name": "optimus-qa-plugin",
+  "version": "12.0.0",
+  "description": "测试 QA 工具集：测试用例设计、测试报告、JMeter 脚本、UI 自动化、飞书测试项目管理等",
+  "skills": "./skills/",
+  "author": "optimus",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official"
+}

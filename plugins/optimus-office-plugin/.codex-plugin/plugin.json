@@ -1,0 +1,8 @@
+{
+  "name": "optimus-office-plugin",
+  "version": "12.0.0",
+  "description": "Office 文档处理工具集：Word、Excel、PowerPoint、PDF 文档的生成和处理，网页内容抓取转 Markdown，本地文件（docx/pdf/pptx/csv/json/xml）转 Markdown",
+  "skills": "./skills/",
+  "author": "optimus",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official"
+}

@@ -1,0 +1,54 @@
+{
+  "name": "optimus-plugins-official",
+  "interface": { "displayName": "Optimus 官方插件" },
+  "plugins": [
+    {
+      "name": "optimus-frontend-plugin",
+      "source": { "source": "local", "path": "./plugins/optimus-frontend-plugin" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "Frontend"
+    },
+    {
+      "name": "optimus-backend-plugin",
+      "source": { "source": "local", "path": "./plugins/optimus-backend-plugin" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "Backend"
+    },
+    {
+      "name": "optimus-qa-plugin",
+      "source": { "source": "local", "path": "./plugins/optimus-qa-plugin" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "QA"
+    },
+    {
+      "name": "optimus-prd-plugin",
+      "source": { "source": "local", "path": "./plugins/optimus-prd-plugin" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "Product"
+    },
+    {
+      "name": "optimus-office-plugin",
+      "source": { "source": "local", "path": "./plugins/optimus-office-plugin" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "Productivity"
+    },
+    {
+      "name": "optimus-devops-plugin",
+      "source": { "source": "local", "path": "./plugins/optimus-devops-plugin" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "DevOps"
+    },
+    {
+      "name": "optimus-mcp-servers",
+      "source": { "source": "local", "path": "./plugins/optimus-mcp-servers" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "MCP"
+    },
+    {
+      "name": "optimus-media-plugin",
+      "source": { "source": "local", "path": "./plugins/optimus-media-plugin" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "Media"
+    }
+  ]
+}

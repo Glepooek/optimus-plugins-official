@@ -1,0 +1,8 @@
+{
+  "name": "optimus-devops-plugin",
+  "version": "12.0.0",
+  "description": "DevOps 工具集：Jenkins CI/CD、API 变更通知、应用初始化、项目分析、工作周报转写",
+  "skills": "./skills/",
+  "author": "optimus",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official"
+}
