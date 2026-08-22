@@ -59,21 +59,6 @@ git clone https://github.com/Glepooek/optimus-plugins-official ~/.claude/plugins
 # MasterGo 设计稿转 WPF 页面
 /optimus-frontend-plugin:mastergo-to-wpf-page
 
-# MasterGo 设计稿抽取 WPF 组件库
-/optimus-frontend-plugin:mastergo-to-wpf-components
-
-# 从 MasterGo 设计稿导出图标/背景资产为 WPF Icons.xaml
-/optimus-frontend-plugin:mastergo-icon-expoter
-
-# 从 SVG 提取并合并路径，转换为 WPF Path.Data
-/optimus-frontend-plugin:svg-to-xaml-path
-
-# 调用 WPF 代码审查
-/optimus-frontend-plugin:wpf-code-review
-
-# 分析音视频编码/分辨率/码率/时长
-/optimus-media-plugin:media-analyze
-
 # 音视频压缩、分辨率转换、片段截取
 /optimus-media-plugin:media-compress
 /optimus-media-plugin:media-resize
@@ -82,17 +67,34 @@ git clone https://github.com/Glepooek/optimus-plugins-official ~/.claude/plugins
 
 ### Codex CLI 安装与使用
 
-仓库在 `.agents/plugins/marketplace.json` 定义了 Codex marketplace（8 个插件），支持 Codex CLI 安装：
+仓库在 `.agents/plugins/marketplace.json` 定义了 Codex marketplace（8 个插件），支持 Codex CLI 安装。
+
+**方式 1：远程添加（推荐）**
 
 ```bash
-# 添加本仓库为本地 marketplace
-codex plugin marketplace add ./
+# 添加 GitHub 仓库为 marketplace（owner/repo 或 HTTPS/SSH 均可）
+codex plugin marketplace add Glepooek/optimus-plugins-official
 
 # 手动安装单个插件（AVAILABLE）
 codex plugin add optimus-frontend-plugin@optimus-plugins-official
 
 # 查看可用插件与已安装状态
 codex plugin list --available --json
+```
+
+**方式 2：本地路径添加（开发调试用）**
+
+```bash
+# 从仓库根目录添加本地 marketplace
+codex plugin marketplace add ./
+codex plugin add optimus-frontend-plugin@optimus-plugins-official
+```
+
+**更新已安装的插件：**
+
+```bash
+# 刷新 Git marketplace 快照（codex 的 plugin 安装基于本地快照，add 后需 upgrade 才拉到新插件）
+codex plugin marketplace upgrade
 ```
 
 Codex 中调用插件 skill（自动带 `plugin:` 前缀）：
