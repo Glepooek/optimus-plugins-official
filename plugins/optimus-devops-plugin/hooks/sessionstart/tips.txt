@@ -192,7 +192,7 @@
 ---
 [工具] 📋 CronList 列出定时任务\n功能：列出所有活跃的 cron 定时任务\n效果：查看哪些任务在定期运行，何时触发\n例子：CronList 查看所有定时任务的状态和下次执行时间
 ---
-[工具] 💬 SendMessage 发送消息\n功能：向团队中的其他 agent 发送消息；v2.1.224 起支持跨机器发送——同一账号下任意机器上的 Claude Code 会话都可互相收发，用 ListAgents 发现可联系的会话（macOS/Linux）；v2.1.225 起可以按名称主动发起对话（ListAgents 中显示为 "name [ref]"），不必等对方先发消息\n效果：团队协作中进行 agent 间通信；配合 crossSessionInbound、dialogExpiry 设置可控制陌生会话或 bypass 权限会话下的消息是否需人工审批\n例子：SendMessage(to="tester", message="测试完成") 通知测试员；ListAgents 列出其他机器上运行的会话后按名称主动发起跨机器对话
+[工具] 💬 SendMessage 发送消息\n功能：向团队中的其他 agent 发送消息；v2.1.224 起支持跨机器发送——同一账号下任意机器上的 Claude Code 会话都可互相收发，用 ListAgents 发现可联系的会话（此前仅 macOS/Linux，v2.1.239 起 Windows 也支持跨机器消息）；v2.1.225 起可以按名称主动发起对话（ListAgents 中显示为 "name [ref]"），不必等对方先发消息；v2.1.239 起 ListAgents 会告知会话自己的名称（其他会话联系它时使用的名字），SendMessage 给自己的名字发消息时会提示这一点而非报错"no agent named …"\n效果：团队协作中进行 agent 间通信，macOS/Linux/Windows 三端统一支持；配合 crossSessionInbound、dialogExpiry 设置可控制陌生会话或 bypass 权限会话下的消息是否需人工审批；不确定自己在其他会话眼中叫什么名字时，ListAgents 直接告知\n例子：SendMessage(to="tester", message="测试完成") 通知测试员；ListAgents 列出其他机器上运行的会话后按名称主动发起跨机器对话；Windows 下同一账号多台机器的会话现在也能互相 SendMessage
 ---
 [工具] 🎯 Skill 调用技能\n功能：调用预定义的 skill 执行特定工作流\n效果：使用专家级工作流确保质量和一致性\n例子：Skill(skill="brainstorming") 在编码前进行设计头脑风暴
 ---
@@ -232,7 +232,7 @@
 ---
 [Skill] 🧹 /simplify 清理式审查并应用修复\n功能：v2.1.154 起 /simplify 只做 cleanup 类审查（复用、简化、效率、抽象层级）并直接把修改应用到工作区，不再排查 bug——找正确性缺陷请改用 /code-review\n效果：重构或改完功能后一键收敛代码质量，改动直接落到工作区无需手动誊抄；与 /code-review 职责明确分离，各跑各的互不干扰\n例子：/simplify 清理最近改动并应用修复；找 bug 改用 /code-review high
 ---
-[Skill] 🔌 claude-api 构建 API 应用\n功能：构建、调试、优化 Claude API 应用；v2.1.221 起新增 prompt-audit 子命令，审计提示词和工具描述中是否存在针对旧模型编写的过时模式\n效果：使用最佳实践开发 Claude API 应用；prompt-audit 帮助在升级模型后发现需要更新的提示词写法\n例子：claude-api 开发使用 Claude 的应用；claude-api prompt-audit 检查现有提示词是否有旧模型时代的过时写法
+[Skill] 🔌 claude-api 构建 API 应用\n功能：构建、调试、优化 Claude API 应用；v2.1.221 起新增 prompt-audit 子命令，审计提示词和工具描述中是否存在针对旧模型编写的过时模式；v2.1.239 起新增 upgrade 子命令，把 Python 项目的 anthropic SDK 从 0.x 迁移到 1.x（超时写法从 httpx.Timeout 改为 anthropic.Timeout）\n效果：使用最佳实践开发 Claude API 应用；prompt-audit 帮助在升级模型后发现需要更新的提示词写法；upgrade 减少手动排查 0.x→1.x 破坏性变更的成本\n例子：claude-api 开发使用 Claude 的应用；claude-api prompt-audit 检查现有提示词是否有旧模型时代的过时写法；claude-api upgrade 自动迁移 Python 项目的 anthropic SDK 大版本
 ---
 [Skill] 🔓 fewer-permission-prompts 减少权限提示\n功能：分析常用命令并配置权限白名单\n效果：减少重复的权限确认提示\n例子：fewer-permission-prompts 优化权限配置
 ---
@@ -268,7 +268,7 @@
 ---
 [配置] 🔧 环境变量配置\n功能：通过环境变量控制 Claude Code 行为，包括 ANTHROPIC_BASE_URL（API端点）、BASH_DEFAULT_TIMEOUT_MS（命令超时）、MAX_MCP_OUTPUT_TOKENS（MCP输出限制）等\n效果：精细控制运行时行为和资源限制\n例子：CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 减少网络流量
 ---
-[交互] 🎯 /goal 目标驱动模式\n功能：设置完成条件，Claude 跨轮次持续工作直到目标达成；后台任务卡住 30+ 分钟会主动 check-in（可用 CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0 关闭）；遇到不可恢复错误（如登录失效、额度耗尽、上下文溢出）时自动清除目标并提示，而非继续空转\n效果：适合复杂多步骤任务，Claude 会自动判断目标是否完成，无需手动监控每一步；异常场景下不会无意义地保持目标待命状态\n例子：/goal "所有测试通过且代码覆盖率 > 80%" 让 Claude 自动完成并验证；CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0 claude 关闭后台任务超时主动检查
+[交互] 🎯 /goal 目标驱动模式\n功能：设置完成条件，Claude 跨轮次持续工作直到目标达成；后台任务卡住会主动 check-in，v2.1.239 起改为退避节奏（30 分钟 → 1 小时 → 之后每 2 小时一次，而非固定每 30 分钟，可用 CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0 关闭）；遇到不可恢复错误（如登录失效、额度耗尽、上下文溢出）时自动清除目标并提示，而非继续空转；v2.1.239 起通过 claude --resume 选择器恢复会话时，会一并恢复该会话原来激活的目标\n效果：适合复杂多步骤任务，Claude 会自动判断目标是否完成，无需手动监控每一步；异常场景下不会无意义地保持目标待命状态；退避节奏减少长任务下不必要的频繁打断；恢复会话后无需重新设置目标即可继续追踪完成度\n例子：/goal "所有测试通过且代码覆盖率 > 80%" 让 Claude 自动完成并验证；CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0 claude 关闭后台任务超时主动检查；claude --resume 选中一个曾设置过 /goal 的会话，目标状态自动恢复继续追踪
 ---
 [交互] 🔍 /ultrareview 并行代码审查\n功能：启动云端多代理并行代码审查\n效果：多个专门审查代理同时检查不同方面（安全、性能、可读性），比单次审查更全面\n例子：/ultrareview 在提交重要功能前进行全面并行审查
 ---
@@ -434,7 +434,7 @@
 ---
 [配置] ⏱️ CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT MCP 工具超时\n功能：环境变量 CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT 覆盖远程 MCP 工具调用的默认超时（v2.1.187+ 默认 5 分钟无响应后中止）\n效果：防止远程 MCP 工具调用无响应时永久阻塞会话；在低延迟网络或耗时较长的 MCP 工具场景可按需调大\n例子：CLAUDE_CODE_MCP_TOOL_IDLE_TIMEOUT=600000 claude 将超时调为 10 分钟，避免长耗时工具被提前终止
 ---
-[配置] 🔁 CLAUDE_CODE_RETRY_WATCHDOG 无人值守重试\n功能：环境变量 CLAUDE_CODE_RETRY_WATCHDOG 为无人值守（非交互）会话设置重试看门狗；启用后将非容量类瞬时错误的默认重试次数提升至 300 次，并解除 CLAUDE_CODE_MAX_RETRIES 的 15 次硬上限\n效果：自动化脚本或 CI 场景中，API 错误时按看门狗策略持续重试而不受 15 次硬上限约束\n例子：CLAUDE_CODE_RETRY_WATCHDOG=3600 claude -p "长任务" 允许看门狗在 1 小时内持续重试
+[配置] 🔁 CLAUDE_CODE_RETRY_WATCHDOG 无人值守重试\n功能：环境变量 CLAUDE_CODE_RETRY_WATCHDOG 为无人值守（非交互）会话设置重试看门狗；启用后将非容量类瞬时错误的默认重试次数提升至 300 次，并解除 CLAUDE_CODE_MAX_RETRIES 的 15 次硬上限；v2.1.239 起遇到组织消费额度上限或余额耗尽这类错误时立即失败退出，不再无限等待重置\n效果：自动化脚本或 CI 场景中，API 错误时按看门狗策略持续重试而不受 15 次硬上限约束；额度类硬性错误能快速失败，避免 CI 任务无意义空等到超时\n例子：CLAUDE_CODE_RETRY_WATCHDOG=3600 claude -p "长任务" 允许看门狗在 1 小时内持续重试；组织额度耗尽时任务会立即报错退出，而非挂起等待额度重置
 ---
 [交互] 🧩 /plugin Skills 区域\n功能：/plugin 已安装插件标签页新增 Skills 区域，展示插件提供的所有技能，并可通过 /plugin 发现最近未使用过的插件以便清理\n效果：快速核查某插件有哪些 skills 可用；定期用 /plugin 清理不再需要的历史插件\n例子：/plugin 进入已安装标签页，查看 Skills 区域确认技能已加载；发现长期未用插件时直接卸载
 ---
@@ -597,7 +597,9 @@
 例子：SendMessage(to="code-review", notify_when_idle=true, message="PR ready for review") 让 code-review 会话空闲时通知你
 ---
 [配置] ⌨️ keybindingFlavor 键位偏好
-功能：v2.1.238 起 settings.json 新增 keybindingFlavor 设置，设为 "readline" 时 Ctrl+W 在提示符中删除到前一个空白（类似 Bash）；默认 "classic" 行为不变
+功能：v2.1.238 起 settings.json 新增 keybindingFlavor 设置，设为 "readline" 时 Ctrl+W 在提示符中删除到前一个空白（类似 Bash）；默认 "classic" 行为不变；v2.1.239 起 "readline" 同时匹配 Bash 的单词级按键：Alt+F 和 Ctrl/Option+→ 跳到单词末尾，Alt+D 删除到单词末尾（Ctrl+Y 可粘贴回删除内容），标点符号也作为单词分隔符
 效果：习惯 Bash/readline 键位的用户可获得一致的删除体验，不必迁就默认行为
 例子：{"keybindingFlavor": "readline"} 让 Ctrl+W 删除到前一个空白；不设置则保持 classic 默认
+---
+[工具] 📇 /list-agents 列出团队伙伴\n功能：v2.1.239 起 /list-agents 命令（ListAgents 工具的斜杠命令形式）列出你的在线 teammate；此前只有子代理和其他普通会话会出现在列表中，可联系的 teammate 反而不显示\n效果：多 agent 团队协作时能一眼确认哪些 teammate 当前在线可联系，不必先尝试 SendMessage 才知道对方是否可达\n例子：/list-agents 查看当前所有可联系的 teammate 及其在线状态，再用 SendMessage 联系其中的某个
 ---

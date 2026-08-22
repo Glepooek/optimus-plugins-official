@@ -2,7 +2,7 @@
   "name": "optimus-plugins-official",
   "displayName": "Optimus 官方插件仓库",
   "description": "自定义 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强、权限通知等企业级开发工具链",
-  "version": "10.0.3",
+  "version": "10.0.4",
   "owner": {
     "name": "optimus",
     "url": "https://www.optimus.cn"
@@ -55,7 +55,7 @@
     {
       "name": "optimus-devops-plugin",
       "source": "./plugins/optimus-devops-plugin",
-      "description": "DevOps 工具集：Jenkins CI/CD、API 变更通知、应用初始化、项目分析、工作周报转写。内置 Hooks：SessionStart（295条技巧智能轮播）、Notification（Windows权限通知）"
+      "description": "DevOps 工具集：Jenkins CI/CD、API 变更通知、应用初始化、项目分析、工作周报转写。内置 Hooks：SessionStart（296条技巧智能轮播）、Notification（Windows权限通知）"
     },
     {
       "name": "optimus-mcp-servers",
