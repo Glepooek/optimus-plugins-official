@@ -66,7 +66,7 @@ Minor/Major 升级建议先用 `darwin-skill` 对改动的 skill 评分，新分
 
 ## Skill frontmatter 规范
 
-Skill frontmatter / CHANGELOG 规范见 `.claude/rules/skill-authoring.md`（编辑 SKILL.md / CHANGELOG.md / AGENT.md 时自动加载）。
+Skill frontmatter / CHANGELOG 规范见 `.claude/rules/skill-conventions.md`（编辑 SKILL.md / CHANGELOG.md / AGENT.md 时自动加载）。
 
 ---
 
@@ -81,6 +81,6 @@ Skill frontmatter / CHANGELOG 规范见 `.claude/rules/skill-authoring.md`（编
 | 文件 | 用途 |
 |---|---|
 | `.claude-plugin/marketplace.json` | 插件仓库元数据和版本号 |
-| `.claude/rules/skill-authoring.md` | SKILL.md frontmatter / CHANGELOG 规范（按路径自动加载） |
+| `.claude/rules/skill-conventions.md` | SKILL.md frontmatter / CHANGELOG 规范（按路径自动加载） |
 
 **已被 gitignore 的目录（有意排除，非缺失）：** `.claude/skills/darwin-skill/`（评估产物）、`.remember/`、`.codegraph/`

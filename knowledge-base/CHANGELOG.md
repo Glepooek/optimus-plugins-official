@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.1] - 2026-08-22
+
+### Changed
+- `.claude/rules/skill-authoring.md` 重命名为 `skill-conventions.md`（规则文件覆盖 skill 全生命周期约定，`authoring` 名偏窄），README 与 `skill-authoring/00-README.md`、`01-skill-format.md` 引用同步更新
+
 ## [1.3.0] - 2026-08-22
 
 ### Added

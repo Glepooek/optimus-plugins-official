@@ -26,7 +26,7 @@
 规范通过以下手段落地：
 
 1. **格式校验**：用 [`skills-ref`](https://github.com/agentskills/agentskills/tree/main/skills-ref) 校验 SKILL.md frontmatter 与命名规范（`skills-ref validate ./my-skill`）
-2. **前置检查**：按 `.claude/rules/skill-authoring.md` 的仓库专属约定（版本号、author、category、allowed-tools 写法）自查
+2. **前置检查**：按 `.claude/rules/skill-conventions.md` 的仓库专属约定（版本号、author、category、allowed-tools 写法）自查
 3. **触发验证**：按 `02-description-optimization.md` 用 eval 查询集验证 description 触发准确率
 4. **质量评估**：按 `03-skill-evaluation.md` 跑 with-skill / without-skill 基线对比，记录 pass_rate / tokens / time
 5. **模板兜底**：新 skill 的 SKILL.md 结构参照 `01-skill-format.md` 的推荐章节
@@ -62,7 +62,7 @@
 
 ## 与仓库已有资产的关系
 
-- `.claude/rules/skill-authoring.md`：仓库级规则文件，聚焦本仓库专属约定（版本号、author、category、allowed-tools、前置校验、CHANGELOG、README 章节）；其中涉及"如何创建 skill"的规范引用本领域各篇
+- `.claude/rules/skill-conventions.md`：仓库级规则文件，聚焦本仓库专属约定（版本号、author、category、allowed-tools、前置校验、需求预告、CHANGELOG、README 章节）；其中涉及"如何创建 skill"的规范引用本领域各篇
 - `darwin-skill`：skill 自动优化评估，与 `03-skill-evaluation.md` 的评估方法论互补（darwin 侧重评分自动化，本领域侧重 eval 驱动迭代）
 - `skill-creator`（外部）：agent 自动化创建 skill 的参考实现，与本领域规范配套使用
 

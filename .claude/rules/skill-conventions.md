@@ -14,7 +14,7 @@ paths:
 
 **通用规范见 `knowledge-base/skill-authoring/`**——SKILL.md 格式（六字段约束、目录结构、progressive disclosure、文件引用）见 `01-skill-format.md`；描述优化见 `02-description-optimization.md`；质量评估见 `03-skill-evaluation.md`；脚本使用见 `04-script-usage.md`；最佳实践见 `05-best-practices.md`。本篇只承载**本仓库专属约定**。
 
-每个 skill 维护**独立的语义版本**，与仓库 marketplace 版本号分开管理。frontmatter 遵循开放 Agent Skills 规范（agentskills.io），只允许 `name`/`description`/`license`/`allowed-tools`/`metadata`/`compatibility` 六个顶层字段（各字段约束见 `knowledge-base/skill-authoring/01-skill-format.md`），出现其他顶层字段会导致跨 runtime 严格校验器报"Unexpected fields in frontmatter"错误。
+每个 skill 维护**独立的语义版本**，与仓库 marketplace 版本号分开管理。frontmatter 遵循开放 Agent Skills 规范（agentskills.io），只允许 `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools` 六个顶层字段（各字段约束见 `knowledge-base/skill-authoring/01-skill-format.md`），出现其他顶层字段会导致跨 runtime 严格校验器报"Unexpected fields in frontmatter"错误。
 
 ### metadata.version
 
@@ -101,7 +101,7 @@ skill 正式执行任务前（进入具体业务 Step 之前），必须先做�
 
 类别1-3（依赖/输入/输出）不适用本分类，检查失败一律报错终止——这三类是执行的物理前提，不存在"用户确认后仍可继续"的空间。
 
-### 需求预告：执行前一次性告知，而非逐步反应式发现
+## 需求预告：执行前一次性告知，而非逐步反应式发现
 
 四类检查默认在**执行到对应 Step 时**才触发——若用户的触发语句缺了必要信息（如未给输入文件、未指定目标参数），会导致逐步卡在某个 Step 才反过来追问，多轮来回才能凑齐信息。这是执行时的正确性保障，不是执行前的可发现性保障，两者要分开满足。
 
@@ -158,7 +158,7 @@ skill 处理用户请求的**第一步**，必须先对比"该 skill 需要哪�
 
 ### 所处层级
 
-用 ASCII box-drawing 图，以 `metadata.category` 的 5 个取值（workflow/generator/quality/tool/platform）为层级，标出本 skill 所处层，及直接上下游 skill（用 `★` 标记本 skill）。复合 skill 的子 skill 标注所属主流程及所在阶段。确无上下游依赖时，仍保留本章节，图中注明"无上下游，独立使用"——不允许跳过该章节。
+用 ASCII box-drawing 图，以 `metadata.category` 的 5 个取值（workflow/quality/generator/tool/platform）为层级，标出本 skill 所处层，及直接上下游 skill（用 `★` 标记本 skill）。复合 skill 的子 skill 标注所属主流程及所在阶段。确无上下游依赖时，仍保留本章节，图中注明"无上下游，独立使用"——不允许跳过该章节。
 
 ### 触发词 / 内部触发条件
 
