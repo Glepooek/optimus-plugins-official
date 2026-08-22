@@ -1,9 +1,18 @@
 # Changelog
 
+## [1.4.2] - 2026-08-22
+
+### Changed
+- 概述改为指向团队 `knowledge-base/csharp/` 规范集，与"Microsoft 官方文档降级为背景"的定位对齐
+- 审查流程重构：加入档位决策分支（时间紧走快速初审 / 全面走完整 11 类），原「快速审查清单」改名「快速初审」并标注覆盖子集与升级路径
+
+### Fixed
+- 权威参考中 `knowledge-base/csharp/README.md` 坏链修复为 `00-README.md`
+
 ## [1.4.1] - 2026-08-22
 
 ### Changed
-- 审查清单 12 类别改为引用 `knowledge-base/csharp/` 规范条款，不再自建重复规则文本
+- 审查清单 12 类别合并为 11 行引用表，改为引用 `knowledge-base/csharp/` 规范条款，不再自建重复规则文本
 - 删除与审查清单重复的"常见违规速查表"整节
 - 权威参考改为以 `knowledge-base/csharp/` 为团队规范准绳，Microsoft 官方文档降级为背景参考
 

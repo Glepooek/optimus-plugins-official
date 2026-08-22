@@ -2,7 +2,7 @@
 name: csharp-code-review
 description: 用于审查 C# 代码的 Microsoft 编码规范、命名标准、代码质量，以及异常处理/取消令牌传播等 API 健壮性问题。当用户提到：审查/检查/review C# 代码、.cs 文件、C# 项目代码规范、准备合并/PR、代码质量检查、命名约定问题、代码风格统一时，务必使用此 skill。也适用于用户询问"这段 C# 代码有什么问题"、"帮我看看这个类的命名"、"检查一下代码规范"等场景。
 metadata:
-  version: "1.4.1"
+  version: "1.4.2"
   author: desktop client team
   category: quality
 compatibility: 纯知识型审查 skill，基于用户粘贴/提供的代码文本分析，无外部 CLI/MCP 依赖。
@@ -13,16 +13,18 @@ allowed-tools: Read
 
 ## 概述
 
-基于 [Microsoft 官方 C# 编码规范](https://learn.microsoft.com/zh-cn/dotnet/csharp/fundamentals/coding-style/coding-conventions) 和 [命名准则](https://learn.microsoft.com/zh-cn/dotnet/csharp/fundamentals/coding-style/identifier-names) 的系统化代码审查。
+基于团队 C# 编写规范集（[`knowledge-base/csharp/`](../../../../knowledge-base/csharp/00-README.md)）的系统化代码审查。
 
 **核心原则**：通过全面的 checklist 驱动审查，确保不遗漏任何违规。规范不是约束，而是帮助团队写出一致、可维护、专业的代码。
 
 ## 审查流程
 
-按以下顺序进行审查，确保系统性：
+先整体扫读把握结构，再按用户场景在两档审查深度中择一执行，最后统一输出报告：
 
-1. **快速扫描（30 秒）**：先看整体结构和明显问题
-2. **分类检查（5-10 分钟）**：逐项检查下面的 11 个类别
+1. **整体扫读（30 秒）**：先看整体结构和明显问题，两档共用，必做
+2. **选档执行**：按用户场景选择审查深度——
+   - 时间紧迫 / 用户只求快速自查 → 走**快速初审**（1-2 分钟，见「快速初审」）
+   - PR 合并前 / 用户要全面报告 → 走**完整审查**，逐项核对「审查清单」11 个类别（5-10 分钟）
 3. **生成报告**：使用标准报告格式（见下方模板）
 
 ## 报告格式
@@ -79,9 +81,9 @@ allowed-tools: Read
 | 10 | 异步模式 | `04-async-programming.md` § 2、§ 6 | 禁止 `.Result`/`.Wait()`；`CancellationToken` 传播 |
 | 11 | API 设计与健壮性 | `13-api-design.md` § 2；`05-error-handling.md` 全篇 | 隐式依赖契约显式说明；异常语义统一；取消令牌传播 |
 
-## 快速审查清单
+## 快速初审
 
-用于时间紧迫时的快速审查（1-2 分钟），按上方审查清单表的类别编号快速过一遍：
+时间紧迫或用户只求快速自查时选用（1-2 分钟），是「审查清单」11 类里**最易出错、且不依赖上下文即可判断**的子集。覆盖 **#1 #2 #3 #4 #5 #9 #11**（其中"健壮性"一条同时涵盖 #9 异常处理与 #11 的健壮性要点）。未列入的 #6/#7/#8/#10 多为依赖上下文或易被高频项顺带覆盖，时间紧时不必展开；出现可疑点可升级「审查清单」完整档复核。
 
 1. **命名**（#1）：接口 `I`、私有字段 `_`、静态字段 `s_`、公共 `PascalCase`、参数 `camelCase`
 2. **类型与判空**（#2、#4）：`string` 而非 `String`；`is null` 而非 `== null`
@@ -92,7 +94,7 @@ allowed-tools: Read
 
 ## 权威参考
 
-团队规范以 [`knowledge-base/csharp/`](../../../../knowledge-base/csharp/README.md) 为准——本 skill 的审查依据直接来自该规范集，不额外维护规则文本。语言层的通用惯例背景可参考：
+团队规范以 [`knowledge-base/csharp/`](../../../../knowledge-base/csharp/00-README.md) 为准——本 skill 的审查依据直接来自该规范集，不额外维护规则文本。语言层的通用惯例背景可参考：
 
 - [Microsoft C# 编码规范](https://learn.microsoft.com/zh-cn/dotnet/csharp/fundamentals/coding-style/coding-conventions)
 - [Microsoft 标识符命名规则](https://learn.microsoft.com/zh-cn/dotnet/csharp/fundamentals/coding-style/identifier-names)
