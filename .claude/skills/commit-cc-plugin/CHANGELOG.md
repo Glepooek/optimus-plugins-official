@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.0] - 2026-08-23
+
+### Added
+- 第二步扩展到同时维护 `.agents/skills/` 符号链接镜像：检查缺失、自动补齐、清理及暂存均覆盖
+  `.kiro/skills/` 与 `.agents/skills/` 两个镜像（本仓库支持 Codex CLI，需在 `.agents/skills/`
+  暴露与 kiro 一致的镜像）
+
 ## [3.3.0] - 2026-08-04
 
 ### Added
