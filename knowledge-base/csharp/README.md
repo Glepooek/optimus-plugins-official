@@ -76,7 +76,7 @@
 - `csharp-code-review` skill：本规范 `02` 章的编码层面是它的审查依据；review 流程见 `15`
 - `dotnet-upgrade` 系列 skills：版本升级与迁移以它们为准，本规范保持版本中立，不重复迁移细节
 - `dotnet-nuget:convert-to-cpm`：`10` 章强制中央包管理（CPM），落地用该 skill
-- `refit.md`：Refit REST 客户端实践参考，见 `13` 章 API 设计相关条目
+- `reference/refit.md`：Refit REST 客户端实践参考，见 `13` 章 API 设计相关条目
 
 ## 权威参考
 

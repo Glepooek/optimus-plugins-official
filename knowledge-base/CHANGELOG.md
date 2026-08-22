@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-08-22
+
+### Added
+- 首个 reference 条目 `csharp.ref.refit`：`refit.md` 迁入 `csharp/reference/`，登记索引
+- 相关引用路径更新（`13-api-design.md`、`csharp/README.md` 中 `refit.md` → `reference/refit.md`）
+
 ## [1.1.1] - 2026-08-22
 
 ### Changed
