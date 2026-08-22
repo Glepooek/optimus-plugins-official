@@ -1,7 +1,10 @@
-# Claude Code 插件仓库
+# Optimus 插件库（Claude Code / Codex CLI）
 
 [![Version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FGlepooek%2Foptimus-plugins-official%2Fmaster%2F.claude-plugin%2Fmarketplace.json&query=%24.version&label=version&color=blue)](https://github.com/Glepooek/optimus-plugins-official)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+企业级开发工具链插件仓库，同时支持 **Claude Code** 与 **OpenAI Codex CLI** 两个 harness。
+两套 harness 共用同一份 SKILL.md 真源（`.claude/skills/`），通过符号链接镜像（`.kiro/skills/`、`.agents/skills/`）分发，无需双份维护。
 
 ## 📦 插件列表
 
@@ -50,7 +53,35 @@
 git clone https://github.com/Glepooek/optimus-plugins-official ~/.claude/plugins/marketplace/optimus-plugins-official
 ```
 
-### 使用插件
+### Codex CLI 安装与使用
+
+仓库在 `.agents/plugins/marketplace.json` 定义了 Codex marketplace（8 个插件），支持 Codex CLI 安装：
+
+```bash
+# 添加本仓库为本地 marketplace
+codex plugin marketplace add ./
+
+# 手动安装单个插件（AVAILABLE）
+
+ codex plugin add optimus-frontend-plugin@optimus-plugins-official
+
+# 查看可用插件与已安装状态
+codex plugin list --available --json
+```
+
+Codex 中调用插件 skill（自动带 `plugin:` 前缀）：
+
+```bash
+# MasterGo 设计稿转 WPF 页面
+/optimus-frontend-plugin:mastergo-to-wpf-page
+
+# 分析音视频编码/分辨率/码率/时长
+/optimus-media-plugin:media-analyze
+```
+
+此外，本仓库维护流程类 skill（如 `commit-cc-plugin`、`test-locally`）也会通过 `.agents/skills/` 镜像暴露给 Codex。
+
+### 使用插件（Claude Code）
 
 在 Claude Code 中调用插件的 skills：
 
