@@ -12,7 +12,9 @@ paths:
 
 ## Skill frontmatter 规范
 
-每个 skill 维护**独立的语义版本**，与仓库 marketplace 版本号分开管理，并遵循开放 Agent Skills 规范（agentskills.io）——该规范只允许 `name`/`description`/`license`/`allowed-tools`/`metadata`/`compatibility` 六个顶层字段，出现其他顶层字段会导致跨 runtime 严格校验器报"Unexpected fields in frontmatter"错误。
+**通用规范见 `knowledge-base/skill-authoring/`**——SKILL.md 格式（六字段约束、目录结构、progressive disclosure、文件引用）见 `01-skill-format.md`；描述优化见 `02-description-optimization.md`；质量评估见 `03-skill-evaluation.md`；脚本使用见 `04-script-usage.md`；最佳实践见 `05-best-practices.md`。本篇只承载**本仓库专属约定**。
+
+每个 skill 维护**独立的语义版本**，与仓库 marketplace 版本号分开管理。frontmatter 遵循开放 Agent Skills 规范（agentskills.io），只允许 `name`/`description`/`license`/`allowed-tools`/`metadata`/`compatibility` 六个顶层字段（各字段约束见 `knowledge-base/skill-authoring/01-skill-format.md`），出现其他顶层字段会导致跨 runtime 严格校验器报"Unexpected fields in frontmatter"错误。
 
 ### metadata.version
 

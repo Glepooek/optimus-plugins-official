@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0] - 2026-08-22
+
+### Added
+- 新增 `skill-authoring` 领域（Skill 创建规范）：00-README + 01-05 规范篇 + 3 个 reference 讲解篇
+- `01-skill-format.md`：SKILL.md 格式规约（目录结构/frontmatter/正文/progressive disclosure/文件引用）
+- `02-description-optimization.md`：描述优化（触发机制/写作原则/trigger eval/train-validation 切分）
+- `03-skill-evaluation.md`：质量评估（evals/assertions/grading/benchmark/迭代循环）
+- `04-script-usage.md`：脚本使用（one-off 命令/自包含脚本/agentic 设计）
+- `05-best-practices.md`：最佳实践（真实经验/上下文预算/控制校准/指令模式）
+- `reference/`：trigger-eval-workflow、eval-workspace-structure、self-contained-scripts 三篇讲解
+- `.claude/rules/skill-authoring.md` frontmatter 节改为引用知识库 `skill-authoring/`（通用规范归知识库，仓库专属约定留规则文件）
+
 ## [1.2.1] - 2026-08-22
 
 ### Changed
