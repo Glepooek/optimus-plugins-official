@@ -21,7 +21,8 @@
 
 ## 范围声明
 
-- 本次只搭建知识库的目录结构、索引机制、维护 skill；**不改造**任何现有的知识消费方类 skill（如 `plugins/optimus-backend-plugin/skills/csharp-code-review` 目前直接引用 Microsoft 官方文档，是否改为消费本知识库，属于后续独立任务）。
+- 本次搭建知识库的目录结构、索引机制、维护 skill；**同时处理** `plugins/optimus-backend-plugin/skills/csharp-code-review` 中与规范文档重复的内嵌知识（见 Section 5）——该 skill 是当前仓库里唯一已发现的、内嵌完整规范内容且与知识库直接冲突的案例，纳入本次一并解决，避免同一套规则存在两份独立维护的拷贝。
+- 其余 skill 中若发现类似的纯文档知识内嵌（非本次排查范围内的），后续按 Section 5 同样的原则处理，不在本次强制排查全仓库。
 - 知识库当前只收纳 `csharp`、`wpf` 两个领域（迁移自现有文档），新领域按同一模式随时追加。
 
 ## Section 1：目录结构与迁移
@@ -110,11 +111,74 @@ knowledge-base/
 - **前置校验**（按 `.claude/rules/skill-authoring.md` 四类检查）：依赖检查（Python 可用）；输入参数检查（若指定 `domain` 且非新建，目录须存在）；输出参数检查（写入路径父目录存在）；无强"运行条件"硬约束，`id` 重复等问题走脚本校验后置报告。
 - **不做的事**：不做语义内容生成，`summary`/`tags` 由人/agent 判断填写，skill 只负责流程引导与格式/一致性校验。
 
+## Section 5：`csharp-code-review` 内嵌知识去重
+
+排查发现：`plugins/optimus-backend-plugin/skills/csharp-code-review/SKILL.md` 的"审查清单"章节内嵌了 12 个类别的完整规则（命名约定、类型使用、字符串处理、逻辑运算符、代码结构、`var` 使用、集合与 LINQ、对象创建、委托与事件、异常处理、异步模式、API 设计与健壮性），与迁移后的 `knowledge-base/csharp/` 规范条款存在大面积重复：
+
+| csharp-code-review 类别 | 对应 knowledge-base 篇章 | 处理方式 |
+|---|---|---|
+| 1. 命名约定 | `02-coding-style.md` §1 | 删除 skill 内嵌表格，改引用 |
+| 2-6. 类型/字符串/运算符/结构/`var` | `02-coding-style.md` §2 | 删除，改引用 |
+| 7. 集合与 LINQ | `07-performance.md` §3 | 删除，改引用 |
+| 8. 对象创建 | `02-coding-style.md` §2.4 | 删除，改引用 |
+| 10. 异常处理 | `05-error-handling.md` | 删除，改引用 |
+| 11. 异步模式 | `04-async-programming.md` §6、`13-api-design.md` | 删除，改引用 |
+| 12. API 设计与健壮性（异常语义统一、取消令牌传播） | `05`/`13`/`04` 已覆盖 | 删除，改引用 |
+| 9. 委托与事件（优先 `Func<>`/`Action<>`） | 现有规范文档**未覆盖** | 新增为 `knowledge-base/csharp/` 规范条目（归入 `02-coding-style.md` 或 `03-design-principles.md`，由执行阶段判断） |
+| 12. "隐式依赖契约需要显式说明" | 现有规范文档**未覆盖**（仅 `03-design-principles.md` 反例代码注释提及，非正式条款） | 新增为 `knowledge-base/csharp/` 规范条目（归入 `13-api-design.md` 或 `03-design-principles.md`） |
+
+处理原则：
+
+- **逐条删重，不整体保留**：已被规范文档覆盖的内容从 SKILL.md 删除，不作为并行拷贝保留——同一规则存在两份独立文字表述，长期必然漂移不一致。
+- **skill 改为引用规范**：SKILL.md 的"审查清单"章节改写为指向 `knowledge-base/csharp/` 对应文件/条目 `id` 的引用列表（审查时按引用去读原文规则），不再自建规则文本。速查表、"为什么重要"讲解等 skill 特有的呈现形式（checkbox、severity 分级提示）可以保留，但规则内容本身以引用为准。
+- **两条真缺口内容新增后先入库**：先按 Section 1-2 流程把这两条写入 `knowledge-base/csharp/` 并登记索引，再让 SKILL.md 引用，不倒着来（不能让 skill 继续维护一份规范文档里没有的规则文本）。
+- **权威参考章节调整**：SKILL.md 末尾的"权威参考"从 Microsoft 官方文档链接，改为同时说明"团队规范以 `knowledge-base/csharp/` 为准，语言层通用惯例参考 Microsoft 官方文档"，避免误导——团队内部规则的权威来源应是仓库自己的规范，而非外部文档。
+- **版本处理**：这是对 `plugins/` 下已有内容的修改（非破坏性，行为不变只是知识来源变化），按 `CLAUDE.md` 版本规则计 **Patch**，随 `commit-cc-plugin` 一并升级 `csharp-code-review` 的 `metadata.version` 与仓库 `marketplace.json`。
+
+## Section 6：knowledge-base 自身版本号与 CHANGELOG
+
+`knowledge-base/` 作为一个整体维护**独立于 `marketplace.json` 的单一版本号**（不按领域拆分——csharp、wpf 及未来新领域共用一个版本号，任一领域的变更都升级同一个号）。
+
+- **版本号位置**：`knowledge-base/README.md` 顶部加一行 `> 版本：x.x.x`，格式比照 `plugins/*/skills/*/README.md` 现有的 `> 版本：1.0.0 | 分类：generator` 写法（去掉不适用的"分类"字段）。
+- **CHANGELOG.md**：新增 `knowledge-base/CHANGELOG.md`，格式与 skill 的 `CHANGELOG.md` 完全一致（见 `.claude/rules/skill-authoring.md` CHANGELOG 规范）：
+
+```markdown
+## [版本号] - YYYY-MM-DD
+
+### Added
+- 新增的领域/规范条目/reference 条目
+
+### Changed
+- 修改的内容
+
+### Removed
+- 删除的内容
+
+### Fixed
+- 修复的问题
+```
+
+只写实际发生的类别，无变更的类别省略。
+
+- **版本升级规则**（比照 skill 版本规则，换算到知识库内容语义）：
+
+| 变更类型 | 版本升级 |
+|---|---|
+| 新增领域、新增规范条目、新增 reference 条目 | **Minor** `x.X.x` |
+| 修改已有规范/reference 内容、修正索引、文档优化 | **Patch** `x.x.X` |
+| 删除领域、删除规范条目、规范措辞产生不兼容语义变化（如 SHOULD 改 MUST） | **Major** `X.x.x` |
+
+- **初始版本**：本次迁移与建设（Section 1-5 全部内容）视为创世提交，初始版本 `1.0.0`；CHANGELOG 第一条记录本次全部变更（迁移 csharp/wpf 两个领域、建立索引机制、新增两条缺口规范、`csharp-code-review` 去重改造）。
+- **与仓库整体版本的关系**：独立于 `marketplace.json`，两者不联动，与 Section 3 已确定的"knowledge-base 内容变更不触发 marketplace.json 升级"一致。
+- **维护责任并入 `knowledge-base-maintain` skill**：该 skill 引导新增/修改条目时，同步判断本次变更的版本升级级别，追加 CHANGELOG 条目并更新 `README.md` 版本号，与索引一致性校验一起完成，不依赖人工事后补记。
+
 ## 待实施清单（转 writing-plans）
 
 1. 迁移 `docs/csharp_doc` → `knowledge-base/csharp`，`docs/wpf_doc` → `knowledge-base/wpf`。
 2. 为两个领域生成 `index.jsonl`（回填现有 01-17 规范条目的索引记录）、`reference/` 空目录、领域 `README.md` 补充说明。
-3. 新增 `knowledge-base/README.md`、`knowledge-base/check_index.py`。
+3. 新增 `knowledge-base/README.md`（含版本号）、`knowledge-base/CHANGELOG.md`（初始 `1.0.0`）、`knowledge-base/check_index.py`。
 4. 修正 `knowledge-base/csharp/17-comments-docs.md` 内部自引用路径。
-5. 新建 `.claude/skills/knowledge-base-maintain/`（SKILL.md + CHANGELOG.md），并在 `.kiro/skills/` 建同名符号链接。
+5. 新建 `.claude/skills/knowledge-base-maintain/`（SKILL.md + CHANGELOG.md），并在 `.kiro/skills/` 建同名符号链接；职责中包含引导版本号/CHANGELOG 同步。
 6. 全仓搜索 `docs/csharp_doc`、`docs/wpf_doc` 残留引用并更新（当前已知：`.remember/` 下的历史记忆文件不必更新，属于历史快照）。
+7. 补齐 `knowledge-base/csharp/` 两条缺口规范条目（委托与事件选择、隐式依赖契约显式说明），登记索引。
+8. 改写 `csharp-code-review/SKILL.md` 审查清单章节为引用形式，删除已重复的规则文本；更新"权威参考"章节；`CHANGELOG.md` 记录本次调整；升级 `metadata.version`（Patch）与 `marketplace.json`。
