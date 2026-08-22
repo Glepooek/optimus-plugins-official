@@ -1,6 +1,6 @@
 # 知识库（knowledge-base）
 
-> 版本：1.2.0
+> 版本：1.2.1
 
 跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`csharp`、`wpf`。
 
@@ -10,10 +10,10 @@
 
 ```
 <domain>/
-├── README.md          # 领域说明、阅读路径
+├── 00-README.md         # 领域说明、阅读路径
 ├── 01-*.md ... 17-*.md  # 规范条款（MUST/SHOULD/MAY 语气）
-├── index.jsonl         # 索引：rule + reference 统一编目
-└── reference/          # 描述性知识（无规范语气），首篇内容产生时才建
+├── index.jsonl          # 索引：rule + reference 统一编目
+└── reference/           # 描述性知识（无规范语气），首篇内容产生时才建
 ```
 
 ## 消费方式

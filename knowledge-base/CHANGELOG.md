@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.1] - 2026-08-22
+
+### Changed
+- `csharp/README.md`、`wpf/README.md` 重命名为 `00-README.md`（纳入编号体系，文件地图同步更新）
+
 ## [1.2.0] - 2026-08-22
 
 ### Added

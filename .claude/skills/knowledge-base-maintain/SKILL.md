@@ -2,7 +2,7 @@
 name: knowledge-base-maintain
 description: 新增、修改、迁移 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"校验知识库索引"。
 metadata:
-  version: "1.0.1"
+  version: "1.0.2"
   author: desktop client team
   category: tool
 compatibility: 需要本机 Python 3（跑本 skill scripts/check_index.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
@@ -32,7 +32,7 @@ python --version
 
 依次询问用户（已在触发语句中提供的不重复问）：
 
-1. **`domain`**：目标领域（`csharp`/`wpf`/其他）。若目标领域目录不存在（`knowledge-base/<domain>/` 不存在），确认是新建领域——新建领域时先创建 `knowledge-base/<domain>/README.md`（参照 `knowledge-base/csharp/README.md` 的章节结构：文档目的、适用范围与读者、规范级别、阅读路径、文件地图）与空的 `knowledge-base/<domain>/index.jsonl`。
+1. **`domain`**：目标领域（`csharp`/`wpf`/其他）。若目标领域目录不存在（`knowledge-base/<domain>/` 不存在），确认是新建领域——新建领域时先创建 `knowledge-base/<domain>/00-README.md`（参照 `knowledge-base/csharp/00-README.md` 的章节结构：文档目的、适用范围与读者、规范级别、阅读路径、文件地图）与空的 `knowledge-base/<domain>/index.jsonl`。
 2. **`kind`**：`rule` 或 `reference`。
 3. 若 `kind=rule`：追问 **`level`**（`MUST`/`SHOULD`/`MAY`）。
 4. **正文归属**：`rule` 写入哪个规范文件的哪个章节（已有文件追加小节，或指出需要新建文件）；`reference` 写入 `reference/<主题slug>.md`（新文件，不编号）。
@@ -81,4 +81,4 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" <domain>
 |---|---|---|
 | `check_index.py` 报 `id` 重复 | 检查是否误用了已存在的 id 命名规则，改用更具体的 slug | 若确认是历史遗留重复，两条记录都需人工核对哪条是权威版本，不能随意删一条了事 |
 | `check_index.py` 报 anchor 不匹配 | 打开目标文件确认标题文字的准确文本（含大小写、标点），更新索引 `anchor` 字段 | 若目标章节确实还不存在，先在正文补齐该章节标题，再回填索引 |
-| 新建领域但用户未提供该领域的规范级别定义 | 参照 `knowledge-base/csharp/README.md` 的"规范级别"章节直接复用同一套 MUST/SHOULD/MAY 定义，无需重新设计 | 若用户希望该领域有不同的级别体系，先与用户确认具体差异再落地 |
+| 新建领域但用户未提供该领域的规范级别定义 | 参照 `knowledge-base/csharp/00-README.md` 的"规范级别"章节直接复用同一套 MUST/SHOULD/MAY 定义，无需重新设计 | 若用户希望该领域有不同的级别体系，先与用户确认具体差异再落地 |

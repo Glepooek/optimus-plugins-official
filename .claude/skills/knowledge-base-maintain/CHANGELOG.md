@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.2] - 2026-08-22
+
+### Changed
+- 领域说明文件路径更新：`knowledge-base/<domain>/README.md` → `00-README.md`（新建领域与规范级别参照示例同步改为 `csharp/00-README.md`）
+
 ## [1.0.1] - 2026-08-22
 
 ### Changed
