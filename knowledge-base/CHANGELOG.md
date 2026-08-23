@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.8.0] - 2026-08-23
+
+### Added
+- `git` 领域新增 `reference/pull-request-concepts.md`：Pull Request 概念讲解——PR 不是 GitHub 特有（GitLab 叫 Merge Request）、PR 的代码评审/CI 门禁/合并关卡三大作用、何时该用 PR，是 `03-pull-requests.md` 的配套参考
+- `git/index.jsonl` 新增 1 条 reference 索引记录 `git.ref.pull-request-concepts`
+
+### Changed
+- `03-pull-requests.md` 正文头部补充指向配套 reference 的引用说明
+
 ## [1.7.0] - 2026-08-23
 
 ### Added

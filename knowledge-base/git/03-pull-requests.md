@@ -2,6 +2,8 @@
 
 > 更新历史：2026-08-23 创建，迁移自 `csharp/16-collaboration.md` §3 并新增合并策略与保护分支约定。
 
+PR 概念讲解（PR 是什么、平台名称差异、何时使用）见 `reference/pull-request-concepts.md`。
+
 ## 1. PR 规范
 
 - **必须**：PR 标题表达变更意图；描述含：背景、改动、测试、验证方式
