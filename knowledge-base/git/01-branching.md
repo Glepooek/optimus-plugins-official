@@ -2,6 +2,8 @@
 
 > 更新历史：2026-08-23 创建，迁移自 `csharp/16-collaboration.md` §1 并新增分支命名规范。
 
+工作流选型对比、命名示例大全与分支生命周期管理见 `reference/branching-workflows.md`。
+
 ## 1. 分支策略
 
 - **推荐**：GitHub Flow（主干开发 + 短生命特性分支），团队统一一种

@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.7.0] - 2026-08-23
+
+### Added
+- `git/02-commit-messages.md` §1 新增规范条：提交中若有 AI 协作者，须用 `Co-Authored-By` footer 明确标注，禁止隐去 AI 参与事实
+- `git/reference/commit-message-tooling.md` 新增第 4 节「AI 协作者标注」：Co-Authored-By 格式讲解、为何用结构化 footer 而非自由文本、常见误区
+- `git/index.jsonl` 新增 1 条规范索引记录 `git.02.ai-coauthor`，`git.ref.commit-message-tooling` 的 `tags`/`summary` 同步补充 AI 协作相关关键词
+
+## [1.6.0] - 2026-08-23
+
+### Added
+- `git` 领域新增 `reference/branching-workflows.md`：GitHub Flow/Git Flow/Trunk-Based 工作流对比、分支命名示例大全、分支生命周期管理（创建/同步/清理），是 `01-branching.md` 的配套参考
+- `git` 领域新增 `reference/commit-message-tooling.md`：Conventional Commits 完整规范（type 清单、BREAKING CHANGE、多行 body）、commit-msg hook 实现（commitlint/husky、纯 Shell）、敏感信息扫描工具对比（gitleaks/git-secrets/truffleHog），是 `02-commit-messages.md` 的配套参考
+- `git/index.jsonl` 补充对应 2 条 reference 索引记录
+
+### Changed
+- `01-branching.md`、`02-commit-messages.md` 正文头部补充指向配套 reference 的引用说明
+- `git/00-README.md`「索引与机器消费」补充 `reference/` 目录说明
+
 ## [1.5.0] - 2026-08-23
 
 ### Added

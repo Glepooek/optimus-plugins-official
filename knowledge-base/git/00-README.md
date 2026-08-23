@@ -49,7 +49,7 @@
 
 ## 索引与机器消费
 
-本领域下的 `index.jsonl` 是供 skill 编程式检索的索引（不重复正文，只做定位），字段说明与维护约定见仓库根 `knowledge-base/README.md`。
+本领域下的 `index.jsonl` 是供 skill 编程式检索的索引（不重复正文，只做定位），字段说明与维护约定见仓库根 `knowledge-base/README.md`。`reference/` 目录存放不带 MUST/SHOULD/MAY 语气的描述性知识（工作流对比、命名示例、工具讲解），与本篇编号规范文件是并列关系，不是从属关系。
 
 ## 更新与豁免
 
