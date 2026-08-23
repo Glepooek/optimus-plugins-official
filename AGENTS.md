@@ -87,6 +87,26 @@ Skill frontmatter / CHANGELOG 规范见 `.claude/rules/skill-conventions.md`（�
 
 ---
 
+## docs/ 与 knowledge-base/ 的定位划分
+
+两者都是 Markdown 文档集合，但性质不同，新增文档前先判断该落在哪一侧：
+
+| 维度 | `knowledge-base/` | `docs/` |
+|---|---|---|
+| 内容性质 | **规范条款**（MUST/SHOULD/MAY 语气），可执行的判断依据 | **叙述性资料**：使用指南、历史决策记录、外部资料备份 |
+| 消费方式 | 被 skill **编程式检索**（`index.jsonl` + `file`+`anchor` 定位单条） | 人类完整阅读，无检索单条的场景 |
+| 版本化 | 有独立版本号 + CHANGELOG，条目级别管理，见 `knowledge-base/README.md` | 无版本号，靠文件名日期或 git history 追溯 |
+
+**判断标准**：这份内容是否需要被某个 skill 按条检索引用作为判断依据？是 → `knowledge-base/`；仅供人类阅读理解（工具怎么用、当时为什么这么设计、外部资料备份）→ `docs/`。
+
+`docs/` 内部已有的分类，供参照：
+
+- `superpowers/specs/`、`superpowers/plans/`：brainstorming→writing-plans 工作流产生的**历史决策记录**，记录某功能当时为什么这么设计，不是可复用规范，不进 knowledge-base
+- `claude_blog/`、`claude_docs/`、`url_list.txt`：外部资料备份/追踪表，与本仓库规范无关
+- `SUPERPOWERS_GUIDE.md`、`claude-code-config.md`：操作使用指南（怎么用某个工具/插件），非"代码该怎么写"的规范条款，即使内容详尽也不归入 knowledge-base——这类流程性叙述天然依赖线性阅读顺序，拆成索引条目会破坏可读性
+
+---
+
 ## Codex CLI 兼容说明
 
 本仓库同时支持 Claude Code 与 OpenAI Codex 双 harness。Codex 侧通过 `.agents/plugins/marketplace.json` 安装插件：
