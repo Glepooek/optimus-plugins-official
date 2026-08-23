@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.3] - 2026-08-23
+
+### Changed
+- README「消费方式」补充"动态检索 vs 固定映射"两种消费模式说明，明确 `csharp-code-review`/`wpf-code-review` 直接引用 `file`+`anchor` 属于被认可的固定映射模式
+- README「维护约定」补充索引覆盖是渐进式的，新增/优化 skill 引用到未登记规则时随手补录即可，不必专项排期回填
+
 ## [1.3.2] - 2026-08-22
 
 ### Changed

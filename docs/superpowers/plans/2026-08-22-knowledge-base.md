@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-22-knowledge-base-design.md`（Section 1-6 + 待实施清单）
 
+> 状态：全部 Task 已执行完毕，现为历史决策记录——文档中的具体路径（如 `check_index.py`）、领域列表、skill 名称可能已随后续迭代变化，当前状态以 `knowledge-base/README.md` + `CHANGELOG.md` 为准，不要直接照抄本文档中的命令/路径
+
 ## Global Constraints
 
 - 迁移必须用 `git mv`，不得删除重建（保留文件历史）。

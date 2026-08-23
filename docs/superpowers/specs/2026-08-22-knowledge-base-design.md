@@ -1,6 +1,6 @@
 # 知识库（knowledge-base）设计
 
-> 状态：已批准，待转 writing-plans 生成实施计划
+> 状态：已批准并实施完毕，现为历史决策记录——后续迭代（领域新增、路径迁移、skill 改名等）已实际发生但不会回写本文档，当前状态以 `knowledge-base/README.md` + `CHANGELOG.md` 为准
 
 ## 背景与动机
 
