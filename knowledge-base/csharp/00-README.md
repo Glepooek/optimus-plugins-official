@@ -58,7 +58,7 @@
 | 13 | `13-api-design.md` | API 设计与版本化 |
 | 14 | `14-security.md` | 安全规范 |
 | 15 | `15-quality-review.md` | 代码质量与审查流程 |
-| 16 | `16-collaboration.md` | 版本控制与协作 |
+| 16 | `16-collaboration.md` | CHANGELOG 规范（分支/提交/PR/发布/所有权见 `knowledge-base/git/`） |
 | 17 | `17-comments-docs.md` | 注释与文档 |
 
 ## 索引与机器消费

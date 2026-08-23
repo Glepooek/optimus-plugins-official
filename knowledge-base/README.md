@@ -1,8 +1,8 @@
 # 知识库（knowledge-base）
 
-> 版本：1.4.0
+> 版本：1.5.0
 
-跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`csharp`、`wpf`、`skill-authoring`。
+跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`csharp`、`wpf`、`git`、`skill-authoring`。
 
 ## 目录结构
 
