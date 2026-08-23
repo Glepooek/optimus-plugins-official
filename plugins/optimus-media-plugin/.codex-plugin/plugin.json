@@ -1,8 +1,26 @@
 {
   "name": "optimus-media-plugin",
-  "version": "12.0.0",
+  "version": "12.1.0",
   "description": "音视频处理工具集：基于 ffmpeg/ffprobe 的音视频编解码分析、分辨率转换、压缩、片段截取、帧率转换、格式转换、ffplay 播放预览",
   "skills": "./skills/",
-  "author": "optimus",
-  "repository": "https://github.com/Glepooek/optimus-plugins-official"
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT",
+  "interface": {
+    "displayName": "Optimus Media",
+    "shortDescription": "音视频处理工具集",
+    "longDescription": "音视频处理工具集：基于 ffmpeg/ffprobe 的音视频编解码分析、分辨率转换、压缩、片段截取、帧率转换、格式转换、ffplay 播放预览",
+    "developerName": "Optimus",
+    "category": "Media",
+    "capabilities": [
+      "Skills"
+    ],
+    "defaultPrompt": [
+      "处理一个音视频文件"
+    ]
+  }
 }

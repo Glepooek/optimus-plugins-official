@@ -3,6 +3,24 @@
   "version": "12.1.0",
   "description": "后端开发工具集：API 开发、后端架构设计、数据库设计、API 文档生成等。内置 PreToolUse Hook：git commit 前自动门禁校验 .cs 改动是否已经 csharp-code-review 审查",
   "skills": "./skills/",
-  "author": "optimus",
-  "repository": "https://github.com/Glepooek/optimus-plugins-official"
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT",
+  "interface": {
+    "displayName": "Optimus Backend",
+    "shortDescription": "后端 API 与架构开发工具集",
+    "longDescription": "后端开发工具集：API 开发、后端架构设计、数据库设计、API 文档生成等。内置 PreToolUse Hook：git commit 前自动门禁校验 .cs 改动是否已经 csharp-code-review 审查",
+    "developerName": "Optimus",
+    "category": "Backend",
+    "capabilities": [
+      "Skills"
+    ],
+    "defaultPrompt": [
+      "开始一段后端 API 开发任务"
+    ]
+  }
 }

@@ -1,7 +1,32 @@
 {
   "name": "optimus-mcp-servers",
-  "version": "12.0.0",
+  "version": "12.1.0",
   "description": "MCP 服务器集成：GitHub Copilot MCP、MasterGo 设计协作、飞书项目等企业级 MCP 服务",
   "mcpServers": "./.mcp.json",
-  "author": "optimus"
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "github",
+    "mastergo",
+    "feishu"
+  ],
+  "interface": {
+    "displayName": "Optimus MCP Servers",
+    "shortDescription": "企业级 MCP 服务器集成",
+    "longDescription": "集成 GitHub Copilot MCP、MasterGo 设计协作、飞书项目等企业级 MCP 服务，为开发环境提供设计协同、项目管理与代码助手能力。",
+    "developerName": "Optimus",
+    "category": "MCP",
+    "capabilities": [
+      "Tools"
+    ],
+    "defaultPrompt": [
+      "连接并管理 MCP 服务器"
+    ]
+  }
 }

@@ -1,8 +1,26 @@
 {
   "name": "optimus-prd-plugin",
-  "version": "12.0.0",
+  "version": "12.1.0",
   "description": "PRD 管理工具集：PRD 文档创建、优化、审查，产品需求全流程管理",
   "skills": "./skills/",
-  "author": "optimus",
-  "repository": "https://github.com/Glepooek/optimus-plugins-official"
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT",
+  "interface": {
+    "displayName": "Optimus PRD",
+    "shortDescription": "PRD 全流程管理工具集",
+    "longDescription": "PRD 管理工具集：PRD 文档创建、优化、审查，产品需求全流程管理",
+    "developerName": "Optimus",
+    "category": "Product",
+    "capabilities": [
+      "Skills"
+    ],
+    "defaultPrompt": [
+      "创建或优化一份 PRD"
+    ]
+  }
 }

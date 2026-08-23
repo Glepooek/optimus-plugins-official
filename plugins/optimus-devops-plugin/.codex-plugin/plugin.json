@@ -1,8 +1,26 @@
 {
   "name": "optimus-devops-plugin",
-  "version": "12.0.0",
+  "version": "12.1.0",
   "description": "DevOps 工具集：Jenkins CI/CD、API 变更通知、应用初始化、项目分析、工作周报转写",
   "skills": "./skills/",
-  "author": "optimus",
-  "repository": "https://github.com/Glepooek/optimus-plugins-official"
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT",
+  "interface": {
+    "displayName": "Optimus DevOps",
+    "shortDescription": "DevOps 与 CI/CD 工具集",
+    "longDescription": "DevOps 工具集：Jenkins CI/CD、API 变更通知、应用初始化、项目分析、工作周报转写。内置 Hooks：SessionStart（296条技巧智能轮播）、Notification（Windows权限通知）",
+    "developerName": "Optimus",
+    "category": "DevOps",
+    "capabilities": [
+      "Skills"
+    ],
+    "defaultPrompt": [
+      "开始一段 DevOps / CI-CD 任务"
+    ]
+  }
 }
