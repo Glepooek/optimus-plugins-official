@@ -1,7 +1,7 @@
 {
   "name": "optimus-backend-plugin",
-  "version": "12.0.0",
-  "description": "后端开发工具集：API 开发、后端架构设计、数据库设计、API 文档生成等",
+  "version": "12.1.0",
+  "description": "后端开发工具集：API 开发、后端架构设计、数据库设计、API 文档生成等。内置 PreToolUse Hook：git commit 前自动门禁校验 .cs 改动是否已经 csharp-code-review 审查",
   "skills": "./skills/",
   "author": "optimus",
   "repository": "https://github.com/Glepooek/optimus-plugins-official"
