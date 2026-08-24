@@ -1,26 +1,22 @@
 # ~/.codex/config.toml
-# Optimus MCP 服务器配置示例
-# 复制本文件内容到 ~/.codex/config.toml，并在运行 Codex 的环境中设置下方所需环境变量。
+# Optimus MCP 服务器配置（Codex 原生字段，不使用变量字符串插值）。
+# 由 scripts/gen_mcp_config.py 从 mcp.config.json 生成，请勿手改。
 #
-# 环境变量：
-#   GITHUB_TOKEN          GitHub Copilot MCP 鉴权（Bearer token）
-#   MASTERGO_TOKEN        MasterGo 设计协作 token
-#   FEISHU_PROJECT_TOKEN  飞书项目 token（会经 MCP_USER_TOKEN 注入）
+# 运行 Codex 前需在当前环境 export 以下变量（或用 shell_environment_policy.set 注入）：
+#   GITHUB_TOKEN     GitHub Copilot MCP 鉴权（Bearer）
+#   MG_MCP_TOKEN     MasterGo API token（服务原生环境变量）
+#   MCP_USER_TOKEN   飞书项目 user_token
 
-# GitHub Copilot MCP（HTTP）
-# 用 bearer_token_env_var 从环境读取 token，避免把密钥写进配置文件
 [mcp_servers.github]
 url = "https://api.githubcopilot.com/mcp/"
 bearer_token_env_var = "GITHUB_TOKEN"
 
-# MasterGo Magic MCP（stdio）
 [mcp_servers.mastergo-magic-mcp]
 command = "npx"
-args = ["-y", "@mastergo/magic-mcp", "--token=${MASTERGO_TOKEN}", "--url=https://mastergo.com"]
-env = {}
+args = ["-y", "@mastergo/magic-mcp", "--url=https://mastergo.com"]
+env_vars = ["MG_MCP_TOKEN"]
 
-# 飞书项目 MCP（stdio）
 [mcp_servers.FeishuProjectMcp]
 command = "npx"
 args = ["-y", "@lark-project/mcp", "--domain", "https://project.feishu.cn"]
-env = { MCP_USER_TOKEN = "${FEISHU_PROJECT_TOKEN}" }
+env_vars = ["MCP_USER_TOKEN"]

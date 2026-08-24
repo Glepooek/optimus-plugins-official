@@ -1,13 +1,17 @@
 {
-  "mcpServers": {
+  "env_vars": {
+    "GITHUB_TOKEN": "GitHub Copilot MCP 鉴权（Bearer）",
+    "MG_MCP_TOKEN": "MasterGo API token（服务原生环境变量）",
+    "MCP_USER_TOKEN": "飞书项目 user_token"
+  },
+  "servers": {
     "github": {
-      "type": "http",
+      "transport": "http",
       "url": "https://api.githubcopilot.com/mcp/",
-      "headers": {
-        "Authorization": "Bearer ${GITHUB_TOKEN}"
-      }
+      "bearer": "GITHUB_TOKEN"
     },
     "mastergo-magic-mcp": {
+      "transport": "stdio",
       "command": "npx",
       "args": [
         "-y",
@@ -15,11 +19,10 @@
         "--token=<MG_MCP_TOKEN>",
         "--url=https://mastergo.com"
       ],
-      "env": {
-        "MG_MCP_TOKEN": "${MG_MCP_TOKEN}"
-      }
+      "env": ["MG_MCP_TOKEN"]
     },
     "FeishuProjectMcp": {
+      "transport": "stdio",
       "command": "npx",
       "args": [
         "-y",
@@ -27,9 +30,7 @@
         "--domain",
         "https://project.feishu.cn"
       ],
-      "env": {
-        "MCP_USER_TOKEN": "${MCP_USER_TOKEN}"
-      }
+      "env": ["MCP_USER_TOKEN"]
     }
   }
 }

@@ -12,7 +12,7 @@
 ### 2. MasterGo Magic MCP
 - **类型**: stdio
 - **功能**: MasterGo 设计协作工具集成
-- **环境变量**: `MASTERGO_TOKEN`
+- **环境变量**: `MG_MCP_TOKEN`
 
 ### 3. 飞书项目 MCP
 - **类型**: stdio
@@ -31,6 +31,14 @@
 
 ## 配置说明
 
+> **单一真源**：三台服务器的通用定义在插件根目录 `mcp.config.json`。运行
+> `python scripts/gen_mcp_config.py` 会按各 harness 原生字段生成两套配置：
+> `.mcp.json`（Claude Code，用 `headers`/`env` + `${VAR}` 插值）与
+> `config.toml.example`（Codex，用 `bearer_token_env_var`/`env_vars`，不做 `${VAR}`
+> 插值）。**请勿手改生成产物**，改 `mcp.config.json` 后重新生成并跑
+> `python scripts/test_gen_mcp_config.py` 校验。之所以分成两套，是因为 Claude Code
+> 与 Codex 的鉴权字段和 `${VAR}` 插值规则不同——没有一份 `.mcp.json` 能同时让两侧正确带入令牌。
+
 ### Claude Code 使用方式
 
 0. 前置要求
@@ -41,7 +49,7 @@
 {
   "env": {
     "GITHUB_TOKEN": "your_github_token_here",
-    "MASTERGO_TOKEN": "your_mastergo_token_here",
+    "MG_MCP_TOKEN": "your_mastergo_token_here",
     "MCP_USER_TOKEN": "your_feishu_project_token_here"
   }
 }
@@ -86,13 +94,13 @@ bearer_token_env_var = "GITHUB_TOKEN"
 
 [mcp_servers.mastergo-magic-mcp]
 command = "npx"
-args = ["-y", "@mastergo/magic-mcp", "--token=${MASTERGO_TOKEN}", "--url=https://mastergo.com"]
-env = {}
+args = ["-y", "@mastergo/magic-mcp", "--url=https://mastergo.com"]
+env_vars = ["MG_MCP_TOKEN"]
 
 [mcp_servers.FeishuProjectMcp]
 command = "npx"
 args = ["-y", "@lark-project/mcp", "--domain", "https://project.feishu.cn"]
-env = { MCP_USER_TOKEN = "${FEISHU_PROJECT_TOKEN}" }
+env_vars = ["MCP_USER_TOKEN"]
 ```
 
 **环境变量**：两种方式都依赖以下环境变量，需在运行 Codex 的 shell 环境中设置（或写入 `~/.codex/config.toml` 的 `[shell_environment_policy.set]`）：
@@ -100,8 +108,14 @@ env = { MCP_USER_TOKEN = "${FEISHU_PROJECT_TOKEN}" }
 | 变量 | 用途 |
 |---|---|
 | `GITHUB_TOKEN` | GitHub Copilot MCP 鉴权（Bearer token） |
-| `MASTERGO_TOKEN` | MasterGo 设计协作 token |
-| `FEISHU_PROJECT_TOKEN` | 飞书项目 token（经 `MCP_USER_TOKEN` 注入） |
+| `MG_MCP_TOKEN` | MasterGo 设计协作 token（服务原生环境变量） |
+| `MCP_USER_TOKEN` | 飞书项目 user_token |
+
+> **注意**：Codex 不会展开 `.mcp.json` 里的 `${VAR}`，也不会把 shell 环境变量自动传给 MCP
+> 子进程。因此 Codex 侧**可靠**的鉴权方式是写 `~/.codex/config.toml`（上面的方式 B），
+> 用 `bearer_token_env_var`（HTTP）和 `env_vars`（stdio）按名称转发环境变量。
+> `config.toml.example` 已按此生成。插件内的 `.mcp.json` 是 Claude Code 原生写法，Codex
+> 通过 marketplace 加载到的是服务器定义，鉴权请走方式 B。
 
 **生效时机**：安装或修改配置后需新开一个 Codex 会话，MCP 工具才会被加载。
 
@@ -117,9 +131,11 @@ env = { MCP_USER_TOKEN = "${FEISHU_PROJECT_TOKEN}" }
 2. 进入用户设置 → 开发者设置
 3. 创建 API Token
 
+> 将生成的 token 导出为环境变量 `MG_MCP_TOKEN`（两侧都使用该变量名）。
+
 ### 飞书项目 Token
 1. 登录飞书项目 (https://project.feishu.cn)
 2. 进入浏览器开发者工具（F12）→ Application/存储 → Cookies
 3. 复制 `user_token` 的值（注意：可能需要定期更新）
 
-> **提示**: 飞书项目 Token 使用 user_token，建议定期检查是否过期。
+> 将 `user_token` 导出为环境变量 `MCP_USER_TOKEN`。该 token 建议定期检查是否过期。
