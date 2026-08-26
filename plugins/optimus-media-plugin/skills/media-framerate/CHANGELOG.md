@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.3] - 2026-08-26
+
+### Changed
+- Step 4 提高/降低帧率判断补充概念引用：帧率概念与复制帧/运动插帧/丢帧机制指向 `knowledge-base/media/reference/media-parameters.md` §2「帧率」
+
 ## [1.0.2] - 2026-08-17
 
 ### Fixed

@@ -21,3 +21,12 @@
 | `-b:v <码率>` | 指定视频目标码率，与 `-crf` 互斥，二选一 | media-compress 目标码率模式 |
 | `-pass <1\|2>` | 两轮编码（two-pass）的轮次标记；第一轮分析画面复杂度分布，第二轮据此精确分配码率 | media-compress 目标码率模式 |
 | `-an` | 禁用音频流，仅处理视频；用于两轮编码第一轮不产出音频以节省分析时间 | media-compress 目标码率模式第一轮 |
+
+## 概念解释
+
+上表参数背后的媒体概念（关键帧对齐、CRF/码率控制、流复制 vs 转码、帧率与插帧）以 `knowledge-base/media/` 为唯一概念来源，参数表只做命令定位：
+
+- `-crf` / `-preset` / `-b:v` / `-pass` 的码率控制与两轮编码概念 → [`knowledge-base/media/reference/video-quality.md`](../../../../knowledge-base/media/reference/video-quality.md) §2「码率控制模式」
+- `-c copy` 流复制 / `-c:v` 转码 → [`knowledge-base/media/reference/media-stream-basics.md`](../../../../knowledge-base/media/reference/media-stream-basics.md) §3「转码、重封装、流复制」
+- `-ss` 对齐到最近关键帧 → `video-codecs.md` 的「关键帧（I / P / B 帧）与 GOP」小节
+- `-r` / `minterpolate` 的帧率与插帧机制 → [`knowledge-base/media/reference/media-parameters.md`](../../../../knowledge-base/media/reference/media-parameters.md) §2「帧率」

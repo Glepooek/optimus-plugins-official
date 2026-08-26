@@ -2,7 +2,7 @@
 name: media-compress
 description: Use when user wants to reduce a media file's size while keeping the same resolution — 压缩视频、压缩音频、音视频压缩、减小文件体积、CRF调画质、压缩到指定大小、压缩到多少MB。Not for resolution changes, clip trimming, or pure codec/format inspection.
 metadata:
-  version: "1.2.1"
+  version: "1.2.2"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -55,6 +55,8 @@ allowed-tools: Bash
 | 默认 / 没有特殊要求 | 23 |
 | 体积优先 / 压缩狠一点 | 26-28 |
 
+> CRF 的"恒定质量、只定质量不定体积"机制与 2-pass 码率控制的取舍见 [`knowledge-base/media/reference/video-quality.md`](../../../../knowledge-base/media/reference/video-quality.md) §2「码率控制模式」。
+
 **目标码率模式（用户明确要求指定体积时）：**
 
 🔴 CHECKPOINT：告知用户"相同目标体积下，CRF 模式通常画质更优——CRF 按画面复杂度自由分配比特，不受体积上限约束；目标码率模式受限于固定预算，画质会随之打折扣"，询问用户是否仍要继续目标体积模式，还是改用 CRF 模式配合"体积优先"档位（CRF 26-28）间接控制体积。用户坚持目标体积模式则继续；改选 CRF 则回退到上方 CRF 分支。未确认前不得进入 Step 5。
@@ -66,6 +68,8 @@ allowed-tools: Bash
 ```
 目标视频码率(kbps) = 目标大小(MB) × 8192 / 时长(秒) − 音频码率(128 kbps)
 ```
+
+> 公式的进制推导（8192 = 1024×8）与"由目标体积反推目标码率"见 [`knowledge-base/media/reference/media-parameters.md`](../../../../knowledge-base/media/reference/media-parameters.md) §4。
 
 **硬约束**：若算出的目标视频码率 ≤ 0（目标体积过小，扣除音频码率后已无空间容纳视频），说明该目标体积在物理上不可行，无法通过用户确认绕过。返回错误信息告知用户当前时长与音频码率下的最小可行体积，请求提高目标大小或接受更低的音频码率，终止任务，不进入 Step 5。
 

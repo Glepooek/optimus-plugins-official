@@ -2,7 +2,7 @@
 name: media-resize
 description: Use when user wants to change a video's resolution — 分辨率转换、1080p转720p、改分辨率、缩放视频、视频转清晰度。Not for compression at the same resolution, trimming, or codec/format analysis.
 metadata:
-  version: "1.2.2"
+  version: "1.2.3"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -50,6 +50,8 @@ ffprobe 查询成功后，🔴 CHECKPOINT：判断以下两种情况——命中
 
 - **放大**：若目标分辨率高于原始分辨率，告知用户放大会损失画质，需用户明确确认后才能继续
 - **宽高比不一致**：若用户给出的目标宽高比与原始视频不一致，告知用户画面会被拉伸变形，询问是否改为等比例缩放（用 `-2` 占位一边）；用户坚持强制双边宽高则按指定值执行，但需在执行前明确告知会拉伸变形
+
+> 分辨率档位、宽高比与横/竖屏判定等概念见 [`knowledge-base/media/reference/media-parameters.md`](../../../../knowledge-base/media/reference/media-parameters.md) §1「分辨率」。
 
 ### Step 5：执行转换
 

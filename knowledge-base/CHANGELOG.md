@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.4] - 2026-08-26
+
+### Changed
+- `media/reference/media-parameters.md` 扩展：§2 帧率新增「提高帧率的两种方式」（复制帧 vs 运动插帧）与「降低帧率=丢帧」；§4 新增「由目标体积反推目标码率」（two-pass 场景的 `目标大小×8192÷时长−音频码率` 公式及 8192 的进制来源）
+- `media/reference/video-codecs.md` §1 新增「关键帧（I/P/B 帧）与 GOP」小节：帧间预测、关键帧间隔与 seek/截取精度的权衡、`-c copy` 对齐关键帧的实际影响
+- `media/index.jsonl` 同步更新 `media.ref.media-parameters`、`media.ref.video-codecs` 的 `summary`/`tags`
+
 ## [1.10.3] - 2026-08-26
 
 ### Changed

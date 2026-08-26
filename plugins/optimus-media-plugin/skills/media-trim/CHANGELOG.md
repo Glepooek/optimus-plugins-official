@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.3] - 2026-08-26
+
+### Changed
+- Step 5 两种截取模式补充概念引用：流复制 vs 转码指向 `knowledge-base/media/reference/media-stream-basics.md` §3；"对齐到最近关键帧"中的关键帧概念指向 `video-codecs.md` 的关键帧小节
+
 ## [1.1.2] - 2026-08-14
 
 ### Fixed

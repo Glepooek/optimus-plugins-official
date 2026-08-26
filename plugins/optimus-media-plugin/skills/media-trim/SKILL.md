@@ -2,7 +2,7 @@
 name: media-trim
 description: Use when user wants to cut a specific segment out of a media file — 片段截取、截取视频、剪切一段、掐头去尾、截取某个时间段。Not for resolution changes, compression, or codec/format inspection.
 metadata:
-  version: "1.1.2"
+  version: "1.1.3"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -62,6 +62,8 @@ ffmpeg -i <input> -ss <start> -to <end> -c:v libx264 -crf 18 -c:a aac <output>
 ```
 
 ⚠️ **注意：`-ss` 参数在 `-i` 前后位置决定截取行为，不是可以随意调换的写法差异。** 放在 `-i` 之前是输入端 seek（快速模式所用），会对齐到最近的关键帧；放在 `-i` 之后是输出端 seek（精确模式所用），帧精确但速度慢很多。两种模式的命令模板中 `-ss`/`-to` 与 `-i` 的相对顺序不可互换。
+
+> 流复制（`-c copy`）快速模式与转码（重新编码）精确模式的取舍见 [`knowledge-base/media/reference/media-stream-basics.md`](../../../../knowledge-base/media/reference/media-stream-basics.md) §3「转码、重封装、流复制」；"对齐到最近关键帧"中的关键帧概念见 `video-codecs.md` 的「关键帧（I / P / B 帧）与 GOP」小节。
 
 参数说明见 `../media-ffmpeg-common/CLI-REFERENCE.md`。
 

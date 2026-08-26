@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.2] - 2026-08-26
+
+### Changed
+- Step 4 补充概念引用：CRF 机制与 2-pass 取舍指向 `knowledge-base/media/reference/video-quality.md` §2「码率控制模式」；目标码率公式的进制推导指向 `media-parameters.md` §4「由目标体积反推目标码率」
+
 ## [1.2.1] - 2026-08-16
 
 ### Fixed

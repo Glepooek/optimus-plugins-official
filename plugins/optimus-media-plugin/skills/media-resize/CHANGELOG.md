@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.3] - 2026-08-26
+
+### Changed
+- Step 4 宽高比/放大判断补充概念引用：分辨率档位、宽高比与横/竖屏判定指向 `knowledge-base/media/reference/media-parameters.md` §1「分辨率」
+
 ## [1.2.2] - 2026-08-18
 
 ### Fixed

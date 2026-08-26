@@ -2,7 +2,7 @@
 name: media-framerate
 description: Use when user wants to change a video's frame rate — 帧率转换、改帧率、转帧率、60fps转30fps、提高帧率、降低帧率、补帧。Not for resolution changes, compression, trimming, or codec/format inspection.
 metadata:
-  version: "1.0.2"
+  version: "1.0.3"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -46,6 +46,8 @@ allowed-tools: Bash
 
 - **提高帧率**：若目标帧率高于原始帧率，告知用户简单转换（复制帧）不会让画面更流畅，画面运动感与原始视频一致，仅是元数据层面的帧率变化；如需真正提升流畅度，需使用运动补偿插帧模式（速度显著更慢，且可能引入插值伪影），询问用户选择"简单复制"还是"运动插帧"，默认简单复制
 - **降低帧率**：无风险操作（丢帧），无需确认，直接执行
+
+> 帧率概念、提高帧率（复制帧 vs 运动插帧）与降低帧率（丢帧）的机制见 [`knowledge-base/media/reference/media-parameters.md`](../../../../knowledge-base/media/reference/media-parameters.md) §2「帧率」。
 
 ### Step 5：执行转换
 

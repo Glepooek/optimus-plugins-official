@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.3] - 2026-08-26
+
+### Changed
+- Step 4 输出字段表补充概念引用：各字段含义与单位换算指向 `knowledge-base/media/reference/ffprobe-field-map.md`（概念详解见 `media-parameters.md`），不再重复知识库正文
+
 ## [1.1.2] - 2026-08-16
 
 ### Fixed

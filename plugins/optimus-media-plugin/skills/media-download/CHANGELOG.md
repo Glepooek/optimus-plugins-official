@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] - 2026-08-26
+
+### Changed
+- Step 5 参数说明表补充概念引用：HLS/DASH 分片协议与 M3U8 清单指向 `knowledge-base/media/reference/streaming-protocols.md`；分离音视频流合并封装指向 `media-stream-basics.md` §1；README 版本同步修正为 1.1.1（此前滞后于 SKILL 的 1.1.0）
+
 ## [1.1.0] - 2026-08-16
 
 ### Added

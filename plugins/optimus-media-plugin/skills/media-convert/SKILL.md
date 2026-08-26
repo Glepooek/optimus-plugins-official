@@ -2,7 +2,7 @@
 name: media-convert
 description: Use when user wants to change a media file's container format — 格式转换、转成mp4、转成mov、转换容器、mp4转mkv、avi转mp4、换个格式。Not for resolution changes, frame rate changes, compression at the same format, or trimming.
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -50,6 +50,8 @@ ffmpeg -i <input> -c copy <output>
 
 - **remux 成功**：任务完成，无画质损失。
 - **remux 失败**（报错如 `Could not find tag for codec` / `codec not currently supported in container` 等编码与目标容器不兼容的信息）：说明目标容器不支持源文件的编码，无法仅靠改变封装完成转换。🔴 CHECKPOINT 告知用户"目标格式不支持当前编码，需要重新编码才能转换，会产生一次有损压缩（画质会有轻微损失）"，询问用户是否接受转码继续，还是改选其他目标格式；用户确认接受转码后才能进入下方转码模式，未确认不得继续。
+
+> remux（重封装）/ 转码 / 流复制三者的区别与"容器≠编码"概念见 [`knowledge-base/media/reference/media-stream-basics.md`](../../../../knowledge-base/media/reference/media-stream-basics.md) §3「转码、重封装、流复制」。
 
 **转码模式（remux 失败且用户确认后）：**
 

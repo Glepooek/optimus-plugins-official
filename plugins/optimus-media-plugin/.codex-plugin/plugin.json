@@ -1,6 +1,6 @@
 {
   "name": "optimus-media-plugin",
-  "version": "12.1.0",
+  "version": "12.1.2",
   "description": "音视频处理工具集：基于 ffmpeg/ffprobe 的音视频编解码分析、分辨率转换、压缩、片段截取、帧率转换、格式转换、ffplay 播放预览",
   "skills": "./skills/",
   "author": {
