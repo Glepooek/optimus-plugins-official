@@ -29,6 +29,7 @@
 | 压缩与保画质 | `reference/video-quality.md` |
 | 字幕处理 | `reference/subtitles.md` |
 | 分析某个具体文件、读取各项参数 | `reference/ffprobe-field-map.md` |
+| 理解网络流地址（M3U8/HLS/RTMP/RTSP） | `reference/streaming-protocols.md` |
 
 ## 文件地图
 
@@ -44,6 +45,7 @@
 | `reference/video-quality.md` | 有损 / 无损、码率控制、色度采样、位深与 HDR |
 | `reference/subtitles.md` | 视频字幕的形态与格式对比 |
 | `reference/ffprobe-field-map.md` | ffprobe 输出字段与各概念的映射 |
+| `reference/streaming-protocols.md` | 流媒体传输与分发协议 |
 
 ## 索引与机器消费
 

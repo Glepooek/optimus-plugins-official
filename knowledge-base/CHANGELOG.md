@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0] - 2026-08-26
+
+### Added
+- `media` 领域新增 `reference/streaming-protocols.md`：流媒体传输与分发协议讲解——M3U8 播放清单、HLS/DASH HTTP 分片分发、RTMP 推流、RTSP 会话控制协议、WebRTC 实时互动，及直播生态推流/分发/互动分工
+- `media/index.jsonl` 登记 1 条 reference 索引记录 `media.ref.streaming-protocols`
+- `media/00-README.md` 阅读路径与文件地图同步补充 streaming-protocols 条目
+
 ## [1.9.1] - 2026-08-26
 
 ### Changed
