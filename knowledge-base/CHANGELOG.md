@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.10.3] - 2026-08-26
+
+### Changed
+- `media/reference/streaming-protocols.md` 第 8 节扩展为「与 ffprobe / ffplay 的关系」：新增 ffplay 能直接播放 HLS/RTSP/RTMP 网络流的说明与命令示例，及 RTSP TCP 传输、RTMP 构建依赖、直播不可回拖、DRM 不可解密等注意点
+- `media/index.jsonl` 同步更新 `media.ref.streaming-protocols` 的 `tags`/`summary`（新增 `ffplay` 标签）
+
 ## [1.10.2] - 2026-08-26
 
 ### Changed

@@ -162,8 +162,20 @@ WebRTC 是面向**实时音视频通信**的开放协议栈（P2P + 协商控制
 | MSE | 浏览器播放流媒体的接口，DASH 及部分 HLS 靠它把分片注入播放器 |
 | ABR | 码率自适应：播放器按网速自动切换清晰度 |
 
-## 8. 与 ffprobe 的关系
+## 8. 与 ffprobe / ffplay 的关系
+
+**ffprobe（查看）**：
 
 - ffprobe 能解析网络流地址（`ffprobe "https://example.com/stream.m3u8"`），但解析的是**清单背后的媒体流**，输出的编码/参数仍是文件视角的字段（见 `ffprobe-field-map.md`）
 - 对 RTSP 可用 `ffprobe "rtsp://..."` 探测；对纯 RTMP 地址，ffprobe 支持有限
 - 流是**实时**的：分析网络流时只能看到当前正在传输的部分，看不到"完整文件"——这与分析静态文件不同
+
+**ffplay（播放）**：ffplay 是 ffmpeg 自带的播放器，与 ffprobe 共用同一套解码/解封装/网络能力，**能直接播放上述网络流**：
+
+| 流类型 | 命令示例 |
+|---|---|
+| HLS（`.m3u8`） | `ffplay "https://cdn.example.com/vod/index.m3u8"` |
+| RTSP（摄像头） | `ffplay -rtsp_transport tcp "rtsp://192.168.1.100:554/stream"` |
+| RTMP（推流/直播） | `ffplay "rtmp://push.live.com/app/streamkey"` |
+
+注意点：RTSP 建议加 `-rtsp_transport tcp`（默认 UDP 网络抖动易花屏）；RTMP 需构建带 RTMP 协议支持；直播流是实时的，不能往回拖进度条；DRM（Widevine/FairPlay 等）加密内容 ffplay 无法解密播放。
