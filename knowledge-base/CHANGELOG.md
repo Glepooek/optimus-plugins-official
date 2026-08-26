@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.10.1] - 2026-08-26
+
+### Changed
+- `media/reference/streaming-protocols.md`：标题改为"流媒体传输与分发协议：HLS、RTMP、RTSP、DASH 与 WebRTC"（去除 M3U8 平列与赘余的"与相关协议"）；将 M3U8 并入 HLS 章节作为其播放清单组件介绍，并展开 HLS 完整组成——分片、两级清单（Media/Master Playlist）、码率自适应、加密与 DRM、直播/点播差异
+- `media/index.jsonl` 同步更新 `media.ref.streaming-protocols` 的 `title`/`summary`
+
 ## [1.10.0] - 2026-08-26
 
 ### Added
