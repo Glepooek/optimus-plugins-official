@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.10.2] - 2026-08-26
+
+### Changed
+- `media/reference/streaming-protocols.md` 重构为面向零基础读者的通俗版：新增"为什么切分片"问题引入、播放器播放 HLS 的 4 步流程、各协议 URL 实例与一句话人话总结、CDN 说明、文末术语速查表，并在常见误区补充"扩展名非铁律"条目
+- `media/index.jsonl` 同步更新 `media.ref.streaming-protocols` 的 `summary`
+
 ## [1.10.1] - 2026-08-26
 
 ### Changed
