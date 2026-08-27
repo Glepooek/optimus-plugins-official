@@ -2,6 +2,8 @@
 
 > 面向团队的全覆盖 C# 开发总纲。**版本中立**——不绑定特定 .NET 版本，适用于所有主流 .NET 版本；编码风格与工程实践并重。
 
+本领域负责 C# 语言、编码风格、设计原则和通用 .NET 工程实践；.NET Runtime、SDK、目标框架、Windows 兼容性与生命周期事实归 `knowledge-base/dotnet/`，WPF/XAML 专属规则归 `knowledge-base/wpf/`。需要判断运行环境时引用 `dotnet`，不要在本领域复制平台支持矩阵。
+
 ## 文档目的
 
 本规范统一团队 C# 项目的编码风格、设计原则与工程实践，目标是让代码**可读、可维护、可演进**。它不是约束的堆砌，而是对"什么样的代码算好代码"的团队共识。
@@ -75,6 +77,7 @@
 
 - `csharp-code-review` skill：本规范 `02` 章的编码层面是它的审查依据；review 流程见 `15`
 - `dotnet-upgrade` 系列 skills：版本升级与迁移以它们为准，本规范保持版本中立，不重复迁移细节
+- `knowledge-base/dotnet/`：提供 Runtime、SDK、目标框架、Windows 兼容性与生命周期 reference
 - `dotnet-nuget:convert-to-cpm`：`10` 章强制中央包管理（CPM），落地用该 skill
 - `reference/refit.md`：Refit REST 客户端实践参考，见 `13` 章 API 设计相关条目
 

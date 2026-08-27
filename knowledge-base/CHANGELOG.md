@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0] - 2026-08-27
+
+### Added
+- 新增 `dotnet` 领域：收纳 .NET Framework、现代 .NET、Windows 兼容性与生命周期的描述性知识
+- 新增 `dotnet/reference/windows-dotnet-support-matrix.md`：Windows 与 .NET Framework / .NET 5+ 支持矩阵整理稿
+- 根知识库领域说明补充 `dotnet`、`csharp`、`wpf` 三者的职责边界
+
 ## [1.10.4] - 2026-08-26
 
 ### Changed

@@ -2,7 +2,7 @@
 
 > 版本：1.10.4
 
-跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`csharp`、`wpf`、`git`、`media`、`skill-authoring`。其中 `media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
+跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
 
 ## 目录结构
 
@@ -15,6 +15,8 @@
 ├── index.jsonl          # 索引：rule + reference 统一编目
 └── reference/           # 描述性知识（无规范语气），首篇内容产生时才建
 ```
+
+领域职责边界：`dotnet` 负责 Runtime、.NET Framework、SDK、目标框架、操作系统兼容性与生命周期；`csharp` 负责 C# 语言和通用工程实践；`wpf` 负责 WPF/XAML 桌面 UI 技术栈；`git` 负责版本控制协作；`media` 负责媒体处理概念；`skill-authoring` 负责 Skill 创建与维护规范。领域可以相互引用，但不得复制同一事实或规则。
 
 ## 消费方式
 

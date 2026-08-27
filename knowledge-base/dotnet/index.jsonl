@@ -1,0 +1,1 @@
+{"id": "dotnet.ref.windows-dotnet-support-matrix", "kind": "reference", "file": "reference/windows-dotnet-support-matrix.md", "anchor": "", "title": "Windows 与 .NET Framework / .NET 5+ 支持矩阵", "tags": ["dotnet", "dotnet-framework", "windows", "target-framework", "compatibility", "lifecycle"], "summary": "说明不同 Windows 版本对 .NET Framework 与现代 .NET 的安装条件、官方支持边界、生命周期和迁移判断。"}
