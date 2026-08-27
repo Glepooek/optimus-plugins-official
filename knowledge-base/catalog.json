@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-08-27",
+  "description": "知识库领域目录册。登记每个领域的内容分类、维护责任、状态与主要消费者，供审计命令与影响分析使用。领域内容真源仍是各领域 index.jsonl 与 Markdown 正文，本文件只承载领域级导航元数据。",
+  "categories": {
+    "rules": "可用于合规判断的规范正文，带 MUST/SHOULD/MAY 语气",
+    "reference": "解释概念、机制、工具和用法的描述性文档，不带规范语气"
+  },
+  "domains": [
+    {
+      "domain": "dotnet",
+      "title": ".NET 平台与运行时",
+      "categories": ["reference"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": ["knowledge-base/csharp", "knowledge-base/wpf"],
+      "reviewed_at": "2026-08-27",
+      "notes": "纯描述性领域，负责 Runtime、.NET Framework、SDK、目标框架、Windows 兼容性与生命周期"
+    },
+    {
+      "domain": "csharp",
+      "title": "C# 语言与通用工程实践",
+      "categories": ["rules", "reference"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": ["plugins/optimus-backend-plugin/skills/csharp-code-review"],
+      "reviewed_at": "2026-08-27",
+      "notes": "语言层与通用工程规范；平台判断引用 dotnet，桌面 UI 引用 wpf，版本控制协作引用 git"
+    },
+    {
+      "domain": "wpf",
+      "title": "WPF / XAML 桌面 UI",
+      "categories": ["rules"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": [
+        "plugins/optimus-frontend-plugin/skills/wpf-code-review",
+        "plugins/optimus-frontend-plugin/skills/wpf-project-conventions"
+      ],
+      "reviewed_at": "2026-08-27",
+      "notes": "WPF 技术栈专属规范；语言层规范引用 csharp，运行环境引用 dotnet"
+    },
+    {
+      "domain": "git",
+      "title": "Git 版本控制与协作",
+      "categories": ["rules", "reference"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": [".claude/skills/commit-cc-plugin"],
+      "reviewed_at": "2026-08-27",
+      "notes": "分支、提交、PR、发布与所有权；条款迁移自 csharp/rules/16-collaboration.md"
+    },
+    {
+      "domain": "media",
+      "title": "媒体处理概念",
+      "categories": ["reference"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": ["plugins/optimus-media-plugin"],
+      "reviewed_at": "2026-08-27",
+      "notes": "纯描述性领域，知识库负责概念、skill 负责操作；不收命令模板"
+    },
+    {
+      "domain": "skill-authoring",
+      "title": "Skill 创建与维护规范",
+      "categories": ["rules", "reference"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": [".claude/rules/skill-conventions.md", ".claude/skills/darwin-skill"],
+      "reviewed_at": "2026-08-27",
+      "notes": "开放 Agent Skills 规范的通用约束；本仓库专属约定见 .claude/rules/skill-conventions.md"
+    }
+  ]
+}

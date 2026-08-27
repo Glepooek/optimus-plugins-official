@@ -27,10 +27,10 @@
 
 规范不是纸面文档，通过以下手段落地：
 
-1. **静态分析门禁**：`.editorconfig` + Roslyn 分析器（见 `01-project-structure.md`），严重级别告警按 **warnings-as-errors** 处理
+1. **静态分析门禁**：`.editorconfig` + Roslyn 分析器（见 `rules/01-project-structure.md`），严重级别告警按 **warnings-as-errors** 处理
 2. **CI 校验**：`restore → build(-warnaserror) → test` 三关
-3. **Code Review**：按 `15-quality-review.md` 流程执行；编码层面问题由 `csharp-code-review` skill 辅助检出
-4. **模板兜底**：新增项目 / 文件按 `01-project-structure.md` 的布局约定生成
+3. **Code Review**：按 `rules/15-quality-review.md` 流程执行；编码层面问题由 `csharp-code-review` skill 辅助检出
+4. **模板兜底**：新增项目 / 文件按 `rules/01-project-structure.md` 的布局约定生成
 
 ## 阅读路径
 
@@ -45,27 +45,27 @@
 | 编号 | 文件 | 主题 |
 |---|---|---|
 | 00 | `00-README.md` | 总则、级别、执行、索引 |
-| 01 | `01-project-structure.md` | 环境与技术选型、解决方案与项目结构 |
-| 02 | `02-coding-style.md` | 命名规范、编码风格、语言特性使用准则 |
-| 03 | `03-design-principles.md` | 面向对象与设计原则 |
-| 04 | `04-async-programming.md` | 异步编程 |
-| 05 | `05-error-handling.md` | 异常处理与错误设计 |
-| 06 | `06-memory-resource.md` | 内存与资源管理 |
-| 07 | `07-performance.md` | 性能 |
-| 08 | `08-concurrency.md` | 并发与线程安全 |
-| 09 | `09-data-access.md` | 数据访问与数据库 |
-| 10 | `10-dependency-management.md` | 依赖管理与 NuGet（CPM） |
-| 11 | `11-observability.md` | 日志与可观测性 |
-| 12 | `12-testing.md` | 测试规范 |
-| 13 | `13-api-design.md` | API 设计与版本化 |
-| 14 | `14-security.md` | 安全规范 |
-| 15 | `15-quality-review.md` | 代码质量与审查流程 |
-| 16 | `16-collaboration.md` | CHANGELOG 规范（分支/提交/PR/发布/所有权见 `knowledge-base/git/`） |
-| 17 | `17-comments-docs.md` | 注释与文档 |
+| 01 | `rules/01-project-structure.md` | 环境与技术选型、解决方案与项目结构 |
+| 02 | `rules/02-coding-style.md` | 命名规范、编码风格、语言特性使用准则 |
+| 03 | `rules/03-design-principles.md` | 面向对象与设计原则 |
+| 04 | `rules/04-async-programming.md` | 异步编程 |
+| 05 | `rules/05-error-handling.md` | 异常处理与错误设计 |
+| 06 | `rules/06-memory-resource.md` | 内存与资源管理 |
+| 07 | `rules/07-performance.md` | 性能 |
+| 08 | `rules/08-concurrency.md` | 并发与线程安全 |
+| 09 | `rules/09-data-access.md` | 数据访问与数据库 |
+| 10 | `rules/10-dependency-management.md` | 依赖管理与 NuGet（CPM） |
+| 11 | `rules/11-observability.md` | 日志与可观测性 |
+| 12 | `rules/12-testing.md` | 测试规范 |
+| 13 | `rules/13-api-design.md` | API 设计与版本化 |
+| 14 | `rules/14-security.md` | 安全规范 |
+| 15 | `rules/15-quality-review.md` | 代码质量与审查流程 |
+| 16 | `rules/16-collaboration.md` | CHANGELOG 规范（分支/提交/PR/发布/所有权见 `knowledge-base/git/`） |
+| 17 | `rules/17-comments-docs.md` | 注释与文档 |
 
 ## 索引与机器消费
 
-本领域下的 `index.jsonl` 是供 skill 编程式检索的索引（不重复正文，只做定位），字段说明与维护约定见仓库根 `knowledge-base/README.md`。`reference/` 目录存放不带 MUST/SHOULD/MAY 语气的描述性知识（语法讲解、API 用法），与本篇编号规范文件是并列关系，不是从属关系——新增/修改任一类内容都需同步 `index.jsonl`，建议通过 `/knowledge-base-maintain` skill 完成。
+本领域下的 `index.jsonl` 是供 skill 编程式检索的索引（不重复正文，只做定位），字段说明与维护约定见仓库根 `knowledge-base/README.md`。`reference/` 目录存放不带 MUST/SHOULD/MAY 语气的描述性知识（语法讲解、API 用法），与 `rules/` 下的规范文件是并列关系，不是从属关系——新增/修改任一类内容都需同步 `index.jsonl`，建议通过 `/knowledge-base-maintain` skill 完成。
 
 ## 更新与豁免
 

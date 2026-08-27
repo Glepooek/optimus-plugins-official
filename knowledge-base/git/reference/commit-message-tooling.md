@@ -1,11 +1,11 @@
 > **本文件在 Git 协作规范中的定位**
 >
 > 本文件是提交信息规范的描述性参考（讲解性质，不带 MUST/SHOULD/MAY 语气）。
-> 在规范体系中，它属于 **`02-commit-messages.md`（提交信息规范与敏感信息防护）** 的配套参考，被该篇引用。
+> 在规范体系中，它属于 **`rules/02-commit-messages.md`（提交信息规范与敏感信息防护）** 的配套参考，被该篇引用。
 >
 > - **适用场景**：需要 Conventional Commits 完整规范细节、要为仓库配置 commit-msg 校验 hook、或要为敏感信息防护选型扫描工具时查阅
-> - **如何结合**：`02-commit-messages.md` §1 的格式要求源自本文件第 1 节；§2 的 hook 不可绕过要求，实现方式见本文件第 2 节；§3 的 secret scanning 建议，工具选型见本文件第 3 节
-> - **维护**：本文件记录团队通用的工具与规范知识，不承载特定仓库的强制约束——强制约束写在 `02-commit-messages.md`
+> - **如何结合**：`rules/02-commit-messages.md` §1 的格式要求源自本文件第 1 节；§2 的 hook 不可绕过要求，实现方式见本文件第 2 节；§3 的 secret scanning 建议，工具选型见本文件第 3 节
+> - **维护**：本文件记录团队通用的工具与规范知识，不承载特定仓库的强制约束——强制约束写在 `rules/02-commit-messages.md`
 
 # 提交信息规范：Conventional Commits 完整规范、Hook 实现、敏感信息扫描工具
 
@@ -88,11 +88,11 @@ Conventional Commits 的设计初衷之一是让提交历史可以被机器解�
 - 包含 `feat` 类型提交 → minor 版本递增
 - 包含 `BREAKING CHANGE` footer 或 `!` 标记 → major 版本递增
 
-这也是为什么 `02-commit-messages.md` 强调"禁止无意义提交"——如果提交信息不能准确反映变更类型，自动化版本推导与 CHANGELOG 生成都会失真。
+这也是为什么 `rules/02-commit-messages.md` 强调"禁止无意义提交"——如果提交信息不能准确反映变更类型，自动化版本推导与 CHANGELOG 生成都会失真。
 
 ## 2. commit-msg Hook 实现讲解
 
-`02-commit-messages.md` §2 要求 pre-commit / commit-msg hook 不可绕过。以下是两种常见实现方式：
+`rules/02-commit-messages.md` §2 要求 pre-commit / commit-msg hook 不可绕过。以下是两种常见实现方式：
 
 ### 2.1 commitlint + husky（Node.js 生态）
 
@@ -144,7 +144,7 @@ fi
 
 ## 3. 敏感信息扫描工具讲解
 
-`02-commit-messages.md` §3 要求 CI 集成 secret scanning。常见工具对比：
+`rules/02-commit-messages.md` §3 要求 CI 集成 secret scanning。常见工具对比：
 
 | 工具 | 定位 | 特点 |
 |---|---|---|
@@ -180,15 +180,15 @@ repos:
       - id: gitleaks
 ```
 
-两层不是互斥关系：pre-commit 层拦截大多数误提交（更早发现、成本更低），CI 层是绕过本地 hook（如 clone 后未装 pre-commit，或 `--no-verify`）之后的最后防线——这与 `02-commit-messages.md` §2 "CI 侧二次校验"是同一防护思路的延伸。
+两层不是互斥关系：pre-commit 层拦截大多数误提交（更早发现、成本更低），CI 层是绕过本地 hook（如 clone 后未装 pre-commit，或 `--no-verify`）之后的最后防线——这与 `rules/02-commit-messages.md` §2 "CI 侧二次校验"是同一防护思路的延伸。
 
 ### 3.2 已泄露密钥的处理原则
 
-无论用哪种工具检测到密钥泄露，处理顺序遵循 `02-commit-messages.md` §3 的原则：**先轮换，再清理历史**。清理 Git 历史（如 `git filter-repo`、BFG Repo-Cleaner）只是减少该密钥在历史中被扫描到的次数，不能撤销"密钥已被暴露过"这一事实——只要密钥已推送到任何远程（即使私有仓库），就应视为已泄露。
+无论用哪种工具检测到密钥泄露，处理顺序遵循 `rules/02-commit-messages.md` §3 的原则：**先轮换，再清理历史**。清理 Git 历史（如 `git filter-repo`、BFG Repo-Cleaner）只是减少该密钥在历史中被扫描到的次数，不能撤销"密钥已被暴露过"这一事实——只要密钥已推送到任何远程（即使私有仓库），就应视为已泄露。
 
 ## 4. AI 协作者标注
 
-`02-commit-messages.md` §1 要求提交中若有 AI 协作者须在提交信息中标注。这不是格式偏好，而是提交历史的可追溯性要求——`git blame`/`git log` 是团队回溯"这段代码为什么这样写、当时依据什么信息做的判断"的第一手工具，隐去 AI 参与事实会让后续排查者误判决策链路（例如误以为是人工逐行推敲的结果，而实际上是模型基于当时的上下文生成，可能存在模型幻觉或过时假设）。
+`rules/02-commit-messages.md` §1 要求提交中若有 AI 协作者须在提交信息中标注。这不是格式偏好，而是提交历史的可追溯性要求——`git blame`/`git log` 是团队回溯"这段代码为什么这样写、当时依据什么信息做的判断"的第一手工具，隐去 AI 参与事实会让后续排查者误判决策链路（例如误以为是人工逐行推敲的结果，而实际上是模型基于当时的上下文生成，可能存在模型幻觉或过时假设）。
 
 ### 4.1 标注格式：Git 原生 Co-Authored-By
 

@@ -1,20 +1,32 @@
 # 知识库（knowledge-base）
 
-> 版本：1.10.4
+> 版本：2.0.0
 
 跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
 
 ## 目录结构
 
-每个领域目录遵循统一模式：
+每个领域目录遵循统一模式——**元数据在领域根目录，内容按类型分目录**：
 
 ```
 <domain>/
-├── 00-README.md         # 领域说明、阅读路径
-├── 01-*.md ... 17-*.md  # 规范条款（MUST/SHOULD/MAY 语气）
+├── 00-README.md         # 领域说明、阅读路径、分类说明
 ├── index.jsonl          # 索引：rule + reference 统一编目
+├── rules/               # 规范条款（MUST/SHOULD/MAY 语气）
+│   ├── 01-*.md ... 17-*.md
 └── reference/           # 描述性知识（无规范语气），首篇内容产生时才建
+    └── *.md
 ```
+
+目录约束：
+
+- `00-README.md`、`index.jsonl` 是领域导航元数据，始终位于领域根目录，不下沉到分类目录。
+- `rules/` 只放可用于合规判断的规范正文；文件编号在 `rules/` 内保持既有顺序。
+- `reference/` 与 `rules/` 是**同级并列**关系，不是从属关系；reference 只解释概念、机制、工具和用法。
+- 索引的 `file` 始终是相对领域根目录的路径（`rules/05-error-handling.md`、`reference/video-codecs.md`）；正文内交叉引用同样采用该形式，与索引保持一致。
+- 后续新增分类（如 `examples/`、`decisions/`、`playbooks/`）必须先定义用途、内容语气、索引 `kind` 与生命周期规则，再建目录，并登记到 `catalog.json`；不预建空目录，也不设"其他"这类无语义收容目录。
+
+根目录另有 `catalog.json` 领域目录册，登记每个领域的内容分类、维护者、状态、主要消费者与最近审阅日期。新增或删除领域时必须同步维护——`check_index.py` 会校验 `catalog.json` 与实际领域目录双向一致（登记了不存在的领域、或存在未登记的领域都会报错）。
 
 领域职责边界：`dotnet` 负责 Runtime、.NET Framework、SDK、目标框架、操作系统兼容性与生命周期；`csharp` 负责 C# 语言和通用工程实践；`wpf` 负责 WPF/XAML 桌面 UI 技术栈；`git` 负责版本控制协作；`media` 负责媒体处理概念；`skill-authoring` 负责 Skill 创建与维护规范。领域可以相互引用，但不得复制同一事实或规则。
 
@@ -29,25 +41,47 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
 
 索引记录字段：
 
-| 字段 | 说明 |
-|---|---|
-| `id` | `<domain>.<文件编号或ref>.<slug>`，全局唯一，人工手写 |
-| `kind` | `"rule"` \| `"reference"` |
-| `level` | 仅 `rule` 有，`MUST`/`SHOULD`/`MAY` |
-| `file` | 相对领域目录的文件路径 |
-| `anchor` | 文件内标题文本（非 slug），无锚点留空字符串 |
-| `title` | 条目标题 |
-| `tags` | 自由关键词数组 |
-| `summary` | 一句话摘要 |
+| 字段 | 必填 | 说明 |
+|---|---|---|
+| `id` | 必填 | `<domain>.<两位文件编号或 ref>.<slug>`，全局唯一，人工手写；slug 用小写字母/数字/连字符 |
+| `kind` | 必填 | `"rule"` \| `"reference"` |
+| `level` | rule 必填 | 仅 `rule` 有，`MUST`/`SHOULD`/`MAY`；`reference` 不得有 |
+| `file` | 必填 | 相对领域根目录的路径（`rules/*.md` 或 `reference/*.md`） |
+| `anchor` | 必填 | 文件内标题文本（非 slug），无锚点留空字符串 |
+| `title` | 必填 | 条目标题 |
+| `tags` | 必填 | 自由关键词数组 |
+| `summary` | 必填 | 一句话摘要 |
+| `enforcement` | 可选 | `ci` \| `review` \| `advisory`，表达规则如何执行 |
+| `status` | 可选 | `active` \| `deprecated` \| `experimental`，缺省视为 `active` |
+| `source` | 可选 | 来源数组：公开 URL，或内部 ADR / issue / PR 路径 |
+| `applies_to` | 可选 | 技术栈、版本或场景边界数组 |
+| `reviewed_at` | 可选 | 最近审阅日期，ISO 格式 `YYYY-MM-DD` |
+| `owner` | 可选 | 维护责任主体（团队而非个人） |
+
+可选字段是渐进引入的治理元数据：未填不报错，填了必须合法。`check_index.py` 校验全部字段的类型与枚举取值。
+
+## 索引粒度规范
+
+粒度不均会让动态检索在不同领域的召回能力不可比较，因此统一如下判断标准：
+
+- **可独立判断的规则原则上单独登记一条**：一条规则若能脱离上下文单独用于合规判断（"断言库须团队统一"、"脚本禁止交互提示"），就应有自己的索引条目，锚点指向其所在小节。
+- **导航性标题不作为规则登记**：领域 README 的阅读路径、文件地图、"权威参考"等章节是导航，不承载判断依据，不登记。
+- **reference 可按文档或按独立主题登记**：描述性文档以整篇为单位登记是被认可的做法（media、dotnet 领域即如此）；仅当一篇 reference 内部存在多个会被独立检索的主题时，才拆成多条。因此审计报告的覆盖率**只统计 `rule` 类文件**，不对 reference 计算标题覆盖率。
+- **文件级汇总条目与节级条目可以并存**：早期以整篇为单位登记的 `rule` 条目（如 `skill-authoring.01.format`）已被消费者按文件引用，补充节级条目时保留它作为文件入口，不改 ID——改 ID 属破坏性变更。
+- 覆盖率用 `python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" --audit` 查看，输出每个规范文件的 `indexed / eligible_headings`。
 
 ## 维护约定
 
 - 新增/修改一条规范/reference 时，同一次提交里必须同步更新对应 `index.jsonl`。
-- 改动后运行 `python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" <domain>` 做一致性自检（file 存在、anchor 存在、id 不重复；脚本随 `knowledge-base-maintain` skill 分发）。
+- 改动后运行 `python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" <domain>` 做一致性自检（脚本随 `knowledge-base-maintain` skill 分发）。校验分两类作用域：
+  - **单领域检查**（传参）：该领域的 schema、字段枚举、`id` 格式、`file` 存在与路径越界、`anchor` 匹配、孤儿文件。
+  - **全局检查**（始终执行，即使只传一个领域）：`id` 全局唯一、`id` 前缀与领域归属一致、`catalog.json` 与实际领域双向一致。
+- 加 `--audit` 输出健康报告（记录数、`kind`/`level` 分布、规范文件的标题索引覆盖率、孤儿文件）。
 - 规范条款可选择性引用 `reference/*.md` 加强依据；引用单向，reference 不反向声明被谁引用。
 - 版本号见本文件顶部，变更规则与 CHANGELOG 格式见 `CHANGELOG.md`；日常新增/修改建议通过 `/knowledge-base-maintain` skill 完成，会自动同步索引与版本号。
 - 不做自动生成索引的脚本——`tags`/`summary`/`level` 需要语义判断，机械提取质量不可靠。
 - 索引覆盖是渐进式的，不要求一次性覆盖全部规范文件——新增/优化 skill 引用到某条规则时，若该规则尚未登记索引，随手补一行即可，不必专项排期回填。
+- 迁移或重命名规范文件时，必须同步更新四处：索引 `file` 字段、领域 README 文件地图、正文交叉引用、消费者 skill 的引用路径（含 Markdown 链接目标）。
 
 ## 与仓库已有资产的关系
 

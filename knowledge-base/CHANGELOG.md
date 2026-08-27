@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.0.0] - 2026-08-27
+
+按 `docs/superpowers/plans/2026-08-27-knowledge-base-optimization.md` 执行 Phase 0（基线与保护网）+ Phase 1（索引粒度与目录册）。
+
+### Changed
+
+- **破坏性：领域目录结构调整为"元数据在根、内容按类型分组"**——各领域下的编号规范文件迁移到 `<domain>/rules/`，`00-README.md` 与 `index.jsonl` 保留在领域根目录，`reference/` 与 `rules/` 同级并列。涉及 `csharp`（17 篇）、`wpf`（17 篇）、`git`（5 篇）、`skill-authoring`（5 篇），共 44 个文件（`git mv` 迁移，保留历史）。
+- **破坏性：索引 `file` 字段路径变更**——266 条记录的 `file` 从 `NN-*.md` 改为 `rules/NN-*.md`（仅此一字段变动，其余字段逐字未改）。按旧路径做固定映射引用的外部消费者需同步更新；本仓库内引用已全部同步。
+- 同步更新全部内部与消费者引用（共 4 类）：各领域 `00-README.md` 文件地图、`reference/` 与 `rules/` 正文交叉引用（74 处）、`csharp-code-review` / `wpf-code-review` SKILL.md 的审查清单定位表（23 处）、`.claude/rules/skill-conventions.md`（2 处）、`.claude/skills/commit-cc-plugin/SKILL.md`（含 10 处 Markdown 链接目标）。正文头部"更新历史"与本 CHANGELOG 中记录当时事实的路径不改写。
+- 领域 README"索引与机器消费"章节措辞更新：`reference/` 的并列对象由"本篇编号规范文件"改为"`rules/` 下的规范文件"。
+
+### Added
+
+- 根级 `catalog.json` 领域目录册：登记 6 个领域的内容分类、维护者、状态、主要消费者与最近审阅日期，纳入一致性校验（与实际领域目录双向一致，登记缺失或多余均报错）。
+- 根 README 新增"索引粒度规范"章节：可独立判断的规则单独登记、导航标题不登记、`reference` 默认按整篇登记、文件级汇总条目与节级条目可并存。
+- 根 README 索引字段表扩展为必填/可选两栏，新增可选治理字段 `enforcement`（`ci`/`review`/`advisory`）、`status`（`active`/`deprecated`/`experimental`）、`source`、`applies_to`、`reviewed_at`、`owner`——渐进引入，未填不报错，填了必须合法。
+- 补齐 `csharp/rules/12-testing.md` 细粒度索引 7 条：测试项目布局、断言风格、覆盖率目标、测试数据自包含、契约测试、慢测试过滤、CI 覆盖率采集（覆盖率 79.7% → 82.7%）。
+- 补齐 `skill-authoring` 节级索引 35 条：格式规约 6 条、描述优化 6 条、质量评估 8 条、脚本使用 7 条、最佳实践 8 条（覆盖率 14.7% → 100%）。原 5 条文件级汇总条目保留为文件入口，ID 不变。
+- 根 README 维护约定补充：校验的单领域/全局作用域划分、`--audit` 报告用法、迁移文件时须同步的四处引用。
+
+索引记录总数 285 → 327（rule 266 → 308，reference 19 条不变）。
+
 ## [1.11.0] - 2026-08-27
 
 ### Added

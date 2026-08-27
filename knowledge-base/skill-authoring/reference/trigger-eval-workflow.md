@@ -1,6 +1,6 @@
 # Trigger Eval 工作流详解
 
-> 讲解性内容，无规范语气。支撑 `02-description-optimization.md`（触发率测试）。描述"如何搭建并跑触发率测试"的完整可操作流程。
+> 讲解性内容，无规范语气。支撑 `rules/02-description-optimization.md`（触发率测试）。描述"如何搭建并跑触发率测试"的完整可操作流程。
 
 ## 为什么需要触发率测试
 

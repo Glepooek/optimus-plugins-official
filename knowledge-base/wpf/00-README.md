@@ -46,27 +46,27 @@
 | 编号 | 文件 | 主题 |
 |---|---|---|
 | 00 | `00-README.md` | 总则、级别、执行、索引 |
-| 01 | `01-environment.md` | 环境与技术选型 |
-| 02 | `02-project-structure.md` | 项目结构与布局 |
-| 03 | `03-mvvm.md` | MVVM 架构 |
-| 04 | `04-xaml.md` | XAML 编写规范 |
-| 05 | `05-data-binding.md` | 数据绑定 |
-| 06 | `06-controls.md` | 控件体系 |
-| 07 | `07-resources-themes.md` | 资源、样式与主题 |
-| 08 | `08-layout-rendering.md` | 布局与渲染 |
-| 09 | `09-threading.md` | 线程与调度 |
-| 10 | `10-performance.md` | 性能优化 |
-| 11 | `11-testing.md` | 测试 |
-| 12 | `12-exceptions-crash.md` | 异常与崩溃 |
-| 13 | `13-security.md` | 安全 |
-| 14 | `14-accessibility-localization.md` | 可访问性与本地化 |
-| 15 | `15-packaging-deployment.md` | 打包与部署 |
-| 16 | `16-interactivity.md` | XAML Behaviors 与 Interactivity |
-| 17 | `17-common-libraries.md` | WPF 通用库选型 |
+| 01 | `rules/01-environment.md` | 环境与技术选型 |
+| 02 | `rules/02-project-structure.md` | 项目结构与布局 |
+| 03 | `rules/03-mvvm.md` | MVVM 架构 |
+| 04 | `rules/04-xaml.md` | XAML 编写规范 |
+| 05 | `rules/05-data-binding.md` | 数据绑定 |
+| 06 | `rules/06-controls.md` | 控件体系 |
+| 07 | `rules/07-resources-themes.md` | 资源、样式与主题 |
+| 08 | `rules/08-layout-rendering.md` | 布局与渲染 |
+| 09 | `rules/09-threading.md` | 线程与调度 |
+| 10 | `rules/10-performance.md` | 性能优化 |
+| 11 | `rules/11-testing.md` | 测试 |
+| 12 | `rules/12-exceptions-crash.md` | 异常与崩溃 |
+| 13 | `rules/13-security.md` | 安全 |
+| 14 | `rules/14-accessibility-localization.md` | 可访问性与本地化 |
+| 15 | `rules/15-packaging-deployment.md` | 打包与部署 |
+| 16 | `rules/16-interactivity.md` | XAML Behaviors 与 Interactivity |
+| 17 | `rules/17-common-libraries.md` | WPF 通用库选型 |
 
 ## 索引与机器消费
 
-本领域下的 `index.jsonl` 是供 skill 编程式检索的索引（不重复正文，只做定位），字段说明与维护约定见仓库根 `knowledge-base/README.md`。`reference/` 目录存放不带 MUST/SHOULD/MAY 语气的描述性知识（语法讲解、API 用法），与本篇编号规范文件是并列关系，不是从属关系——新增/修改任一类内容都需同步 `index.jsonl`，建议通过 `/knowledge-base-maintain` skill 完成。
+本领域下的 `index.jsonl` 是供 skill 编程式检索的索引（不重复正文，只做定位），字段说明与维护约定见仓库根 `knowledge-base/README.md`。`reference/` 目录存放不带 MUST/SHOULD/MAY 语气的描述性知识（语法讲解、API 用法），与 `rules/` 下的规范文件是并列关系，不是从属关系——新增/修改任一类内容都需同步 `index.jsonl`，建议通过 `/knowledge-base-maintain` skill 完成。
 
 ## 更新与豁免
 

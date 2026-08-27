@@ -41,15 +41,15 @@
 | 编号 | 文件 | 主题 |
 |---|---|---|
 | 00 | `00-README.md` | 总则、级别、执行、索引 |
-| 01 | `01-branching.md` | 分支策略与命名规范 |
-| 02 | `02-commit-messages.md` | 提交信息规范、提交前检查与敏感信息防护 |
-| 03 | `03-pull-requests.md` | PR 规范与合并策略 |
-| 04 | `04-versioning-release.md` | 版本与发布 |
-| 05 | `05-ownership.md` | 代码所有权与约定 |
+| 01 | `rules/01-branching.md` | 分支策略与命名规范 |
+| 02 | `rules/02-commit-messages.md` | 提交信息规范、提交前检查与敏感信息防护 |
+| 03 | `rules/03-pull-requests.md` | PR 规范与合并策略 |
+| 04 | `rules/04-versioning-release.md` | 版本与发布 |
+| 05 | `rules/05-ownership.md` | 代码所有权与约定 |
 
 ## 索引与机器消费
 
-本领域下的 `index.jsonl` 是供 skill 编程式检索的索引（不重复正文，只做定位），字段说明与维护约定见仓库根 `knowledge-base/README.md`。`reference/` 目录存放不带 MUST/SHOULD/MAY 语气的描述性知识（工作流对比、命名示例、工具讲解），与本篇编号规范文件是并列关系，不是从属关系。
+本领域下的 `index.jsonl` 是供 skill 编程式检索的索引（不重复正文，只做定位），字段说明与维护约定见仓库根 `knowledge-base/README.md`。`reference/` 目录存放不带 MUST/SHOULD/MAY 语气的描述性知识（工作流对比、命名示例、工具讲解），与 `rules/` 下的规范文件是并列关系，不是从属关系。
 
 ## 更新与豁免
 
@@ -60,7 +60,7 @@
 ## 与仓库已有资产的关系
 
 - `commit-cc-plugin` skill：本规范 `02` 章提交信息格式是它生成提交信息时的依据
-- `knowledge-base/csharp/16-collaboration.md`：原分支/提交/PR/发布/所有权条款已迁移至本领域，`csharp/16` 仅保留与语言相关的 CHANGELOG 条款
+- `knowledge-base/csharp/rules/16-collaboration.md`：原分支/提交/PR/发布/所有权条款已迁移至本领域，`csharp/16` 仅保留与语言相关的 CHANGELOG 条款
 
 ## 权威参考
 

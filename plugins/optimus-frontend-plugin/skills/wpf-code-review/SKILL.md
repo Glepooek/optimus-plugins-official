@@ -2,7 +2,7 @@
 name: wpf-code-review
 description: 用于审查 WPF 代码的 MVVM 架构、XAML 编写规范、数据绑定、控件/依赖属性、资源主题、布局渲染、线程调度、性能、异常/安全等全量规范，并覆盖虚拟化、Freezable 冻结、Shape 优化等性能诊断。当用户提到：审查/检查/review WPF 代码、.xaml 文件、WPF 项目代码规范、准备合并/PR、代码质量检查、界面卡顿、滚动慢、内存高、MVVM 规范、绑定规范时，务必使用此 skill。
 metadata:
-  version: "2.0.2"
+  version: "2.0.3"
   author: desktop client team
   category: quality
 compatibility: 需要 .NET/WPF/XAML 代码库；支持基于用户粘贴代码审查，也可扫描本地代码库（Grep/Glob）；可直接编辑修复（Edit）；无需额外 CLI/MCP。
@@ -83,22 +83,22 @@ allowed-tools: Read Grep Glob Edit
 
 | # | 类别 | knowledge-base 参考 | 核对要点 |
 |---|---|---|---|
-| 1 | 项目结构与 MVVM 架构 | `02-project-structure.md` §4、§5；`03-mvvm.md` §2、§3、§4、§7 | View 与 code-behind 职责、命名规范；ViewModel 基类可绑定属性、ICommand、View/ViewModel 配对、事件订阅与取消、**View 访问 ViewModel 的时机**（构造函数内 `DataContext` 未就绪时访问 VM 数据会空引用） |
-| 2 | XAML 编写规范 | `04-xaml.md` §1、§2、§4、§5、§8 | 命名空间与根元素、StaticResource vs DynamicResource、x:Name 与 x:Key、DataTemplate 组织、事件与命令 |
-| 3 | 数据绑定 | `05-data-binding.md` §1-§5 | Binding 模式选择、INotifyPropertyChanged/ObservableCollection、绑定路径深度、IValueConverter、绑定静默失败 |
-| 4 | 控件与依赖属性 | `06-controls.md` §2-§5、§8 | 自定义控件约定、DependencyProperty/AttachedProperty、模板与样式、绘制与图形 |
-| 5 | 资源、样式与主题 | `07-resources-themes.md` §2-§5 | 资源键命名、样式体系、主题切换、Freezable 与资源共享、资源可共享性 |
-| 6 | 布局与渲染 | `08-layout-rendering.md` §2、§4、§7、§8 | 面板选型、RenderTransform vs LayoutTransform、Shape 与 Drawing、渲染性能 |
-| 7 | 线程与调度 | `09-threading.md` §1、§2、§4、§5、§6 | UI 线程访问铁律、Dispatcher 使用、async/await 上下文、死锁防护、集合跨线程更新 |
-| 8 | 性能 | `10-performance.md` 全篇 + 下方「性能专项诊断速查」 | 数据绑定、虚拟化、图形渲染、启动时间、布局、资源、事件泄漏的性能操作 |
-| 9 | 异常与崩溃处理 | `12-exceptions-crash.md` §1、§4、§5 | UI 线程异常、异常与错误设计、取消与资源释放 |
-| 10 | 安全 | `13-security.md` §1、§2、§3 | 敏感数据处理、输入验证、XAML 沙箱与部分信任 |
-| 11 | 可访问性与本地化 | `14-accessibility-localization.md` §1、§2、§4、§5 | AutomationProperties、键盘导航、字体与缩放、本地化资源 |
-| 12 | 交互（XAML Behaviors） | `16-interactivity.md` §2、§3 | 分工（Behavior/命令/附加属性/code-behind）、Behavior 生命周期与绑定 |
+| 1 | 项目结构与 MVVM 架构 | `rules/02-project-structure.md` §4、§5；`rules/03-mvvm.md` §2、§3、§4、§7 | View 与 code-behind 职责、命名规范；ViewModel 基类可绑定属性、ICommand、View/ViewModel 配对、事件订阅与取消、**View 访问 ViewModel 的时机**（构造函数内 `DataContext` 未就绪时访问 VM 数据会空引用） |
+| 2 | XAML 编写规范 | `rules/04-xaml.md` §1、§2、§4、§5、§8 | 命名空间与根元素、StaticResource vs DynamicResource、x:Name 与 x:Key、DataTemplate 组织、事件与命令 |
+| 3 | 数据绑定 | `rules/05-data-binding.md` §1-§5 | Binding 模式选择、INotifyPropertyChanged/ObservableCollection、绑定路径深度、IValueConverter、绑定静默失败 |
+| 4 | 控件与依赖属性 | `rules/06-controls.md` §2-§5、§8 | 自定义控件约定、DependencyProperty/AttachedProperty、模板与样式、绘制与图形 |
+| 5 | 资源、样式与主题 | `rules/07-resources-themes.md` §2-§5 | 资源键命名、样式体系、主题切换、Freezable 与资源共享、资源可共享性 |
+| 6 | 布局与渲染 | `rules/08-layout-rendering.md` §2、§4、§7、§8 | 面板选型、RenderTransform vs LayoutTransform、Shape 与 Drawing、渲染性能 |
+| 7 | 线程与调度 | `rules/09-threading.md` §1、§2、§4、§5、§6 | UI 线程访问铁律、Dispatcher 使用、async/await 上下文、死锁防护、集合跨线程更新 |
+| 8 | 性能 | `rules/10-performance.md` 全篇 + 下方「性能专项诊断速查」 | 数据绑定、虚拟化、图形渲染、启动时间、布局、资源、事件泄漏的性能操作 |
+| 9 | 异常与崩溃处理 | `rules/12-exceptions-crash.md` §1、§4、§5 | UI 线程异常、异常与错误设计、取消与资源释放 |
+| 10 | 安全 | `rules/13-security.md` §1、§2、§3 | 敏感数据处理、输入验证、XAML 沙箱与部分信任 |
+| 11 | 可访问性与本地化 | `rules/14-accessibility-localization.md` §1、§2、§4、§5 | AutomationProperties、键盘导航、字体与缩放、本地化资源 |
+| 12 | 交互（XAML Behaviors） | `rules/16-interactivity.md` §2、§3 | 分工（Behavior/命令/附加属性/code-behind）、Behavior 生命周期与绑定 |
 
 ## 性能专项诊断速查
 
-性能类问题（上方第 8 类）检查时，按以下检查点定位具体瓶颈。这些操作级模式对应 `10-performance.md`：
+性能类问题（上方第 8 类）检查时，按以下检查点定位具体瓶颈。这些操作级模式对应 `rules/10-performance.md`：
 - **数据绑定**：集合用 `ObservableCollection<T>`；常量/只读用 `OneTime`；绑定路径 ≤3 层；昂贵转换器缓存
 - **虚拟化**：长列表开启虚拟化 + `VirtualizationMode="Recycling"`；确认数据量超出可视区再讨论；ItemTemplate 用轻量布局
 - **图形渲染**：动态高频图形用 `DrawingVisual`/`DrawingGroup`；静态用 `Path`/`StreamGeometry`；循环外创建并 `Freeze()` Brush

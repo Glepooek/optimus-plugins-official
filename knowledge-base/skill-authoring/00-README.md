@@ -27,9 +27,9 @@
 
 1. **格式校验**：用 [`skills-ref`](https://github.com/agentskills/agentskills/tree/main/skills-ref) 校验 SKILL.md frontmatter 与命名规范（`skills-ref validate ./my-skill`）
 2. **前置检查**：按 `.claude/rules/skill-conventions.md` 的仓库专属约定（版本号、author、category、allowed-tools 写法）自查
-3. **触发验证**：按 `02-description-optimization.md` 用 eval 查询集验证 description 触发准确率
-4. **质量评估**：按 `03-skill-evaluation.md` 跑 with-skill / without-skill 基线对比，记录 pass_rate / tokens / time
-5. **模板兜底**：新 skill 的 SKILL.md 结构参照 `01-skill-format.md` 的推荐章节
+3. **触发验证**：按 `rules/02-description-optimization.md` 用 eval 查询集验证 description 触发准确率
+4. **质量评估**：按 `rules/03-skill-evaluation.md` 跑 with-skill / without-skill 基线对比，记录 pass_rate / tokens / time
+5. **模板兜底**：新 skill 的 SKILL.md 结构参照 `rules/01-skill-format.md` 的推荐章节
 
 ## 阅读路径
 
@@ -44,15 +44,15 @@
 | 编号 | 文件 | 主题 |
 |---|---|---|
 | 00 | `00-README.md` | 总则、级别、执行、索引 |
-| 01 | `01-skill-format.md` | SKILL.md 格式规约：目录结构、frontmatter、正文、文件引用、progressive disclosure |
-| 02 | `02-description-optimization.md` | 描述优化：触发机制、写作原则、trigger eval、train/validation 切分 |
-| 03 | `03-skill-evaluation.md` | skill 质量评估：测试用例、assertions、grading、benchmark、迭代循环 |
-| 04 | `04-script-usage.md` | 脚本使用：one-off 命令、自包含脚本、agentic 设计 |
-| 05 | `05-best-practices.md` | 最佳实践：经验来源、上下文预算、控制校准、指令模式 |
+| 01 | `rules/01-skill-format.md` | SKILL.md 格式规约：目录结构、frontmatter、正文、文件引用、progressive disclosure |
+| 02 | `rules/02-description-optimization.md` | 描述优化：触发机制、写作原则、trigger eval、train/validation 切分 |
+| 03 | `rules/03-skill-evaluation.md` | skill 质量评估：测试用例、assertions、grading、benchmark、迭代循环 |
+| 04 | `rules/04-script-usage.md` | 脚本使用：one-off 命令、自包含脚本、agentic 设计 |
+| 05 | `rules/05-best-practices.md` | 最佳实践：经验来源、上下文预算、控制校准、指令模式 |
 
 ## 索引与机器消费
 
-本领域下的 `index.jsonl` 是供 skill 编程式检索的索引（不重复正文，只做定位），字段说明与维护约定见仓库根 `knowledge-base/README.md`。`reference/` 目录存放不带 MUST/SHOULD/MAY 语气的讲解性内容（详细机制、示例、对比），与本篇编号规范文件是并列关系，不是从属关系——规范篇引用 reference 加强依据，reference 不反向声明——新增/修改任一类内容都需同步 `index.jsonl`，建议通过 `/knowledge-base-maintain` skill 完成。
+本领域下的 `index.jsonl` 是供 skill 编程式检索的索引（不重复正文，只做定位），字段说明与维护约定见仓库根 `knowledge-base/README.md`。`reference/` 目录存放不带 MUST/SHOULD/MAY 语气的讲解性内容（详细机制、示例、对比），与 `rules/` 下的规范文件是并列关系，不是从属关系——规范篇引用 reference 加强依据，reference 不反向声明——新增/修改任一类内容都需同步 `index.jsonl`，建议通过 `/knowledge-base-maintain` skill 完成。
 
 ## 更新与豁免
 
@@ -63,7 +63,7 @@
 ## 与仓库已有资产的关系
 
 - `.claude/rules/skill-conventions.md`：仓库级规则文件，聚焦本仓库专属约定（版本号、author、category、allowed-tools、前置校验、需求预告、CHANGELOG、README 章节）；其中涉及"如何创建 skill"的规范引用本领域各篇
-- `darwin-skill`：skill 自动优化评估，与 `03-skill-evaluation.md` 的评估方法论互补（darwin 侧重评分自动化，本领域侧重 eval 驱动迭代）
+- `darwin-skill`：skill 自动优化评估，与 `rules/03-skill-evaluation.md` 的评估方法论互补（darwin 侧重评分自动化，本领域侧重 eval 驱动迭代）
 - `skill-creator`（外部）：agent 自动化创建 skill 的参考实现，与本领域规范配套使用
 
 ## 权威参考

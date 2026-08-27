@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.3] - 2026-08-27
+
+### Fixed
+- 审查清单的 knowledge-base 引用路径同步知识库目录调整：`NN-*.md` → `rules/NN-*.md`（知识库 2.0.0 将各领域规范文件迁入 `<domain>/rules/`，旧路径已失效）
+
 ## [1.5.2] - 2026-08-23
 
 ### Changed
