@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.4.2] - 2026-08-27
+
+### Changed
+- Git 提交、分支、PR 与发布规则改为引用 `knowledge-base/git/`，skill 仅保留本仓库专用的发布编排与 checkpoint
+
+## [3.4.1] - 2026-08-27
+
+### Fixed
+- 增加 PowerShell 提交信息的正确写法与提交后真实换行校验，明确禁止使用字面量 `\n` 拼接 message
+
 ## [3.4.0] - 2026-08-23
 
 ### Added
