@@ -13,6 +13,7 @@ from check_index import (
     check_id_format,
     check_orphan_files,
     check_schema,
+    check_source_refs,
     find_headings,
     normalize_heading,
     parse_index_file,
@@ -202,6 +203,25 @@ class TestCheckSchema(unittest.TestCase):
         problems = check_schema(Path("."), valid_entry(reviewed_at="2026/08/27"))
         self.assertTrue(any("reviewed_at" in p for p in problems))
 
+    def test_rejects_may_with_ci_enforcement(self):
+        """MAY 是可选做法，不应作为 CI 拦截依据。"""
+        problems = check_schema(Path("."), valid_entry(level="MAY", enforcement="ci"))
+        self.assertTrue(any("level=MAY" in p and "enforcement=ci" in p for p in problems))
+
+    def test_allows_may_with_advisory_enforcement(self):
+        self.assertEqual(
+            check_schema(Path("."), valid_entry(level="MAY", enforcement="advisory")), [])
+
+    def test_allows_must_with_ci_enforcement(self):
+        self.assertEqual(
+            check_schema(Path("."), valid_entry(level="MUST", enforcement="ci")), [])
+
+    def test_rejects_reference_with_enforcement(self):
+        entry = valid_entry(kind="reference", anchor="", enforcement="review")
+        del entry["level"]
+        problems = check_schema(Path("."), entry)
+        self.assertTrue(any("不应有 enforcement" in p for p in problems))
+
 
 class TestCheckIdFormat(unittest.TestCase):
     def test_accepts_numbered_id(self):
@@ -248,6 +268,49 @@ class TestCheckFilePathSafe(unittest.TestCase):
             result = check_file_path_safe(Path(d), entry)
             self.assertIsNotNone(result)
             self.assertIn("绝对路径", result)
+
+
+class TestCheckSourceRefs(unittest.TestCase):
+    def _domain(self, base):
+        (base / "reference").mkdir(parents=True, exist_ok=True)
+        (base / "reference" / "workflows.md").write_text(
+            "# 标题\n## 1. 三种主流分支工作流对比\n", encoding="utf-8")
+        return base
+
+    def test_no_source_field_is_ok(self):
+        with tempfile.TemporaryDirectory() as d:
+            self.assertEqual(check_source_refs(Path(d), valid_entry()), [])
+
+    def test_external_url_is_not_checked(self):
+        with tempfile.TemporaryDirectory() as d:
+            entry = valid_entry(source=["https://www.conventionalcommits.org/"])
+            self.assertEqual(check_source_refs(Path(d), entry), [])
+
+    def test_valid_internal_ref_is_ok(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = self._domain(Path(d))
+            entry = valid_entry(source=["reference/workflows.md#1. 三种主流分支工作流对比"])
+            self.assertEqual(check_source_refs(base, entry), [])
+
+    def test_ref_without_anchor_is_ok(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = self._domain(Path(d))
+            entry = valid_entry(source=["reference/workflows.md"])
+            self.assertEqual(check_source_refs(base, entry), [])
+
+    def test_missing_file_is_reported(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = self._domain(Path(d))
+            entry = valid_entry(source=["reference/gone.md#某章节"])
+            problems = check_source_refs(base, entry)
+            self.assertTrue(any("source 引用的文件不存在" in p for p in problems))
+
+    def test_missing_anchor_is_reported(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = self._domain(Path(d))
+            entry = valid_entry(source=["reference/workflows.md#不存在的章节"])
+            problems = check_source_refs(base, entry)
+            self.assertTrue(any("source 锚点未在" in p for p in problems))
 
 
 class TestCheckOrphanFiles(unittest.TestCase):
@@ -476,6 +539,24 @@ class TestBuildAudit(unittest.TestCase):
             report = build_audit(base, ["media"])
             self.assertIsNone(report["domains"]["media"]["coverage_ratio"])
             self.assertEqual(report["totals"]["references"], 1)
+
+    def test_reports_enforcement_distribution(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            write_domain(
+                base, "git",
+                [
+                    valid_entry(id="git.01.a", file="rules/01-x.md", anchor="甲", enforcement="ci"),
+                    valid_entry(id="git.01.b", file="rules/01-x.md", anchor="乙", enforcement="review"),
+                    valid_entry(id="git.01.c", file="rules/01-x.md", anchor="丙"),
+                ],
+                {"rules/01-x.md": "## 甲\n## 乙\n## 丙\n"},
+            )
+            report = build_audit(base, ["git"])
+            data = report["domains"]["git"]
+            self.assertEqual(data["enforcements"], {"ci": 1, "review": 1, "(未填)": 1})
+            self.assertEqual(data["enforcement_coverage"], round(2 / 3, 3))
+            self.assertEqual(report["totals"]["enforcement_filled"], 2)
 
 
 if __name__ == "__main__":

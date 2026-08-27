@@ -100,6 +100,13 @@ def check_schema(domain_dir, entry):
         if value is not None and value not in allowed:
             problems.append(f"[{entry_id}] 非法 {field}：{value}（允许 {'/'.join(allowed)}）")
 
+    # MAY 是可选做法，不应作为 CI 拦截依据
+    if level == "MAY" and entry.get("enforcement") == "ci":
+        problems.append(f"[{entry_id}] level=MAY 不得标 enforcement=ci（可选做法不作为 CI 拦截依据）")
+
+    if entry.get("enforcement") is not None and kind == "reference":
+        problems.append(f"[{entry_id}] kind=reference 不应有 enforcement 字段")
+
     if "source" in entry and not isinstance(entry["source"], list):
         problems.append(f"[{entry_id}] 字段 source 必须是数组")
     if "applies_to" in entry and not isinstance(entry["applies_to"], list):
@@ -109,6 +116,34 @@ def check_schema(domain_dir, entry):
     if reviewed_at is not None and not (isinstance(reviewed_at, str) and DATE_RE.match(reviewed_at)):
         problems.append(f"[{entry_id}] 字段 reviewed_at 必须是 ISO 日期（YYYY-MM-DD）：{reviewed_at}")
 
+    return problems
+
+
+def check_source_refs(domain_dir, entry):
+    """校验 source 中的内部引用（<file>#<anchor> 形式）真实存在。
+
+    source 允许混放两类取值：外部 URL 与领域内部路径。URL 无法离线校验（也不该在
+    校验期发网络请求），内部路径可以——不校验就等于新增一批无人看守的引用，
+    与规范文件迁移后失效的正文交叉引用是同一类腐烂。
+    """
+    sources = entry.get("source")
+    if not isinstance(sources, list):
+        return []  # 类型问题已由 check_schema 报告
+    entry_id = entry.get("id", "<无 id>")
+    problems = []
+    for ref in sources:
+        if not isinstance(ref, str) or not ref.strip():
+            problems.append(f"[{entry_id}] source 元素必须是非空字符串")
+            continue
+        if "://" in ref:
+            continue  # 外部 URL，不做离线校验
+        rel, _, anchor = ref.partition("#")
+        target = domain_dir / rel
+        if not target.exists():
+            problems.append(f"[{entry_id}] source 引用的文件不存在：{rel}")
+            continue
+        if anchor and not any(anchor in h for h in find_headings(target.read_text(encoding="utf-8"))):
+            problems.append(f"[{entry_id}] source 锚点未在 {rel} 中找到匹配标题：{anchor}")
     return problems
 
 
@@ -262,6 +297,8 @@ def run_checks(base_dir, domains):
         for entry in entries:
             for msg in check_schema(domain_dir, entry):
                 problems.append(f"[{domain}] {msg}")
+            for msg in check_source_refs(domain_dir, entry):
+                problems.append(f"[{domain}] {msg}")
             for check in (check_id_format_wrapper(domain), check_file_path_safe):
                 result = check(domain_dir, entry)
                 if result:
@@ -312,6 +349,9 @@ def build_audit(base_dir, domains):
         entries = parse_index_file(index_path)
         kinds = Counter(e.get("kind") for e in entries)
         levels = Counter(e.get("level") for e in entries if e.get("kind") == "rule")
+        rules = [e for e in entries if e.get("kind") == "rule"]
+        enforcements = Counter(e.get("enforcement") or "(未填)" for e in rules)
+        governance_filled = sum(1 for e in rules if e.get("enforcement"))
         per_file = defaultdict(int)
         for e in entries:
             if isinstance(e.get("file"), str) and e.get("kind") == "rule":
@@ -337,6 +377,10 @@ def build_audit(base_dir, domains):
             "entries": len(entries),
             "kinds": dict(kinds),
             "levels": dict(levels),
+            "enforcements": dict(enforcements),
+            "enforcement_coverage": (
+                round(governance_filled / len(rules), 3) if rules else None
+            ),
             "orphan_files": check_orphan_files(domain_dir, entries),
             "coverage": coverage,
             "coverage_ratio": round(indexed_total / eligible_total, 3) if eligible_total else None,
@@ -344,17 +388,25 @@ def build_audit(base_dir, domains):
         report["totals"]["entries"] += len(entries)
         report["totals"]["rules"] += kinds.get("rule", 0)
         report["totals"]["references"] += kinds.get("reference", 0)
+        report["totals"]["enforcement_filled"] = (
+            report["totals"].get("enforcement_filled", 0) + governance_filled
+        )
     return report
 
 
 def print_audit(report):
     t = report["totals"]
+    filled = t.get("enforcement_filled", 0)
+    ratio = f"{filled / t['rules']:.1%}" if t["rules"] else "n/a"
     print(f"知识库审计报告：{t['entries']} 条记录（rule {t['rules']} / reference {t['references']}）")
+    print(f"治理元数据：{filled}/{t['rules']} 条 rule 已填 enforcement（{ratio}）")
     for domain, data in report["domains"].items():
         ratio = data["coverage_ratio"]
         ratio_text = f"{ratio:.1%}" if ratio is not None else "n/a（无规范文件）"
         print(f"\n== {domain}：{data['entries']} 条 | kinds={data['kinds']} | levels={data['levels']}")
         print(f"   规范文件二级标题索引覆盖率：{ratio_text}")
+        if data["enforcements"]:
+            print(f"   enforcement 分布：{data['enforcements']}")
         if data["orphan_files"]:
             print(f"   孤儿文件：{data['orphan_files']}")
         for rel, c in data["coverage"].items():

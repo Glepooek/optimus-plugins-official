@@ -1,6 +1,6 @@
 # 知识库（knowledge-base）
 
-> 版本：2.0.0
+> 版本：3.0.0
 
 跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
 
@@ -53,12 +53,38 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
 | `summary` | 必填 | 一句话摘要 |
 | `enforcement` | 可选 | `ci` \| `review` \| `advisory`，表达规则如何执行 |
 | `status` | 可选 | `active` \| `deprecated` \| `experimental`，缺省视为 `active` |
-| `source` | 可选 | 来源数组：公开 URL，或内部 ADR / issue / PR 路径 |
+| `source` | 可选 | 依据数组，两种形式：外部 URL，或领域内相对路径 `<file>#<标题文本>` |
 | `applies_to` | 可选 | 技术栈、版本或场景边界数组 |
 | `reviewed_at` | 可选 | 最近审阅日期，ISO 格式 `YYYY-MM-DD` |
 | `owner` | 可选 | 维护责任主体（团队而非个人） |
 
 可选字段是渐进引入的治理元数据：未填不报错，填了必须合法。`check_index.py` 校验全部字段的类型与枚举取值。
+
+### level 与 enforcement 的分工
+
+两个字段回答不同问题，不可互相替代：
+
+- **`level` 回答"违反有多严重"**——由正文措辞决定：「必须/禁止」→ `MUST`，「应该/不应」→ `SHOULD`，「可以/建议」→ `MAY`。
+- **`enforcement` 回答"靠什么拦住"**——由该规则能否被工具无歧义判定决定。
+
+| `enforcement` | 判定标准 | 典型例子 |
+|---|---|---|
+| `ci` | 存在可自动执行的检查机制（正则校验、静态分析规则、平台保护规则、扫描器），工具能无歧义判定通过与否 | 分支名格式、Conventional Commits 格式、tag 命名、secret scanning |
+| `review` | 需人工判断内容质量或变更意图，工具无法可靠判定 | PR 描述是否讲清背景与验证方式、版本号语义是否判断正确、是否绕过了 hook |
+| `advisory` | 建议性做法，不作为拦截依据 | CODEOWNERS 配置、onboarding 阅读顺序 |
+
+**一个小节内混有不同级别的条款时，`level` 取该小节最强条款的级别**（实测 76% 的条目属此情形）。这是对消费者安全的默认——不会把强制条款误判为推荐；但反过来，命中一条 `MUST` 条目不代表该小节每句话都是硬性要求，消费者仍需按 `file` + `anchor` 打开正文读具体措辞。这也是"索引只做定位、不复制正文"原则的直接后果。
+
+约束：`level: MAY` 的条目不得标 `enforcement: ci`——可选做法不应作为 CI 拦截依据，该组合由校验器报错。
+
+### source：规则到理由的连接
+
+规范条款只写"要做什么、不能做什么"，**理由、选型对比、例外场景由 `reference/` 承载**——这是 `rules/` 与 `reference/` 分层的目的。`source` 把这层关系登记成可检索的数据，让消费者能从一条规则反查到它的依据，而不必靠人工在两个目录间猜对应关系。
+
+- 内部依据写 `<file>#<标题文本>`（如 `reference/commit-message-tooling.md#2.3 为什么不能靠"团队自觉"代替 hook`），路径相对领域根目录，与 `file` 字段同一形式。
+- 外部依据写完整 URL（如 `https://www.conventionalcommits.org/`）。
+- `check_index.py` 校验内部引用的文件与锚点真实存在；URL 不做离线校验。因此**迁移 `reference/` 文件或改其标题时，`source` 也是需要同步的引用之一**。
+- 规则本身自解释、无独立理由文档时不填——`source` 未填不代表缺失，不追求 100% 覆盖。
 
 ## 索引粒度规范
 
@@ -81,7 +107,7 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
 - 版本号见本文件顶部，变更规则与 CHANGELOG 格式见 `CHANGELOG.md`；日常新增/修改建议通过 `/knowledge-base-maintain` skill 完成，会自动同步索引与版本号。
 - 不做自动生成索引的脚本——`tags`/`summary`/`level` 需要语义判断，机械提取质量不可靠。
 - 索引覆盖是渐进式的，不要求一次性覆盖全部规范文件——新增/优化 skill 引用到某条规则时，若该规则尚未登记索引，随手补一行即可，不必专项排期回填。
-- 迁移或重命名规范文件时，必须同步更新四处：索引 `file` 字段、领域 README 文件地图、正文交叉引用、消费者 skill 的引用路径（含 Markdown 链接目标）。
+- 迁移或重命名规范/reference 文件时，必须同步更新五处：索引 `file` 字段、索引 `source` 字段中的内部引用、领域 README 文件地图、正文交叉引用、消费者 skill 的引用路径（含 Markdown 链接目标）。
 
 ## 与仓库已有资产的关系
 

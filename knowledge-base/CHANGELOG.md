@@ -1,5 +1,35 @@
 # Changelog
 
+## [3.0.0] - 2026-08-27
+
+按 `docs/superpowers/plans/2026-08-27-knowledge-base-optimization.md` 执行 Phase 2（规则内容质量治理），以 `git` 领域为试点，并处理试点中发现的 `git` ↔ `csharp` 跨领域重复。
+
+### Removed
+
+- **破坏性：删除索引条目 `csharp.15.quality-gate-overview`**——其承载的「CI 全绿才可合并」「禁止红灯合并」「门禁配置随仓库提交、禁止 `--no-verify`」属通用协作约束，已由 `git.03.branch-protection`、`git.03.pr-conventions`、`git.02.commit-hooks` 承载。按旧 ID 做固定映射的外部消费者需改引用 `git` 领域对应条目；本仓库内无消费者引用该条目（`csharp-code-review` 审查清单 10 类均为编码层面，不涉及 15 章）。
+- `csharp/rules/15-quality-review.md` 删除原 §1「质量门禁总览」整节与 §4 中「所有变更走 PR + review」「PR 描述说明变更意图、测试情况、验证方式」两条，改为在篇首与节首引用 `knowledge-base/git/`。
+
+### Changed
+
+- **破坏性：`csharp.15.*` 其余 4 条条目的 `anchor` 随章节重编号变更**（`3.→2.` 复杂度与代码度量、`4. Code Review 流程→3. Code Review 内容重点`、`5.→4.` review 标准、`6.→5.` 技术债务管理）。
+- `csharp.15.code-review-process` 的 `title`/`summary` 收窄为「C# code review 的内容重点与结论要求」——PR 流程条款迁出后，原措辞已不覆盖该条目实际内容。
+- **解开 `git` ↔ `csharp` 语义环**：`git/rules/03-pull-requests.md` §1 原写「CI 通过 + review 批准才可合并（联动 `csharp/rules/15-quality-review.md`）」，而 csharp 又独立重述同一条 git 规则，形成两边互认权威、实则无单一真源的环。现按领域职责（README 载明 `git` 负责版本控制协作）归入 git，并把「禁止红灯合并」并入该条，`git.03.pr-conventions` 的 `summary` 同步补录。
+- `csharp/00-README.md` 落地手段第 3 条与文件地图第 15 行同步更新，标明 CI 门禁与 PR 流程见 `knowledge-base/git/`。
+- 根 README 记录实测结论：**76% 的索引条目所在小节混有不同级别条款，`level` 取该小节最强条款的级别**。这是对消费者安全的默认（不会把强制条款误判为推荐），但命中 `MUST` 条目不代表该小节每句话都是硬性要求，消费者仍需按 `file` + `anchor` 读正文。该结论修正了优化计划中"WPF 132 条全 MUST 说明规则被过度强化"的原始判断——真实原因是索引粒度与条款级别的粒度不匹配，而非规则本身被写强。
+- 根 README 索引字段表中 `source` 的说明由"内部 ADR / issue / PR 路径"改为明确的 `<file>#<标题文本>` 形式，与校验器实际解析规则一致。
+- 迁移/重命名文件时需同步的引用由四处增加为五处，新增"索引 `source` 字段中的内部引用"。
+
+### Added
+
+- `git` 领域 12 条 rule 补齐治理元数据：`enforcement`（`ci` 8 / `review` 3 / `advisory` 1）、`status`、`applies_to`、`reviewed_at`、`owner`，该领域治理字段覆盖率 100%。
+- `git` 领域 8 条 rule 补齐 `source`，指向承载其理由的 `reference/` 小节或权威外部规范（如 `git.02.commit-hooks` → `reference/commit-message-tooling.md#2.3 为什么不能靠"团队自觉"代替 hook`）。理由不复制进规范正文——规范给约束、reference 给理由是既定分层，复制会产生两份需同步的同一事实。
+- 根 README 新增"level 与 enforcement 的分工"章节：`level` 表达违反的严重程度（由正文措辞决定），`enforcement` 表达靠什么拦住（由能否被工具无歧义判定决定），附三档判定标准与例子。
+- 根 README 新增"source：规则到理由的连接"章节：内部引用形式 `<file>#<标题文本>`、外部 URL、校验范围与不追求全覆盖的取值约定。
+
+### Fixed
+
+- 补上 2026-08-23（v1.5.0）那次迁移的漏项：当时按 `csharp/16-collaboration.md` 这一个文件迁移协作条款，但同类条款还散落在 `15-quality-review.md` 的「质量门禁」「Code Review 流程」标题下未被扫到——重复按语义分布，按文件迁移会漏。
+
 ## [2.0.0] - 2026-08-27
 
 按 `docs/superpowers/plans/2026-08-27-knowledge-base-optimization.md` 执行 Phase 0（基线与保护网）+ Phase 1（索引粒度与目录册）。

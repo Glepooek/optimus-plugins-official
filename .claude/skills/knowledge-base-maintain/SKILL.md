@@ -2,7 +2,7 @@
 name: knowledge-base-maintain
 description: 新增、修改、迁移 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"校验知识库索引"。
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
   author: desktop client team
   category: tool
 compatibility: 需要本机 Python 3（跑本 skill scripts/check_index.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
@@ -44,14 +44,17 @@ python --version
 
 1. 用 Edit/Write 把正文内容写入 Step 2 确定的文件位置（`rule` → `<domain>/rules/`，`reference` → `<domain>/reference/`）。
 2. 生成 `id`：`<domain>.<两位文件编号或 ref>.<slug>`（如 `csharp.02.xxx` 或 `csharp.ref.xxx`），slug 只用小写字母/数字/连字符，确认在该领域 `index.jsonl` 中未出现过。
-3. 用 Edit 在对应 `knowledge-base/<domain>/index.jsonl` **末尾追加一行**（不重排已有行），必填字段：`id`、`kind`、`level`（仅 rule）、`file`（相对领域根，如 `rules/02-coding-style.md`）、`anchor`（标题文本，非 slug；`reference` 条目留空字符串）、`title`、`tags`、`summary`。可选治理字段（`enforcement`/`status`/`source`/`applies_to`/`reviewed_at`/`owner`）按需填写，取值约束见 `knowledge-base/README.md` 字段表。
+3. 用 Edit 在对应 `knowledge-base/<domain>/index.jsonl` **末尾追加一行**（不重排已有行），必填字段：`id`、`kind`、`level`（仅 rule）、`file`（相对领域根，如 `rules/02-coding-style.md`）、`anchor`（标题文本，非 slug；`reference` 条目留空字符串）、`title`、`tags`、`summary`。
+4. 按需填写可选治理字段（未填不报错，填了必须合法，取值约束见 `knowledge-base/README.md` 字段表）。其中两个字段有明确判断依据：
+   - **`enforcement`**（仅 rule）：该规则能否被工具无歧义判定？能 → `ci`；需人工判断内容质量或意图 → `review`；建议性、不作拦截依据 → `advisory`。`level: MAY` 不得配 `ci`。
+   - **`source`**：该规则的理由、选型对比或例外场景是否已写在本领域 `reference/` 中？是 → 填 `<file>#<标题文本>` 指向它（如 `reference/commit-message-tooling.md#2.3 为什么不能靠"团队自觉"代替 hook`）；有权威外部依据 → 填完整 URL。**不要把 reference 里的理由复制进规范正文**——规范给约束、reference 给理由是知识库的分层设计，复制会产生两份需同步维护的同一事实。规则自解释、无独立理由文档时留空。
 
 ## Step 4（修改/迁移条目）：定位与同步
 
 1. 用 Grep 在目标领域 `index.jsonl` 中按 `id` 或关键词定位现有记录行。
 2. 修改正文内容（若涉及跨目录迁移，如从 `rules/` 移到 `reference/`：先在新位置写入正文，再删除旧位置正文，最后更新索引行的 `file`/`anchor`/`kind` 字段——不得只改索引不改正文，也不得只改正文不改索引）。
 3. 用 Edit 更新 `index.jsonl` 中对应行的变化字段。
-4. **迁移或重命名文件时**，用 Grep 在全仓库反查引用该路径的位置并同步更新四处：索引 `file` 字段、领域 `00-README.md` 的文件地图、其他正文的交叉引用、消费者 skill 的引用（含 Markdown 链接目标 `](...)`，不只是反引号提及）。历史记录类文本（CHANGELOG、正文头部"更新历史"、`docs/superpowers/` 下的历史计划）记录的是当时事实，不改写。
+4. **迁移或重命名文件时**，用 Grep 在全仓库反查引用该路径的位置并同步更新五处：索引 `file` 字段、索引 `source` 字段中的内部引用、领域 `00-README.md` 的文件地图、其他正文的交叉引用、消费者 skill 的引用（含 Markdown 链接目标 `](...)`，不只是反引号提及）。历史记录类文本（CHANGELOG、正文头部"更新历史"、`docs/superpowers/` 下的历史计划）记录的是当时事实，不改写。
 
 ## Step 5：运行一致性校验
 
@@ -77,6 +80,8 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" --audit
 | `重复 id` | 与其他领域的条目冲突（全局唯一） |
 | `id 不符合 ... 格式` | 中段不是两位数字或 `ref`，或 slug 含大写/下划线 |
 | `缺少必填字段` / `非法 level` | 索引行漏字段或枚举拼错 |
+| `source 引用的文件不存在` / `source 锚点未在 ... 找到` | `reference/` 文件被迁移或标题被改动，`source` 未同步 |
+| `level=MAY 不得标 enforcement=ci` | 可选做法不能作为 CI 拦截依据，改 `advisory`，或确认该规则实际是 MUST/SHOULD |
 | `孤儿文件未被索引引用` | 新建了 Markdown 但未登记索引 |
 | `领域未登记到 catalog.json` | 新建领域后忘记同步 `catalog.json` |
 

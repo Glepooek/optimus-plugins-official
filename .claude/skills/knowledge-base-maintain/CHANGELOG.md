@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0] - 2026-08-27
+
+### Added
+- `check_index.py` 新增 `source` 内部引用校验：`<file>#<标题文本>` 形式的文件与锚点必须真实存在，外部 URL 不做离线校验——不校验等于新增一批无人看守的引用，与规范文件迁移后失效的正文交叉引用是同一类腐烂
+- `check_index.py` 新增组合约束：`level: MAY` 不得配 `enforcement: ci`（可选做法不作为 CI 拦截依据）；`kind: reference` 不得有 `enforcement`
+- `--audit` 报告新增治理元数据维度：全库 `enforcement` 填写率、各领域 `enforcement` 分布
+- Step 3 补充 `enforcement` 与 `source` 的填写判断依据，并明确禁止把 `reference/` 的理由复制进规范正文
+- Step 5 常见问题表新增 `source` 引用失效与 `MAY`+`ci` 两类；`test_check_index.py` 从 55 个测试扩展到 66 个
+
+### Changed
+- Step 4 迁移/重命名时需同步的引用由四处增加为五处，新增"索引 `source` 字段中的内部引用"
+
 ## [1.1.0] - 2026-08-27
 
 ### Added

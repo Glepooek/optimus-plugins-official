@@ -29,7 +29,7 @@
 
 1. **静态分析门禁**：`.editorconfig` + Roslyn 分析器（见 `rules/01-project-structure.md`），严重级别告警按 **warnings-as-errors** 处理
 2. **CI 校验**：`restore → build(-warnaserror) → test` 三关
-3. **Code Review**：按 `rules/15-quality-review.md` 流程执行；编码层面问题由 `csharp-code-review` skill 辅助检出
+3. **Code Review**：审查内容重点按 `rules/15-quality-review.md`（PR 流程与合并门禁见 `knowledge-base/git/`）；编码层面问题由 `csharp-code-review` skill 辅助检出
 4. **模板兜底**：新增项目 / 文件按 `rules/01-project-structure.md` 的布局约定生成
 
 ## 阅读路径
@@ -59,7 +59,7 @@
 | 12 | `rules/12-testing.md` | 测试规范 |
 | 13 | `rules/13-api-design.md` | API 设计与版本化 |
 | 14 | `rules/14-security.md` | 安全规范 |
-| 15 | `rules/15-quality-review.md` | 代码质量与审查流程 |
+| 15 | `rules/15-quality-review.md` | 静态分析、代码度量与 review 内容重点（CI 门禁/PR 流程见 `knowledge-base/git/`） |
 | 16 | `rules/16-collaboration.md` | CHANGELOG 规范（分支/提交/PR/发布/所有权见 `knowledge-base/git/`） |
 | 17 | `rules/17-comments-docs.md` | 注释与文档 |
 
