@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.0.1] - 2026-08-28
+
+`check_refs.py` 扫描范围扩到知识库正文后的首轮修复（此前该校验器只看 `plugins/*/skills/`，正文内的 `§` 引用无人看守）。
+
+### Fixed
+
+- `git/reference/commit-message-tooling.md` §3.1 末段声称 `rules/02-commit-messages.md` §2 有「CI 侧二次校验」这一说法——**该措辞在规范中不存在**，§2 只约束本地 pre-commit / commit-msg hook，并明确把耗时检查「交给 CI」而未规定 CI 侧二次校验。真正对应的是 §3 的「CI 集成 secret scanning，在 PR 阶段拦截」。已改为引用 §3。
+
+### Changed
+
+- 补齐知识库正文内 11 处只写章节号、未写标题的 `§` 引用（`git/rules/02-commit-messages.md` 1 处、`git/reference/branching-workflows.md` 3 处、`git/reference/commit-message-tooling.md` 7 处）。裸章节号引用无法与标题交叉校验，章节重编号后会静默指向别的内容。全库 `check_refs.py --strict` 由 12 处问题降为 0。
+
 ## [4.0.0] - 2026-08-28
 
 用 `knowledge-base-maintain` 1.4.0 新增的 `find_duplicates.py` 做全库跨领域查重，处理评分最高的 4 对 C# ↔ WPF 重复。这批重复是自动查重的首次实战产出——3.0.0 那次 `git` ↔ `csharp` 语义环靠人工通读才发现，本次 4 对中的 3 对排在候选前三名。

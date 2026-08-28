@@ -20,11 +20,11 @@
 | 主要代价 | 需要功能开关配合未完成的大特性，否则易把半成品带入主干 | 分支多、合并链路长，`develop` 与 `main` 易产生漂移 | 对自动化测试覆盖率、功能开关基建要求高，团队纪律要求高 |
 | 典型使用者 | GitHub 官方产品团队、多数 Web/SaaS 团队 | 需要多版本并行支持的桌面/嵌入式/企业软件团队 | Google、Facebook 等超大规模工程团队 |
 
-**为什么本仓库的规范条款选 GitHub Flow**（见 `rules/01-branching.md` §1）：本仓库是持续演进的插件仓库，不需要同时维护多个历史发布版本，Git Flow 的 `develop`/`release` 分支体系对这种场景是不必要的额外协调成本；同时团队规模与自动化测试覆盖尚不足以支撑纯粹的 Trunk-Based Development（功能开关基建缺失）。GitHub Flow 是两者之间的平衡点。
+**为什么本仓库的规范条款选 GitHub Flow**（见 `rules/01-branching.md` §1「分支策略」）：本仓库是持续演进的插件仓库，不需要同时维护多个历史发布版本，Git Flow 的 `develop`/`release` 分支体系对这种场景是不必要的额外协调成本；同时团队规模与自动化测试覆盖尚不足以支撑纯粹的 Trunk-Based Development（功能开关基建缺失）。GitHub Flow 是两者之间的平衡点。
 
 ## 2. 分支命名示例大全
 
-命名格式约定见 `rules/01-branching.md` §2：`<type>/<简短描述>`。以下按 `type` 分类给出示例：
+命名格式约定见 `rules/01-branching.md` §2「分支命名规范」：`<type>/<简短描述>`。以下按 `type` 分类给出示例：
 
 | type | 用途 | 命名示例 |
 |---|---|---|
@@ -67,7 +67,7 @@ git rebase origin/main         # 或 git merge origin/main，团队统一一种�
 - **rebase 方式**：历史线性，但已推送的分支 rebase 后需要 `git push --force-with-lease`（不要用裸 `--force`，避免覆盖他人在同一分支上的提交）
 - **merge 方式**：历史保留合并节点，安全但主干历史会有额外的合并提交
 
-多数团队对"同步自己的特性分支"用 rebase（分支通常只有自己在用，force push 风险低），对"合入主干"用团队统一的合并策略（见 `rules/03-pull-requests.md` §2）。
+多数团队对"同步自己的特性分支"用 rebase（分支通常只有自己在用，force push 风险低），对"合入主干"用团队统一的合并策略（见 `rules/03-pull-requests.md` §2「合并策略」）。
 
 ### 3.3 合并后清理
 

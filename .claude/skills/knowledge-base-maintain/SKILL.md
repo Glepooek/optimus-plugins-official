@@ -2,7 +2,7 @@
 name: knowledge-base-maintain
 description: 新增、修改、迁移 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验与语义查重。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"校验知识库索引"、"知识库查重"。
 metadata:
-  version: "1.4.0"
+  version: "1.5.0"
   author: desktop client team
   category: tool
 compatibility: 需要本机 Python 3（跑本 skill scripts/ 下的 check_index.py 与 check_refs.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
@@ -51,7 +51,7 @@ python ".claude/skills/knowledge-base-maintain/scripts/find_duplicates.py" --top
 
 | 情形 | 处置 |
 |---|---|
-| 真重复：同一条约束被两处各自完整表述 | 按领域职责归入一处（`catalog.json` 载明各领域职责），另一处改为引用而非重写 |
+| 真重复：同一条约束被两处各自完整表述 | 按领域职责归入一处（`catalog.json` 载明各领域职责），另一处改为引用而非重写。引用须带章节标题（`§ 1. 测试策略与金字塔`），否则该引用不可交叉校验、章节重编号时静默失效 |
 | 合理分层：通用规则在通用领域，技术特有细化在技术领域 | 不动。如 `csharp.01.target-framework` 与 `wpf.01.target-framework`，后者加了「必含 `-windows` 后缀」 |
 | 语义环：两处互相「联动」对方，却都不承载完整规则 | 无单一真源，必须打破——定一处为权威，另一处只留引用 |
 
@@ -101,7 +101,7 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" --audit
 | `孤儿文件未被索引引用` | 新建了 Markdown 但未登记索引 |
 | `领域未登记到 catalog.json` | 新建领域后忘记同步 `catalog.json` |
 
-**改动了规范文件的章节标题或章节编号时**，还须校验消费者 skill 的 `§ 章节号` 引用——这类引用不在 `index.jsonl` 里，`check_index.py` 管不到：
+**改动了规范文件的章节标题或章节编号时**，还须校验 `§ 章节号` 引用——这类引用不在 `index.jsonl` 里，`check_index.py` 管不到。校验范围含消费者 skill 与**知识库正文自身**（跨领域去重会在正文留下 `csharp/rules/12-testing.md § 1` 这类引用，与 skill 里的一样脆弱）：
 
 ```bash
 python ".claude/skills/knowledge-base-maintain/scripts/check_refs.py"

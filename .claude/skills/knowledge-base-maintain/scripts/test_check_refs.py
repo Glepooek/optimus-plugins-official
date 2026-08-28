@@ -113,6 +113,103 @@ class TestExtractRefs(unittest.TestCase):
             self.assertEqual([r[2] for r in refs], ["rules/03-mvvm.md", "rules/04-xaml.md"])
             self.assertEqual(check_consumer(c, f.root)[0], [])
 
+    def test_captures_title_in_double_quotes(self):
+        """`§2 "CI 侧二次校验"` —— 引号形态除「」外还须认英文/全角双引号。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            for quoted in ('"事件与订阅"', '“事件与订阅”'):
+                c = f.consumer(f'knowledge-base/wpf/00-README.md\n\n`rules/03-mvvm.md` §7 {quoted}\n')
+                self.assertEqual(extract_refs(c, f.root)[0][4], "事件与订阅", quoted)
+                self.assertEqual(check_consumer(c, f.root), ([], []), quoted)
+
+    def test_subsection_title_separated_by_space_only(self):
+        """`§ 2.1 属性变更通知` —— 子章节号里的点已被编号吃掉，标题靠空格分隔。
+
+        回归锁：曾因把「必须有点号分隔」当作标题判据，导致 csharp-code-review 已修好的
+        5 处 `§ 2.x 标题` 集体退回脆弱引用状态。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            c = f.consumer("knowledge-base/wpf/00-README.md\n\n`rules/03-mvvm.md` § 2.1 属性变更通知\n")
+            self.assertEqual(extract_refs(c, f.root)[0][4], "属性变更通知")
+            self.assertEqual(check_consumer(c, f.root), ([], []))
+
+    def test_prose_continuation_after_number_is_not_a_title(self):
+        """散文写法「§2 的 hook 不可绕过要求」中，§2 后面是句子续写而非标题。
+
+        判据是结构而非标点枚举：带标题的引用，编号与标题之间必有分隔符
+        （`§ 7. 集成测试` 的点号、`§7「事件与订阅」` 的书名号）；散文续写没有。
+        这类引用按脆弱引用处理（无法交叉校验），不是失效。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            c = f.consumer(
+                "knowledge-base/wpf/00-README.md\n\n"
+                "`rules/03-mvvm.md` §2 的可绑定属性要求源自本文件第 1 节\n")
+            self.assertIsNone(extract_refs(c, f.root)[0][4])
+            problems, fragile = check_consumer(c, f.root)
+            self.assertEqual(problems, [])
+            self.assertEqual(len(fragile), 1)
+
+    def test_prose_continuation_without_space_is_not_a_title(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            c = f.consumer("knowledge-base/wpf/00-README.md\n\n`rules/03-mvvm.md` §7要求订阅须配对取消\n")
+            self.assertIsNone(extract_refs(c, f.root)[0][4])
+            self.assertEqual(check_consumer(c, f.root)[0], [])
+
+    def test_plain_title_stops_at_chinese_period(self):
+        """散文式引用「§ 7. 事件与订阅。后面还有一句」——句号后的内容不属于标题。
+
+        skill 里的引用写在表格单元格中，靠 `、`/`；` 天然分隔，从没踩到这个边界；
+        知识库正文是散文，句号才是句子终止符。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            c = f.consumer(
+                "knowledge-base/wpf/00-README.md\n\n"
+                "通用原则见 `rules/03-mvvm.md` § 7. 事件与订阅。本篇只写差异：\n")
+            self.assertEqual(extract_refs(c, f.root)[0][4], "事件与订阅")
+            self.assertEqual(check_consumer(c, f.root)[0], [])
+
+    def test_plain_title_stops_at_fullwidth_comma(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            c = f.consumer(
+                "knowledge-base/wpf/00-README.md\n\n`rules/03-mvvm.md` § 1. MVVM 框架选型，另见下文\n")
+            self.assertEqual(extract_refs(c, f.root)[0][4], "MVVM 框架选型")
+
+    def test_kb_spec_file_resolves_relative_ref_against_own_domain(self):
+        """知识库正文里的 `rules/xxx.md` 相对引用，基准领域是该文件自身所在领域。
+
+        skill 靠正文中出现的 knowledge-base/<domain>/ 定基准，知识库正文没有这种自指路径，
+        只能从文件自身路径推断——否则同领域内的 `rules/...` § 引用一律无法解析。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            spec = f.spec_dir / "11-testing.md"
+            spec.write_text("# 11\n\n分层见 `rules/03-mvvm.md` § 7. 事件与订阅\n", encoding="utf-8")
+            refs = extract_refs(spec, f.root)
+            self.assertEqual([(r[1], r[2], r[4]) for r in refs],
+                             [("wpf", "rules/03-mvvm.md", "事件与订阅")])
+            self.assertEqual(check_consumer(spec, f.root)[0], [])
+
+    def test_kb_cross_domain_full_path_overrides_own_domain(self):
+        """正文写完整跨领域路径时，按路径里的领域解析，不被自身领域覆盖。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            other = f.root / "knowledge-base" / "csharp" / "rules"
+            other.mkdir(parents=True)
+            (other / "12-testing.md").write_text("# 12\n\n## 1. 测试策略与金字塔\n", encoding="utf-8")
+            spec = f.spec_dir / "11-testing.md"
+            spec.write_text(
+                "# 11\n\n通用原则见 `knowledge-base/csharp/rules/12-testing.md` § 1. 测试策略与金字塔。"
+                "WPF 侧的差异：\n", encoding="utf-8")
+            refs = extract_refs(spec, f.root)
+            self.assertEqual([(r[1], r[2], r[4]) for r in refs],
+                             [("csharp", "rules/12-testing.md", "测试策略与金字塔")])
+            self.assertEqual(check_consumer(spec, f.root)[0], [])
+
     def test_ambiguous_domain_skips_relative_refs(self):
         """一个文件引用了两个领域时，相对路径无法定基准，不猜。"""
         with tempfile.TemporaryDirectory() as tmp:
@@ -197,7 +294,31 @@ class TestCollectConsumers(unittest.TestCase):
             f.consumer("x")
             f.consumer("y", name="CLI-REFERENCE.md")
             names = {p.name for p in collect_consumers(f.root)}
-            self.assertEqual(names, {"SKILL.md", "CLI-REFERENCE.md"})
+            self.assertTrue({"SKILL.md", "CLI-REFERENCE.md"} <= names)
+
+    def test_finds_kb_spec_and_reference_files(self):
+        """知识库正文自身也是消费者——去重产生的跨领域 § 引用就写在这里。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            ref_dir = f.root / "knowledge-base" / "wpf" / "reference"
+            ref_dir.mkdir(parents=True)
+            (ref_dir / "why-mvvm.md").write_text("# why\n", encoding="utf-8")
+            rels = {p.relative_to(f.root).as_posix() for p in collect_consumers(f.root)}
+            self.assertIn("knowledge-base/wpf/rules/03-mvvm.md", rels)
+            self.assertIn("knowledge-base/wpf/reference/why-mvvm.md", rels)
+
+    def test_ignores_kb_changelog_and_readme(self):
+        """知识库的 CHANGELOG 与 README 记录的是历史事实与消费方式说明，不校验。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            kb = f.root / "knowledge-base"
+            (kb / "CHANGELOG.md").write_text("`rules/99-gone.md` §1 迁移记录\n", encoding="utf-8")
+            (kb / "README.md").write_text("可写死 `file` § `章节` 引用\n", encoding="utf-8")
+            (kb / "wpf" / "00-README.md").write_text("# wpf\n", encoding="utf-8")
+            rels = {p.relative_to(f.root).as_posix() for p in collect_consumers(f.root)}
+            self.assertNotIn("knowledge-base/CHANGELOG.md", rels)
+            self.assertNotIn("knowledge-base/README.md", rels)
+            self.assertNotIn("knowledge-base/wpf/00-README.md", rels)
 
     def test_ignores_changelog(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -20,8 +20,16 @@ import re
 import sys
 from pathlib import Path
 
-# 消费者文件：plugins 下的 SKILL.md 与被 skill 引用的参考文档
-CONSUMER_GLOBS = ("plugins/*/skills/*/SKILL.md", "plugins/*/skills/*/*REFERENCE*.md")
+# 消费者文件：plugins 下的 SKILL.md 与被 skill 引用的参考文档，以及知识库正文自身
+# ——跨领域去重会在正文里留下 `csharp/rules/12-testing.md § 1` 这类引用，形态与 skill
+# 里的一样脆弱。knowledge-base 的 CHANGELOG/README 与领域 00-README.md 不在其中：
+# 前两者记录历史事实与消费方式说明，后者是文件地图（只列路径不引章节）。
+CONSUMER_GLOBS = (
+    "plugins/*/skills/*/SKILL.md",
+    "plugins/*/skills/*/*REFERENCE*.md",
+    "knowledge-base/*/rules/*.md",
+    "knowledge-base/*/reference/*.md",
+)
 
 # 领域识别：任何 knowledge-base/<domain>/ 出现处，用于给相对路径引用定基准
 # （文件名可能含大写，如 00-README.md，故领域提取与文件路径提取分开）
@@ -32,8 +40,30 @@ FULL_PATH_RE = re.compile(r'knowledge-base/(?P<domain>[a-z0-9-]+)/(?P<rel>(?:rul
 REL_PATH_RE = re.compile(r'`(?P<rel>(?:rules|reference)/[a-z0-9][a-z0-9-]*\.md)`')
 BARE_NAME_RE = re.compile(r'`(?P<name>[a-z0-9][a-z0-9-]*\.md)`')
 
-# 章节引用：§ 后跟编号，可选跟标题（「」包裹或裸文本）
-SECTION_RE = re.compile(r'§\s*(?P<num>\d+(?:\.\d+)*)\s*[.．]?\s*(?:「(?P<quoted>[^」]+)」|(?P<plain>[^§|；;、\n]*))')
+# 章节引用：§ 后跟编号，可选跟标题（引号包裹，或 `.`/空格 分隔的裸文本）
+#
+# 引号形态认「」/""/“”三种——实际写法都出现过，只认一种会把另两种判成脆弱引用。
+#
+# 两处不能放宽：
+# 1. 编号与裸标题之间必须有 `.`/`．`/空格 分隔——`§7要求订阅须配对` 里紧贴编号的
+#    文字是句子续写，不是标题。
+# 2. 空格分隔的形态还须排除以助词/动词打头的续写：`§2 的 hook 不可绕过要求`、
+#    `§3 要求 CI 集成 secret scanning` 都是散文，不是标题。这类按裸引用（脆弱、
+#    不可交叉校验）处理，而不是拿续写文本去比标题得出假失效。
+#    点号分隔的形态无此歧义（`§ 7. 集成测试`），不做该排除。
+#    子章节形态 `§ 2.1 属性变更通知` 只能靠空格分隔（点号已被编号吃掉），所以不能
+#    简单地要求"必须有点号"——那会让所有 `§ N.M 标题` 退回脆弱状态。
+# 裸标题的终止符含中文句号与全角逗号：正文是散文，「§ 7. 集成测试。WPF 侧只补一条：」
+# 里句号之后不属于标题；skill 的引用写在表格单元格中靠 `、`/`；` 分隔，踩不到这个边界。
+PROSE_LEAD = r'的|地|得|要求|规定|说明|定义|提到|指出|所述|中|里|与|和|及'
+SECTION_RE = re.compile(
+    r'§\s*(?P<num>\d+(?:\.\d+)*)'
+    r'(?:'
+    r'\s*[「“"](?P<quoted>[^」”"]+)[」”"]'
+    r'|\s*[.．]\s*(?P<plain>[^§|；;、。，\n]*)'
+    rf'|[ 　](?!(?:{PROSE_LEAD}))(?P<spaced>[^§|；;、。，\n]*)'
+    r')?'
+)
 
 # 目标文件标题：## / ### 等，编号在标题文本开头
 HEADING_RE = re.compile(r'^(#{2,6})\s+(?P<num>\d+(?:\.\d+)*)[.．]?\s+(?P<text>.+)$')
@@ -90,20 +120,36 @@ def iter_file_segments(line, default_domain, last_dir):
         yield domain, rel, line[end:stop], last_dir
 
 
+def own_domain(consumer_path, repo_root):
+    """消费者本身就是知识库正文时，返回它所属领域，否则 None。
+
+    知识库正文里的 `rules/xxx.md` 相对引用没有自指的 knowledge-base/<domain>/ 路径可依，
+    只能从文件自身位置推断基准领域；skill 不在知识库内，返回 None 走内容提取那条路。
+    """
+    try:
+        parts = consumer_path.relative_to(repo_root).parts
+    except ValueError:
+        return None
+    return parts[1] if len(parts) > 2 and parts[0] == "knowledge-base" else None
+
+
 def extract_refs(consumer_path, repo_root):
     """从消费者文件提取 (行号, 领域, 相对路径, 章节号, 引用标题或 None) 五元组。"""
     text = consumer_path.read_text(encoding="utf-8")
 
-    # 文件级默认领域：整篇里出现的 knowledge-base/<domain>/ 若唯一，则作为相对路径引用的基准
-    domain_names = set(DOMAIN_RE.findall(text))
-    default_domain = next(iter(domain_names)) if len(domain_names) == 1 else None
+    # 相对路径引用的基准领域：知识库正文取自身所在领域；skill 取正文中唯一出现的领域名
+    # （出现多个领域时无法定基准，不猜）。完整路径引用不受此影响，各自按路径里的领域解析。
+    default_domain = own_domain(consumer_path, repo_root)
+    if default_domain is None:
+        domain_names = set(DOMAIN_RE.findall(text))
+        default_domain = next(iter(domain_names)) if len(domain_names) == 1 else None
 
     refs = []
     last_dir = None
     for line_no, line in enumerate(text.splitlines(), start=1):
         for domain, rel, tail, last_dir in iter_file_segments(line, default_domain, last_dir):
             for m in SECTION_RE.finditer(tail):
-                title = m.group("quoted") or m.group("plain") or ""
+                title = m.group("quoted") or m.group("plain") or m.group("spaced") or ""
                 title = normalize(title)
                 if NOISE_TITLE_RE.match(title):
                     title = None

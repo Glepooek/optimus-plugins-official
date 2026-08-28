@@ -16,7 +16,7 @@ Conventional Commits 完整规范、commit-msg hook 实现方式与敏感信息�
 - **必须**：提交信息描述变更意图（What & Why），不逐行罗列
 - **禁止**：无意义提交（`update`、`fix`、堆叠的 `wip`）
 - **应该**：一个提交一个逻辑变更（原子提交，便于回滚与审阅）
-- **必须**：提交中若有 AI 协作者（AI 生成或辅助生成本次变更），须在提交信息中用 `Co-Authored-By: <AI 名称> <noreply@域名>` footer 明确标注，不得隐去 AI 参与事实；具体标注格式与要求见 `reference/commit-message-tooling.md` §4
+- **必须**：提交中若有 AI 协作者（AI 生成或辅助生成本次变更），须在提交信息中用 `Co-Authored-By: <AI 名称> <noreply@域名>` footer 明确标注，不得隐去 AI 参与事实；具体标注格式与要求见 `reference/commit-message-tooling.md` §4「AI 协作者标注」
 
 ## 2. 提交前检查与 Hooks
 
