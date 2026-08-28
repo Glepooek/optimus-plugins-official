@@ -10,14 +10,14 @@
 
 | 插件 | 职责 |
 |---|---|
-| [optimus-frontend-plugin](plugins/optimus-frontend-plugin) | WPF 前端开发、SVG `<path d>` 提取并生成 WPF `Path.Data`/XAML；MasterGo 设计稿转 WPF 页面与组件库 |
-| [optimus-backend-plugin](plugins/optimus-backend-plugin) | API 开发、后端架构、数据库设计 |
-| [optimus-qa-plugin](plugins/optimus-qa-plugin) | 测试用例、JMeter、UI 自动化、飞书测试项目集成 |
-| [optimus-prd-plugin](plugins/optimus-prd-plugin) | PRD 文档创建、审查、需求管理 |
-| [optimus-office-plugin](plugins/optimus-office-plugin) | Word/Excel/PPT/PDF 生成与处理 |
-| [optimus-devops-plugin](plugins/optimus-devops-plugin) | Jenkins CI/CD、项目分析、工作周报转写；内置 SessionStart（技巧轮播）+ Notification hooks |
-| [optimus-mcp-servers](plugins/optimus-mcp-servers) | GitHub Copilot MCP、MasterGo、飞书项目等 MCP 集成 |
-| [optimus-media-plugin](plugins/optimus-media-plugin) | 音视频处理工具集：基于 ffmpeg/ffprobe 的编解码分析、分辨率转换、压缩、片段截取、帧率转换、格式转换，ffplay 播放预览，yt-dlp 在线下载 |
+| [optimus-frontend-plugin](plugins/optimus-frontend-plugin) | WPF 前端开发：MasterGo 设计稿转页面与组件库、SVG 转 XAML、XAML 代码审查 |
+| [optimus-backend-plugin](plugins/optimus-backend-plugin) | 后端开发：需求到实现全流程、公司服务 API 对接、C# 代码审查 |
+| [optimus-qa-plugin](plugins/optimus-qa-plugin) | 测试 QA：用例设计与报告、JMeter 与 UI 自动化、设计稿一致性校验、飞书项目同步 |
+| [optimus-prd-plugin](plugins/optimus-prd-plugin) | PRD 全流程：需求文档创建、优化与审查 |
+| [optimus-office-plugin](plugins/optimus-office-plugin) | 文档处理：Word/Excel/PPT/PDF 生成，网页与本地文件转 Markdown |
+| [optimus-devops-plugin](plugins/optimus-devops-plugin) | DevOps：Jenkins 构建、项目分析、周报转写、skill 链接同步；内置 SessionStart（技巧轮播）+ Notification hooks |
+| [optimus-mcp-servers](plugins/optimus-mcp-servers) | MCP 服务集成：GitHub、MasterGo 设计协作、飞书项目 |
+| [optimus-media-plugin](plugins/optimus-media-plugin) | 音视频处理：分析、转码压缩、裁剪缩放、在线下载与播放预览 |
 
 ## 🔧 外部依赖
 
@@ -26,12 +26,12 @@
 | 插件 | 关键依赖 |
 |---|---|
 | optimus-frontend-plugin | MasterGo MCP（设计稿读取）、Python 3 |
-| optimus-backend-plugin | Python `requests`、`beautifulsoup4`（接口文档/网页抓取） |
-| optimus-qa-plugin | JMeter（性能测试执行）、Playwright + Midscene（UI 自动化）、MasterGo MCP、飞书项目 MCP |
+| optimus-backend-plugin | superpowers 插件（后端开发流程硬性依赖）、服务注册表 `api-doc-test.optimus.cn`（有本地缓存降级）、Python `requests` + `beautifulsoup4`（接口文档/网页抓取） |
+| optimus-qa-plugin | JMeter（性能测试执行）、Playwright + Midscene（UI 自动化）、MasterGo MCP、飞书项目 MCP、Figma MCP + Chrome DevTools MCP（UI 一致性校验，需自行配置）、Python（XMind 生成） |
 | optimus-prd-plugin | 无 |
 | optimus-office-plugin | markitdown、Playwright CLI（网页转 Markdown）、PptxGenJS（PPT 生成）、reportlab + pypdf（PDF 生成）、pandas + openpyxl（Excel 处理）、LibreOffice（文档转换/重算）、.NET SDK + OpenXML SDK（docx-writer） |
-| optimus-devops-plugin | Jenkins（需账号/API Token）、Python `requests` + `pyyaml` |
-| optimus-mcp-servers | GitHub Copilot MCP（`GITHUB_TOKEN`）、MasterGo Magic MCP（`MASTERGO_TOKEN`）、飞书项目 MCP（`FEISHU_PROJECT_TOKEN`）、Playwright CLI |
+| optimus-devops-plugin | Jenkins（需账号/API Token）、Python `requests` + `pyyaml`、Git（项目分析与周报提取提交记录） |
+| optimus-mcp-servers | GitHub Copilot MCP（`GITHUB_TOKEN`）、MasterGo Magic MCP（`MG_MCP_TOKEN`）、飞书项目 MCP（`MCP_USER_TOKEN`） |
 | optimus-media-plugin | ffmpeg/ffprobe（编解码分析与处理）、ffplay（播放预览，需图形显示环境）、yt-dlp（在线视频/音频下载） |
 
 ## 🚀 快速开始

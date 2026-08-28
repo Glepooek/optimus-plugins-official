@@ -48,6 +48,7 @@ tips.txt 包含 307 条技巧，涵盖以下分类：
 - **[工作流与自动化]** - 高级工作流程
 - **[排障]** - 问题诊断和排查
 - **[Skill]** - 预定义工作流技能
+- **[Skill·插件名]** - 特定插件提供的 skill（如 `[Skill·superpowers]`、`[Skill·code-review]`、`[Skill·frontend-design]`、`[Skill·commit-commands]`）
 - **[MCP]** - Model Context Protocol 服务器
 - **[高级]** - 高级特性和用法
 

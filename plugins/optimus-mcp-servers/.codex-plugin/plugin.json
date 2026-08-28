@@ -1,7 +1,7 @@
 {
   "name": "optimus-mcp-servers",
-  "version": "12.1.1",
-  "description": "MCP 服务器集成：GitHub Copilot MCP、MasterGo 设计协作、飞书项目等企业级 MCP 服务",
+  "version": "12.1.7",
+  "description": "MCP 服务集成：GitHub、MasterGo 设计协作、飞书项目",
   "mcpServers": "./.mcp.json",
   "author": {
     "name": "optimus",
@@ -18,8 +18,8 @@
   ],
   "interface": {
     "displayName": "Optimus MCP Servers",
-    "shortDescription": "企业级 MCP 服务器集成",
-    "longDescription": "集成 GitHub Copilot MCP、MasterGo 设计协作、飞书项目等企业级 MCP 服务，为开发环境提供设计协同、项目管理与代码助手能力。",
+    "shortDescription": "企业级 MCP 服务集成",
+    "longDescription": "MCP 服务集成：GitHub、MasterGo 设计协作、飞书项目",
     "developerName": "Optimus",
     "category": "MCP",
     "capabilities": [

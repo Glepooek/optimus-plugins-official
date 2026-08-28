@@ -1,7 +1,7 @@
 {
   "name": "optimus-backend-plugin",
-  "version": "12.1.5",
-  "description": "后端开发工具集：API 开发、后端架构设计、数据库设计、API 文档生成等。内置 PreToolUse Hook：git commit 前自动门禁校验 .cs 改动是否已经 csharp-code-review 审查",
+  "version": "12.1.7",
+  "description": "后端开发：需求到实现全流程、公司服务 API 对接、C# 代码审查",
   "skills": "./skills/",
   "author": {
     "name": "optimus",
@@ -12,8 +12,8 @@
   "license": "MIT",
   "interface": {
     "displayName": "Optimus Backend",
-    "shortDescription": "后端 API 与架构开发工具集",
-    "longDescription": "后端开发工具集：API 开发、后端架构设计、数据库设计、API 文档生成等。内置 PreToolUse Hook：git commit 前自动门禁校验 .cs 改动是否已经 csharp-code-review 审查",
+    "shortDescription": "后端开发工具集",
+    "longDescription": "后端开发：需求到实现全流程、公司服务 API 对接、C# 代码审查。内置 PreToolUse Hook：git commit 前门禁校验 .cs 改动是否已审查",
     "developerName": "Optimus",
     "category": "Backend",
     "capabilities": [

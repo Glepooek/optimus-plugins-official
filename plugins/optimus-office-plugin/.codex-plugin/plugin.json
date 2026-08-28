@@ -1,7 +1,7 @@
 {
   "name": "optimus-office-plugin",
-  "version": "12.1.0",
-  "description": "Office 文档处理工具集：Word、Excel、PowerPoint、PDF 文档的生成和处理，网页内容抓取转 Markdown，本地文件（docx/pdf/pptx/csv/json/xml）转 Markdown",
+  "version": "12.1.7",
+  "description": "文档处理：Word/Excel/PPT/PDF 生成，网页与本地文件转 Markdown",
   "skills": "./skills/",
   "author": {
     "name": "optimus",
@@ -12,8 +12,8 @@
   "license": "MIT",
   "interface": {
     "displayName": "Optimus Office",
-    "shortDescription": "Office 文档处理工具集",
-    "longDescription": "Office 文档处理工具集：Word、Excel、PowerPoint、PDF 文档的生成和处理，网页内容抓取转 Markdown，本地文件（docx/pdf/pptx/csv/json/xml）转 Markdown",
+    "shortDescription": "文档处理工具集",
+    "longDescription": "文档处理：Word/Excel/PPT/PDF 生成，网页与本地文件转 Markdown",
     "developerName": "Optimus",
     "category": "Productivity",
     "capabilities": [

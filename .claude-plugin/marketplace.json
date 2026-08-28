@@ -2,7 +2,7 @@
   "name": "optimus-plugins-official",
   "displayName": "Optimus 官方插件仓库",
   "description": "自定义 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强、权限通知等企业级开发工具链",
-  "version": "12.1.6",
+  "version": "12.1.7",
   "owner": {
     "name": "optimus",
     "url": "https://www.optimus.cn"
@@ -30,42 +30,42 @@
     {
       "name": "optimus-frontend-plugin",
       "source": "./plugins/optimus-frontend-plugin",
-      "description": "WPF 前端开发工具集：SVG `<path d>` 提取并生成 WPF `Path.Data`/XAML；WPF XAML 性能优化；MasterGo 设计稿转 WPF 页面组装（mastergo-to-wpf-page）；MasterGo 设计稿图标/背景资产导出为 WPF Icons.xaml；MasterGo 设计稿组件抽取生成组件库（mastergo-to-wpf-components），页面组装优先复用组件库。内置 PreToolUse Hook：git commit 前自动门禁校验 .xaml 改动是否已经 wpf-code-review 审查"
+      "description": "WPF 前端开发：MasterGo 设计稿转页面与组件库、SVG 转 XAML、XAML 代码审查。内置 PreToolUse Hook：git commit 前门禁校验 .xaml 改动是否已审查"
     },
     {
       "name": "optimus-backend-plugin",
       "source": "./plugins/optimus-backend-plugin",
-      "description": "后端开发工具集：API 开发、后端架构设计、数据库设计、API 文档生成等。内置 PreToolUse Hook：git commit 前自动门禁校验 .cs 改动是否已经 csharp-code-review 审查"
+      "description": "后端开发：需求到实现全流程、公司服务 API 对接、C# 代码审查。内置 PreToolUse Hook：git commit 前门禁校验 .cs 改动是否已审查"
     },
     {
       "name": "optimus-qa-plugin",
       "source": "./plugins/optimus-qa-plugin",
-      "description": "测试 QA 工具集：测试用例设计、测试报告、JMeter 脚本、UI 自动化、飞书测试项目管理等"
+      "description": "测试 QA：用例设计与报告、JMeter 与 UI 自动化、设计稿一致性校验、飞书项目同步"
     },
     {
       "name": "optimus-prd-plugin",
       "source": "./plugins/optimus-prd-plugin",
-      "description": "PRD 管理工具集：PRD 文档创建、优化、审查，产品需求全流程管理"
+      "description": "PRD 全流程：需求文档创建、优化与审查"
     },
     {
       "name": "optimus-office-plugin",
       "source": "./plugins/optimus-office-plugin",
-      "description": "Office 文档处理工具集：Word、Excel、PowerPoint、PDF 文档的生成和处理，网页内容抓取转 Markdown，本地文件（docx/pdf/pptx/csv/json/xml）转 Markdown"
+      "description": "文档处理：Word/Excel/PPT/PDF 生成，网页与本地文件转 Markdown"
     },
     {
       "name": "optimus-devops-plugin",
       "source": "./plugins/optimus-devops-plugin",
-      "description": "DevOps 工具集：Jenkins CI/CD、API 变更通知、应用初始化、项目分析、工作周报转写。内置 Hooks：SessionStart（307条技巧智能轮播）、Notification（Windows权限通知）"
+      "description": "DevOps：Jenkins 构建、项目分析、周报转写、skill 链接同步。内置 Hooks：SessionStart（307条技巧智能轮播）、Notification（Windows权限通知）"
     },
     {
       "name": "optimus-mcp-servers",
       "source": "./plugins/optimus-mcp-servers",
-      "description": "MCP 服务器集成：GitHub Copilot MCP、MasterGo 设计协作、飞书项目等企业级 MCP 服务"
+      "description": "MCP 服务集成：GitHub、MasterGo 设计协作、飞书项目"
     },
     {
       "name": "optimus-media-plugin",
       "source": "./plugins/optimus-media-plugin",
-      "description": "音视频处理工具集：基于 ffmpeg/ffprobe 的音视频编解码分析、分辨率转换、压缩、片段截取、帧率转换、格式转换、ffplay 播放预览"
+      "description": "音视频处理：分析、转码压缩、裁剪缩放、在线下载与播放预览"
     }
   ]
 }

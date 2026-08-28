@@ -1,7 +1,7 @@
 {
   "name": "optimus-media-plugin",
-  "version": "12.1.4",
-  "description": "音视频处理工具集：基于 ffmpeg/ffprobe 的音视频编解码分析、分辨率转换、压缩、片段截取、帧率转换、格式转换、ffplay 播放预览",
+  "version": "12.1.7",
+  "description": "音视频处理：分析、转码压缩、裁剪缩放、在线下载与播放预览",
   "skills": "./skills/",
   "author": {
     "name": "optimus",
@@ -13,7 +13,7 @@
   "interface": {
     "displayName": "Optimus Media",
     "shortDescription": "音视频处理工具集",
-    "longDescription": "音视频处理工具集：基于 ffmpeg/ffprobe 的音视频编解码分析、分辨率转换、压缩、片段截取、帧率转换、格式转换、ffplay 播放预览",
+    "longDescription": "音视频处理：分析、转码压缩、裁剪缩放、在线下载与播放预览",
     "developerName": "Optimus",
     "category": "Media",
     "capabilities": [

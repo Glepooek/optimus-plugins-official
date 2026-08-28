@@ -1,7 +1,7 @@
 {
   "name": "optimus-frontend-plugin",
-  "version": "12.1.5",
-  "description": "WPF 前端开发工具集：SVG `<path d>` 提取并生成 WPF `Path.Data`/XAML；WPF XAML 性能优化；MasterGo 设计稿转 WPF 页面组装（mastergo-to-wpf-page）；MasterGo 设计稿图标/背景资产导出为 WPF Icons.xaml；MasterGo 设计稿组件抽取生成组件库（mastergo-to-wpf-components），页面组装优先复用组件库",
+  "version": "12.1.7",
+  "description": "WPF 前端开发：MasterGo 设计稿转页面与组件库、SVG 转 XAML、XAML 代码审查",
   "skills": "./skills/",
   "author": {
     "name": "optimus",
@@ -13,7 +13,7 @@
   "interface": {
     "displayName": "Optimus Frontend",
     "shortDescription": "WPF 前端开发工具集",
-    "longDescription": "WPF 前端开发工具集：SVG `<path d>` 提取并生成 WPF `Path.Data`/XAML；WPF XAML 性能优化；MasterGo 设计稿转 WPF 页面组装（mastergo-to-wpf-page）；MasterGo 设计稿图标/背景资产导出为 WPF Icons.xaml；MasterGo 设计稿组件抽取生成组件库（mastergo-to-wpf-components），页面组装优先复用组件库。内置 PreToolUse Hook：git commit 前自动门禁校验 .xaml 改动是否已经 wpf-code-review 审查",
+    "longDescription": "WPF 前端开发：MasterGo 设计稿转页面与组件库、SVG 转 XAML、XAML 代码审查。内置 PreToolUse Hook：git commit 前门禁校验 .xaml 改动是否已审查",
     "developerName": "Optimus",
     "category": "Frontend",
     "capabilities": [
