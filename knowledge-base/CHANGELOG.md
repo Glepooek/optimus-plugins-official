@@ -1,5 +1,32 @@
 # Changelog
 
+## [5.0.0] - 2026-08-28
+
+治理元数据从 `git` 试点推广到全部规范领域：`enforcement` 填写率 3.7%（12/326）→ **100%（326/326）**。此前该字段只在 12 条 `git` 规则上有值，等于一套定义完整、有校验器保护、但实际只覆盖 3.7% 内容的元数据——消费者无法用它做任何全库判断。
+
+按 Major 升版的原因是 `skill-authoring` 三条 `level` 由 `SHOULD` 改为 `MUST`（见下方 Changed），这是不兼容语义变化。治理字段本身的补齐是纯增量。
+
+### Changed
+
+- **`skill-authoring` 三条 `level` 由 `SHOULD` 修正为 `MUST`**——正文含「必须/禁止」措辞，索引却标 `SHOULD`，违反根 README 已写明的「`level` 取该小节最强条款的级别」。逐条读正文判 `enforcement` 时暴露：
+  - `skill-authoring.04.self-contained`（§3 自包含脚本）：正文含「**禁止**：依赖 `node_modules`/`Gemfile` 等外部安装步骤才可运行的脚本」
+  - `skill-authoring.05.gotchas`（§5.1 Gotchas 章节）：正文含两条「**必须**」（Gotchas 须放 `SKILL.md` 内；纠正后须回填）
+  - `skill-authoring.05.plan-validate-execute`（§5.5 Plan-Validate-Execute）：正文含「**必须**：关键在中间的校验脚本」
+
+  对消费者的影响：按 `level: MUST` 过滤硬性要求的消费者此前会漏掉这三条；按 `SHOULD` 检索推荐做法的消费者会少三条命中。三条的 `id`/`file`/`anchor` 均未变更，无需改引用。
+- 根 README 的「可选字段是渐进引入的治理元数据」改为反映现状：`enforcement`/`status`/`applies_to`/`reviewed_at`/`owner` 已在全部 `rule` 条目填满，schema 层仍可选（漏填不报错），实际是新增条目时的约定。漏填不会被校验拦住，只会在治理数据里留空洞。
+- 根 README 的 `enforcement` 判定表例子由清一色 git 场景扩为覆盖三个领域，并补入判 `ci` 的操作性检验：**工具判的是该小节的实质，还是只是它的外壳？只判外壳的填 `review`。** 原型是 `git.02.commit-hooks`——"hook 是否存在"可自动判定（外壳），但该节实质要求是"不得绕过"，只能人判。同时明确该字段的语义归属：本仓库无 CI 也无 hook，`enforcement` 对自身是声明性元数据，标 `ci` 的 130 条指的是被这些规范约束的**项目**的 CI 该拦什么。
+
+### Added
+
+- `csharp`（142 条）、`wpf`（132 条）、`skill-authoring`（40 条）全部 `rule` 条目补齐五个治理字段：`enforcement`、`status: active`、`applies_to`、`reviewed_at: 2026-08-28`、`owner: desktop client team`。全库 `enforcement` 分布 `ci` 130 / `review` 183 / `advisory` 13。
+  - `csharp` 58 `ci`：集中在 01 章工程配置（csproj/global.json/.editorconfig/CI 顺序）、02 章命名与布局（10 条，分析器 + `.editorconfig` 主场）、04 章异步反模式（`.Result`/`.Wait()`/`async void`/`ConfigureAwait` 是 Roslyn 强项）、06 章 Dispose 模式与终结器（成套 CA 规则）、10 章依赖清单（CPM/浮动版本/包源/漏洞/许可证）、12 章测试工程形态（框架统一、命名布局、断言库、覆盖率门禁）、14 章注入与弱算法（扫描器专长）、11/17 章的日志库统一与 XML 注释完整性
+  - `wpf` 51 `ci`：01/02 章工程与命名（`-windows` 后缀、Desktop workload、生成文件标记、`x:Name` 形态）、04 章 XAML 结构（命名空间、`x:Name`/`x:Key` 分工、BAML 编译）、09 章线程（Timer 类型选择、`.Result`、`async void`、`ConfigureAwait`）、13 章安全（硬编码密钥、拼接 SQL、明文 HTTP、弱哈希、签名）、14 章可访问性与本地化（`AutomationProperties` 缺失、硬编码字号与字符串、硬编码日期格式）、15 章打包（Release/版本一致/pdb/签名）、以及 06/16 章的依赖属性与 Behavior 生命周期（`DependencyProperty` 声明形态、`OnAttached`/`OnDetaching` 配对可静态检出）
+  - `skill-authoring` 13 `ci`：一半是 `skills-ref validate` 直接判定的（frontmatter 六字段、目录结构、正文行数上限、相对路径引用、`uv run` 自包含脚本、禁止交互提示），另一半是 eval 流程里有明确数值门槛的（触发率阈值、train/validation 切分比例、带/不带 skill 双跑基线、benchmark delta 记录）——这类的判定标准写在规则里，脚本能核对
+  - `advisory` 13 条为横向对比表与优先级排序类内容（测试框架对比、Mock 框架对比、推荐语言特性、性能优先级、弱引用适用场景等），它们不表达可拦截的约束
+  - `csharp.13.repo-asset-contract` 补 `source` 指向 `reference/refit.md`。其余条目按"规则自解释时不填"的既定判据留空，`source` 不追求覆盖率
+- 根 README 新增「reviewed_at：读过才填」章节：该字段语义是"正文最近一次被人实际读过并确认仍成立的日期"，不是"索引行最近编辑日期"。批量刷新而不读正文会让它变成看起来在治理、实际零保证的数字，比留空更糟。因此批量填元数据须按领域逐文件读正文，不按 `id` 列表批处理——本次即按此执行，也正是这一约束让上述三条 `level` 不符被发现。
+
 ## [4.2.0] - 2026-08-28
 
 `csharp` 领域索引覆盖率补齐（81.8% → 96.2%，超过 `wpf` 的 94.3%）。补之前先修了覆盖率算法本身——旧算法用 `min(条目数, 二级章节数)` 封顶，只比数量不看落点，会让条目集中的文件掩盖真实空缺。

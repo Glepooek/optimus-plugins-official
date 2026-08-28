@@ -2,7 +2,7 @@
 name: knowledge-base-maintain
 description: 新增、修改、迁移、废弃 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验与语义查重。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"废弃规范条目"、"校验知识库索引"、"知识库查重"。
 metadata:
-  version: "1.7.0"
+  version: "1.8.0"
   author: desktop client team
   category: tool
 compatibility: 需要本机 Python 3（跑本 skill scripts/ 下的 check_index.py 与 check_refs.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
@@ -63,9 +63,11 @@ python ".claude/skills/knowledge-base-maintain/scripts/find_duplicates.py" --top
 1. 用 Edit/Write 把正文内容写入 Step 2 确定的文件位置（`rule` → `<domain>/rules/`，`reference` → `<domain>/reference/`）。
 2. 生成 `id`：`<domain>.<两位文件编号或 ref>.<slug>`（如 `csharp.02.xxx` 或 `csharp.ref.xxx`），slug 只用小写字母/数字/连字符，确认在该领域 `index.jsonl` 中未出现过。
 3. 用 Edit 在对应 `knowledge-base/<domain>/index.jsonl` **末尾追加一行**（不重排已有行），必填字段：`id`、`kind`、`level`（仅 rule）、`file`（相对领域根，如 `rules/02-coding-style.md`）、`anchor`（标题文本，非 slug；`reference` 条目留空字符串）、`title`、`tags`、`summary`。
-4. 按需填写可选治理字段（未填不报错，填了必须合法，取值约束见 `knowledge-base/README.md` 字段表）。其中两个字段有明确判断依据：
-   - **`enforcement`**（仅 rule）：该规则能否被工具无歧义判定？能 → `ci`；需人工判断内容质量或意图 → `review`；建议性、不作拦截依据 → `advisory`。`level: MAY` 不得配 `ci`。
-   - **`source`**：该规则的理由、选型对比或例外场景是否已写在本领域 `reference/` 中？是 → 填 `<file>#<标题文本>` 指向它（如 `reference/commit-message-tooling.md#2.3 为什么不能靠"团队自觉"代替 hook`）；有权威外部依据 → 填完整 URL。**不要把 reference 里的理由复制进规范正文**——规范给约束、reference 给理由是知识库的分层设计，复制会产生两份需同步维护的同一事实。规则自解释、无独立理由文档时留空。
+4. 填写治理字段。`rule` 条目**须一并填** `enforcement`、`status`（新增一律 `active`）、`applies_to`、`reviewed_at`（今天）、`owner`——schema 层它们仍是可选（漏填不报错），但全库 326 条 `rule` 已填满，漏填只会在治理数据里留一个校验器抓不到的空洞。取值约束见 `knowledge-base/README.md` 字段表。其中两个字段有明确判断依据：
+   - **`enforcement`**（仅 rule）：该规则能否被工具无歧义判定？能 → `ci`；需人工判断内容质量或意图 → `review`；建议性、不作拦截依据 → `advisory`。`level: MAY` 不得配 `ci`。**判 `ci` 前先做外壳检验**：工具判的是该小节的实质，还是只是它的外壳（文件放哪、有没有引入某个包）？只判外壳 → `review`。问的是"能不能被工具判定"，不是"本仓库有没有在跑"——本仓库无 CI，该字段描述的是被规范约束的**项目**该怎么拦。
+   - **`source`**：该规则的理由、选型对比或例外场景是否已写在本领域 `reference/` 中？是 → 填 `<file>#<标题文本>` 指向它（如 `reference/commit-message-tooling.md#2.3 为什么不能靠"团队自觉"代替 hook`）；有权威外部依据 → 填完整 URL。**不要把 reference 里的理由复制进规范正文**——规范给约束、reference 给理由是知识库的分层设计，复制会产生两份需同步维护的同一事实。规则自解释、无独立理由文档时留空，`source` 不追求覆盖率。注意该字段是**数组**，单个依据也要写成 `["..."]`。
+
+**批量为已有条目补治理字段时**（不新增内容，只填元数据）：按领域逐文件**读正文**再填，不要按 `id` 列表批处理。`reviewed_at` 的语义是"正文最近被人实际读过并确认仍成立"，不读正文就刷日期是假声明；且读正文是判 `enforcement` 的必要输入。5.0.0 推广时正是这样发现 `skill-authoring` 三条 `level` 与正文措辞不符——批处理两件事都做不到。填完跑 `--audit` 看 `enforcement` 填写率是否达到预期。
 
 ## Step 4（修改/迁移条目）：定位与同步
 
@@ -139,6 +141,7 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" --audit
 | `重复 id` | 与其他领域的条目冲突（全局唯一） |
 | `id 不符合 ... 格式` | 中段不是两位数字或 `ref`，或 slug 含大写/下划线 |
 | `缺少必填字段` / `非法 level` | 索引行漏字段或枚举拼错 |
+| `字段 source 必须是数组` | `source` 写成了字符串。单个依据也要 `["reference/x.md#标题"]` |
 | `source 引用的文件不存在` / `source 锚点未在 ... 找到` | `reference/` 文件被迁移或标题被改动，`source` 未同步 |
 | `level=MAY 不得标 enforcement=ci` | 可选做法不能作为 CI 拦截依据，改 `advisory`，或确认该规则实际是 MUST/SHOULD |
 | `孤儿文件未被索引引用` | 新建了 Markdown 但未登记索引 |
