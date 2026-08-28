@@ -1,16 +1,15 @@
 # 01 · 环境与技术选型
 
-> 更新历史：2026-08-21 创建。
+> 更新历史：2026-08-21 创建；2026-08-28 目标框架与构建 CI 的通用条款去重，改为引用 `knowledge-base/csharp/rules/01-project-structure.md`，本篇仅保留 WPF 特有约束。
 
 **版本中立声明**：本规范不绑定具体 .NET / WPF 版本。目标框架与 SDK 由团队在仓库级统一决策，规范只约定"如何一致"，不约定"用哪一版"。版本升级与迁移以官方升级指南为准。
 
 ## 1. 目标框架策略
 
-- **必须**：全仓库统一 `TargetFramework`（WPF 必含 `-windows` 后缀，如 `net8.0-windows`），主版本由团队决策，并用 `global.json` / `Directory.Build.props` 固化
-- **必须**：优先选择当前处于支持期的 LTS 版本；WPF 的修复与安全更新只在支持期内提供
-- **必须**：目标框架含 `-windows` 后缀（`netX.Y-windows`），纯 `netX.Y` 无法启用 WPF 与 Windows 桌面 API
-- **应该**：多项目仓库通过 `Directory.Build.props` 集中声明目标框架，避免逐项目手写
-- **禁止**：同一解决方案内混用不兼容的目标框架（除非有明确理由并在代码中注释）
+全仓库统一 `TargetFramework`、优先 LTS、用 `global.json` / `Directory.Build.props` 固化、禁止解决方案内混用不兼容框架等**通用**约束见 `knowledge-base/csharp/rules/01-project-structure.md` § 1. 目标框架策略。WPF 侧的附加要求：
+
+- **必须**：目标框架含 `-windows` 后缀（`netX.Y-windows`，如 `net8.0-windows`），纯 `netX.Y` 无法启用 WPF 与 Windows 桌面 API
+- **必须**：选择 LTS 版本时注意 WPF 的修复与安全更新只在该版本支持期内提供（平台支持期事实见 `knowledge-base/dotnet/`）
 
 ## 2. SDK 与工具链
 
@@ -83,8 +82,8 @@
 
 ## 7. 构建与 CI
 
-- **必须**：CI 顺序执行 `dotnet restore` → `dotnet build -warnaserror` → `dotnet test`
-- **必须**：CI 使用与 `global.json` 一致的 SDK，并安装 Desktop workload；构建必须可复现
-- **应该**：CI 缓存 NuGet 包与 workload，缩短还原时间
-- **应该**：构建产物（`bin` / `obj`）不入库，由 `.gitignore` 统一排除
-- **禁止**：CI 使用私有 / 本地独有的机器依赖（XAML 编译不依赖本地设计器）
+CI 步骤顺序、SDK 与 `global.json` 一致、NuGet 缓存、构建可复现、产物不入库等**通用**约束见 `knowledge-base/csharp/rules/01-project-structure.md` § 8. 构建与 CI。WPF 侧的附加要求：
+
+- **必须**：CI 环境安装 Desktop workload，否则 WPF 项目无法构建
+- **应该**：除 NuGet 包外一并缓存 workload，缩短还原时间
+- **禁止**：构建依赖本地设计器——XAML 编译不需要设计器，依赖它会让 CI 无法复现

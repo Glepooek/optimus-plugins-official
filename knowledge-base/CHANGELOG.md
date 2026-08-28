@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.0.0] - 2026-08-28
+
+用 `knowledge-base-maintain` 1.4.0 新增的 `find_duplicates.py` 做全库跨领域查重，处理评分最高的 4 对 C# ↔ WPF 重复。这批重复是自动查重的首次实战产出——3.0.0 那次 `git` ↔ `csharp` 语义环靠人工通读才发现，本次 4 对中的 3 对排在候选前三名。
+
+### Changed
+
+- **破坏性：`wpf.11.integration-test` 的 `level` 由 `MUST` 降为 `SHOULD`**。通用条款（验证真实协作、可控环境、禁止连生产资源、禁止写成慢速 E2E）迁出后，该小节只剩一条 `应该` 级的 WPF 特有条款，原 `MUST` 已不反映正文实际措辞。按 `level` 取小节内最强条款级别的既定规则，此处只能是 `SHOULD`。按 `level` 做拦截强度分档的消费者需重新评估该条目。
+- **`wpf/rules/11-testing.md` §1「测试分层」去重**：通用分层原则改为引用 `csharp/rules/12-testing.md` § 1. 测试策略与金字塔，本篇只保留 WPF 侧的术语对应（通用规范的 E2E 层在 WPF 即 UI 自动化测试）与「禁止只有 UI 自动化没有单元测试」。
+- **`wpf/rules/11-testing.md` §7「集成测试」去重**：验证对象、可控环境与两条禁止项改为引用 `csharp/rules/12-testing.md` § 7. 集成测试，本篇只补 WPF 特有的一条（重点验证 ViewModel ↔ 服务 ↔ 持久化链路）。
+- **`wpf/rules/01-environment.md` §1「目标框架策略」去重**：统一 `TargetFramework`、优先 LTS、用 `global.json` / `Directory.Build.props` 固化等通用约束改为引用 `csharp/rules/01-project-structure.md` § 1. 目标框架策略，本篇只保留 `-windows` 后缀必需性与 LTS 支持期语义两条 WPF 特有约束。
+- **`wpf/rules/01-environment.md` §7「构建与 CI」去重**：CI 步骤顺序、SDK 与 `global.json` 一致、NuGet 缓存、构建可复现、产物不入库等通用约束改为引用 `csharp/rules/01-project-structure.md` § 8. 构建与 CI，本篇只保留 Desktop workload 安装、workload 缓存、禁止依赖本地设计器三条。
+- 上述 4 个条目的 `title`/`summary` 同步收窄为其正文实际保留的 WPF 特有内容，并注明通用约束所在的 csharp 章节——去重后仍按旧 summary 检索会误以为 wpf 侧承载完整规则。
+- 两个 wpf 规范文件的 `anchor` **未变更**，按 `file` + `anchor` 定位的消费者不受影响；本仓库两个 review skill（`wpf-code-review` / `csharp-code-review`）均未引用这两个文件，无消费者需同步。
+
+### Fixed
+
+- `wpf/rules/11-testing.md` 篇首原已声明「通用测试策略沿用团队约定，本篇聚焦 WPF 特有测试问题」，但 §1 与 §7 的正文把通用条款完整重述了一遍，与自身声明矛盾。本次去重使正文与该声明一致。
+
 ## [3.0.0] - 2026-08-27
 
 按 `docs/superpowers/plans/2026-08-27-knowledge-base-optimization.md` 执行 Phase 2（规则内容质量治理），以 `git` 领域为试点，并处理试点中发现的 `git` ↔ `csharp` 跨领域重复。
