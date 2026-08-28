@@ -61,6 +61,16 @@
       "notes": "纯描述性领域，知识库负责概念、skill 负责操作；不收命令模板"
     },
     {
+      "domain": "architecture",
+      "title": "软件架构风格与设计原则",
+      "categories": ["rules", "reference"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": [],
+      "reviewed_at": "2026-08-29",
+      "notes": "语言无关的架构风格、分层契约、设计原则与选型判据；语言落地引用 csharp，桌面 UI 形态引用 wpf，单个设计模式判据归 design-patterns"
+    },
+    {
       "domain": "skill-authoring",
       "title": "Skill 创建与维护规范",
       "categories": ["rules", "reference"],

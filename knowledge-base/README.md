@@ -1,8 +1,8 @@
 # 知识库（knowledge-base）
 
-> 版本：5.0.0
+> 版本：5.1.0
 
-跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
+跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`、`architecture`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
 
 ## 目录结构
 
