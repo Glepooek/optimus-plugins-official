@@ -1,6 +1,6 @@
 # 知识库（knowledge-base）
 
-> 版本：4.0.1
+> 版本：4.1.0
 
 跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
 
@@ -52,7 +52,7 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
 | `tags` | 必填 | 自由关键词数组 |
 | `summary` | 必填 | 一句话摘要 |
 | `enforcement` | 可选 | `ci` \| `review` \| `advisory`，表达规则如何执行 |
-| `status` | 可选 | `active` \| `deprecated` \| `experimental`，缺省视为 `active` |
+| `status` | 可选 | `active` \| `deprecated` \| `experimental`，缺省视为 `active`；标 `deprecated` 须同时满足下文"status：废弃条目的过渡期"的三条要求 |
 | `source` | 可选 | 依据数组，两种形式：外部 URL，或领域内相对路径 `<file>#<标题文本>` |
 | `applies_to` | 可选 | 技术栈、版本或场景边界数组 |
 | `reviewed_at` | 可选 | 最近审阅日期，ISO 格式 `YYYY-MM-DD` |
@@ -85,6 +85,20 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
 - 外部依据写完整 URL（如 `https://www.conventionalcommits.org/`）。
 - `check_index.py` 校验内部引用的文件与锚点真实存在；URL 不做离线校验。因此**迁移 `reference/` 文件或改其标题时，`source` 也是需要同步的引用之一**。
 - 规则本身自解释、无独立理由文档时不填——`source` 未填不代表缺失，不追求 100% 覆盖。
+
+### status：废弃条目的过渡期
+
+条目不再适用时**不直接删索引行**，而是标 `status: deprecated` 走一个过渡期。直接删除会让按旧 `id` 检索的消费者只得到"查不到"，而不是"已废弃，改用 X"——线索断在最需要它的地方（3.0.0 删 `csharp.15.quality-gate-overview` 即是此形态）。
+
+废弃条目必须同时满足三条，否则 `check_index.py` 报错：
+
+- **正文小节保留，标题加「已废弃」标记**，节首一行说明替代去向与移除计划。正文不删，是为了让按 `file` + `anchor` 定位的旧引用仍能读到内容与指引；`anchor` 保持不变。标记文本固定用「已废弃」，换成「弃用」「过时」检不出。
+- **`summary` 须含替代去向**：条目 `id`（`git.03.pr-conventions`）或规范文件路径（`git/rules/03-pull-requests.md`）。只标废弃不给去向，比直接删更糟——检索者拿到一条死规则且无路可走。
+- **不得保留 `enforcement: ci`**：已废弃的规则不应仍作为 CI 拦截依据，改 `advisory` 或删该字段。
+
+其他条目的 `source` 不得指向已废弃的小节（该小节随时会被移除，届时 `source` 静默失效），校验器一并拦截。废弃属不兼容语义变化，按 Major 升版本；废弃条目在下一个 Major 版本移除正文与索引行。当前废弃条目数可用 `check_index.py --audit` 查看。
+
+例外：**从未被外部引用、且刚建立不久的条目**（当次提交内的笔误、重复登记）直接删除即可，无消费者需要过渡期。
 
 ## 索引粒度规范
 

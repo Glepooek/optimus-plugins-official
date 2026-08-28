@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.1.0] - 2026-08-28
+
+### Added
+
+- 根 README 新增「status：废弃条目的过渡期」章节。此前 `status` 只在字段表里列了 `active`/`deprecated`/`experimental` 三个枚举值，没有任何关于"怎么废弃一条规则"的规定——结果全库 326 条无一使用 `deprecated`，3.0.0 废弃 `csharp.15.quality-gate-overview` 时只能直接删索引行，按旧 `id` 检索的消费者只得到「查不到」而非「已废弃，改用 `git.03.pr-conventions`」。
+- 废弃机制定为**保留正文 + 标题加「已废弃」标记 + `anchor` 不变**，配三条强制要求（正文标题带标记、`summary` 含替代去向、不得保留 `enforcement: ci`），并禁止其他条目的 `source` 指向已废弃小节。四项均由 `check_index.py` 校验。`anchor` 保持不变是关键取舍——改 `anchor` 会让按 `file`+`anchor` 固定映射的消费者立刻失效，等于用破坏性变更实现一个本意是给过渡期的机制。
+- 明确废弃属不兼容语义变化按 Major 升版本，废弃条目在下一个 Major 移除正文与索引行；并给出例外：从未被引用且刚建立不久的条目（当次提交内的笔误、重复登记）直接删除即可。
+
+### Changed
+
+- 字段表 `status` 行补充指引，指向新增章节的三条要求。
+
 ## [4.0.1] - 2026-08-28
 
 `check_refs.py` 扫描范围扩到知识库正文后的首轮修复（此前该校验器只看 `plugins/*/skills/`，正文内的 `§` 引用无人看守）。

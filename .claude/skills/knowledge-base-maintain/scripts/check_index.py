@@ -29,6 +29,12 @@ ENFORCEMENTS = ("ci", "review", "advisory")
 STATUSES = ("active", "deprecated", "experimental")
 DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 
+# 废弃标记：正文小节标题与 source 目标标题都用这一个词，只认一种写法便于机械校验
+DEPRECATED_MARK = "已废弃"
+
+# 替代去向：条目 id（`git.03.pr-conventions`）或规范文件路径（`git/rules/03-pull-requests.md`）
+SUCCESSOR_RE = re.compile(r'[a-z0-9-]+\.(?:\d{2}|ref)\.[a-z0-9-]+|[a-z0-9-]+/(?:rules|reference)/[a-z0-9-]+\.md')
+
 # 领域元数据文件，不参与孤儿文件判定（不属于 rules/reference 内容）
 DOMAIN_META_FILES = {"00-README.md"}
 
@@ -142,8 +148,54 @@ def check_source_refs(domain_dir, entry):
         if not target.exists():
             problems.append(f"[{entry_id}] source 引用的文件不存在：{rel}")
             continue
-        if anchor and not any(anchor in h for h in find_headings(target.read_text(encoding="utf-8"))):
+        if not anchor:
+            continue
+        matched = [h for h in find_headings(target.read_text(encoding="utf-8")) if anchor in h]
+        if not matched:
             problems.append(f"[{entry_id}] source 锚点未在 {rel} 中找到匹配标题：{anchor}")
+        elif all(DEPRECATED_MARK in h for h in matched):
+            # 活跃规则的理由挂在已废弃小节上——该小节随时会被移除，届时 source 静默失效
+            problems.append(
+                f"[{entry_id}] source 指向{DEPRECATED_MARK}的小节：{rel} 的「{matched[0]}」，"
+                f"须改指其替代去向"
+            )
+    return problems
+
+
+def check_deprecated(domain_dir, entry):
+    """校验 `status: deprecated` 条目的三项前提。
+
+    `deprecated` 长期是纯枚举占位（全库无一使用），废弃只能走「删索引条目」——
+    删完外部消费者拿旧 id 检索只得到「查不到」，而不是「已废弃，改用 X」。要让该状态
+    真正可用，索引与正文必须同时表明废弃事实与替代去向，否则它只是个更隐蔽的死条目。
+    """
+    if entry.get("status") != "deprecated":
+        return []
+    entry_id = entry.get("id", "<无 id>")
+    problems = []
+
+    if entry.get("enforcement") == "ci":
+        problems.append(f"[{entry_id}] status=deprecated 不得标 enforcement=ci（已废弃的规则不应仍在 CI 拦截）")
+
+    summary = entry.get("summary") or ""
+    if not SUCCESSOR_RE.search(summary):
+        problems.append(
+            f"[{entry_id}] summary 未说明替代去向——废弃条目须指明改用哪条规则"
+            f"（条目 id 或 `<domain>/rules/<file>.md` 路径），只标废弃不给去向比直接删更糟"
+        )
+
+    # 正文标题须带废弃标记：索引说废弃而正文没标，按 file+anchor 读正文的人毫不知情
+    anchor = entry.get("anchor") or ""
+    rel = entry.get("file")
+    if anchor and isinstance(rel, str) and rel:
+        target = domain_dir / rel
+        if target.exists():  # file 缺失由 check_file_exists 报告，此处不重复
+            matched = [h for h in find_headings(target.read_text(encoding="utf-8")) if anchor in h]
+            if matched and not any(DEPRECATED_MARK in h for h in matched):
+                problems.append(
+                    f"[{entry_id}] 正文标题未标注已废弃：{rel} 的「{matched[0]}」"
+                    f"须改为「{matched[0]}（{DEPRECATED_MARK}）」"
+                )
     return problems
 
 
@@ -299,6 +351,8 @@ def run_checks(base_dir, domains):
                 problems.append(f"[{domain}] {msg}")
             for msg in check_source_refs(domain_dir, entry):
                 problems.append(f"[{domain}] {msg}")
+            for msg in check_deprecated(domain_dir, entry):
+                problems.append(f"[{domain}] {msg}")
             for check in (check_id_format_wrapper(domain), check_file_path_safe):
                 result = check(domain_dir, entry)
                 if result:
@@ -381,6 +435,10 @@ def build_audit(base_dir, domains):
             "enforcement_coverage": (
                 round(governance_filled / len(rules), 3) if rules else None
             ),
+            "deprecated": [
+                e["id"] for e in entries
+                if e.get("status") == "deprecated" and isinstance(e.get("id"), str)
+            ],
             "orphan_files": check_orphan_files(domain_dir, entries),
             "coverage": coverage,
             "coverage_ratio": round(indexed_total / eligible_total, 3) if eligible_total else None,
@@ -388,6 +446,9 @@ def build_audit(base_dir, domains):
         report["totals"]["entries"] += len(entries)
         report["totals"]["rules"] += kinds.get("rule", 0)
         report["totals"]["references"] += kinds.get("reference", 0)
+        report["totals"]["deprecated"] = (
+            report["totals"].get("deprecated", 0) + len(report["domains"][domain]["deprecated"])
+        )
         report["totals"]["enforcement_filled"] = (
             report["totals"].get("enforcement_filled", 0) + governance_filled
         )
@@ -400,6 +461,8 @@ def print_audit(report):
     ratio = f"{filled / t['rules']:.1%}" if t["rules"] else "n/a"
     print(f"知识库审计报告：{t['entries']} 条记录（rule {t['rules']} / reference {t['references']}）")
     print(f"治理元数据：{filled}/{t['rules']} 条 rule 已填 enforcement（{ratio}）")
+    if t.get("deprecated"):
+        print(f"已废弃条目：{t['deprecated']} 条（正文保留、待下一个 Major 版本移除）")
     for domain, data in report["domains"].items():
         ratio = data["coverage_ratio"]
         ratio_text = f"{ratio:.1%}" if ratio is not None else "n/a（无规范文件）"
@@ -407,6 +470,8 @@ def print_audit(report):
         print(f"   规范文件二级标题索引覆盖率：{ratio_text}")
         if data["enforcements"]:
             print(f"   enforcement 分布：{data['enforcements']}")
+        if data["deprecated"]:
+            print(f"   已废弃：{', '.join(data['deprecated'])}")
         if data["orphan_files"]:
             print(f"   孤儿文件：{data['orphan_files']}")
         for rel, c in data["coverage"].items():

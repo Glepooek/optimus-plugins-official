@@ -7,6 +7,7 @@ from check_index import (
     build_audit,
     check_anchor_exists,
     check_catalog,
+    check_deprecated,
     check_duplicate_ids,
     check_file_exists,
     check_file_path_safe,
@@ -313,6 +314,98 @@ class TestCheckSourceRefs(unittest.TestCase):
             self.assertTrue(any("source 锚点未在" in p for p in problems))
 
 
+class TestCheckDeprecated(unittest.TestCase):
+    """废弃条目的看守规则。
+
+    `deprecated` 此前是纯枚举占位——全库 326 条无一使用，废弃只能走「删索引条目」
+    （3.0.0 删 csharp.15.quality-gate-overview 即是），外部消费者拿旧 id 检索只得到
+    「查不到」而非「已废弃，改用 X」。这批检查是让该状态可用的前提。
+    """
+
+    def _domain(self, d, heading="## 1. 质量门禁总览（已废弃）", summary="已废弃：改用 git.03.pr-conventions。"):
+        base = Path(d)
+        (base / "rules").mkdir(parents=True, exist_ok=True)
+        (base / "rules" / "15-quality.md").write_text(
+            f"# 15 · 质量\n\n{heading}\n\n> 已废弃（2026-08-28）：本节约束迁至 git 领域。\n",
+            encoding="utf-8")
+        entry = valid_entry(
+            id="csharp.15.quality-gate-overview", file="rules/15-quality.md",
+            anchor="1. 质量门禁总览", status="deprecated", summary=summary)
+        return base, entry
+
+    def test_active_entry_is_not_checked(self):
+        """缺省状态与显式 active 都不走废弃校验，避免给 314 条未标 status 的条目添负担。"""
+        with tempfile.TemporaryDirectory() as d:
+            base, entry = self._domain(d)
+            for status in (None, "active", "experimental"):
+                e = dict(entry)
+                e.pop("status", None) if status is None else e.update(status=status)
+                self.assertEqual(check_deprecated(base, e), [], status)
+
+    def test_well_formed_deprecation_passes(self):
+        with tempfile.TemporaryDirectory() as d:
+            base, entry = self._domain(d)
+            self.assertEqual(check_deprecated(base, entry), [])
+
+    def test_requires_deprecation_marker_in_heading(self):
+        """索引说废弃、正文标题没标记 → 按 file+anchor 读正文的人毫不知情。"""
+        with tempfile.TemporaryDirectory() as d:
+            base, entry = self._domain(d, heading="## 1. 质量门禁总览")
+            problems = check_deprecated(base, entry)
+            self.assertTrue(any("正文标题未标注已废弃" in p for p in problems), problems)
+
+    def test_requires_successor_in_summary(self):
+        """只标废弃不给去向，比直接删更糟——检索者拿到一条死规则且无路可走。"""
+        with tempfile.TemporaryDirectory() as d:
+            base, entry = self._domain(d, summary="本条已不再适用。")
+            problems = check_deprecated(base, entry)
+            self.assertTrue(any("summary 未说明替代去向" in p for p in problems), problems)
+
+    def test_accepts_successor_expressed_as_path(self):
+        """替代去向可以是条目 id，也可以是文件路径。"""
+        with tempfile.TemporaryDirectory() as d:
+            base, entry = self._domain(
+                d, summary="已废弃：改见 knowledge-base/git/rules/03-pull-requests.md。")
+            self.assertEqual(check_deprecated(base, entry), [])
+
+    def test_rejects_ci_enforcement_on_deprecated(self):
+        """已废弃却仍作为 CI 拦截依据是矛盾状态。"""
+        with tempfile.TemporaryDirectory() as d:
+            base, entry = self._domain(d)
+            entry["enforcement"] = "ci"
+            problems = check_deprecated(base, entry)
+            self.assertTrue(any("enforcement=ci" in p for p in problems), problems)
+
+    def test_missing_file_is_not_double_reported(self):
+        """file 不存在由 check_file_exists 报告，此处不重复。"""
+        with tempfile.TemporaryDirectory() as d:
+            base, entry = self._domain(d)
+            entry["file"] = "rules/gone.md"
+            self.assertEqual([p for p in check_deprecated(base, entry) if "标题" in p], [])
+
+
+class TestDeprecatedSourceRefs(unittest.TestCase):
+    def test_source_pointing_at_deprecated_section_is_reported(self):
+        """活跃规则的理由不得挂在已废弃小节上。"""
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            (base / "reference").mkdir(parents=True)
+            (base / "reference" / "tooling.md").write_text(
+                "# 工具\n\n## 2. 旧方案对比（已废弃）\n\n## 3. 现方案\n", encoding="utf-8")
+            entry = valid_entry(source=["reference/tooling.md#2. 旧方案对比"])
+            problems = check_source_refs(base, entry)
+            self.assertTrue(any("已废弃" in p for p in problems), problems)
+
+    def test_source_pointing_at_active_section_is_ok(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            (base / "reference").mkdir(parents=True)
+            (base / "reference" / "tooling.md").write_text(
+                "# 工具\n\n## 2. 旧方案对比（已废弃）\n\n## 3. 现方案\n", encoding="utf-8")
+            entry = valid_entry(source=["reference/tooling.md#3. 现方案"])
+            self.assertEqual(check_source_refs(base, entry), [])
+
+
 class TestCheckOrphanFiles(unittest.TestCase):
     def test_readme_is_not_orphan(self):
         with tempfile.TemporaryDirectory() as d:
@@ -557,6 +650,23 @@ class TestBuildAudit(unittest.TestCase):
             self.assertEqual(data["enforcements"], {"ci": 1, "review": 1, "(未填)": 1})
             self.assertEqual(data["enforcement_coverage"], round(2 / 3, 3))
             self.assertEqual(report["totals"]["enforcement_filled"], 2)
+
+    def test_counts_deprecated_entries(self):
+        """审计不报废弃条目数，等于放任它们无声堆积——保留正文的废弃方式尤其需要这个计数。"""
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            write_domain(
+                base, "git",
+                [
+                    valid_entry(id="git.01.a", file="rules/01-x.md", anchor="甲"),
+                    valid_entry(id="git.01.b", file="rules/01-x.md", anchor="乙（已废弃）",
+                                status="deprecated", summary="已废弃：改用 git.01.a。"),
+                ],
+                {"rules/01-x.md": "## 甲\n## 乙（已废弃）\n"},
+            )
+            report = build_audit(base, ["git"])
+            self.assertEqual(report["domains"]["git"]["deprecated"], ["git.01.b"])
+            self.assertEqual(report["totals"]["deprecated"], 1)
 
 
 if __name__ == "__main__":

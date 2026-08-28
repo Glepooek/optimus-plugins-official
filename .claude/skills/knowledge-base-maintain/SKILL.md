@@ -1,8 +1,8 @@
 ---
 name: knowledge-base-maintain
-description: 新增、修改、迁移 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验与语义查重。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"校验知识库索引"、"知识库查重"。
+description: 新增、修改、迁移、废弃 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验与语义查重。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"废弃规范条目"、"校验知识库索引"、"知识库查重"。
 metadata:
-  version: "1.5.0"
+  version: "1.6.0"
   author: desktop client team
   category: tool
 compatibility: 需要本机 Python 3（跑本 skill scripts/ 下的 check_index.py 与 check_refs.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
@@ -11,7 +11,7 @@ allowed-tools: Read Write Edit Bash Grep Glob
 
 # 知识库维护
 
-维护 `knowledge-base/` 下的内容与索引一致性：新增条目、修改/迁移条目、仅校验、查重四种场景。
+维护 `knowledge-base/` 下的内容与索引一致性：新增条目、修改/迁移条目、废弃条目、仅校验、查重五种场景。
 
 ## Step 1：确认场景与依赖
 
@@ -26,6 +26,7 @@ python --version
 确认场景：
 - **新增条目**：新增一条 `rule` 或 `reference`（写入前先按 Step 2 末尾查重）
 - **修改/迁移条目**：修改已有条目内容，或把内容从规范文件移到 `reference/`（或反之）
+- **废弃条目**：某条规则不再适用，或其约束已归入另一领域——走 Step 4.5，**不要直接删索引行**
 - **仅校验**：不新增/修改内容，只想看当前 `knowledge-base/` 一致性状态
 - **查重**：只想排查语义重复条目，不改内容——直接跳到 Step 2 末尾的 `find_duplicates.py`，跑完人工判断即可，无需走后续步骤
 
@@ -72,6 +73,44 @@ python ".claude/skills/knowledge-base-maintain/scripts/find_duplicates.py" --top
 4. **迁移或重命名文件时**，用 Grep 在全仓库反查引用该路径的位置并同步更新五处：索引 `file` 字段、索引 `source` 字段中的内部引用、领域 `00-README.md` 的文件地图、其他正文的交叉引用、消费者 skill 的引用（含 Markdown 链接目标 `](...)`，不只是反引号提及）。历史记录类文本（CHANGELOG、正文头部"更新历史"、`docs/superpowers/` 下的历史计划）记录的是当时事实，不改写。
 5. **重排或重命名规范文件的章节时**（改动 `## N. 标题` 的编号或文本），消费者 skill 里的 `§ N` 引用会跟着失效，须一并更新——这类引用不在索引中，靠 Step 5 的 `check_refs.py` 兜底检出。
 
+## Step 4.5（废弃条目）：标记而非删除
+
+**先判断是废弃还是删除**——两者处理方式不同，选错会让外部消费者失去线索：
+
+| 情形 | 处理 |
+|---|---|
+| 规则的约束仍然成立，只是**归属换了领域**（跨领域去重的典型结果） | 走本 Step 标记 `deprecated`，`summary` 指明新归属 |
+| 规则本身**不再适用**（技术演进使其失效、当初的判断被推翻） | 走本 Step 标记 `deprecated`，`summary` 说明改用什么或为何不再需要 |
+| 条目**从未被外部引用过、且刚建立不久**（当次提交内的笔误、重复登记） | 直接删索引行与正文，不留废弃痕迹——没有消费者需要过渡期 |
+
+除第三种，**一律不直接删索引行**。3.0.0 废弃 `csharp.15.quality-gate-overview` 时直接删除，外部消费者按旧 `id` 检索只会得到「查不到」，而不是「已废弃，改用 `git.03.pr-conventions`」——线索断在最需要它的地方。
+
+确认为废弃后，四处同步改动：
+
+1. **正文小节保留，标题加废弃标记**，并在节首加一行说明去向。正文不删是为了让按 `file`+`anchor` 定位的旧引用仍能读到内容与替代指引；`anchor` 不变，`check_index.py` / `check_refs.py` 全部继续通过：
+
+   ```markdown
+   ## 1. 质量门禁总览（已废弃）
+
+   > 已废弃（2026-08-28）：本节约束迁至 `knowledge-base/git/rules/03-pull-requests.md` § 1. PR 与合并。
+   > 本节保留仅为兼容旧引用，不再更新，将于下一个 Major 版本移除。
+
+   （原正文条款保留在此，不改动）
+   ```
+
+   标记文本固定用「已废弃」（`check_index.py` 按该词机械校验，换成「弃用」「过时」检不出）。
+
+2. **索引行改三个字段**（`id`/`file`/`anchor` 全部不动）：
+   - `status` 改为 `deprecated`
+   - `summary` 开头写「已废弃：」并**必须**含替代去向（条目 `id` 如 `git.03.pr-conventions`，或路径如 `git/rules/03-pull-requests.md`）——校验器强制要求，只标废弃不给去向比直接删更糟
+   - 若原有 `enforcement: ci`，改为 `advisory` 或删除该字段（已废弃的规则不应仍在 CI 拦截）
+
+3. **反查其他条目的 `source`**：若有活跃条目的 `source` 指向被废弃的小节，改指其替代去向。`check_index.py` 会报错，不需要手工穷举。
+
+4. **反查消费者引用**：用 Grep 在 `plugins/*/skills/` 与 `knowledge-base/` 正文中查该文件路径与 `§ 章节号`，把引用改指替代去向。消费者继续引用已废弃小节不会被校验拦住（正文还在、标题也对得上），只能靠这一步人工处置。
+
+废弃是**不兼容语义变化**，Step 6 按 Major 升版本，CHANGELOG 须写明被废弃的条目 `id`、替代去向、以及外部消费者需要做什么。
+
 ## Step 5：运行一致性校验
 
 ```bash
@@ -100,6 +139,10 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" --audit
 | `level=MAY 不得标 enforcement=ci` | 可选做法不能作为 CI 拦截依据，改 `advisory`，或确认该规则实际是 MUST/SHOULD |
 | `孤儿文件未被索引引用` | 新建了 Markdown 但未登记索引 |
 | `领域未登记到 catalog.json` | 新建领域后忘记同步 `catalog.json` |
+| `summary 未说明替代去向` | 废弃条目只标了 `status: deprecated`，没写改用哪条——补 `id` 或路径 |
+| `正文标题未标注已废弃` | 索引标了废弃但正文标题没加「（已废弃）」，读正文的人不知情 |
+| `source 指向已废弃的小节` | 活跃条目的理由挂在废弃内容上，改指其替代去向 |
+| `status=deprecated 不得标 enforcement=ci` | 已废弃却仍作为 CI 拦截依据，改 `advisory` 或删该字段 |
 
 **改动了规范文件的章节标题或章节编号时**，还须校验 `§ 章节号` 引用——这类引用不在 `index.jsonl` 里，`check_index.py` 管不到。校验范围含消费者 skill 与**知识库正文自身**（跨领域去重会在正文留下 `csharp/rules/12-testing.md § 1` 这类引用，与 skill 里的一样脆弱）：
 
@@ -116,7 +159,7 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_refs.py"
 
 裸章节号引用只告警不失败；`--strict` 可把告警也算作失败。**新写消费者引用时一律带标题文本**，否则等于自愿放弃这层保护。
 
-## Step 6：同步版本号与 CHANGELOG（新增/修改/迁移场景，仅校验场景跳过）
+## Step 6：同步版本号与 CHANGELOG（新增/修改/迁移/废弃场景，仅校验场景跳过）
 
 判断本次变更的版本升级级别：
 
@@ -124,7 +167,7 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_refs.py"
 |---|---|
 | 新增领域、新增规范条目、新增 reference 条目 | Minor `x.X.x` |
 | 修改已有规范/reference 内容、修正索引、文档优化 | Patch `x.x.X` |
-| 删除领域、删除规范条目、规范措辞产生不兼容语义变化（如 SHOULD 改 MUST） | Major `X.x.x` |
+| 删除领域、删除规范条目、**废弃条目（`status` 改 `deprecated`）**、规范措辞产生不兼容语义变化（如 SHOULD 改 MUST） | Major `X.x.x` |
 
 用 Edit 更新 `knowledge-base/README.md` 顶部 `> 版本：x.x.x`，并在 `knowledge-base/CHANGELOG.md` 顶部追加对应版本条目（格式同 skill CHANGELOG：`## [版本号] - YYYY-MM-DD` + `### Added`/`Changed`/`Removed`/`Fixed`，只写实际发生的类别）。
 
@@ -141,3 +184,4 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_refs.py"
 | `check_index.py` 报孤儿文件 | 判断该文件是新建待登记（补索引行）还是应删除的残留（确认后删） | 若该文件有意不登记索引，说明它不属于 `rules/`/`reference/` 分类，与用户确认其归属 |
 | `check_index.py` 报领域未登记到 `catalog.json` | 在 `catalog.json` 的 `domains` 追加该领域记录，`categories` 只填实际存在的分类目录 | 若该目录不应作为知识库领域（如误建），删除其 `index.jsonl` 或整个目录 |
 | 新建领域但用户未提供该领域的规范级别定义 | 参照 `knowledge-base/csharp/00-README.md` 的"规范级别"章节直接复用同一套 MUST/SHOULD/MAY 定义，无需重新设计 | 若用户希望该领域有不同的级别体系，先与用户确认具体差异再落地 |
+| 要废弃的条目仍被消费者 skill 引用 | 先把消费者引用改指替代去向，再标记废弃——否则消费者会继续读到一份不再维护的规则 | 若替代去向尚未确定（约束确实要保留但归属未决），不要先标废弃，与用户确认归属后再动 |
