@@ -651,6 +651,42 @@ class TestBuildAudit(unittest.TestCase):
             self.assertEqual(data["enforcement_coverage"], round(2 / 3, 3))
             self.assertEqual(report["totals"]["enforcement_filled"], 2)
 
+    def test_subsection_anchors_count_toward_parent_section(self):
+        """anchor 指向 h3 时，其父 h2 视为已覆盖——按更细粒度登记不该被算成未登记。"""
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            write_domain(
+                base, "csharp",
+                [
+                    valid_entry(id="csharp.02.a", file="rules/02-style.md", anchor="1.1 核心规则表"),
+                    valid_entry(id="csharp.02.b", file="rules/02-style.md", anchor="1.2 命名禁忌"),
+                    valid_entry(id="csharp.02.c", file="rules/02-style.md", anchor="2. 编码风格"),
+                ],
+                {"rules/02-style.md": "## 1. 命名规范\n### 1.1 核心规则表\n### 1.2 命名禁忌\n## 2. 编码风格\n"},
+            )
+            c = build_audit(base, ["csharp"])["domains"]["csharp"]["coverage"]["rules/02-style.md"]
+            self.assertEqual((c["indexed"], c["eligible_headings"]), (2, 2))
+
+    def test_extra_entries_do_not_mask_an_uncovered_section(self):
+        """多条目集中在同一小节时，不得让另一个空缺小节被算成已覆盖。
+
+        旧算法用 min(条目数, h2 数) 封顶：3 条全落在「1.」上也记 2/2 满分，
+        「2.」的真实空缺被条目数掩盖。实测 csharp/rules/12-testing.md 正中此形态。
+        """
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            write_domain(
+                base, "csharp",
+                [
+                    valid_entry(id="csharp.02.a", file="rules/02-style.md", anchor="1.1 甲"),
+                    valid_entry(id="csharp.02.b", file="rules/02-style.md", anchor="1.2 乙"),
+                    valid_entry(id="csharp.02.c", file="rules/02-style.md", anchor="1.3 丙"),
+                ],
+                {"rules/02-style.md": "## 1. 命名规范\n### 1.1 甲\n### 1.2 乙\n### 1.3 丙\n## 2. 编码风格\n"},
+            )
+            c = build_audit(base, ["csharp"])["domains"]["csharp"]["coverage"]["rules/02-style.md"]
+            self.assertEqual((c["indexed"], c["eligible_headings"]), (1, 2))
+
     def test_counts_deprecated_entries(self):
         """审计不报废弃条目数，等于放任它们无声堆积——保留正文的废弃方式尤其需要这个计数。"""
         with tempfile.TemporaryDirectory() as d:

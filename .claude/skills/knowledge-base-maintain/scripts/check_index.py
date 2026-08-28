@@ -388,6 +388,32 @@ def check_id_format_wrapper(domain):
     return _check
 
 
+def covered_sections(target, anchors):
+    """返回 (被 anchor 命中的二级章节数, 二级章节总数)。
+
+    `anchor` 指向 h3 时归属到其父 h2——按更细粒度登记不该被算成未登记
+    （`csharp/rules/02-coding-style.md` 的 15 条全部指向 h3）。
+
+    早期实现用 `min(条目数, h2 数)` 封顶，只比数量不看落点：条目集中在同一小节时，
+    多出的条目会把另一个小节的真实空缺掩盖成满分（实测 `csharp/rules/12-testing.md`
+    17 条记 14/14，真实只覆盖 13 个）。覆盖率要等于"有多少小节可被检索到"，
+    就必须按 anchor 落点算。
+    """
+    hit, current = set(), None
+    h2_all = []
+    for line in target.read_text(encoding="utf-8").splitlines():
+        m = HEADING_RE.match(line)
+        if not m:
+            continue
+        depth, text = len(m.group(1)), normalize_heading(line)
+        if depth == 2:
+            current = text
+            h2_all.append(text)
+        if depth in (2, 3) and current and any(a and a in text for a in anchors):
+            hit.add(current)
+    return len(hit), len(h2_all)
+
+
 def build_audit(base_dir, domains):
     """生成健康报告：记录数、kind/level 分布、规范文件的二级标题索引覆盖率。
 
@@ -406,26 +432,22 @@ def build_audit(base_dir, domains):
         rules = [e for e in entries if e.get("kind") == "rule"]
         enforcements = Counter(e.get("enforcement") or "(未填)" for e in rules)
         governance_filled = sum(1 for e in rules if e.get("enforcement"))
-        per_file = defaultdict(int)
+        per_file = defaultdict(list)
         for e in entries:
             if isinstance(e.get("file"), str) and e.get("kind") == "rule":
-                per_file[e["file"]] += 1
+                per_file[e["file"]].append(e.get("anchor") or "")
 
         coverage = {}
         eligible_total = indexed_total = 0
-        for rel, count in sorted(per_file.items()):
+        for rel, anchors in sorted(per_file.items()):
             target = domain_dir / rel
             if not target.exists():
                 continue
-            headings = [
-                normalize_heading(line)
-                for line in target.read_text(encoding="utf-8").splitlines()
-                if HEADING_RE.match(line) and len(HEADING_RE.match(line).group(1)) == 2
-            ]
-            eligible = len(headings)
-            coverage[rel] = {"indexed": count, "eligible_headings": eligible}
+            hit, eligible = covered_sections(target, anchors)
+            coverage[rel] = {"indexed": hit if eligible else len(anchors),
+                             "eligible_headings": eligible}
             eligible_total += eligible
-            indexed_total += min(count, eligible) if eligible else count
+            indexed_total += hit if eligible else len(anchors)
 
         report["domains"][domain] = {
             "entries": len(entries),

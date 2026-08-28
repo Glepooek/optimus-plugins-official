@@ -2,7 +2,7 @@
 name: knowledge-base-maintain
 description: 新增、修改、迁移、废弃 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验与语义查重。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"废弃规范条目"、"校验知识库索引"、"知识库查重"。
 metadata:
-  version: "1.6.0"
+  version: "1.7.0"
   author: desktop client team
   category: tool
 compatibility: 需要本机 Python 3（跑本 skill scripts/ 下的 check_index.py 与 check_refs.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
@@ -41,6 +41,8 @@ python --version
 5. **`tags`**、**`summary`**、**`title`**：与用户共同确定，`summary` 一句话，不超过一行。
 
 判断索引粒度：可独立用于合规判断的规则单独登记一条（锚点指向其小节）；导航性标题（阅读路径、文件地图、"权威参考"）不登记；`reference` 默认按整篇文档登记，仅当内部存在多个会被独立检索的主题时才拆条。完整规范见 `knowledge-base/README.md` 的"索引粒度规范"。
+
+**按覆盖率缺口批量补条目时，先逐项判断该不该登记**——`--audit` 的缺口数字里混着有意不登记的小节（落地模板、快速上手、跨章导航节、约束已由别处承载的节），照数字追平会同时做错两件事：给指南性章节强造 rule 条目，以及给已有真源的约束造第二个检索入口。判据见 `knowledge-base/README.md` 的"覆盖率不追求 100%"。快速筛法：统计该小节正文的行数、`必须/禁止` 条数与代码块数——4 行含 2 条「必须」是纯规范条款；91 行 0 条「必须」+5 个代码块是教学材料。**一节里每条都带「见/联动 X 章」标注 → 它是导航节，条款真源在被指向的章节**，此时先按下文查重处置，再给收窄后的内容登记。
 
 **写入前先查重**——避免把已有约束在另一个领域再写一遍：
 
@@ -124,6 +126,8 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" <domain>
 ```bash
 python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" --audit
 ```
+
+覆盖率按 `anchor` 落点计算——`anchor` 指向三级标题时其父二级章节记为已覆盖，多条目集中在同一小节不会掩盖另一小节的空缺。**覆盖率是诊断指标不是达标指标**，缺口不必也不应追平到 100%，判据见 `knowledge-base/README.md` 的"覆盖率不追求 100%"。
 
 - 输出 `OK: 共检查 N 条记录，未发现问题` → 继续 Step 6。
 - 输出非零退出码 + 问题列表 → 逐条修复，修复后重新运行本命令，直到 `OK`。常见问题：

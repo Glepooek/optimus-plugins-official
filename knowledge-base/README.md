@@ -1,6 +1,6 @@
 # 知识库（knowledge-base）
 
-> 版本：4.1.0
+> 版本：4.2.0
 
 跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
 
@@ -108,7 +108,19 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
 - **导航性标题不作为规则登记**：领域 README 的阅读路径、文件地图、"权威参考"等章节是导航，不承载判断依据，不登记。
 - **reference 可按文档或按独立主题登记**：描述性文档以整篇为单位登记是被认可的做法（media、dotnet 领域即如此）；仅当一篇 reference 内部存在多个会被独立检索的主题时，才拆成多条。因此审计报告的覆盖率**只统计 `rule` 类文件**，不对 reference 计算标题覆盖率。
 - **文件级汇总条目与节级条目可以并存**：早期以整篇为单位登记的 `rule` 条目（如 `skill-authoring.01.format`）已被消费者按文件引用，补充节级条目时保留它作为文件入口，不改 ID——改 ID 属破坏性变更。
-- 覆盖率用 `python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" --audit` 查看，输出每个规范文件的 `indexed / eligible_headings`。
+- 覆盖率用 `python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" --audit` 查看，输出每个规范文件的 `indexed / eligible_headings`。`anchor` 指向三级标题时，其父二级章节记为已覆盖——按更细粒度登记不该被算成未登记。
+
+### 覆盖率不追求 100%
+
+**覆盖率是诊断指标，不是达标指标**——它回答"有多少小节可被检索到"，而有些小节本就不该被检索到。把它当 KPI 追平，会逼出两类坏条目：给操作指南强造 rule 条目，以及给已由别处承载的约束造第二个检索入口。以下三类小节**有意不登记**，它们构成的缺口是正确状态：
+
+| 不登记的情形 | 例子 | 原因 |
+|---|---|---|
+| 落地模板与快速上手 | `csharp/rules/01-project-structure.md` 附录 `Directory.Build.props` 模板、`12-testing.md` § 13 框架快速上手 | 模板每行都注着"见第 N 节"，约束的真源在被引的那些小节；快速上手是语法教学，零规范措辞。登记它们等于给同一约束造第二个入口 |
+| 通篇是跨章导航的小节 | `csharp/rules/07-performance.md` § 10 并发与数据（两条均"见 `08` 章"） | 每条都带"见/联动 X 章"标注的小节是导航而非规范，条款真源在被指向的章节 |
+| 约束已由其他领域/章节承载 | `csharp/rules/14-security.md` § 6 依赖与供应链（真源 `csharp.10.vulnerability-scanning`）、`15-quality-review.md` § 1 静态分析（真源 `csharp.01.static-analysis`）| 同一约束在两处登记，检索者拿到两条却无从判断哪条是准——这正是"领域可以相互引用，但不得复制同一事实或规则"要防的形态 |
+
+**"联动 X 章"是重复的可靠信号**：一节里若每条条款都带这类标注，先怀疑它是导航节，判断其条款真源在哪，而不是直接给它登记条目。若真源与本节各写了同一约束的一半，正确处置是先去重（本节改为引用真源 + 只留特有条），再给收窄后的内容登记。
 
 ## 维护约定
 
