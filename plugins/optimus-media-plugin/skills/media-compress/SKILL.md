@@ -2,7 +2,7 @@
 name: media-compress
 description: Use when user wants to reduce a media file's size while keeping the same resolution — 压缩视频、压缩音频、音视频压缩、减小文件体积、CRF调画质、压缩到指定大小、压缩到多少MB。Not for resolution changes, clip trimming, or pure codec/format inspection.
 metadata:
-  version: "1.2.2"
+  version: "1.2.3"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -69,7 +69,7 @@ allowed-tools: Bash
 目标视频码率(kbps) = 目标大小(MB) × 8192 / 时长(秒) − 音频码率(128 kbps)
 ```
 
-> 公式的进制推导（8192 = 1024×8）与"由目标体积反推目标码率"见 [`knowledge-base/media/reference/media-parameters.md`](../../../../knowledge-base/media/reference/media-parameters.md) §4。
+> 公式的进制推导（8192 = 1024×8）与"由目标体积反推目标码率"见 [`knowledge-base/media/reference/media-parameters.md`](../../../../knowledge-base/media/reference/media-parameters.md) §4「三者关系与码率估算」。
 
 **硬约束**：若算出的目标视频码率 ≤ 0（目标体积过小，扣除音频码率后已无空间容纳视频），说明该目标体积在物理上不可行，无法通过用户确认绕过。返回错误信息告知用户当前时长与音频码率下的最小可行体积，请求提高目标大小或接受更低的音频码率，终止任务，不进入 Step 5。
 

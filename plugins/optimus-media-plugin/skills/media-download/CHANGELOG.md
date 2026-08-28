@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.2] - 2026-08-28
+
+### Fixed
+- `media-stream-basics.md §1` 引用补上标题文本「一个媒体文件由什么构成」，使其可被 `knowledge-base-maintain` 的 `check_refs.py` 交叉校验——裸章节号在规范文件重编号后会静默失效
+
 ## [1.1.1] - 2026-08-26
 
 ### Changed

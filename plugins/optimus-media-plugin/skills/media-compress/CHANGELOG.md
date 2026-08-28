@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.3] - 2026-08-28
+
+### Fixed
+- `media-parameters.md §4` 引用补上标题文本「三者关系与码率估算」，使其可被 `knowledge-base-maintain` 的 `check_refs.py` 交叉校验——裸章节号在规范文件重编号后会静默失效
+
 ## [1.2.2] - 2026-08-26
 
 ### Changed

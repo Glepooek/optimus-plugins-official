@@ -2,7 +2,7 @@
 name: media-download
 description: Use when user wants to download a single online video or audio by URL — 下载视频、下载这个视频、视频下载、帮我下载这个链接的视频、yt-dlp。Not for playlist/channel batch downloads, content requiring login credentials, or local file transcoding/compression/trimming.
 metadata:
-  version: "1.1.1"
+  version: "1.1.2"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 yt-dlp 并加入 PATH（见下方安装指引），以及 ffmpeg（供 yt-dlp 合并分离的音视频流），参见 ../media-ffmpeg-common/INSTALL.md。
@@ -93,7 +93,7 @@ yt-dlp -f <format_id> -N <concurrent_fragments> -o <output> --no-playlist <url>
 | `-o <output>` | 指定 Step 3 确认的输出路径；yt-dlp 语法支持模板变量，但本 skill 场景下始终传入用户确认的具体路径，不使用模板变量 |
 | `--no-playlist` | 确保即使 URL 同时指向单条视频与其所属播放列表（如从播放列表页面复制的单条视频链接），也只下载该单条视频，这是从命令层面强制落实"不支持播放列表批量下载"边界的关键参数，不可省略 |
 
-> HLS/DASH 分片协议与 M3U8 清单概念见 [`knowledge-base/media/reference/streaming-protocols.md`](../../../../knowledge-base/media/reference/streaming-protocols.md)；分离的视频流+音频流由 ffmpeg 合并封装，对应"容器包裹多条流"概念见 `media-stream-basics.md` §1。
+> HLS/DASH 分片协议与 M3U8 清单概念见 [`knowledge-base/media/reference/streaming-protocols.md`](../../../../knowledge-base/media/reference/streaming-protocols.md)；分离的视频流+音频流由 ffmpeg 合并封装，对应"容器包裹多条流"概念见 `media-stream-basics.md` §1「一个媒体文件由什么构成」。
 
 ## 失败处理
 

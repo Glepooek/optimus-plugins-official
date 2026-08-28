@@ -2,10 +2,10 @@
 name: knowledge-base-maintain
 description: 新增、修改、迁移 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"校验知识库索引"。
 metadata:
-  version: "1.2.0"
+  version: "1.3.0"
   author: desktop client team
   category: tool
-compatibility: 需要本机 Python 3（跑本 skill scripts/check_index.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
+compatibility: 需要本机 Python 3（跑本 skill scripts/ 下的 check_index.py 与 check_refs.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
 allowed-tools: Read Write Edit Bash Grep Glob
 ---
 
@@ -55,6 +55,7 @@ python --version
 2. 修改正文内容（若涉及跨目录迁移，如从 `rules/` 移到 `reference/`：先在新位置写入正文，再删除旧位置正文，最后更新索引行的 `file`/`anchor`/`kind` 字段——不得只改索引不改正文，也不得只改正文不改索引）。
 3. 用 Edit 更新 `index.jsonl` 中对应行的变化字段。
 4. **迁移或重命名文件时**，用 Grep 在全仓库反查引用该路径的位置并同步更新五处：索引 `file` 字段、索引 `source` 字段中的内部引用、领域 `00-README.md` 的文件地图、其他正文的交叉引用、消费者 skill 的引用（含 Markdown 链接目标 `](...)`，不只是反引号提及）。历史记录类文本（CHANGELOG、正文头部"更新历史"、`docs/superpowers/` 下的历史计划）记录的是当时事实，不改写。
+5. **重排或重命名规范文件的章节时**（改动 `## N. 标题` 的编号或文本），消费者 skill 里的 `§ N` 引用会跟着失效，须一并更新——这类引用不在索引中，靠 Step 5 的 `check_refs.py` 兜底检出。
 
 ## Step 5：运行一致性校验
 
@@ -84,6 +85,21 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" --audit
 | `level=MAY 不得标 enforcement=ci` | 可选做法不能作为 CI 拦截依据，改 `advisory`，或确认该规则实际是 MUST/SHOULD |
 | `孤儿文件未被索引引用` | 新建了 Markdown 但未登记索引 |
 | `领域未登记到 catalog.json` | 新建领域后忘记同步 `catalog.json` |
+
+**改动了规范文件的章节标题或章节编号时**，还须校验消费者 skill 的 `§ 章节号` 引用——这类引用不在 `index.jsonl` 里，`check_index.py` 管不到：
+
+```bash
+python ".claude/skills/knowledge-base-maintain/scripts/check_refs.py"
+```
+
+| 问题类型 | 典型原因 |
+|---|---|
+| `§ N 标题不符——引用写「A」，实际为「B」` | 章节被重编号或改名，消费者引用未同步。这是章节重编号唯一能被自动检出的形态 |
+| `无 § N 章节` | 章节被删除或合并，报错会列出该文件现有全部章节号 |
+| `引用的文件不存在` | 规范文件被迁移/重命名，消费者引用未同步 |
+| `⚠️ N 处引用只写了章节号、未写标题` | 该引用无法交叉校验，重编号时会静默失效——按提示补标题文本，形如 `§ 2.2 类型与运算符` 或 `§2「码率控制模式」` |
+
+裸章节号引用只告警不失败；`--strict` 可把告警也算作失败。**新写消费者引用时一律带标题文本**，否则等于自愿放弃这层保护。
 
 ## Step 6：同步版本号与 CHANGELOG（新增/修改/迁移场景，仅校验场景跳过）
 
