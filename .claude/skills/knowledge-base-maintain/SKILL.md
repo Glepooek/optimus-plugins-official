@@ -1,8 +1,8 @@
 ---
 name: knowledge-base-maintain
-description: 新增、修改、迁移 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"校验知识库索引"。
+description: 新增、修改、迁移 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验与语义查重。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"校验知识库索引"、"知识库查重"。
 metadata:
-  version: "1.3.0"
+  version: "1.4.0"
   author: desktop client team
   category: tool
 compatibility: 需要本机 Python 3（跑本 skill scripts/ 下的 check_index.py 与 check_refs.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
@@ -11,7 +11,7 @@ allowed-tools: Read Write Edit Bash Grep Glob
 
 # 知识库维护
 
-维护 `knowledge-base/` 下的内容与索引一致性：新增条目、修改/迁移条目、仅校验三种场景。
+维护 `knowledge-base/` 下的内容与索引一致性：新增条目、修改/迁移条目、仅校验、查重四种场景。
 
 ## Step 1：确认场景与依赖
 
@@ -24,9 +24,10 @@ python --version
 不可用则提示用户安装 Python 3 后重试，终止本次操作（依赖检查失败，硬性阻断）。
 
 确认场景：
-- **新增条目**：新增一条 `rule` 或 `reference`
+- **新增条目**：新增一条 `rule` 或 `reference`（写入前先按 Step 2 末尾查重）
 - **修改/迁移条目**：修改已有条目内容，或把内容从规范文件移到 `reference/`（或反之）
 - **仅校验**：不新增/修改内容，只想看当前 `knowledge-base/` 一致性状态
+- **查重**：只想排查语义重复条目，不改内容——直接跳到 Step 2 末尾的 `find_duplicates.py`，跑完人工判断即可，无需走后续步骤
 
 ## Step 2（新增条目）：收集条目信息
 
@@ -39,6 +40,20 @@ python --version
 5. **`tags`**、**`summary`**、**`title`**：与用户共同确定，`summary` 一句话，不超过一行。
 
 判断索引粒度：可独立用于合规判断的规则单独登记一条（锚点指向其小节）；导航性标题（阅读路径、文件地图、"权威参考"）不登记；`reference` 默认按整篇文档登记，仅当内部存在多个会被独立检索的主题时才拆条。完整规范见 `knowledge-base/README.md` 的"索引粒度规范"。
+
+**写入前先查重**——避免把已有约束在另一个领域再写一遍：
+
+```bash
+python ".claude/skills/knowledge-base-maintain/scripts/find_duplicates.py" --top 10
+```
+
+该脚本按 `title`+`summary` 的词项重叠报候选（不按 tags 筛——跨领域条目的 tags 天然不相交，实测会漏掉真重复）。默认只报跨领域候选，加 `--within-domain` 同时报领域内。**输出是候选不是判决**，按三种情形处置：
+
+| 情形 | 处置 |
+|---|---|
+| 真重复：同一条约束被两处各自完整表述 | 按领域职责归入一处（`catalog.json` 载明各领域职责），另一处改为引用而非重写 |
+| 合理分层：通用规则在通用领域，技术特有细化在技术领域 | 不动。如 `csharp.01.target-framework` 与 `wpf.01.target-framework`，后者加了「必含 `-windows` 后缀」 |
+| 语义环：两处互相「联动」对方，却都不承载完整规则 | 无单一真源，必须打破——定一处为权威，另一处只留引用 |
 
 ## Step 3（新增条目）：写入正文与索引
 
