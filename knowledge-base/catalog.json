@@ -91,8 +91,8 @@
       "notes": "模式的选用判据与误用识别；架构风格选型引用 architecture，语言落地引用 csharp，WPF 特有形态引用 wpf"
     },
     {
-      "domain": "algorithms",
-      "title": "算法与数据结构选型判据",
+      "domain": "data-structures-algorithms",
+      "title": "数据结构与算法",
       "categories": ["rules", "reference"],
       "owner": "desktop client team",
       "status": "active",
