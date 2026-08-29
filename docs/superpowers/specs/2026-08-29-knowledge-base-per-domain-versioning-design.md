@@ -53,8 +53,9 @@
 | 2 | `index.jsonl` 39 行 | `"id": "algorithms.XX.yyy"` → `"data-structures-algorithms.XX.yyy"`。其余字段不动——`file` 是领域内相对路径，`source` 实测 39 条全是外部 URL（`hello-algo.com` / Microsoft Learn），零处含领域名 |
 | 3 | `catalog.json` | `domain` → `data-structures-algorithms`；`title` → 数据结构与算法 |
 | 4 | 根 `README.md` | 领域列表、领域职责边界两处 |
-| 5 | 领域 `README.md` | 标题、开篇、文件地图中的领域名 |
-| 6 | `reference/hello-algo-01-intro.md` | 1 处 `algorithms` 字样（实施时确认是领域名引用还是书名/URL 的一部分，后者不动） |
+| 5 | 领域 `README.md` | 标题「算法与数据结构规范」→「数据结构与算法规范」；开篇、文档目的、适用范围中的领域名；文件地图首行的 `00-README.md`（B 组一并处理） |
+
+**实测确认无需改的一处**：`reference/hello-algo-01-intro.md` 中 3 处 `algorithms` 字样全部位于上游 URL 内（`chapter_introduction/algorithms_are_everywhere/`），不是领域名引用，不动。
 
 ### 3.3 不改的三处（有意保留）
 
@@ -126,13 +127,15 @@
 
 | 事实 | 数据 | 意义 |
 |---|---|---|
-| 本地图指针总数 | 235 处 | 待替换量 |
+| 本地图指针总数 | 235 处（**196 单图 + 39 多图**） | 待替换量 |
+| 多图指针形态 | 一处指针对应上游多张分步图，如「前序遍历的递归过程（11 张分步图：`<1>`…`<11>`）」；39 处展开共 **292 张** | 不能一对一替换，须展开 |
 | 上游 1.3.0 章节 md | 105 个，含 502 条唯一 alt | 映射来源 |
-| alt 文本精确匹配率 | **231/235 = 98.3%** | 可脚本化回填，无需靠位置猜 |
-| 未命中 | 4 处（2 个唯一名称） | 人工兜底 |
+| alt 文本精确匹配率 | **235/235 = 100%**（剥离「（N 张分步图：…）」后缀后取首张 alt） | 可全量脚本化回填，**无人工兜底** |
+| 多图递推规律 | 上游用 mkdocs tab 组织，首张为中文 alt、后续为英文标识，文件名形如 `*_step1.png`…`*_stepN_xxx.png`，**在文档中连续排列**；实测 3 篇（stack / binary_tree_traversal / deque）声明张数与实际完全一致 | 首张 alt 命中后按顺序取后续 N-1 张 |
 | 上游图片文件名唯一性 | 485 张**无一重名** | 可平铺单一 `assets/`，不必复刻上游 67 个 `*.assets/` 子目录 |
-| 上游图片总体积 | 9.1 MB（485 张） | 实际只下引用到的约 200 张，预计 4-5 MB |
-| 网络可达性 | **仅 PowerShell `Invoke-WebRequest` 可达**；curl 与 WebFetch 访问 raw.githubusercontent 均超时 | 实施时不要重走弯路 |
+| 引用总张数 vs 唯一张数 | 196 + 292 = 488 引用，去重后 ≤485 | 少量图被多处复用，`assets/` 按文件名去重 |
+| 上游图片总体积 | 9.1 MB（485 张全量） | 实际只下引用到的，预计 8-9 MB |
+| 网络可达性 | **仅 PowerShell `Invoke-WebRequest` 可达**，且需**重试**（实测首次常超时、第二次成功）；curl 与 WebFetch 均超时 | 实施时脚本须带重试，不要重走弯路 |
 
 ### 5.3 产物形态
 
@@ -145,22 +148,31 @@ knowledge-base/data-structures-algorithms/reference/
 └── hello-algo-01-intro.md ... 15-greedy.md
 ```
 
-正文替换：
+正文替换，单图与多图两种形态：
 
 ```markdown
-改前：> 📊 原书图：数组定义与存储方式（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/array/）
-改后：![数组定义与存储方式](assets/array_definition.png)
+单图，改前：> 📊 原书图：数组定义与存储方式（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/array/）
+单图，改后：![数组定义与存储方式](assets/array_definition.png)
+
+多图，改前：> 📊 原书图：基于链表实现栈的入栈出栈操作（3 张分步图：LinkedListStack、push()、pop()）（图解见 https://...）
+多图，改后：![基于链表实现栈的入栈出栈操作](assets/linkedlist_stack_step1.png)
+            ![linkedlist_stack_push](assets/linkedlist_stack_step2_push.png)
+            ![linkedlist_stack_pop](assets/linkedlist_stack_step3_pop.png)
 ```
+
+多图的 alt 沿用上游原文（首张中文、后续英文标识），不自行编造——保持与原作一致是 BY 条款下的稳妥做法。
 
 用相对路径 `assets/xxx.png`：与索引 `file` 字段的路径约定同形态，且 GitHub 网页、VS Code 预览、本地 Markdown 阅读器三处均可解析。
 
 ### 5.4 回填流程
 
-1. **抓映射**：一次性脚本从上游 1.3.0 的 105 个章节 md 提取 `alt → 图片路径`（已实测得 502 条）
-2. **下载 + 改写**：按本地 235 处 alt 查映射 → 下载对应图到 `assets/` → 替换正文
-3. **人工兜底 4 处**：`开放寻址`（1 处）、`在二叉搜索树中删除节点`（3 处）——上游 alt 带子标题（原书按度为 0/1/2 分了三张图），需对照原书章节确定各处配图
+1. **抓映射**：一次性脚本从上游 1.3.0 的 105 个章节 md 提取**有序**的 `(alt, 图片路径)` 列表（已实测得 502 条唯一 alt）。必须保留文档内顺序——多图展开依赖"首张 alt 之后连续取 N-1 张"
+2. **下载 + 改写**：对每处指针，剥离「（N 张分步图：…）」后缀取首张 alt → 查映射定位 → 单图取 1 张、多图连续取 N 张 → 下载到 `assets/`（按文件名去重）→ 替换正文
+3. **无人工兜底**：匹配率实测 100%，不需要人工处理的残留
 
 脚本为**一次性工具，跑完不留仓库**——不属于 `knowledge-base-maintain` 的常规能力，留下会成为无人维护的死代码。
+
+网络访问须带**重试**（实测首次请求常超时、重试即成功），否则 105 篇抓取会中途失败。
 
 ### 5.5 许可证影响
 
@@ -171,9 +183,9 @@ knowledge-base/data-structures-algorithms/reference/
 ### 5.6 验证标准
 
 1. `grep -rc '📊 原书图' <领域>/reference/*.md` → **0**（235 处全部替换）
-2. `grep -rhoE '\]\(assets/[^)]+\)'` 的每个文件名在 `assets/` 下真实存在（无断链）
+2. 图片引用总数 = **488**（196 单图 + 292 多图展开），且每个 `assets/xxx.png` 在磁盘真实存在（无断链）
 3. `check_index.py` → 483 条 OK，`--audit` 孤儿文件 **0**（`assets/*.png` 非 `.md`，7.1.0 已实测 `LICENSE` 不被报孤儿，图片同理）
-4. 人工抽查 3 篇预览渲染，确认图显示
+4. 人工抽查 3 篇预览渲染（含一篇多图章节，如 `hello-algo-05-stack-queue.md`），确认图显示且分步顺序正确
 5. `grep -c '图解未导出'` → 0
 
 ## 6. C 组：CHANGELOG 拆分与领域独立版本号
@@ -189,9 +201,11 @@ knowledge-base/data-structures-algorithms/reference/
 
 | 处置 | 条目 | 说明 |
 |---|---|---|
-| **直接删除** | 2.0.0、3.0.0、4.0.0、5.0.0 | 全库治理记录（建保护网、规则质量治理、全库查重、`enforcement` 推广），不属任何单一领域 |
-| **归入单一领域** | 7.1.0 / 7.2.0 → dsa；1.9.x / 1.10.x → media；其余按内容判断 | 多数历史属此类 |
-| **切成两半** | 6.0.0（csharp 迁出 / architecture 迁入）、5.1.0、7.0.0 等 | 每侧标注「衍生自全局 X.Y.Z」，保留跨领域关联的可追溯性 |
+| **直接删除（8 条）** | 1.0.0、1.1.1、1.3.3、2.0.0、3.0.0、4.0.0、4.1.0、5.0.0 | 改的是知识库**机制**而非领域内容：建库与索引机制、校验脚本迁入 skill、根 README 消费方式规范、保护网、规则质量治理、全库查重、废弃机制、`enforcement` 推广 |
+| **归入单一领域（20 条）** | 1.1.0/1.2.0/1.4.0 → csharp；1.3.0/1.3.1 → skill-authoring；1.3.2 → wpf；1.6.0/1.7.0/1.8.0/4.0.1 → git；1.9.0/1.9.1/1.10.0-1.10.4 → media；1.11.0 → dotnet；7.1.0/7.2.0 → dsa | 多数历史属此类 |
+| **切成两半（6 条）** | 1.2.1（csharp+wpf）、1.5.0（git 建域 + csharp 迁出）、4.2.0（csharp 主 + 根 README）、5.1.0（architecture 建域 + csharp 预告）、6.0.0（csharp 迁出 / architecture 迁入）、7.0.0（design-patterns 建域 + csharp 收窄） | 每侧标注「衍生自全局 X.Y.Z」，保留跨领域关联的可追溯性 |
+
+**判定依据是逐条读正文，不是 grep 领域名**——实测机械 grep 会把 7.2.0 判成 5 个领域（实际只改 dsa，其余是正文里的引用提及）。
 
 各领域 `CHANGELOG.md` 结构：
 
@@ -214,7 +228,7 @@ knowledge-base/data-structures-algorithms/reference/
 ### 6.3 已知损失（已确认接受）
 
 - 跨领域条目切开后**两侧都不完整**，丢失"这几件事是同一次决策"这层信息
-- 4 条全库治理记录**永久丢失**，含「level 全 MUST 的真实原因是 76% 条目小节内混级」等实测结论
+- **8 条机制类记录永久丢失**，含「level 全 MUST 的真实原因是 76% 条目小节内混级」（3.0.0）、「废弃时改 `anchor` 等于用破坏性变更实现一个本意给过渡期的机制」（4.1.0）、「旧覆盖率算法用 `min(条目数, 章节数)` 封顶会掩盖真实空缺」（4.2.0 部分）等实测结论
 
 **可接受的理由**：其中有价值的判断已沉淀在根 `README.md` 正文（"level 与 enforcement 的分工"、"覆盖率不追求 100%"、"reviewed_at：读过才填"等章节），删 CHANGELOG 不等于丢掉这些知识。
 
