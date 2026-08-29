@@ -72,6 +72,10 @@
 | 编号 | 文件 | 主题 |
 |---|---|---|
 | 00 | `00-README.md` | 总则、级别、许可证隔离、领域边界、索引 |
+| 01 | `rules/01-complexity.md` | 复杂度判断：声明与规模上限、量级边界、最差复杂度、空间约束、时空交换 |
+| 02 | `rules/02-data-structure-selection.md` | 结构选型：连续/离散存储、栈队列、哈希、有序结构、堆、图表示 |
+| 03 | `rules/03-recursion-iteration.md` | 递归与迭代：深度上限、尾递归的不可依赖性、重复计算、终止条件 |
+| 04 | `rules/04-algorithm-strategy.md` | 策略适用边界：查找、排序、分治、动态规划、回溯、贪心 |
 | — | `reference/LICENSE` | CC BY-NC-SA 4.0 许可证全文（约束 `reference/` 全部内容） |
 | — | `reference/hello-algo-01-intro.md` | 《Hello 算法》第 1 章 · 初识算法 |
 | — | `reference/hello-algo-02-complexity.md` | 《Hello 算法》第 2 章 · 复杂度分析 |
@@ -89,7 +93,9 @@
 | — | `reference/hello-algo-14-dynamic-programming.md` | 《Hello 算法》第 14 章 · 动态规划 |
 | — | `reference/hello-algo-15-greedy.md` | 《Hello 算法》第 15 章 · 贪心 |
 
-`rules/` 尚未建立，规范条款随后续版本补入。
+`rules/` 四篇构成一条判断链：`01` 给复杂度语汇与规模上限的表达要求，`02` 按访问模式选结构，`03` 处理递归实现的安全边界，`04` 判断算法策略的前提是否成立。`01` 是另外三篇的共同前提。
+
+`02` 与 `04` 各有一节「对照表」（`02 § 8. 选型对照`、`04 § 8. 策略对照`）**有意不登记索引**——它们是各节条款的速查汇总，适用前提写在对应小节内，登记会给同一约束造第二个检索入口。
 
 ## 索引与机器消费
 
