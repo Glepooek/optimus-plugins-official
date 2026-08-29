@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：复杂度分析（图解见 https://www.hello-algo.com/chapter_computational_complexity/index/）
-
+![复杂度分析](assets/chapter_complexity_analysis.jpg)
 > **摘要**
 >
 > 复杂度分析犹如浩瀚的算法宇宙中的时空向导。
@@ -103,8 +102,7 @@ int ForLoop(int n) {
 
 下图是该求和函数的流程框图。
 
-> 📊 原书图：求和函数的流程框图（图解见 https://www.hello-algo.com/chapter_computational_complexity/iteration_and_recursion/）
-
+![求和函数的流程框图](assets/iteration.png)
 此求和函数的操作数量与输入数据大小 $n$ 成正比，或者说成“线性关系”。实际上，**时间复杂度描述的就是这个“线性关系”**。相关内容将会在下一节中详细介绍。
 
 #### while 循环
@@ -170,8 +168,7 @@ string NestedForLoop(int n) {
 
 下图是该嵌套循环的流程框图。
 
-> 📊 原书图：嵌套循环的流程框图（图解见 https://www.hello-algo.com/chapter_computational_complexity/iteration_and_recursion/）
-
+![嵌套循环的流程框图](assets/nested_iteration.png)
 在这种情况下，函数的操作数量与 $n^2$ 成正比，或者说算法运行时间和输入数据大小 $n$ 成“平方关系”。
 
 我们可以继续添加嵌套循环，每一次嵌套都是一次“升维”，将会使时间复杂度提高至“立方关系”“四次方关系”，以此类推。
@@ -206,8 +203,7 @@ int Recur(int n) {
 
 下图展示了该函数的递归过程。
 
-> 📊 原书图：求和函数的递归过程（图解见 https://www.hello-algo.com/chapter_computational_complexity/iteration_and_recursion/）
-
+![求和函数的递归过程](assets/recursion_sum.png)
 虽然从计算角度看，迭代与递归可以得到相同的结果，**但它们代表了两种完全不同的思考和解决问题的范式**。
 
 - **迭代**：“自下而上”地解决问题。从最基础的步骤开始，然后不断重复或累加这些步骤，直到任务完成。
@@ -227,8 +223,7 @@ int Recur(int n) {
 
 如下图所示，在触发终止条件前，同时存在 $n$ 个未返回的递归函数，**递归深度为 $n$** 。
 
-> 📊 原书图：递归调用深度（图解见 https://www.hello-algo.com/chapter_computational_complexity/iteration_and_recursion/）
-
+![递归调用深度](assets/recursion_sum_depth.png)
 在实际中，编程语言允许的递归深度通常是有限的，过深的递归可能导致栈溢出错误。
 
 #### 尾递归
@@ -256,8 +251,7 @@ int TailRecur(int n, int res) {
 - **普通递归**：求和操作是在“归”的过程中执行的，每层返回后都要再执行一次求和操作。
 - **尾递归**：求和操作是在“递”的过程中执行的，“归”的过程只需层层返回。
 
-> 📊 原书图：尾递归过程（图解见 https://www.hello-algo.com/chapter_computational_complexity/iteration_and_recursion/）
-
+![尾递归过程](assets/tail_recursion_sum.png)
 > **提示**
 >
 > 请注意，许多编译器或解释器并不支持尾递归优化。例如，Python 默认不支持尾递归优化，因此即使函数是尾递归形式，仍然可能会遇到栈溢出问题。
@@ -292,8 +286,7 @@ int Fib(int n) {
 
 观察以上代码，我们在函数内递归调用了两个函数，**这意味着从一个调用产生了两个调用分支**。如下图所示，这样不断递归调用下去，最终将产生一棵层数为 $n$ 的<u>递归树（recursion tree）</u>。
 
-> 📊 原书图：斐波那契数列的递归树（图解见 https://www.hello-algo.com/chapter_computational_complexity/iteration_and_recursion/）
-
+![斐波那契数列的递归树](assets/recursion_tree.png)
 从本质上看，递归体现了“将问题分解为更小子问题”的思维范式，这种分治策略至关重要。
 
 - 从算法角度看，搜索、排序、回溯、分治、动态规划等许多重要算法策略直接或间接地应用了这种思维方式。
@@ -415,8 +408,7 @@ void AlgorithmC(int n) {
 - 算法 `B` 中的打印操作需要循环 $n$ 次，算法运行时间随着 $n$ 增大呈线性增长。此算法的时间复杂度被称为“线性阶”。
 - 算法 `C` 中的打印操作需要循环 $1000000$ 次，虽然运行时间很长，但它与输入数据大小 $n$ 无关。因此 `C` 的时间复杂度和 `A` 相同，仍为“常数阶”。
 
-> 📊 原书图：算法 A、B 和 C 的时间增长趋势（图解见 https://www.hello-algo.com/chapter_computational_complexity/time_complexity/）
-
+![算法 A、B 和 C 的时间增长趋势](assets/time_complexity_simple_example.png)
 相较于直接统计算法的运行时间，时间复杂度分析有哪些特点呢？
 
 - **时间复杂度能够有效评估算法效率**。例如，算法 `B` 的运行时间呈线性增长，在 $n > 1$ 时比算法 `A` 更慢，在 $n > 1000000$ 时比算法 `C` 更慢。事实上，只要输入数据大小 $n$ 足够大，复杂度为“常数阶”的算法一定优于“线性阶”的算法，这正是时间增长趋势的含义。
@@ -457,8 +449,7 @@ $T(n)$ 是一次函数，说明其运行时间的增长趋势是线性的，因�
 
 如下图所示，计算渐近上界就是寻找一个函数 $f(n)$ ，使得当 $n$ 趋向于无穷大时，$T(n)$ 和 $f(n)$ 处于相同的增长级别，仅相差一个常数系数 $c$。
 
-> 📊 原书图：函数的渐近上界（图解见 https://www.hello-algo.com/chapter_computational_complexity/time_complexity/）
-
+![函数的渐近上界](assets/asymptotic_upper_bound.png)
 ### 推算方法
 
 渐近上界的数学味儿有点重，如果你感觉没有完全理解，也无须担心。我们可以先掌握推算方法，在不断的实践中，就可以逐渐领悟其数学意义。
@@ -529,8 +520,7 @@ O(1) < O(\log n) < O(n) < O(n \log n) < O(n^2) < O(2^n) < O(n!) \newline
 \end{aligned}
 $$
 
-> 📊 原书图：常见的时间复杂度类型（图解见 https://www.hello-algo.com/chapter_computational_complexity/time_complexity/）
-
+![常见的时间复杂度类型](assets/time_complexity_common_types.png)
 #### 常数阶 $O(1)$
 
 常数阶的操作数量与输入数据大小 $n$ 无关，即不随着 $n$ 的变化而变化。
@@ -598,8 +588,7 @@ int Quadratic(int n) {
 
 下图对比了常数阶、线性阶和平方阶三种时间复杂度。
 
-> 📊 原书图：常数阶、线性阶和平方阶的时间复杂度（图解见 https://www.hello-algo.com/chapter_computational_complexity/time_complexity/）
-
+![常数阶、线性阶和平方阶的时间复杂度](assets/time_complexity_constant_linear_quadratic.png)
 以冒泡排序为例，外层循环执行 $n - 1$ 次，内层循环执行 $n-1$、$n-2$、$\dots$、$2$、$1$ 次，平均为 $n / 2$ 次，因此时间复杂度为 $O((n - 1) n / 2) = O(n^2)$ ：
 
 ```csharp
@@ -643,8 +632,7 @@ int Exponential(int n) {
 }
 ```
 
-> 📊 原书图：指数阶的时间复杂度（图解见 https://www.hello-algo.com/chapter_computational_complexity/time_complexity/）
-
+![指数阶的时间复杂度](assets/time_complexity_exponential.png)
 在实际算法中，指数阶常出现于递归函数中。例如在以下代码中，其递归地一分为二，经过 $n$ 次分裂后停止：
 
 ```csharp
@@ -675,8 +663,7 @@ int Logarithmic(int n) {
 }
 ```
 
-> 📊 原书图：对数阶的时间复杂度（图解见 https://www.hello-algo.com/chapter_computational_complexity/time_complexity/）
-
+![对数阶的时间复杂度](assets/time_complexity_logarithmic.png)
 与指数阶类似，对数阶也常出现于递归函数中。以下代码形成了一棵高度为 $\log_2 n$ 的递归树：
 
 ```csharp
@@ -717,8 +704,7 @@ int LinearLogRecur(int n) {
 
 下图展示了线性对数阶的生成方式。二叉树的每一层的操作总数都为 $n$ ，树共有 $\log_2 n + 1$ 层，因此时间复杂度为 $O(n \log n)$ 。
 
-> 📊 原书图：线性对数阶的时间复杂度（图解见 https://www.hello-algo.com/chapter_computational_complexity/time_complexity/）
-
+![线性对数阶的时间复杂度](assets/time_complexity_logarithmic_linear.png)
 主流排序算法的时间复杂度通常为 $O(n \log n)$ ，例如快速排序、归并排序、堆排序等。
 
 #### 阶乘阶 $O(n!)$
@@ -744,8 +730,7 @@ int FactorialRecur(int n) {
 }
 ```
 
-> 📊 原书图：阶乘阶的时间复杂度（图解见 https://www.hello-algo.com/chapter_computational_complexity/time_complexity/）
-
+![阶乘阶的时间复杂度](assets/time_complexity_factorial.png)
 请注意，因为当 $n \geq 4$ 时恒有 $n! > 2^n$ ，所以阶乘阶比指数阶增长得更快，在 $n$ 较大时也是不可接受的。
 
 ### 最差、最佳、平均时间复杂度
@@ -804,8 +789,7 @@ int FindOne(int[] nums) {
 
 在分析一段程序的空间复杂度时，**我们通常统计暂存数据、栈帧空间和输出数据三部分**，如下图所示。
 
-> 📊 原书图：算法使用的相关空间（图解见 https://www.hello-algo.com/chapter_computational_complexity/space_complexity/）
-
+![算法使用的相关空间](assets/space_types.png)
 相关代码如下：
 
 ```csharp
@@ -887,8 +871,7 @@ O(1) < O(\log n) < O(n) < O(n^2) < O(2^n) \newline
 \end{aligned}
 $$
 
-> 📊 原书图：常见的空间复杂度类型（图解见 https://www.hello-algo.com/chapter_computational_complexity/space_complexity/）
-
+![常见的空间复杂度类型](assets/space_complexity_common_types.png)
 #### 常数阶 $O(1)$
 
 常数阶常见于数量与输入数据大小 $n$ 无关的常量、变量、对象。
@@ -947,8 +930,7 @@ void LinearRecur(int n) {
 }
 ```
 
-> 📊 原书图：递归函数产生的线性阶空间复杂度（图解见 https://www.hello-algo.com/chapter_computational_complexity/space_complexity/）
-
+![递归函数产生的线性阶空间复杂度](assets/space_complexity_recursive_linear.png)
 #### 平方阶 $O(n^2)$
 
 平方阶常见于矩阵和图，元素数量与 $n$ 成平方关系：
@@ -982,8 +964,7 @@ int QuadraticRecur(int n) {
 }
 ```
 
-> 📊 原书图：递归函数产生的平方阶空间复杂度（图解见 https://www.hello-algo.com/chapter_computational_complexity/space_complexity/）
-
+![递归函数产生的平方阶空间复杂度](assets/space_complexity_recursive_quadratic.png)
 #### 指数阶 $O(2^n)$
 
 指数阶常见于二叉树。观察下图，层数为 $n$ 的“满二叉树”的节点数量为 $2^n - 1$ ，占用 $O(2^n)$ 空间：
@@ -1000,8 +981,7 @@ TreeNode? BuildTree(int n) {
 }
 ```
 
-> 📊 原书图：满二叉树产生的指数阶空间复杂度（图解见 https://www.hello-algo.com/chapter_computational_complexity/space_complexity/）
-
+![满二叉树产生的指数阶空间复杂度](assets/space_complexity_exponential.png)
 #### 对数阶 $O(\log n)$
 
 对数阶常见于分治算法。例如归并排序，输入长度为 $n$ 的数组，每轮递归将数组从中点处划分为两半，形成高度为 $\log n$ 的递归树，使用 $O(\log n)$ 栈帧空间。

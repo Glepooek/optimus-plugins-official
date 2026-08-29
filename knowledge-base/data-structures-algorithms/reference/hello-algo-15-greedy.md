@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：贪心（图解见 https://www.hello-algo.com/chapter_greedy/index/）
-
+![贪心](assets/chapter_greedy.jpg)
 > **摘要**
 >
 > 向日葵朝着太阳转动，时刻追求自身成长的最大可能。
@@ -42,8 +41,7 @@
 
 本题采取的贪心策略如下图所示。给定目标金额，**我们贪心地选择不大于且最接近它的硬币**，不断循环该步骤，直至凑出目标金额为止。
 
-> 📊 原书图：零钱兑换的贪心策略（图解见 https://www.hello-algo.com/chapter_greedy/greedy_algorithm/）
-
+![零钱兑换的贪心策略](assets/coin_change_greedy_strategy.png)
 实现代码如下所示：
 
 ```csharp
@@ -79,8 +77,7 @@ int CoinChangeGreedy(int[] coins, int amt) {
 - **反例 $coins = [1, 20, 50]$**：假设 $amt = 60$ ，贪心算法只能找到 $50 + 1 \times 10$ 的兑换组合，共计 $11$ 枚硬币，但动态规划可以找到最优解 $20 + 20 + 20$ ，仅需 $3$ 枚硬币。
 - **反例 $coins = [1, 49, 50]$**：假设 $amt = 98$ ，贪心算法只能找到 $50 + 1 \times 48$ 的兑换组合，共计 $49$ 枚硬币，但动态规划可以找到最优解 $49 + 49$ ，仅需 $2$ 枚硬币。
 
-> 📊 原书图：贪心算法无法找出最优解的示例（图解见 https://www.hello-algo.com/chapter_greedy/greedy_algorithm/）
-
+![贪心算法无法找出最优解的示例](assets/coin_change_greedy_vs_dp.png)
 也就是说，对于零钱兑换问题，贪心算法无法保证找到全局最优解，并且有可能找到非常差的解。它更适合用动态规划解决。
 
 一般情况下，贪心算法的适用情况分以下两种。
@@ -143,8 +140,7 @@ int CoinChangeGreedy(int[] coins, int amt) {
 >
 > 给定 $n$ 个物品，第 $i$ 个物品的重量为 $wgt[i-1]$、价值为 $val[i-1]$ ，和一个容量为 $cap$ 的背包。每个物品只能选择一次，**但可以选择物品的一部分，价值根据选择的重量比例计算**，问在限定背包容量下背包中物品的最大价值。示例如下图所示。
 
-> 📊 原书图：分数背包问题的示例数据（图解见 https://www.hello-algo.com/chapter_greedy/fractional_knapsack_problem/）
-
+![分数背包问题的示例数据](assets/fractional_knapsack_example.png)
 分数背包问题和 0-1 背包问题整体上非常相似，状态包含当前物品 $i$ 和容量 $c$ ，目标是求限定背包容量下的最大价值。
 
 不同点在于，本题允许只选择物品的一部分。如下图所示，**我们可以对物品任意地进行切分，并按照重量比例来计算相应价值**。
@@ -152,8 +148,7 @@ int CoinChangeGreedy(int[] coins, int amt) {
 1. 对于物品 $i$ ，它在单位重量下的价值为 $val[i-1] / wgt[i-1]$ ，简称单位价值。
 2. 假设放入一部分物品 $i$ ，重量为 $w$ ，则背包增加的价值为 $w \times val[i-1] / wgt[i-1]$ 。
 
-> 📊 原书图：物品在单位重量下的价值（图解见 https://www.hello-algo.com/chapter_greedy/fractional_knapsack_problem/）
-
+![物品在单位重量下的价值](assets/fractional_knapsack_unit_value.png)
 ### 贪心策略确定
 
 最大化背包内物品总价值，**本质上是最大化单位重量下的物品价值**。由此便可推理出下图所示的贪心策略。
@@ -162,8 +157,7 @@ int CoinChangeGreedy(int[] coins, int amt) {
 2. 遍历所有物品，**每轮贪心地选择单位价值最高的物品**。
 3. 若剩余背包容量不足，则使用当前物品的一部分填满背包。
 
-> 📊 原书图：分数背包问题的贪心策略（图解见 https://www.hello-algo.com/chapter_greedy/fractional_knapsack_problem/）
-
+![分数背包问题的贪心策略](assets/fractional_knapsack_greedy_strategy.png)
 ### 代码实现
 
 我们建立了一个物品类 `Item` ，以便将物品按照单位价值进行排序。循环进行贪心选择，当背包已满时跳出并返回解：
@@ -212,8 +206,7 @@ double FractionalKnapsack(int[] wgt, int[] val, int cap) {
 
 如下图所示，如果将物品重量和物品单位价值分别看作一张二维图表的横轴和纵轴，则分数背包问题可转化为“求在有限横轴区间下围成的最大面积”。这个类比可以帮助我们从几何角度理解贪心策略的有效性。
 
-> 📊 原书图：分数背包问题的几何表示（图解见 https://www.hello-algo.com/chapter_greedy/fractional_knapsack_problem/）
-
+![分数背包问题的几何表示](assets/fractional_knapsack_area_chart.png)
 ## 15.3 最大容量问题
 
 > **思考**
@@ -224,8 +217,7 @@ double FractionalKnapsack(int[] wgt, int[] val, int cap) {
 >
 > 请在数组中选择两个隔板，使得组成的容器的容量最大，返回最大容量。示例如下图所示。
 
-> 📊 原书图：最大容量问题的示例数据（图解见 https://www.hello-algo.com/chapter_greedy/max_capacity_problem/）
-
+![最大容量问题的示例数据](assets/max_capacity_example.png)
 容器由任意两个隔板围成，**因此本题的状态为两个隔板的索引，记为 $[i, j]$** 。
 
 根据题意，容量等于高度乘以宽度，其中高度由短板决定，宽度是两隔板的数组索引之差。设容量为 $cap[i, j]$ ，则可得计算公式：
@@ -240,18 +232,15 @@ $$
 
 这道题还有更高效率的解法。如下图所示，现选取一个状态 $[i, j]$ ，其满足索引 $i < j$ 且高度 $ht[i] < ht[j]$ ，即 $i$ 为短板、$j$ 为长板。
 
-> 📊 原书图：初始状态（图解见 https://www.hello-algo.com/chapter_greedy/max_capacity_problem/）
-
+![初始状态](assets/max_capacity_initial_state.png)
 如下图所示，**若此时将长板 $j$ 向短板 $i$ 靠近，则容量一定变小**。
 
 这是因为在移动长板 $j$ 后，宽度 $j-i$ 肯定变小；而高度由短板决定，因此高度只可能不变（ $i$ 仍为短板）或变小（移动后的 $j$ 成为短板）。
 
-> 📊 原书图：向内移动长板后的状态（图解见 https://www.hello-algo.com/chapter_greedy/max_capacity_problem/）
-
+![向内移动长板后的状态](assets/max_capacity_moving_long_board.png)
 反向思考，**我们只有向内收缩短板 $i$ ，才有可能使容量变大**。因为虽然宽度一定变小，**但高度可能会变大**（移动后的短板 $i$ 可能会变长）。例如在下图中，移动短板后面积变大。
 
-> 📊 原书图：向内移动短板后的状态（图解见 https://www.hello-algo.com/chapter_greedy/max_capacity_problem/）
-
+![向内移动短板后的状态](assets/max_capacity_moving_short_board.png)
 由此便可推出本题的贪心策略：初始化两指针，使其分列容器两端，每轮向内收缩短板对应的指针，直至两指针相遇。
 
 下图展示了贪心策略的执行过程。
@@ -261,8 +250,15 @@ $$
 3. 比较板 $i$ 和板 $j$ 的高度，并将短板向内移动一格。
 4. 循环执行第 `2.` 步和第 `3.` 步，直至 $i$ 和 $j$ 相遇时结束。
 
-> 📊 原书图：最大容量问题的贪心过程（9 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>）（图解见 https://www.hello-algo.com/chapter_greedy/max_capacity_problem/）
-
+![最大容量问题的贪心过程](assets/max_capacity_greedy_step1.png)
+![max_capacity_greedy_step2](assets/max_capacity_greedy_step2.png)
+![max_capacity_greedy_step3](assets/max_capacity_greedy_step3.png)
+![max_capacity_greedy_step4](assets/max_capacity_greedy_step4.png)
+![max_capacity_greedy_step5](assets/max_capacity_greedy_step5.png)
+![max_capacity_greedy_step6](assets/max_capacity_greedy_step6.png)
+![max_capacity_greedy_step7](assets/max_capacity_greedy_step7.png)
+![max_capacity_greedy_step8](assets/max_capacity_greedy_step8.png)
+![max_capacity_greedy_step9](assets/max_capacity_greedy_step9.png)
 ### 代码实现
 
 代码循环最多 $n$ 轮，**因此时间复杂度为 $O(n)$** 。
@@ -302,8 +298,7 @@ $$
 cap[i, i+1], cap[i, i+2], \dots, cap[i, j-2], cap[i, j-1]
 $$
 
-> 📊 原书图：移动短板导致被跳过的状态（图解见 https://www.hello-algo.com/chapter_greedy/max_capacity_problem/）
-
+![移动短板导致被跳过的状态](assets/max_capacity_skipped_states.png)
 观察发现，**这些被跳过的状态实际上就是将长板 $j$ 向内移动的所有状态**。前面我们已经证明内移长板一定会导致容量变小。也就是说，被跳过的状态都不可能是最优解，**跳过它们不会导致错过最优解**。
 
 以上分析说明，移动短板的操作是“安全”的，贪心策略是有效的。
@@ -314,8 +309,7 @@ $$
 >
 > 给定一个正整数 $n$ ，将其切分为至少两个正整数的和，求切分后所有整数的乘积最大是多少，如下图所示。
 
-> 📊 原书图：最大切分乘积的问题定义（图解见 https://www.hello-algo.com/chapter_greedy/max_product_cutting_problem/）
-
+![最大切分乘积的问题定义](assets/max_product_cutting_definition.png)
 假设我们将 $n$ 切分为 $m$ 个整数因子，其中第 $i$ 个因子记为 $n_i$ ，即
 
 $$
@@ -346,16 +340,14 @@ $$
 
 **贪心策略一**：如果切分方案中包含 $\geq 4$ 的因子，那么它就应该被继续切分。最终的切分方案只应出现 $1$、$2$、$3$ 这三种因子。
 
-> 📊 原书图：切分导致乘积变大（图解见 https://www.hello-algo.com/chapter_greedy/max_product_cutting_problem/）
-
+![切分导致乘积变大](assets/max_product_cutting_greedy_infer1.png)
 接下来思考哪个因子是最优的。在 $1$、$2$、$3$ 这三个因子中，显然 $1$ 是最差的，因为 $1 \times (n-1) < n$ 恒成立，即切分出 $1$ 反而会导致乘积减小。
 
 如下图所示，当 $n = 6$ 时，有 $3 \times 3 > 2 \times 2 \times 2$ 。**这意味着切分出 $3$ 比切分出 $2$ 更优**。
 
 **贪心策略二**：在切分方案中，最多只应存在两个 $2$ 。因为三个 $2$ 总是可以替换为两个 $3$ ，从而获得更大的乘积。
 
-> 📊 原书图：最优切分因子（图解见 https://www.hello-algo.com/chapter_greedy/max_product_cutting_problem/）
-
+![最优切分因子](assets/max_product_cutting_greedy_infer2.png)
 综上所述，可推理出以下贪心策略。
 
 1. 输入整数 $n$ ，从其不断地切分出因子 $3$ ，直至余数为 $0$、$1$、$2$ 。
@@ -396,8 +388,7 @@ int MaxProductCutting(int n) {
 }
 ```
 
-> 📊 原书图：最大切分乘积的计算方法（图解见 https://www.hello-algo.com/chapter_greedy/max_product_cutting_problem/）
-
+![最大切分乘积的计算方法](assets/max_product_cutting_greedy_calculation.png)
 **时间复杂度取决于编程语言的幂运算的实现方法**。以 Python 为例，常用的幂计算函数有三种。
 
 - 运算符 `**` 和函数 `pow()` 的时间复杂度均为 $O(\log⁡ a)$ 。

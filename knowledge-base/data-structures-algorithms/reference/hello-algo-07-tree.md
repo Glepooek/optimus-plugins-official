@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：树（图解见 https://www.hello-algo.com/chapter_tree/index/）
-
+![树](assets/chapter_tree.jpg)
 > **摘要**
 >
 > 参天大树充满生命力，根深叶茂，分枝扶疏。
@@ -42,8 +41,7 @@ class TreeNode(int? x) {
 
 **在二叉树中，除叶节点外，其他所有节点都包含子节点和非空子树**。如下图所示，如果将“节点 2”视为父节点，则其左子节点和右子节点分别是“节点 4”和“节点 5”，左子树是“节点 4 及其以下节点形成的树”，右子树是“节点 5 及其以下节点形成的树”。
 
-> 📊 原书图：父节点、子节点、子树（图解见 https://www.hello-algo.com/chapter_tree/binary_tree/）
-
+![父节点、子节点、子树](assets/binary_tree_definition.png)
 ### 二叉树常见术语
 
 二叉树的常用术语如下图所示。
@@ -57,8 +55,7 @@ class TreeNode(int? x) {
 - 节点的<u>深度（depth）</u>：从根节点到该节点所经过的边的数量。
 - 节点的<u>高度（height）</u>：从距离该节点最远的叶节点到该节点所经过的边的数量。
 
-> 📊 原书图：二叉树的常用术语（图解见 https://www.hello-algo.com/chapter_tree/binary_tree/）
-
+![二叉树的常用术语](assets/binary_tree_terminology.png)
 > **提示**
 >
 > 请注意，我们通常将“高度”和“深度”定义为“经过的边的数量”，但有些题目或教材可能会将其定义为“经过的节点的数量”。在这种情况下，高度和深度都需要加 1 。
@@ -92,8 +89,7 @@ n2.right = n5;
 
 与链表类似，在二叉树中插入与删除节点可以通过修改指针来实现。下图给出了一个示例。
 
-> 📊 原书图：在二叉树中插入与删除节点（图解见 https://www.hello-algo.com/chapter_tree/binary_tree/）
-
+![在二叉树中插入与删除节点](assets/binary_tree_add_remove.png)
 ```csharp
 /* 插入与删除节点 */
 TreeNode P = new(0);
@@ -122,26 +118,22 @@ n1.left = n2;
 >
 > 请注意，在中文社区中，完美二叉树常被称为<u>满二叉树</u>。
 
-> 📊 原书图：完美二叉树（图解见 https://www.hello-algo.com/chapter_tree/binary_tree/）
-
+![完美二叉树](assets/perfect_binary_tree.png)
 #### 完全二叉树
 
 如下图所示，<u>完全二叉树（complete binary tree）</u>仅允许最底层的节点不完全填满，且最底层的节点必须从左至右依次连续填充。请注意，完美二叉树也是一棵完全二叉树。
 
-> 📊 原书图：完全二叉树（图解见 https://www.hello-algo.com/chapter_tree/binary_tree/）
-
+![完全二叉树](assets/complete_binary_tree.png)
 #### 完满二叉树
 
 如下图所示，<u>完满二叉树（full binary tree）</u>除了叶节点之外，其余所有节点都有两个子节点。
 
-> 📊 原书图：完满二叉树（图解见 https://www.hello-algo.com/chapter_tree/binary_tree/）
-
+![完满二叉树](assets/full_binary_tree.png)
 #### 平衡二叉树
 
 如下图所示，<u>平衡二叉树（balanced binary tree）</u>中任意节点的左子树和右子树的高度之差的绝对值不超过 1 。
 
-> 📊 原书图：平衡二叉树（图解见 https://www.hello-algo.com/chapter_tree/binary_tree/）
-
+![平衡二叉树](assets/balanced_binary_tree.png)
 ### 二叉树的退化
 
 下图展示了二叉树的理想结构与退化结构。当二叉树的每层节点都被填满时，达到“完美二叉树”；而当所有节点都偏向一侧时，二叉树退化为“链表”。
@@ -149,8 +141,7 @@ n1.left = n2;
 - 完美二叉树是理想情况，可以充分发挥二叉树“分治”的优势。
 - 链表则是另一个极端，各项操作都变为线性操作，时间复杂度退化至 $O(n)$ 。
 
-> 📊 原书图：二叉树的最佳结构与最差结构（图解见 https://www.hello-algo.com/chapter_tree/binary_tree/）
-
+![二叉树的最佳结构与最差结构](assets/binary_tree_best_worst_cases.png)
 如下表所示，在最佳结构和最差结构下，二叉树的叶节点数量、节点总数、高度等达到极大值或极小值。
 
 <p align="center"> 表 <id> &nbsp; 二叉树的最佳结构与最差结构 </p>
@@ -174,8 +165,7 @@ n1.left = n2;
 
 层序遍历本质上属于<u>广度优先遍历（breadth-first traversal）</u>，也称<u>广度优先搜索（breadth-first search, BFS）</u>，它体现了一种“一圈一圈向外扩展”的逐层遍历方式。
 
-> 📊 原书图：二叉树的层序遍历（图解见 https://www.hello-algo.com/chapter_tree/binary_tree_traversal/）
-
+![二叉树的层序遍历](assets/binary_tree_bfs.png)
 #### 代码实现
 
 广度优先遍历通常借助“队列”来实现。队列遵循“先进先出”的规则，而广度优先遍历则遵循“逐层推进”的规则，两者背后的思想是一致的。实现代码如下：
@@ -211,8 +201,7 @@ List<int> LevelOrder(TreeNode root) {
 
 下图展示了对二叉树进行深度优先遍历的工作原理。**深度优先遍历就像是绕着整棵二叉树的外围“走”一圈**，在每个节点都会遇到三个位置，分别对应前序遍历、中序遍历和后序遍历。
 
-> 📊 原书图：二叉搜索树的前序、中序、后序遍历（图解见 https://www.hello-algo.com/chapter_tree/binary_tree_traversal/）
-
+![二叉搜索树的前序、中序、后序遍历](assets/binary_tree_dfs.png)
 #### 代码实现
 
 深度优先搜索通常基于递归实现：
@@ -237,8 +226,17 @@ void PostOrder(TreeNode? root) {
 1. “递”表示开启新方法，程序在此过程中访问下一个节点。
 2. “归”表示函数返回，代表当前节点已经访问完毕。
 
-> 📊 原书图：前序遍历的递归过程（11 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>、<10>、<11>）（图解见 https://www.hello-algo.com/chapter_tree/binary_tree_traversal/）
-
+![前序遍历的递归过程](assets/preorder_step1.png)
+![preorder_step2](assets/preorder_step2.png)
+![preorder_step3](assets/preorder_step3.png)
+![preorder_step4](assets/preorder_step4.png)
+![preorder_step5](assets/preorder_step5.png)
+![preorder_step6](assets/preorder_step6.png)
+![preorder_step7](assets/preorder_step7.png)
+![preorder_step8](assets/preorder_step8.png)
+![preorder_step9](assets/preorder_step9.png)
+![preorder_step10](assets/preorder_step10.png)
+![preorder_step11](assets/preorder_step11.png)
 #### 复杂度分析
 
 - **时间复杂度为 $O(n)$** ：所有节点被访问一次，使用 $O(n)$ 时间。
@@ -256,8 +254,7 @@ void PostOrder(TreeNode? root) {
 
 根据层序遍历的特性，我们可以推导出父节点索引与子节点索引之间的“映射公式”：**若某节点的索引为 $i$ ，则该节点的左子节点索引为 $2i + 1$ ，右子节点索引为 $2i + 2$** 。下图展示了各个节点索引之间的映射关系。
 
-> 📊 原书图：完美二叉树的数组表示（图解见 https://www.hello-algo.com/chapter_tree/array_representation_of_tree/）
-
+![完美二叉树的数组表示](assets/array_representation_binary_tree.png)
 **映射公式的角色相当于链表中的节点引用（指针）**。给定数组中的任意一个节点，我们都可以通过映射公式来访问它的左（右）子节点。
 
 ### 表示任意二叉树
@@ -266,8 +263,7 @@ void PostOrder(TreeNode? root) {
 
 如下图所示，给定一棵非完美二叉树，上述数组表示方法已经失效。
 
-> 📊 原书图：层序遍历序列对应多种二叉树可能性（图解见 https://www.hello-algo.com/chapter_tree/array_representation_of_tree/）
-
+![层序遍历序列对应多种二叉树可能性](assets/array_representation_without_empty.png)
 为了解决此问题，**我们可以考虑在层序遍历序列中显式地写出所有 `None`** 。如下图所示，这样处理后，层序遍历序列就可以唯一表示二叉树了。示例代码如下：
 
 ```csharp
@@ -276,14 +272,12 @@ void PostOrder(TreeNode? root) {
 int?[] tree = [1, 2, 3, 4, null, 6, 7, 8, 9, null, null, 12, null, null, 15];
 ```
 
-> 📊 原书图：任意类型二叉树的数组表示（图解见 https://www.hello-algo.com/chapter_tree/array_representation_of_tree/）
-
+![任意类型二叉树的数组表示](assets/array_representation_with_empty.png)
 值得说明的是，**完全二叉树非常适合使用数组来表示**。回顾完全二叉树的定义，`None` 只出现在最底层且靠右的位置，**因此所有 `None` 一定出现在层序遍历序列的末尾**。
 
 这意味着使用数组表示完全二叉树时，可以省略存储所有 `None` ，非常方便。下图给出了一个例子。
 
-> 📊 原书图：完全二叉树的数组表示（图解见 https://www.hello-algo.com/chapter_tree/array_representation_of_tree/）
-
+![完全二叉树的数组表示](assets/array_representation_complete_binary_tree.png)
 以下代码实现了一棵基于数组表示的二叉树，包括以下几种操作。
 
 - 给定某节点，获取它的值、左（右）子节点、父节点。
@@ -395,8 +389,7 @@ public List<int> PostOrder() {
 1. 对于根节点，左子树中所有节点的值 $<$ 根节点的值 $<$ 右子树中所有节点的值。
 2. 任意节点的左、右子树也是二叉搜索树，即同样满足条件 `1.` 。
 
-> 📊 原书图：二叉搜索树（图解见 https://www.hello-algo.com/chapter_tree/binary_search_tree/）
-
+![二叉搜索树](assets/binary_search_tree.png)
 ### 二叉搜索树的操作
 
 我们将二叉搜索树封装为一个类 `BinarySearchTree` ，并声明一个成员变量 `root` ，指向树的根节点。
@@ -409,8 +402,10 @@ public List<int> PostOrder() {
 - 若 `cur.val > num` ，说明目标节点在 `cur` 的左子树中，因此执行 `cur = cur.left` 。
 - 若 `cur.val = num` ，说明找到目标节点，跳出循环并返回该节点。
 
-> 📊 原书图：二叉搜索树查找节点示例（4 张分步图：<1>、<2>、<3>、<4>）（图解见 https://www.hello-algo.com/chapter_tree/binary_search_tree/）
-
+![二叉搜索树查找节点示例](assets/bst_search_step1.png)
+![bst_search_step2](assets/bst_search_step2.png)
+![bst_search_step3](assets/bst_search_step3.png)
+![bst_search_step4](assets/bst_search_step4.png)
 二叉搜索树的查找操作与二分查找算法的工作原理一致，都是每轮排除一半情况。循环次数最多为二叉树的高度，当二叉树平衡时，使用 $O(\log n)$ 时间。示例代码如下：
 
 ```csharp
@@ -441,8 +436,7 @@ public TreeNode? Search(int num) {
 1. **查找插入位置**：与查找操作相似，从根节点出发，根据当前节点值和 `num` 的大小关系循环向下搜索，直到越过叶节点（遍历至 `None` ）时跳出循环。
 2. **在该位置插入节点**：初始化节点 `num` ，将该节点置于 `None` 的位置。
 
-> 📊 原书图：在二叉搜索树中插入节点（图解见 https://www.hello-algo.com/chapter_tree/binary_search_tree/）
-
+![在二叉搜索树中插入节点](assets/bst_insert.png)
 在代码实现中，需要注意以下两点。
 
 - 二叉搜索树不允许存在重复节点，否则将违反其定义。因此，若待插入节点在树中已存在，则不执行插入，直接返回。
@@ -490,12 +484,10 @@ public void Insert(int num) {
 
 如下图所示，当待删除节点的度为 $0$ 时，表示该节点是叶节点，可以直接删除。
 
-> 📊 原书图：在二叉搜索树中删除节点（度为 0 ）（图解见 https://www.hello-algo.com/chapter_tree/binary_search_tree/）
-
+![在二叉搜索树中删除节点（度为 0 ）](assets/bst_remove_case1.png)
 如下图所示，当待删除节点的度为 $1$ 时，将待删除节点替换为其子节点即可。
 
-> 📊 原书图：在二叉搜索树中删除节点（度为 1 ）（图解见 https://www.hello-algo.com/chapter_tree/binary_search_tree/）
-
+![在二叉搜索树中删除节点（度为 1 ）](assets/bst_remove_case2.png)
 当待删除节点的度为 $2$ 时，我们无法直接删除它，而需要使用一个节点替换该节点。由于要保持二叉搜索树“左子树 $<$ 根节点 $<$ 右子树”的性质，**因此这个节点可以是右子树的最小节点或左子树的最大节点**。
 
 假设我们选择右子树的最小节点（中序遍历的下一个节点），则删除操作流程如下图所示。
@@ -503,8 +495,10 @@ public void Insert(int num) {
 1. 找到待删除节点在“中序遍历序列”中的下一个节点，记为 `tmp` 。
 2. 用 `tmp` 的值覆盖待删除节点的值，并在树中递归删除节点 `tmp` 。
 
-> 📊 原书图：在二叉搜索树中删除节点（度为 2 ）（4 张分步图：<1>、<2>、<3>、<4>）（图解见 https://www.hello-algo.com/chapter_tree/binary_search_tree/）
-
+![在二叉搜索树中删除节点（度为 2 ）](assets/bst_remove_case3_step1.png)
+![bst_remove_case3_step2](assets/bst_remove_case3_step2.png)
+![bst_remove_case3_step3](assets/bst_remove_case3_step3.png)
+![bst_remove_case3_step4](assets/bst_remove_case3_step4.png)
 删除节点操作同样使用 $O(\log n)$ 时间，其中查找待删除节点需要 $O(\log n)$ 时间，获取中序遍历后继节点需要 $O(\log n)$ 时间。示例代码如下：
 
 ```csharp
@@ -568,8 +562,7 @@ public void Remove(int num) {
 
 利用中序遍历升序的性质，我们在二叉搜索树中获取有序数据仅需 $O(n)$ 时间，无须进行额外的排序操作，非常高效。
 
-> 📊 原书图：二叉搜索树的中序遍历序列（图解见 https://www.hello-algo.com/chapter_tree/binary_search_tree/）
-
+![二叉搜索树的中序遍历序列](assets/bst_inorder_traversal.png)
 ### 二叉搜索树的效率
 
 给定一组数据，我们考虑使用数组或二叉搜索树存储。观察下表，二叉搜索树的各项操作的时间复杂度都是对数阶，具有稳定且高效的性能。只有在高频添加、低频查找删除数据的场景下，数组比二叉搜索树的效率更高。
@@ -586,8 +579,7 @@ public void Remove(int num) {
 
 然而，如果我们在二叉搜索树中不断地插入和删除节点，可能导致二叉树退化为下图所示的链表，这时各种操作的时间复杂度也会退化为 $O(n)$ 。
 
-> 📊 原书图：二叉搜索树退化（图解见 https://www.hello-algo.com/chapter_tree/binary_search_tree/）
-
+![二叉搜索树退化](assets/bst_degradation.png)
 ### 二叉搜索树常见应用
 
 - 用作系统中的多级索引，实现高效的查找、插入、删除操作。
@@ -600,12 +592,10 @@ public void Remove(int num) {
 
 如下图所示，经过两次删除节点操作，这棵二叉搜索树便会退化为链表。
 
-> 📊 原书图：AVL 树在删除节点后发生退化（图解见 https://www.hello-algo.com/chapter_tree/avl_tree/）
-
+![AVL 树在删除节点后发生退化](assets/avltree_degradation_from_removing_node.png)
 再例如，在下图所示的完美二叉树中插入两个节点后，树将严重向左倾斜，查找操作的时间复杂度也随之劣化。
 
-> 📊 原书图：AVL 树在插入节点后发生退化（图解见 https://www.hello-algo.com/chapter_tree/avl_tree/）
-
+![AVL 树在插入节点后发生退化](assets/avltree_degradation_from_inserting_node.png)
 1962 年 G. M. Adelson-Velsky 和 E. M. Landis 在论文“An algorithm for the organization of information”中提出了 <u>AVL 树</u>。论文中详细描述了一系列操作，确保在持续添加和删除节点后，AVL 树不会退化，从而使得各种操作的时间复杂度保持在 $O(\log n)$ 级别。换句话说，在需要频繁进行增删查改操作的场景中，AVL 树能始终保持高效的数据操作性能，具有很好的应用价值。
 
 ### AVL 树常见术语
@@ -664,12 +654,13 @@ AVL 树的特点在于“旋转”操作，它能够在不影响二叉树的中�
 
 如下图所示，节点下方为平衡因子。从底至顶看，二叉树中首个失衡节点是“节点 3”。我们关注以该失衡节点为根节点的子树，将该节点记为 `node` ，其左子节点记为 `child` ，执行“右旋”操作。完成右旋后，子树恢复平衡，并且仍然保持二叉搜索树的性质。
 
-> 📊 原书图：右旋操作步骤（4 张分步图：<1>、<2>、<3>、<4>）（图解见 https://www.hello-algo.com/chapter_tree/avl_tree/）
-
+![右旋操作步骤](assets/avltree_right_rotate_step1.png)
+![avltree_right_rotate_step2](assets/avltree_right_rotate_step2.png)
+![avltree_right_rotate_step3](assets/avltree_right_rotate_step3.png)
+![avltree_right_rotate_step4](assets/avltree_right_rotate_step4.png)
 如下图所示，当节点 `child` 有右子节点（记为 `grand_child` ）时，需要在右旋中添加一步：将 `grand_child` 作为 `node` 的左子节点。
 
-> 📊 原书图：有 grand_child 的右旋操作（图解见 https://www.hello-algo.com/chapter_tree/avl_tree/）
-
+![有 grand_child 的右旋操作](assets/avltree_right_rotate_with_grandchild.png)
 “向右旋转”是一种形象化的说法，实际上需要通过修改节点指针来实现，代码如下所示：
 
 ```csharp
@@ -692,12 +683,10 @@ TreeNode? RightRotate(TreeNode? node) {
 
 相应地，如果考虑上述失衡二叉树的“镜像”，则需要执行下图所示的“左旋”操作。
 
-> 📊 原书图：左旋操作（图解见 https://www.hello-algo.com/chapter_tree/avl_tree/）
-
+![左旋操作](assets/avltree_left_rotate.png)
 同理，如下图所示，当节点 `child` 有左子节点（记为 `grand_child` ）时，需要在左旋中添加一步：将 `grand_child` 作为 `node` 的右子节点。
 
-> 📊 原书图：有 grand_child 的左旋操作（图解见 https://www.hello-algo.com/chapter_tree/avl_tree/）
-
+![有 grand_child 的左旋操作](assets/avltree_left_rotate_with_grandchild.png)
 可以观察到，**右旋和左旋操作在逻辑上是镜像对称的，它们分别解决的两种失衡情况也是对称的**。基于对称性，我们只需将右旋的实现代码中的所有的 `left` 替换为 `right` ，将所有的 `right` 替换为 `left` ，即可得到左旋的实现代码：
 
 ```csharp
@@ -720,20 +709,17 @@ TreeNode? LeftRotate(TreeNode? node) {
 
 对于下图中的失衡节点 3 ，仅使用左旋或右旋都无法使子树恢复平衡。此时需要先对 `child` 执行“左旋”，再对 `node` 执行“右旋”。
 
-> 📊 原书图：先左旋后右旋（图解见 https://www.hello-algo.com/chapter_tree/avl_tree/）
-
+![先左旋后右旋](assets/avltree_left_right_rotate.png)
 #### 先右旋后左旋
 
 如下图所示，对于上述失衡二叉树的镜像情况，需要先对 `child` 执行“右旋”，再对 `node` 执行“左旋”。
 
-> 📊 原书图：先右旋后左旋（图解见 https://www.hello-algo.com/chapter_tree/avl_tree/）
-
+![先右旋后左旋](assets/avltree_right_left_rotate.png)
 #### 旋转的选择
 
 下图展示的四种失衡情况与上述案例逐个对应，分别需要采用右旋、先左旋后右旋、先右旋后左旋、左旋的操作。
 
-> 📊 原书图：AVL 树的四种旋转情况（图解见 https://www.hello-algo.com/chapter_tree/avl_tree/）
-
+![AVL 树的四种旋转情况](assets/avltree_rotation_cases.png)
 如下表所示，我们通过判断失衡节点的平衡因子以及较高一侧子节点的平衡因子的正负号，来确定失衡节点属于上图中的哪种情况。
 
 <p align="center"> 表 <id> &nbsp; 四种旋转情况的选择条件 </p>

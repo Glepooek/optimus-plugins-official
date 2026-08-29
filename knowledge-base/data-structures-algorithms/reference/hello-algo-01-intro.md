@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：初识算法（图解见 https://www.hello-algo.com/chapter_introduction/index/）
-
+![初识算法](assets/chapter_introduction.jpg)
 > **摘要**
 >
 > 一位少女翩翩起舞，与数据交织在一起，裙摆上飘扬着算法的旋律。
@@ -37,8 +36,11 @@
 2. 由于在拼音字母表中 $r$ 位于 $m$ 之后，所以排除字典前半部分，查找范围缩小到后半部分。
 3. 不断重复步骤 `1.` 和步骤 `2.` ，直至找到拼音首字母为 $r$ 的页码为止。
 
-> 📊 原书图：查字典步骤（5 张分步图：<1>、<2>、<3>、<4>、<5>）（图解见 https://www.hello-algo.com/chapter_introduction/algorithms_are_everywhere/）
-
+![查字典步骤](assets/binary_search_dictionary_step1.png)
+![binary_search_dictionary_step2](assets/binary_search_dictionary_step2.png)
+![binary_search_dictionary_step3](assets/binary_search_dictionary_step3.png)
+![binary_search_dictionary_step4](assets/binary_search_dictionary_step4.png)
+![binary_search_dictionary_step5](assets/binary_search_dictionary_step5.png)
 查字典这个小学生必备技能，实际上就是著名的“二分查找”算法。从数据结构的角度，我们可以把字典视为一个已排序的“数组”；从算法的角度，我们可以将上述查字典的一系列操作看作“二分查找”。
 
 **例二：整理扑克**。我们在打牌时，每局都需要整理手中的扑克牌，使其从小到大排列，实现流程如下图所示。
@@ -47,8 +49,7 @@
 2. 在无序部分抽出一张扑克牌，插入至有序部分的正确位置；完成后最左 2 张扑克已经有序。
 3. 不断循环步骤 `2.` ，每一轮将一张扑克牌从无序部分插入至有序部分，直至所有扑克牌都有序。
 
-> 📊 原书图：扑克排序步骤（图解见 https://www.hello-algo.com/chapter_introduction/algorithms_are_everywhere/）
-
+![扑克排序步骤](assets/playing_cards_sorting.png)
 上述整理扑克牌的方法本质上是“插入排序”算法，它在处理小型数据集时非常高效。许多编程语言的排序库函数中都有插入排序的身影。
 
 **例三：货币找零**。假设我们在超市购买了 $69$ 元的商品，给了收银员 $100$ 元，则收银员需要找我们 $31$ 元。他会很自然地完成如下图所示的思考。
@@ -59,8 +60,7 @@
 4. 从剩余可选项中拿出最大的 $1$ 元，剩余 $1 - 1 = 0$ 元。
 5. 完成找零，方案为 $20 + 10 + 1 = 31$ 元。
 
-> 📊 原书图：货币找零过程（图解见 https://www.hello-algo.com/chapter_introduction/algorithms_are_everywhere/）
-
+![货币找零过程](assets/greedy_change.png)
 在以上步骤中，我们每一步都采取当前看来最好的选择（尽可能用大面额的货币），最终得到了可行的找零方案。从数据结构与算法的角度看，这种方法本质上是“贪心”算法。
 
 小到烹饪一道菜，大到星际航行，几乎所有问题的解决都离不开算法。计算机的出现使得我们能够通过编程将数据结构存储在内存中，同时编写代码调用 CPU 和 GPU 执行算法。这样一来，我们就能把生活中的问题转移到计算机上，以更高效的方式解决各种复杂问题。
@@ -100,12 +100,10 @@
 - 算法为数据结构注入生命力。数据结构本身仅存储数据信息，结合算法才能解决特定问题。
 - 算法通常可以基于不同的数据结构实现，但执行效率可能相差很大，选择合适的数据结构是关键。
 
-> 📊 原书图：数据结构与算法的关系（图解见 https://www.hello-algo.com/chapter_introduction/what_is_dsa/）
-
+![数据结构与算法的关系](assets/relationship_between_data_structure_and_algorithm.png)
 数据结构与算法犹如下图所示的拼装积木。一套积木，除了包含许多零件之外，还附有详细的组装说明书。我们按照说明书一步步操作，就能组装出精美的积木模型。
 
-> 📊 原书图：拼装积木（图解见 https://www.hello-algo.com/chapter_introduction/what_is_dsa/）
-
+![拼装积木](assets/assembling_blocks.png)
 两者的详细对应关系如下表所示。
 
 <p align="center"> 表 <id> &nbsp; 将数据结构与算法类比为拼装积木 </p>

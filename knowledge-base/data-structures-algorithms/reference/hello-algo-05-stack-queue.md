@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：栈与队列（图解见 https://www.hello-algo.com/chapter_stack_and_queue/index/）
-
+![栈与队列](assets/chapter_stack_and_queue.jpg)
 > **摘要**
 >
 > 栈如同叠猫猫，而队列就像猫猫排队。
@@ -33,8 +32,7 @@
 
 如下图所示，我们把堆叠元素的顶部称为“栈顶”，底部称为“栈底”。将把元素添加到栈顶的操作叫作“入栈”，删除栈顶元素的操作叫作“出栈”。
 
-> 📊 原书图：栈的先入后出规则（图解见 https://www.hello-algo.com/chapter_stack_and_queue/stack/）
-
+![栈的先入后出规则](assets/stack_operations.png)
 ### 栈的常用操作
 
 栈的常用操作如下表所示，具体的方法名需要根据所使用的编程语言来确定。在此，我们以常见的 `push()`、`pop()`、`peek()` 命名为例。
@@ -89,8 +87,9 @@ bool isEmpty = stack.Count == 0;
 
 如下图所示，对于入栈操作，我们只需将元素插入链表头部，这种节点插入方法被称为“头插法”。而对于出栈操作，只需将头节点从链表中删除即可。
 
-> 📊 原书图：基于链表实现栈的入栈出栈操作（3 张分步图：LinkedListStack、push()、pop()）（图解见 https://www.hello-algo.com/chapter_stack_and_queue/stack/）
-
+![基于链表实现栈的入栈出栈操作](assets/linkedlist_stack_step1.png)
+![linkedlist_stack_push](assets/linkedlist_stack_step2_push.png)
+![linkedlist_stack_pop](assets/linkedlist_stack_step3_pop.png)
 以下是基于链表实现栈的示例代码：
 
 ```csharp
@@ -157,8 +156,9 @@ public int[] ToArray() {
 
 使用数组实现栈时，我们可以将数组的尾部作为栈顶。如下图所示，入栈与出栈操作分别对应在数组尾部添加元素与删除元素，时间复杂度都为 $O(1)$ 。
 
-> 📊 原书图：基于数组实现栈的入栈出栈操作（3 张分步图：ArrayStack、push()、pop()）（图解见 https://www.hello-algo.com/chapter_stack_and_queue/stack/）
-
+![基于数组实现栈的入栈出栈操作](assets/array_stack_step1.png)
+![array_stack_push](assets/array_stack_step2_push.png)
+![array_stack_pop](assets/array_stack_step3_pop.png)
 由于入栈的元素可能会源源不断地增加，因此我们可以使用动态数组，这样就无须自行处理数组扩容问题。以下为示例代码：
 
 ```csharp
@@ -244,8 +244,7 @@ public int[] ToArray() {
 
 如下图所示，我们将队列头部称为“队首”，尾部称为“队尾”，将把元素加入队尾的操作称为“入队”，删除队首元素的操作称为“出队”。
 
-> 📊 原书图：队列的先入先出规则（图解见 https://www.hello-algo.com/chapter_stack_and_queue/queue/）
-
+![队列的先入先出规则](assets/queue_operations.png)
 ### 队列常用操作
 
 队列的常见操作如下表所示。需要注意的是，不同编程语言的方法名称可能会有所不同。我们在此采用与栈相同的方法命名。
@@ -296,8 +295,9 @@ bool isEmpty = queue.Count == 0;
 
 如下图所示，我们可以将链表的“头节点”和“尾节点”分别视为“队首”和“队尾”，规定队尾仅可添加节点，队首仅可删除节点。
 
-> 📊 原书图：基于链表实现队列的入队出队操作（3 张分步图：LinkedListQueue、push()、pop()）（图解见 https://www.hello-algo.com/chapter_stack_and_queue/queue/）
-
+![基于链表实现队列的入队出队操作](assets/linkedlist_queue_step1.png)
+![linkedlist_queue_push](assets/linkedlist_queue_step2_push.png)
+![linkedlist_queue_pop](assets/linkedlist_queue_step3_pop.png)
 以下是用链表实现队列的代码：
 
 ```csharp
@@ -382,8 +382,9 @@ public int[] ToArray() {
 
 可以看到，入队和出队操作都只需进行一次操作，时间复杂度均为 $O(1)$ 。
 
-> 📊 原书图：基于数组实现队列的入队出队操作（3 张分步图：ArrayQueue、push()、pop()）（图解见 https://www.hello-algo.com/chapter_stack_and_queue/queue/）
-
+![基于数组实现队列的入队出队操作](assets/array_queue_step1.png)
+![array_queue_push](assets/array_queue_step2_push.png)
+![array_queue_pop](assets/array_queue_step3_pop.png)
 你可能会发现一个问题：在不断进行入队和出队的过程中，`front` 和 `rear` 都在向右移动，**当它们到达数组尾部时就无法继续移动了**。为了解决此问题，我们可以将数组视为首尾相接的“环形数组”。
 
 对于环形数组，我们需要让 `front` 或 `rear` 在越过数组尾部时，直接回到数组头部继续遍历。这种周期性规律可以通过“取余操作”来实现，代码如下所示：
@@ -470,8 +471,7 @@ public int[] ToArray() {
 
 在队列中，我们仅能删除头部元素或在尾部添加元素。如下图所示，<u>双向队列（double-ended queue）</u>提供了更高的灵活性，允许在头部和尾部执行元素的添加或删除操作。
 
-> 📊 原书图：双向队列的操作（图解见 https://www.hello-algo.com/chapter_stack_and_queue/deque/）
-
+![双向队列的操作](assets/deque_operations.png)
 ### 双向队列常用操作
 
 双向队列的常用操作如下表所示，具体的方法名称需要根据所使用的编程语言来确定。
@@ -532,8 +532,11 @@ bool isEmpty = deque.Count == 0;
 
 如下图所示，我们将双向链表的头节点和尾节点视为双向队列的队首和队尾，同时实现在两端添加和删除节点的功能。
 
-> 📊 原书图：基于链表实现双向队列的入队出队操作（5 张分步图：LinkedListDeque、push_last()、push_first()、pop_last()、pop_first()）（图解见 https://www.hello-algo.com/chapter_stack_and_queue/deque/）
-
+![基于链表实现双向队列的入队出队操作](assets/linkedlist_deque_step1.png)
+![linkedlist_deque_push_last](assets/linkedlist_deque_step2_push_last.png)
+![linkedlist_deque_push_first](assets/linkedlist_deque_step3_push_first.png)
+![linkedlist_deque_pop_last](assets/linkedlist_deque_step4_pop_last.png)
+![linkedlist_deque_pop_first](assets/linkedlist_deque_step5_pop_first.png)
 实现代码如下所示：
 
 ```csharp
@@ -667,8 +670,11 @@ public int?[] ToArray() {
 
 如下图所示，与基于数组实现队列类似，我们也可以使用环形数组来实现双向队列。
 
-> 📊 原书图：基于数组实现双向队列的入队出队操作（5 张分步图：ArrayDeque、push_last()、push_first()、pop_last()、pop_first()）（图解见 https://www.hello-algo.com/chapter_stack_and_queue/deque/）
-
+![基于数组实现双向队列的入队出队操作](assets/array_deque_step1.png)
+![array_deque_push_last](assets/array_deque_step2_push_last.png)
+![array_deque_push_first](assets/array_deque_step3_push_first.png)
+![array_deque_pop_last](assets/array_deque_step4_pop_last.png)
+![array_deque_pop_first](assets/array_deque_step5_pop_first.png)
 在队列的实现基础上，仅需增加“队首入队”和“队尾出队”的方法：
 
 ```csharp

@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：分治（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/index/）
-
+![分治](assets/chapter_divide_and_conquer.jpg)
 > **摘要**
 >
 > 难题被逐层拆解，每一次的拆解都使它变得更为简单。
@@ -37,8 +36,7 @@
 1. **分**：递归地将原数组（原问题）划分为两个子数组（子问题），直到子数组只剩一个元素（最小子问题）。
 2. **治**：从底至顶地将有序的子数组（子问题的解）进行合并，从而得到有序的原数组（原问题的解）。
 
-> 📊 原书图：归并排序的分治策略（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/divide_and_conquer/）
-
+![归并排序的分治策略](assets/divide_and_conquer_merge_sort.png)
 ### 如何判断分治问题
 
 一个问题是否适合使用分治解决，通常可以参考以下几个判断依据。
@@ -67,8 +65,7 @@ $$
 O(n + (\frac{n}{2})^2 \times 2 + n) = O(\frac{n^2}{2} + 2n)
 $$
 
-> 📊 原书图：划分数组前后的冒泡排序（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/divide_and_conquer/）
-
+![划分数组前后的冒泡排序](assets/divide_and_conquer_bubble_sort.png)
 接下来，我们计算以下不等式，其左边和右边分别为划分前和划分后的操作总数：
 
 $$
@@ -93,8 +90,7 @@ $$
 
 比如在下图所示的“桶排序”中，我们将海量的数据平均分配到各个桶中，则可将所有桶的排序任务分散到各个计算单元，完成后再合并结果。
 
-> 📊 原书图：桶排序的并行计算（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/divide_and_conquer/）
-
+![桶排序的并行计算](assets/divide_and_conquer_parallel_computing.png)
 ### 分治常见应用
 
 一方面，分治可以用来解决许多经典算法问题。
@@ -155,8 +151,7 @@ $$
 
 下图展示了在数组中二分查找元素 $6$ 的分治过程。
 
-> 📊 原书图：二分查找的分治过程（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/binary_search_recur/）
-
+![二分查找的分治过程](assets/binary_search_recur.png)
 在实现代码中，我们声明一个递归函数 `dfs()` 来求解问题 $f(i, j)$ ：
 
 ```csharp
@@ -174,8 +169,7 @@ int BinarySearch(int[] nums, int target) {
 >
 > 给定一棵二叉树的前序遍历 `preorder` 和中序遍历 `inorder` ，请从中构建二叉树，返回二叉树的根节点。假设二叉树中没有值重复的节点（如下图所示）。
 
-> 📊 原书图：构建二叉树的示例数据（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/build_binary_tree_problem/）
-
+![构建二叉树的示例数据](assets/build_tree_example.png)
 ### 判断是否为分治问题
 
 原问题定义为从 `preorder` 和 `inorder` 构建二叉树，是一个典型的分治问题。
@@ -199,8 +193,7 @@ int BinarySearch(int[] nums, int target) {
 2. 查找根节点 3 在 `inorder` 中的索引，利用该索引可将 `inorder` 划分为 `[ 9 | 3 ｜ 1 2 7 ]` 。
 3. 根据 `inorder` 的划分结果，易得左子树和右子树的节点数量分别为 1 和 3 ，从而可将 `preorder` 划分为 `[ 3 | 9 | 2 1 7 ]` 。
 
-> 📊 原书图：在前序遍历和中序遍历中划分子树（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/build_binary_tree_problem/）
-
+![在前序遍历和中序遍历中划分子树](assets/build_tree_preorder_inorder_division.png)
 ### 基于变量描述子树区间
 
 根据以上划分方法，**我们已经得到根节点、左子树、右子树在 `preorder` 和 `inorder` 中的索引区间**。而为了描述这些索引区间，我们需要借助几个指针变量。
@@ -221,8 +214,7 @@ int BinarySearch(int[] nums, int target) {
 
 请注意，右子树根节点索引中的 $(m-l)$ 的含义是“左子树的节点数量”，建议结合下图理解。
 
-> 📊 原书图：根节点和左右子树的索引区间表示（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/build_binary_tree_problem/）
-
+![根节点和左右子树的索引区间表示](assets/build_tree_division_pointers.png)
 ### 代码实现
 
 为了提升查询 $m$ 的效率，我们借助一个哈希表 `hmap` 来存储数组 `inorder` 中元素到索引的映射：
@@ -242,12 +234,18 @@ TreeNode? BuildTree(int[] preorder, int[] inorder) {
 
 下图展示了构建二叉树的递归过程，各个节点是在向下“递”的过程中建立的，而各条边（引用）是在向上“归”的过程中建立的。
 
-> 📊 原书图：构建二叉树的递归过程（9 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>）（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/build_binary_tree_problem/）
-
+![构建二叉树的递归过程](assets/built_tree_step1.png)
+![built_tree_step2](assets/built_tree_step2.png)
+![built_tree_step3](assets/built_tree_step3.png)
+![built_tree_step4](assets/built_tree_step4.png)
+![built_tree_step5](assets/built_tree_step5.png)
+![built_tree_step6](assets/built_tree_step6.png)
+![built_tree_step7](assets/built_tree_step7.png)
+![built_tree_step8](assets/built_tree_step8.png)
+![built_tree_step9](assets/built_tree_step9.png)
 每个递归函数内的前序遍历 `preorder` 和中序遍历 `inorder` 的划分结果如下图所示。
 
-> 📊 原书图：每个递归函数中的划分结果（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/build_binary_tree_problem/）
-
+![每个递归函数中的划分结果](assets/built_tree_overall.png)
 设树的节点数量为 $n$ ，初始化每一个节点（执行一个递归函数 `dfs()` ）使用 $O(1)$ 时间。**因此总体时间复杂度为 $O(n)$** 。
 
 哈希表存储 `inorder` 元素到索引的映射，空间复杂度为 $O(n)$ 。在最差情况下，即二叉树退化为链表时，递归深度达到 $n$ ，使用 $O(n)$ 的栈帧空间。**因此总体空间复杂度为 $O(n)$** 。
@@ -264,24 +262,25 @@ TreeNode? BuildTree(int[] preorder, int[] inorder) {
 > 2. 每次只能移动一个圆盘。
 > 3. 小圆盘必须时刻位于大圆盘之上。
 
-> 📊 原书图：汉诺塔问题示例（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/hanota_problem/）
-
+![汉诺塔问题示例](assets/hanota_example.png)
 **我们将规模为 $i$ 的汉诺塔问题记作 $f(i)$** 。例如 $f(3)$ 代表将 $3$ 个圆盘从 `A` 移动至 `C` 的汉诺塔问题。
 
 ### 考虑基本情况
 
 如下图所示，对于问题 $f(1)$ ，即当只有一个圆盘时，我们将它直接从 `A` 移动至 `C` 即可。
 
-> 📊 原书图：规模为 1 的问题的解（2 张分步图：<1>、<2>）（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/hanota_problem/）
-
+![规模为 1 的问题的解](assets/hanota_f1_step1.png)
+![hanota_f1_step2](assets/hanota_f1_step2.png)
 如下图所示，对于问题 $f(2)$ ，即当有两个圆盘时，**由于要时刻满足小圆盘在大圆盘之上，因此需要借助 `B` 来完成移动**。
 
 1. 先将上面的小圆盘从 `A` 移至 `B` 。
 2. 再将大圆盘从 `A` 移至 `C` 。
 3. 最后将小圆盘从 `B` 移至 `C` 。
 
-> 📊 原书图：规模为 2 的问题的解（4 张分步图：<1>、<2>、<3>、<4>）（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/hanota_problem/）
-
+![规模为 2 的问题的解](assets/hanota_f2_step1.png)
+![hanota_f2_step2](assets/hanota_f2_step2.png)
+![hanota_f2_step3](assets/hanota_f2_step3.png)
+![hanota_f2_step4](assets/hanota_f2_step4.png)
 解决问题 $f(2)$ 的过程可总结为：**将两个圆盘借助 `B` 从 `A` 移至 `C`** 。其中，`C` 称为目标柱、`B` 称为缓冲柱。
 
 ### 子问题分解
@@ -294,8 +293,10 @@ TreeNode? BuildTree(int[] preorder, int[] inorder) {
 2. 将 `A` 中剩余的一个圆盘从 `A` 直接移动至 `C` 。
 3. 令 `C` 为目标柱、`A` 为缓冲柱，将两个圆盘从 `B` 移至 `C` 。
 
-> 📊 原书图：规模为 3 的问题的解（4 张分步图：<1>、<2>、<3>、<4>）（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/hanota_problem/）
-
+![规模为 3 的问题的解](assets/hanota_f3_step1.png)
+![hanota_f3_step2](assets/hanota_f3_step2.png)
+![hanota_f3_step3](assets/hanota_f3_step3.png)
+![hanota_f3_step4](assets/hanota_f3_step4.png)
 从本质上看，**我们将问题 $f(3)$ 划分为两个子问题 $f(2)$ 和一个子问题 $f(1)$** 。按顺序解决这三个子问题之后，原问题随之得到解决。这说明子问题是独立的，而且解可以合并。
 
 至此，我们可总结出下图所示的解决汉诺塔问题的分治策略：将原问题 $f(n)$ 划分为两个子问题 $f(n-1)$ 和一个子问题 $f(1)$ ，并按照以下顺序解决这三个子问题。
@@ -306,8 +307,7 @@ TreeNode? BuildTree(int[] preorder, int[] inorder) {
 
 对于这两个子问题 $f(n-1)$ ，**可以通过相同的方式进行递归划分**，直至达到最小子问题 $f(1)$ 。而 $f(1)$ 的解是已知的，只需一次移动操作即可。
 
-> 📊 原书图：解决汉诺塔问题的分治策略（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/hanota_problem/）
-
+![解决汉诺塔问题的分治策略](assets/hanota_divide_and_conquer.png)
 ### 代码实现
 
 在代码中，我们声明一个递归函数 `dfs(i, src, buf, tar)` ，它的作用是将柱 `src` 顶部的 $i$ 个圆盘借助缓冲柱 `buf` 移动至目标柱 `tar` ：
@@ -323,8 +323,7 @@ void SolveHanota(List<int> A, List<int> B, List<int> C) {
 
 如下图所示，汉诺塔问题形成一棵高度为 $n$ 的递归树，每个节点代表一个子问题，对应一个开启的 `dfs()` 函数，**因此时间复杂度为 $O(2^n)$ ，空间复杂度为 $O(n)$** 。
 
-> 📊 原书图：汉诺塔问题的递归树（图解见 https://www.hello-algo.com/chapter_divide_and_conquer/hanota_problem/）
-
+![汉诺塔问题的递归树](assets/hanota_recursive_tree.png)
 > **引用**
 >
 > 汉诺塔问题源自一个古老的传说。在古印度的一个寺庙里，僧侣们有三根高大的钻石柱子，以及 $64$ 个大小不一的金圆盘。僧侣们不断地移动圆盘，他们相信在最后一个圆盘被正确放置的那一刻，这个世界就会结束。

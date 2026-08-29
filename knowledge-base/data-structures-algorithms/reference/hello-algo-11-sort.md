@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：排序（图解见 https://www.hello-algo.com/chapter_sorting/index/）
-
+![排序](assets/chapter_sorting.jpg)
 > **摘要**
 >
 > 排序犹如一把将混乱变为秩序的魔法钥匙，使我们能以更高效的方式理解与处理数据。
@@ -31,8 +30,7 @@
 
 如下图所示，排序算法中的数据类型可以是整数、浮点数、字符或字符串等。排序的判断规则可根据需求设定，如数字大小、字符 ASCII 码顺序或自定义规则。
 
-> 📊 原书图：数据类型和判断规则示例（图解见 https://www.hello-algo.com/chapter_sorting/sorting_algorithm/）
-
+![数据类型和判断规则示例](assets/sorting_examples.png)
 ### 评价维度
 
 **运行效率**：我们期望排序算法的时间复杂度尽量低，且总体操作数量较少（时间复杂度中的常数项变小）。对于大数据量的情况，运行效率显得尤为重要。
@@ -84,8 +82,17 @@
 4. 以此类推。经过 $n - 1$ 轮选择与交换后，数组前 $n - 1$ 个元素已排序。
 5. 仅剩的一个元素必定是最大元素，无须排序，因此数组排序完成。
 
-> 📊 原书图：选择排序步骤（11 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>、<10>、<11>）（图解见 https://www.hello-algo.com/chapter_sorting/selection_sort/）
-
+![选择排序步骤](assets/selection_sort_step1.png)
+![selection_sort_step2](assets/selection_sort_step2.png)
+![selection_sort_step3](assets/selection_sort_step3.png)
+![selection_sort_step4](assets/selection_sort_step4.png)
+![selection_sort_step5](assets/selection_sort_step5.png)
+![selection_sort_step6](assets/selection_sort_step6.png)
+![selection_sort_step7](assets/selection_sort_step7.png)
+![selection_sort_step8](assets/selection_sort_step8.png)
+![selection_sort_step9](assets/selection_sort_step9.png)
+![selection_sort_step10](assets/selection_sort_step10.png)
+![selection_sort_step11](assets/selection_sort_step11.png)
 在代码中，我们用 $k$ 来记录未排序区间内的最小元素：
 
 ```csharp
@@ -112,16 +119,20 @@ void SelectionSort(int[] nums) {
 - **空间复杂度为 $O(1)$、原地排序**：指针 $i$ 和 $j$ 使用常数大小的额外空间。
 - **非稳定排序**：如下图所示，元素 `nums[i]` 有可能被交换至与其相等的元素的右边，导致两者的相对顺序发生改变。
 
-> 📊 原书图：选择排序非稳定示例（图解见 https://www.hello-algo.com/chapter_sorting/selection_sort/）
-
+![选择排序非稳定示例](assets/selection_sort_instability.png)
 ## 11.3 冒泡排序
 
 <u>冒泡排序（bubble sort）</u>通过连续地比较与交换相邻元素实现排序。这个过程就像气泡从底部升到顶部一样，因此得名冒泡排序。
 
 如下图所示，冒泡过程可以利用元素交换操作来模拟：从数组最左端开始向右遍历，依次比较相邻元素大小，如果“左元素 > 右元素”就交换二者。遍历完成后，最大的元素会被移动到数组的最右端。
 
-> 📊 原书图：利用元素交换操作模拟冒泡（7 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>）（图解见 https://www.hello-algo.com/chapter_sorting/bubble_sort/）
-
+![利用元素交换操作模拟冒泡](assets/bubble_operation_step1.png)
+![bubble_operation_step2](assets/bubble_operation_step2.png)
+![bubble_operation_step3](assets/bubble_operation_step3.png)
+![bubble_operation_step4](assets/bubble_operation_step4.png)
+![bubble_operation_step5](assets/bubble_operation_step5.png)
+![bubble_operation_step6](assets/bubble_operation_step6.png)
+![bubble_operation_step7](assets/bubble_operation_step7.png)
 ### 算法流程
 
 设数组的长度为 $n$ ，冒泡排序的步骤如下图所示。
@@ -131,8 +142,7 @@ void SelectionSort(int[] nums) {
 3. 以此类推，经过 $n - 1$ 轮“冒泡”后，**前 $n - 1$ 大的元素都被交换至正确位置**。
 4. 仅剩的一个元素必定是最小元素，无须排序，因此数组排序完成。
 
-> 📊 原书图：冒泡排序流程（图解见 https://www.hello-algo.com/chapter_sorting/bubble_sort/）
-
+![冒泡排序流程](assets/bubble_sort_overview.png)
 示例代码如下：
 
 ```csharp
@@ -190,8 +200,7 @@ void BubbleSortWithFlag(int[] nums) {
 
 下图展示了数组插入元素的操作流程。设基准元素为 `base` ，我们需要将从目标索引到 `base` 之间的所有元素向右移动一位，然后将 `base` 赋值给目标索引。
 
-> 📊 原书图：单次插入操作（图解见 https://www.hello-algo.com/chapter_sorting/insertion_sort/）
-
+![单次插入操作](assets/insertion_operation.png)
 ### 算法流程
 
 插入排序的整体流程如下图所示。
@@ -201,8 +210,7 @@ void BubbleSortWithFlag(int[] nums) {
 3. 选取第 3 个元素作为 `base` ，将其插入到正确位置后，**数组的前 3 个元素已排序**。
 4. 以此类推，在最后一轮中，选取最后一个元素作为 `base` ，将其插入到正确位置后，**所有元素均已排序**。
 
-> 📊 原书图：插入排序流程（图解见 https://www.hello-algo.com/chapter_sorting/insertion_sort/）
-
+![插入排序流程](assets/insertion_sort_overview.png)
 示例代码如下：
 
 ```csharp
@@ -251,8 +259,15 @@ void InsertionSort(int[] nums) {
 2. 设置一个循环，在每轮中使用 `i`（`j`）分别寻找第一个比基准数大（小）的元素，然后交换这两个元素。
 3. 循环执行步骤 `2.` ，直到 `i` 和 `j` 相遇时停止，最后将基准数交换至两个子数组的分界线。
 
-> 📊 原书图：哨兵划分步骤（9 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>）（图解见 https://www.hello-algo.com/chapter_sorting/quick_sort/）
-
+![哨兵划分步骤](assets/pivot_division_step1.png)
+![pivot_division_step2](assets/pivot_division_step2.png)
+![pivot_division_step3](assets/pivot_division_step3.png)
+![pivot_division_step4](assets/pivot_division_step4.png)
+![pivot_division_step5](assets/pivot_division_step5.png)
+![pivot_division_step6](assets/pivot_division_step6.png)
+![pivot_division_step7](assets/pivot_division_step7.png)
+![pivot_division_step8](assets/pivot_division_step8.png)
+![pivot_division_step9](assets/pivot_division_step9.png)
 哨兵划分完成后，原数组被划分成三部分：左子数组、基准数、右子数组，且满足“左子数组任意元素 $\leq$ 基准数 $\leq$ 右子数组任意元素”。因此，我们接下来只需对这两个子数组进行排序。
 
 > **快速排序的分治策略**
@@ -284,8 +299,7 @@ static int Partition(int[] nums, int left, int right) {
 2. 然后，对左子数组和右子数组分别递归执行“哨兵划分”。
 3. 持续递归，直至子数组长度为 1 时终止，从而完成整个数组的排序。
 
-> 📊 原书图：快速排序流程（图解见 https://www.hello-algo.com/chapter_sorting/quick_sort/）
-
+![快速排序流程](assets/quick_sort_overview.png)
 ```csharp
 /* 快速排序 */
 public static void QuickSort(int[] nums, int left, int right) {
@@ -379,8 +393,7 @@ public static void QuickSort(int[] nums, int left, int right) {
 1. **划分阶段**：通过递归不断地将数组从中点处分开，将长数组的排序问题转换为短数组的排序问题。
 2. **合并阶段**：当子数组长度为 1 时终止划分，开始合并，持续地将左右两个较短的有序数组合并为一个较长的有序数组，直至结束。
 
-> 📊 原书图：归并排序的划分与合并阶段（图解见 https://www.hello-algo.com/chapter_sorting/merge_sort/）
-
+![归并排序的划分与合并阶段](assets/merge_sort_overview.png)
 ### 算法流程
 
 如下图所示，“划分阶段”从顶至底递归地将数组从中点切分为两个子数组。
@@ -390,8 +403,16 @@ public static void QuickSort(int[] nums, int left, int right) {
 
 “合并阶段”从底至顶地将左子数组和右子数组合并为一个有序数组。需要注意的是，从长度为 1 的子数组开始合并，合并阶段中的每个子数组都是有序的。
 
-> 📊 原书图：归并排序步骤（10 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>、<10>）（图解见 https://www.hello-algo.com/chapter_sorting/merge_sort/）
-
+![归并排序步骤](assets/merge_sort_step1.png)
+![merge_sort_step2](assets/merge_sort_step2.png)
+![merge_sort_step3](assets/merge_sort_step3.png)
+![merge_sort_step4](assets/merge_sort_step4.png)
+![merge_sort_step5](assets/merge_sort_step5.png)
+![merge_sort_step6](assets/merge_sort_step6.png)
+![merge_sort_step7](assets/merge_sort_step7.png)
+![merge_sort_step8](assets/merge_sort_step8.png)
+![merge_sort_step9](assets/merge_sort_step9.png)
+![merge_sort_step10](assets/merge_sort_step10.png)
 观察发现，归并排序与二叉树后序遍历的递归顺序是一致的。
 
 - **后序遍历**：先递归左子树，再递归右子树，最后处理根节点。
@@ -454,8 +475,18 @@ void MergeSort(int[] nums, int left, int right) {
 >
 > 实际上，元素出堆操作中也包含第 `2.` 步和第 `3.` 步，只是多了一个弹出元素的步骤。
 
-> 📊 原书图：堆排序步骤（12 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>、<10>、<11>、<12>）（图解见 https://www.hello-algo.com/chapter_sorting/heap_sort/）
-
+![堆排序步骤](assets/heap_sort_step1.png)
+![heap_sort_step2](assets/heap_sort_step2.png)
+![heap_sort_step3](assets/heap_sort_step3.png)
+![heap_sort_step4](assets/heap_sort_step4.png)
+![heap_sort_step5](assets/heap_sort_step5.png)
+![heap_sort_step6](assets/heap_sort_step6.png)
+![heap_sort_step7](assets/heap_sort_step7.png)
+![heap_sort_step8](assets/heap_sort_step8.png)
+![heap_sort_step9](assets/heap_sort_step9.png)
+![heap_sort_step10](assets/heap_sort_step10.png)
+![heap_sort_step11](assets/heap_sort_step11.png)
+![heap_sort_step12](assets/heap_sort_step12.png)
 在代码实现中，我们使用了与“堆”章节相同的从顶至底堆化 `sift_down()` 函数。值得注意的是，由于堆的长度会随着提取最大元素而减小，因此我们需要给 `sift_down()` 函数添加一个长度参数 $n$ ，用于指定堆的当前有效长度。代码如下所示：
 
 ```csharp
@@ -495,8 +526,7 @@ void HeapSort(int[] nums) {
 2. 对每个桶分别执行排序（这里采用编程语言的内置排序函数）。
 3. 按照桶从小到大的顺序合并结果。
 
-> 📊 原书图：桶排序算法流程（图解见 https://www.hello-algo.com/chapter_sorting/bucket_sort/）
-
+![桶排序算法流程](assets/bucket_sort_overview.png)
 代码如下所示：
 
 ```csharp
@@ -546,14 +576,12 @@ void BucketSort(float[] nums) {
 
 如下图所示，这种方法本质上是创建一棵递归树，目标是让叶节点的值尽可能平均。当然，不一定要每轮将数据划分为 3 个桶，具体划分方式可根据数据特点灵活选择。
 
-> 📊 原书图：递归划分桶（图解见 https://www.hello-algo.com/chapter_sorting/bucket_sort/）
-
+![递归划分桶](assets/scatter_in_buckets_recursively.png)
 如果我们提前知道商品价格的概率分布，**则可以根据数据概率分布设置每个桶的价格分界线**。值得注意的是，数据分布并不一定需要特意统计，也可以根据数据特点采用某种概率模型进行近似。
 
 如下图所示，我们假设商品价格服从正态分布，这样就可以合理地设定价格区间，从而将商品平均分配到各个桶中。
 
-> 📊 原书图：根据概率分布划分桶（图解见 https://www.hello-algo.com/chapter_sorting/bucket_sort/）
-
+![根据概率分布划分桶](assets/scatter_in_buckets_distribution.png)
 ## 11.9 计数排序
 
 <u>计数排序（counting sort）</u>通过统计元素数量来实现排序，通常应用于整数数组。
@@ -566,8 +594,7 @@ void BucketSort(float[] nums) {
 2. **借助 `counter` 统计 `nums` 中各数字的出现次数**，其中 `counter[num]` 对应数字 `num` 的出现次数。统计方法很简单，只需遍历 `nums`（设当前数字为 `num`），每轮将 `counter[num]` 增加 $1$ 即可。
 3. **由于 `counter` 的各个索引天然有序，因此相当于所有数字已经排序好了**。接下来，我们遍历 `counter` ，根据各数字出现次数从小到大的顺序填入 `nums` 即可。
 
-> 📊 原书图：计数排序流程（图解见 https://www.hello-algo.com/chapter_sorting/counting_sort/）
-
+![计数排序流程](assets/counting_sort_overview.png)
 代码如下所示：
 
 ```csharp
@@ -616,8 +643,14 @@ $$
 
 遍历完成后，数组 `res` 中就是排序好的结果，最后使用 `res` 覆盖原数组 `nums` 即可。下图展示了完整的计数排序流程。
 
-> 📊 原书图：计数排序步骤（8 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>）（图解见 https://www.hello-algo.com/chapter_sorting/counting_sort/）
-
+![计数排序步骤](assets/counting_sort_step1.png)
+![counting_sort_step2](assets/counting_sort_step2.png)
+![counting_sort_step3](assets/counting_sort_step3.png)
+![counting_sort_step4](assets/counting_sort_step4.png)
+![counting_sort_step5](assets/counting_sort_step5.png)
+![counting_sort_step6](assets/counting_sort_step6.png)
+![counting_sort_step7](assets/counting_sort_step7.png)
+![counting_sort_step8](assets/counting_sort_step8.png)
 计数排序的实现代码如下所示：
 
 ```csharp
@@ -684,8 +717,7 @@ void CountingSort(int[] nums) {
 2. 对学号的第 $k$ 位执行“计数排序”。完成后，数据会根据第 $k$ 位从小到大排序。
 3. 将 $k$ 增加 $1$ ，然后返回步骤 `2.` 继续迭代，直到所有位都排序完成后结束。
 
-> 📊 原书图：基数排序算法流程（图解见 https://www.hello-algo.com/chapter_sorting/radix_sort/）
-
+![基数排序算法流程](assets/radix_sort_overview.png)
 下面剖析代码实现。对于一个 $d$ 进制的数字 $x$ ，要获取其第 $k$ 位 $x_k$ ，可以使用以下计算公式：
 
 $$
@@ -741,8 +773,7 @@ void RadixSort(int[] nums) {
 - 总的来说，我们希望找到一种排序算法，具有高效率、稳定、原地以及自适应性等优点。然而，正如其他数据结构和算法一样，没有一种排序算法能够同时满足所有这些条件。在实际应用中，我们需要根据数据的特性来选择合适的排序算法。
 - 下图对比了主流排序算法的效率、稳定性、就地性和自适应性等。
 
-> 📊 原书图：排序算法对比（图解见 https://www.hello-algo.com/chapter_sorting/summary/）
-
+![排序算法对比](assets/sorting_algorithms_comparison.png)
 ### Q & A
 
 **Q**：排序算法稳定性在什么情况下是必需的？

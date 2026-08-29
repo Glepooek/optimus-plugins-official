@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：数组与链表（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/index/）
-
+![数组与链表](assets/chapter_array_and_linkedlist.jpg)
 > **摘要**
 >
 > 数据结构的世界如同一堵厚实的砖墙。
@@ -29,8 +28,7 @@
 
 <u>数组（array）</u>是一种线性数据结构，其将相同类型的元素存储在连续的内存空间中。我们将元素在数组中的位置称为该元素的<u>索引（index）</u>。下图展示了数组的主要概念和存储方式。
 
-> 📊 原书图：数组定义与存储方式（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/array/）
-
+![数组定义与存储方式](assets/array_definition.png)
 ### 数组常用操作
 
 #### 初始化数组
@@ -51,8 +49,7 @@ int[] nums = [1, 3, 2, 5, 4];
 
 数组元素被存储在连续的内存空间中，这意味着计算数组元素的内存地址非常容易。给定数组内存地址（首元素内存地址）和某个元素的索引，我们可以使用下图所示的公式计算得到该元素的内存地址，从而直接访问该元素。
 
-> 📊 原书图：数组元素的内存地址计算（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/array/）
-
+![数组元素的内存地址计算](assets/array_memory_location_calculation.png)
 观察上图，我们发现数组首个元素的索引为 $0$ ，这似乎有些反直觉，因为从 $1$ 开始计数会更自然。但从地址计算公式的角度看，**索引本质上是内存地址的偏移量**。首个元素的地址偏移量是 $0$ ，因此它的索引为 $0$ 是合理的。
 
 在数组中访问元素非常高效，我们可以在 $O(1)$ 时间内随机访问数组中的任意一个元素。
@@ -73,8 +70,7 @@ int RandomAccess(int[] nums) {
 
 数组元素在内存中是“紧挨着的”，它们之间没有空间再存放任何数据。如下图所示，如果想在数组中间插入一个元素，则需要将该元素之后的所有元素都向后移动一位，之后再把元素赋值给该索引。
 
-> 📊 原书图：数组插入元素示例（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/array/）
-
+![数组插入元素示例](assets/array_insert_element.png)
 值得注意的是，由于数组的长度是固定的，因此插入一个元素必定会导致数组尾部元素“丢失”。我们将这个问题的解决方案留在“列表”章节中讨论。
 
 ```csharp
@@ -93,8 +89,7 @@ void Insert(int[] nums, int num, int index) {
 
 同理，如下图所示，若想删除索引 $i$ 处的元素，则需要把索引 $i$ 之后的元素都向前移动一位。
 
-> 📊 原书图：数组删除元素示例（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/array/）
-
+![数组删除元素示例](assets/array_remove_element.png)
 请注意，删除元素完成后，原先末尾的元素变得“无意义”了，所以我们无须特意去修改它。
 
 ```csharp
@@ -201,8 +196,7 @@ int[] Extend(int[] nums, int enlarge) {
 
 链表的设计使得各个节点可以分散存储在内存各处，它们的内存地址无须连续。
 
-> 📊 原书图：链表定义与存储方式（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/linked_list/）
-
+![链表定义与存储方式](assets/linkedlist_definition.png)
 观察上图，链表的组成单位是<u>节点（node）</u>对象。每个节点都包含两项数据：节点的“值”和指向下一节点的“引用”。
 
 - 链表的首个节点被称为“头节点”，最后一个节点被称为“尾节点”。
@@ -252,8 +246,7 @@ n3.next = n4;
 
 相比之下，在数组中插入元素的时间复杂度为 $O(n)$ ，在大数据量下的效率较低。
 
-> 📊 原书图：链表插入节点示例（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/linked_list/）
-
+![链表插入节点示例](assets/linkedlist_insert_node.png)
 ```csharp
 /* 在链表的节点 n0 之后插入节点 P */
 void Insert(ListNode n0, ListNode P) {
@@ -269,8 +262,7 @@ void Insert(ListNode n0, ListNode P) {
 
 请注意，尽管在删除操作完成后节点 `P` 仍然指向 `n1` ，但实际上遍历此链表已经无法访问到 `P` ，这意味着 `P` 已经不再属于该链表了。
 
-> 📊 原书图：链表删除节点（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/linked_list/）
-
+![链表删除节点](assets/linkedlist_remove_node.png)
 ```csharp
 /* 删除链表的节点 n0 之后的首个节点 */
 void Remove(ListNode n0) {
@@ -349,8 +341,7 @@ class ListNode(int x) {  // 构造函数
 }
 ```
 
-> 📊 原书图：常见链表种类（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/linked_list/）
-
+![常见链表种类](assets/linkedlist_common_types.png)
 ### 链表典型应用
 
 单向链表通常用于实现栈、队列、哈希表和图等数据结构。
@@ -627,8 +618,7 @@ public int[] ToArray() {
 - **硬盘难以被内存取代**。首先，内存中的数据在断电后会丢失，因此它不适合长期存储数据；其次，内存的成本是硬盘的几十倍，这使得它难以在消费者市场普及。
 - **缓存的大容量和高速度难以兼得**。随着 L1、L2、L3 缓存的容量逐步增大，其物理尺寸会变大，与 CPU 核心之间的物理距离会变远，从而导致数据传输时间增加，元素访问延迟变高。在当前技术下，多层级的缓存结构是容量、速度和成本之间的最佳平衡点。
 
-> 📊 原书图：计算机存储系统（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/ram_and_cache/）
-
+![计算机存储系统](assets/storage_pyramid.png)
 > **提示**
 >
 > 计算机的存储层次结构体现了速度、容量和成本三者之间的精妙平衡。实际上，这种权衡普遍存在于所有工业领域，它要求我们在不同的优势和限制之间找到最佳平衡点。
@@ -637,8 +627,7 @@ public int[] ToArray() {
 
 如下图所示，在程序运行时，数据会从硬盘中被读取到内存中，供 CPU 计算使用。缓存可以看作 CPU 的一部分，**它通过智能地从内存加载数据**，给 CPU 提供高速的数据读取，从而显著提升程序的执行效率，减少对较慢的内存的依赖。
 
-> 📊 原书图：硬盘、内存和缓存之间的数据流通（图解见 https://www.hello-algo.com/chapter_array_and_linkedlist/ram_and_cache/）
-
+![硬盘、内存和缓存之间的数据流通](assets/computer_storage_devices.png)
 ### 数据结构的内存效率
 
 在内存空间利用方面，数组和链表各自具有优势和局限性。

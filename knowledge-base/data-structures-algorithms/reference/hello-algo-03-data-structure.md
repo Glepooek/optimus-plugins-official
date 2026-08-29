@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：数据结构（图解见 https://www.hello-algo.com/chapter_data_structure/index/）
-
+![数据结构](assets/chapter_data_structure.jpg)
 > **摘要**
 >
 > 数据结构如同一副稳固而多样的框架。
@@ -43,16 +42,14 @@
 - **树形结构**：树、堆、哈希表，元素之间是一对多的关系。
 - **网状结构**：图，元素之间是多对多的关系。
 
-> 📊 原书图：线性数据结构与非线性数据结构（图解见 https://www.hello-algo.com/chapter_data_structure/classification_of_data_structure/）
-
+![线性数据结构与非线性数据结构](assets/classification_logic_structure.png)
 ### 物理结构：连续与分散
 
 **当算法程序运行时，正在处理的数据主要存储在内存中**。下图展示了一个计算机内存条，其中每个黑色方块都包含一块内存空间。我们可以将内存想象成一个巨大的 Excel 表格，其中每个单元格都可以存储一定大小的数据。
 
 **系统通过内存地址来访问目标位置的数据**。如下图所示，计算机根据特定规则为表格中的每个单元格分配编号，确保每个内存空间都有唯一的内存地址。有了这些地址，程序便可以访问内存中的数据。
 
-> 📊 原书图：内存条、内存空间、内存地址（图解见 https://www.hello-algo.com/chapter_data_structure/classification_of_data_structure/）
-
+![内存条、内存空间、内存地址](assets/computer_memory_location.png)
 > **提示**
 >
 > 值得说明的是，将内存比作 Excel 表格是一个简化的类比，实际内存的工作机制比较复杂，涉及地址空间、内存管理、缓存机制、虚拟内存和物理内存等概念。
@@ -61,8 +58,7 @@
 
 如下图所示，**物理结构反映了数据在计算机内存中的存储方式**，可分为连续空间存储（数组）和分散空间存储（链表）。物理结构从底层决定了数据的访问、更新、增删等操作方法，两种物理结构在时间效率和空间效率方面呈现出互补的特点。
 
-> 📊 原书图：连续空间存储与分散空间存储（图解见 https://www.hello-algo.com/chapter_data_structure/classification_of_data_structure/）
-
+![连续空间存储与分散空间存储](assets/classification_phisical_structure.png)
 值得说明的是，**所有数据结构都是基于数组、链表或二者的组合实现的**。例如，栈和队列既可以使用数组实现，也可以使用链表实现；而哈希表的实现可能同时包含数组和链表。
 
 - **基于数组可实现**：栈、队列、哈希表、树、堆、图、矩阵、张量（维度 $\geq 3$ 的数组）等。
@@ -150,8 +146,7 @@ bool[] bools = new bool[5];
 
 下图展示了原码、反码和补码之间的转换方法。
 
-> 📊 原书图：原码、反码与补码之间的相互转换（图解见 https://www.hello-algo.com/chapter_data_structure/number_encoding/）
-
+![原码、反码与补码之间的相互转换](assets/1s_2s_complement.png)
 <u>原码（sign-magnitude）</u>虽然最直观，但存在一些局限性。一方面，**负数的原码不能直接用于运算**。例如在原码下计算 $1 + (-2)$ ，得到的结果是 $-3$ ，这显然是不对的。
 
 $$
@@ -257,8 +252,7 @@ $$
 \end{aligned}
 $$
 
-> 📊 原书图：IEEE 754 标准下的 float 的计算示例（图解见 https://www.hello-algo.com/chapter_data_structure/number_encoding/）
-
+![IEEE 754 标准下的 float 的计算示例](assets/ieee_754_float.png)
 观察上图，给定一个示例数据 $\mathrm{S} = 0$ ， $\mathrm{E} = 124$ ，$\mathrm{N} = 2^{-2} + 2^{-3} = 0.375$ ，则有：
 
 $$
@@ -291,8 +285,7 @@ $$
 
 <u>ASCII 码</u>是最早出现的字符集，其全称为 American Standard Code for Information Interchange（美国标准信息交换代码）。它使用 7 位二进制数（一个字节的低 7 位）表示一个字符，最多能够表示 128 个不同的字符。如下图所示，ASCII 码包括英文字母的大小写、数字 0 ~ 9、一些标点符号，以及一些控制字符（如换行符和制表符）。
 
-> 📊 原书图：ASCII 码（图解见 https://www.hello-algo.com/chapter_data_structure/character_encoding/）
-
+![ASCII 码](assets/ascii_table.png)
 然而，**ASCII 码仅能够表示英文**。随着计算机的全球化，诞生了一种能够表示更多语言的 <u>EASCII</u> 字符集。它在 ASCII 的 7 位基础上扩展到 8 位，能够表示 256 个不同的字符。
 
 在世界范围内，陆续出现了一批适用于不同地区的 EASCII 字符集。这些字符集的前 128 个字符统一为 ASCII 码，后 128 个字符定义不同，以适应不同语言的需求。
@@ -317,8 +310,7 @@ Unicode 是一种通用字符集，本质上是给每个字符分配一个编号
 
 对于以上问题，**一种直接的解决方案是将所有字符存储为等长的编码**。如下图所示，“Hello”中的每个字符占用 1 字节，“算法”中的每个字符占用 2 字节。我们可以通过高位填 0 将“Hello 算法”中的所有字符都编码为 2 字节长度。这样系统就可以每隔 2 字节解析一个字符，恢复这个短语的内容了。
 
-> 📊 原书图：Unicode 编码示例（图解见 https://www.hello-algo.com/chapter_data_structure/character_encoding/）
-
+![Unicode 编码示例](assets/unicode_hello_algo.png)
 然而 ASCII 码已经向我们证明，编码英文只需 1 字节。若采用上述方案，英文文本占用空间的大小将会是 ASCII 编码下的两倍，非常浪费内存空间。因此，我们需要一种更加高效的 Unicode 编码方法。
 
 ### UTF-8 编码
@@ -336,8 +328,7 @@ UTF-8 的编码规则并不复杂，分为以下两种情况。
 
 之所以将 $10$ 当作校验符，是因为在 UTF-8 编码规则下，不可能有字符的最高两位是 $10$ 。这个结论可以用反证法来证明：假设一个字符的最高两位是 $10$ ，说明该字符的长度为 $1$ ，对应 ASCII 码。而 ASCII 码的最高位应该是 $0$ ，与假设矛盾。
 
-> 📊 原书图：UTF-8 编码示例（图解见 https://www.hello-algo.com/chapter_data_structure/character_encoding/）
-
+![UTF-8 编码示例](assets/utf-8_hello_algo.png)
 除了 UTF-8 之外，常见的编码方式还包括以下两种。
 
 - **UTF-16 编码**：使用 2 或 4 字节来表示一个字符。所有的 ASCII 字符和常用的非英文字符，都用 2 字节表示；少数字符需要用到 4 字节表示。对于 2 字节的字符，UTF-16 编码与 Unicode 码点相等。

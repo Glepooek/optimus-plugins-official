@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：堆（图解见 https://www.hello-algo.com/chapter_heap/index/）
-
+![堆](assets/chapter_heap.jpg)
 > **摘要**
 >
 > 堆就像是山岳峰峦，层叠起伏、形态各异。
@@ -32,8 +31,7 @@
 - <u>小顶堆（min heap）</u>：任意节点的值 $\leq$ 其子节点的值。
 - <u>大顶堆（max heap）</u>：任意节点的值 $\geq$ 其子节点的值。
 
-> 📊 原书图：小顶堆与大顶堆（图解见 https://www.hello-algo.com/chapter_heap/heap/）
-
+![小顶堆与大顶堆](assets/min_heap_and_max_heap.png)
 堆作为完全二叉树的一个特例，具有以下特性。
 
 - 最底层节点靠左填充，其他层的节点都被填满。
@@ -113,8 +111,7 @@ minHeap = new PriorityQueue<int, int>([(1, 1), (3, 3), (2, 2), (5, 5), (4, 4)]);
 
 如下图所示，给定索引 $i$ ，其左子节点的索引为 $2i + 1$ ，右子节点的索引为 $2i + 2$ ，父节点的索引为 $(i - 1) / 2$（向下整除）。当索引越界时，表示空节点或节点不存在。
 
-> 📊 原书图：堆的表示与存储（图解见 https://www.hello-algo.com/chapter_heap/heap/）
-
+![堆的表示与存储](assets/representation_of_heap.png)
 我们可以将索引映射公式封装成函数，方便后续使用：
 
 ```csharp
@@ -141,8 +138,15 @@ public int Peek() {
 
 考虑从入堆节点开始，**从底至顶执行堆化**。如下图所示，我们比较插入节点与其父节点的值，如果插入节点更大，则将它们交换。然后继续执行此操作，从底至顶修复堆中的各个节点，直至越过根节点或遇到无须交换的节点时结束。
 
-> 📊 原书图：元素入堆步骤（9 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>）（图解见 https://www.hello-algo.com/chapter_heap/heap/）
-
+![元素入堆步骤](assets/heap_push_step1.png)
+![heap_push_step2](assets/heap_push_step2.png)
+![heap_push_step3](assets/heap_push_step3.png)
+![heap_push_step4](assets/heap_push_step4.png)
+![heap_push_step5](assets/heap_push_step5.png)
+![heap_push_step6](assets/heap_push_step6.png)
+![heap_push_step7](assets/heap_push_step7.png)
+![heap_push_step8](assets/heap_push_step8.png)
+![heap_push_step9](assets/heap_push_step9.png)
 设节点总数为 $n$ ，则树的高度为 $O(\log n)$ 。由此可知，堆化操作的循环轮数最多为 $O(\log n)$ ，**元素入堆操作的时间复杂度为 $O(\log n)$** 。代码如下所示：
 
 ```csharp
@@ -172,8 +176,16 @@ void SiftUp(int i) {
 
 如下图所示，**“从顶至底堆化”的操作方向与“从底至顶堆化”相反**，我们将根节点的值与其两个子节点的值进行比较，将最大的子节点与根节点交换。然后循环执行此操作，直到越过叶节点或遇到无须交换的节点时结束。
 
-> 📊 原书图：堆顶元素出堆步骤（10 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>、<10>）（图解见 https://www.hello-algo.com/chapter_heap/heap/）
-
+![堆顶元素出堆步骤](assets/heap_pop_step1.png)
+![heap_pop_step2](assets/heap_pop_step2.png)
+![heap_pop_step3](assets/heap_pop_step3.png)
+![heap_pop_step4](assets/heap_pop_step4.png)
+![heap_pop_step5](assets/heap_pop_step5.png)
+![heap_pop_step6](assets/heap_pop_step6.png)
+![heap_pop_step7](assets/heap_pop_step7.png)
+![heap_pop_step8](assets/heap_pop_step8.png)
+![heap_pop_step9](assets/heap_pop_step9.png)
+![heap_pop_step10](assets/heap_pop_step10.png)
 与元素入堆操作相似，堆顶元素出堆操作的时间复杂度也为 $O(\log n)$ 。代码如下所示：
 
 ```csharp
@@ -251,8 +263,7 @@ public MaxHeap(IEnumerable<int> nums) {
 
 接下来我们来进行更为准确的计算。为了降低计算难度，假设给定一个节点数量为 $n$ 、高度为 $h$ 的“完美二叉树”，该假设不会影响计算结果的正确性。
 
-> 📊 原书图：完美二叉树的各层节点数量（图解见 https://www.hello-algo.com/chapter_heap/build_heap/）
-
+![完美二叉树的各层节点数量](assets/heapify_operations_count.png)
 如上图所示，节点“从顶至底堆化”的最大迭代次数等于该节点到叶节点的距离，而该距离正是“节点高度”。因此，我们可以对各层的“节点数量 $\times$ 节点高度”求和，**得到所有节点的堆化迭代次数的总和**。
 
 $$
@@ -300,8 +311,7 @@ $$
 
 此方法只适用于 $k \ll n$ 的情况，因为当 $k$ 与 $n$ 比较接近时，其时间复杂度趋向于 $O(n^2)$ ，非常耗时。
 
-> 📊 原书图：遍历寻找最大的 k 个元素（图解见 https://www.hello-algo.com/chapter_heap/top_k/）
-
+![遍历寻找最大的 k 个元素](assets/top_k_traversal.png)
 > **提示**
 >
 > 当 $k = n$ 时，我们可以得到完整的有序序列，此时等价于“选择排序”算法。
@@ -312,8 +322,7 @@ $$
 
 显然，该方法“超额”完成任务了，因为我们只需找出最大的 $k$ 个元素即可，而不需要排序其他元素。
 
-> 📊 原书图：排序寻找最大的 k 个元素（图解见 https://www.hello-algo.com/chapter_heap/top_k/）
-
+![排序寻找最大的 k 个元素](assets/top_k_sorting.png)
 ### 方法三：堆
 
 我们可以基于堆更加高效地解决 Top-k 问题，流程如下图所示。
@@ -323,8 +332,15 @@ $$
 3. 从第 $k + 1$ 个元素开始，若当前元素大于堆顶元素，则将堆顶元素出堆，并将当前元素入堆。
 4. 遍历完成后，堆中保存的就是最大的 $k$ 个元素。
 
-> 📊 原书图：基于堆寻找最大的 k 个元素（9 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>）（图解见 https://www.hello-algo.com/chapter_heap/top_k/）
-
+![基于堆寻找最大的 k 个元素](assets/top_k_heap_step1.png)
+![top_k_heap_step2](assets/top_k_heap_step2.png)
+![top_k_heap_step3](assets/top_k_heap_step3.png)
+![top_k_heap_step4](assets/top_k_heap_step4.png)
+![top_k_heap_step5](assets/top_k_heap_step5.png)
+![top_k_heap_step6](assets/top_k_heap_step6.png)
+![top_k_heap_step7](assets/top_k_heap_step7.png)
+![top_k_heap_step8](assets/top_k_heap_step8.png)
+![top_k_heap_step9](assets/top_k_heap_step9.png)
 示例代码如下：
 
 ```csharp

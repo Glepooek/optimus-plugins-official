@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：动态规划（图解见 https://www.hello-algo.com/chapter_dynamic_programming/index/）
-
+![动态规划](assets/chapter_dynamic_programming.jpg)
 > **摘要**
 >
 > 小溪汇入河流，江河汇入大海。
@@ -37,8 +36,7 @@
 
 如下图所示，对于一个 $3$ 阶楼梯，共有 $3$ 种方案可以爬到楼顶。
 
-> 📊 原书图：爬到第 3 阶的方案数量（图解见 https://www.hello-algo.com/chapter_dynamic_programming/intro_to_dynamic_programming/）
-
+![爬到第 3 阶的方案数量](assets/climbing_stairs_example.png)
 本题的目标是求解方案数量，**我们可以考虑通过回溯来穷举所有可能性**。具体来说，将爬楼梯想象为一个多轮选择的过程：从地面出发，每轮选择上 $1$ 阶或 $2$ 阶，每当到达楼梯顶部时就将方案数量加 $1$ ，当越过楼梯顶部时就将其剪枝。代码如下所示：
 
 ```csharp
@@ -72,8 +70,7 @@ $$
 
 这意味着在爬楼梯问题中，各个子问题之间存在递推关系，**原问题的解可以由子问题的解构建得来**。下图展示了该递推关系。
 
-> 📊 原书图：方案数量递推关系（图解见 https://www.hello-algo.com/chapter_dynamic_programming/intro_to_dynamic_programming/）
-
+![方案数量递推关系](assets/climbing_stairs_state_transfer.png)
 我们可以根据递推公式得到暴力搜索解法。以 $dp[n]$ 为起始点，**递归地将一个较大问题拆解为两个较小问题的和**，直至到达最小子问题 $dp[1]$ 和 $dp[2]$ 时返回。其中，最小子问题的解是已知的，即 $dp[1] = 1$、$dp[2] = 2$ ，表示爬到第 $1$、$2$ 阶分别有 $1$、$2$ 种方案。
 
 观察以下代码，它和标准回溯代码都属于深度优先搜索，但更加简洁：
@@ -87,8 +84,7 @@ int ClimbingStairsDFS(int n) {
 
 下图展示了暴力搜索形成的递归树。对于问题 $dp[n]$ ，其递归树的深度为 $n$ ，时间复杂度为 $O(2^n)$ 。指数阶属于爆炸式增长，如果我们输入一个比较大的 $n$ ，则会陷入漫长的等待之中。
 
-> 📊 原书图：爬楼梯对应递归树（图解见 https://www.hello-algo.com/chapter_dynamic_programming/intro_to_dynamic_programming/）
-
+![爬楼梯对应递归树](assets/climbing_stairs_dfs_tree.png)
 观察上图，**指数阶的时间复杂度是“重叠子问题”导致的**。例如 $dp[9]$ 被分解为 $dp[8]$ 和 $dp[7]$ ，$dp[8]$ 被分解为 $dp[7]$ 和 $dp[6]$ ，两者都包含子问题 $dp[7]$ 。
 
 以此类推，子问题中包含更小的重叠子问题，子子孙孙无穷尽也。绝大部分计算资源都浪费在这些重叠的子问题上。
@@ -114,8 +110,7 @@ int ClimbingStairsDFSMem(int n) {
 
 观察下图，**经过记忆化处理后，所有重叠子问题都只需计算一次，时间复杂度优化至 $O(n)$** ，这是一个巨大的飞跃。
 
-> 📊 原书图：记忆化搜索对应递归树（图解见 https://www.hello-algo.com/chapter_dynamic_programming/intro_to_dynamic_programming/）
-
+![记忆化搜索对应递归树](assets/climbing_stairs_dfs_memo_tree.png)
 ### 方法三：动态规划
 
 **记忆化搜索是一种“从顶至底”的方法**：我们从原问题（根节点）开始，递归地将较大子问题分解为较小子问题，直至解已知的最小子问题（叶节点）。之后，通过回溯逐层收集子问题的解，构建出原问题的解。
@@ -144,8 +139,7 @@ int ClimbingStairsDP(int n) {
 
 下图模拟了以上代码的执行过程。
 
-> 📊 原书图：爬楼梯的动态规划过程（图解见 https://www.hello-algo.com/chapter_dynamic_programming/intro_to_dynamic_programming/）
-
+![爬楼梯的动态规划过程](assets/climbing_stairs_dp.png)
 与回溯算法一样，动态规划也使用“状态”概念来表示问题求解的特定阶段，每个状态都对应一个子问题以及相应的局部最优解。例如，爬楼梯问题的状态定义为当前所在楼梯阶数 $i$ 。
 
 根据以上内容，我们可以总结出动态规划的常用术语。
@@ -197,8 +191,7 @@ int ClimbingStairsDPComp(int n) {
 
 如下图所示，若第 $1$、$2$、$3$ 阶的代价分别为 $1$、$10$、$1$ ，则从地面爬到第 $3$ 阶的最小代价为 $2$ 。
 
-> 📊 原书图：爬到第 3 阶的最小代价（图解见 https://www.hello-algo.com/chapter_dynamic_programming/dp_problem_features/）
-
+![爬到第 3 阶的最小代价](assets/min_cost_cs_example.png)
 设 $dp[i]$ 为爬到第 $i$ 阶累计付出的代价，由于第 $i$ 阶只可能从 $i - 1$ 阶或 $i - 2$ 阶走来，因此 $dp[i]$ 只可能等于 $dp[i - 1] + cost[i]$ 或 $dp[i - 2] + cost[i]$ 。为了尽可能减少代价，我们应该选择两者中较小的那一个：
 
 $$
@@ -234,8 +227,7 @@ int MinCostClimbingStairsDP(int[] cost) {
 
 下图展示了以上代码的动态规划过程。
 
-> 📊 原书图：爬楼梯最小代价的动态规划过程（图解见 https://www.hello-algo.com/chapter_dynamic_programming/dp_problem_features/）
-
+![爬楼梯最小代价的动态规划过程](assets/min_cost_cs_dp.png)
 本题也可以进行空间优化，将一维压缩至零维，使得空间复杂度从 $O(n)$ 降至 $O(1)$ ：
 
 ```csharp
@@ -268,8 +260,7 @@ int MinCostClimbingStairsDPComp(int[] cost) {
 
 如下图所示，爬上第 $3$ 阶仅剩 $2$ 种可行方案，其中连续三次跳 $1$ 阶的方案不满足约束条件，因此被舍弃。
 
-> 📊 原书图：带约束爬到第 3 阶的方案数量（图解见 https://www.hello-algo.com/chapter_dynamic_programming/dp_problem_features/）
-
+![带约束爬到第 3 阶的方案数量](assets/climbing_stairs_constraint_example.png)
 在该问题中，如果上一轮是跳 $1$ 阶上来的，那么下一轮就必须跳 $2$ 阶。这意味着，**下一步选择不能由当前状态（当前所在楼梯阶数）独立决定，还和前一个状态（上一轮所在楼梯阶数）有关**。
 
 不难发现，此问题已不满足无后效性，状态转移方程 $dp[i] = dp[i-1] + dp[i-2]$ 也失效了，因为 $dp[i-1]$ 代表本轮跳 $1$ 阶，但其中包含了许多“上一轮是跳 $1$ 阶上来的”方案，而为了满足约束，我们就不能将 $dp[i-1]$ 直接计入 $dp[i]$ 中。
@@ -288,8 +279,7 @@ dp[i, 2] = dp[i-2, 1] + dp[i-2, 2]
 \end{cases}
 $$
 
-> 📊 原书图：考虑约束下的递推关系（图解见 https://www.hello-algo.com/chapter_dynamic_programming/dp_problem_features/）
-
+![考虑约束下的递推关系](assets/climbing_stairs_constraint_state_transfer.png)
 最终，返回 $dp[n, 1] + dp[n, 2]$ 即可，两者之和代表爬到第 $n$ 阶的方案总数：
 
 ```csharp
@@ -363,8 +353,7 @@ int ClimbingStairsConstraintDP(int n) {
 
 下图展示了一个例子，给定网格的最小路径和为 $13$ 。
 
-> 📊 原书图：最小路径和示例数据（图解见 https://www.hello-algo.com/chapter_dynamic_programming/dp_solution_pipeline/）
-
+![最小路径和示例数据](assets/min_path_sum_example.png)
 **第一步：思考每轮的决策，定义状态，从而得到 $dp$ 表**
 
 本题的每一轮的决策就是从当前格子向下或向右走一步。设当前格子的行列索引为 $[i, j]$ ，则向下或向右走一步后，索引变为 $[i+1, j]$ 或 $[i, j+1]$ 。因此，状态应包含行索引和列索引两个变量，记为 $[i, j]$ 。
@@ -373,8 +362,7 @@ int ClimbingStairsConstraintDP(int n) {
 
 至此，我们就得到了下图所示的二维 $dp$ 矩阵，其尺寸与输入网格 $grid$ 相同。
 
-> 📊 原书图：状态定义与 dp 表（图解见 https://www.hello-algo.com/chapter_dynamic_programming/dp_solution_pipeline/）
-
+![状态定义与 dp 表](assets/min_path_sum_solution_state_definition.png)
 > **说明**
 >
 > 动态规划和回溯过程可以描述为一个决策序列，而状态由所有决策变量构成。它应当包含描述解题进度的所有变量，其包含了足够的信息，能够用来推导出下一个状态。
@@ -391,8 +379,7 @@ $$
 dp[i, j] = \min(dp[i-1, j], dp[i, j-1]) + grid[i, j]
 $$
 
-> 📊 原书图：最优子结构与状态转移方程（图解见 https://www.hello-algo.com/chapter_dynamic_programming/dp_solution_pipeline/）
-
+![最优子结构与状态转移方程](assets/min_path_sum_solution_state_transition.png)
 > **说明**
 >
 > 根据定义好的 $dp$ 表，思考原问题和子问题的关系，找出通过子问题的最优解来构造原问题的最优解的方法，即最优子结构。
@@ -405,8 +392,7 @@ $$
 
 如下图所示，由于每个格子是由其左方格子和上方格子转移而来，因此我们使用循环来遍历矩阵，外循环遍历各行，内循环遍历各列。
 
-> 📊 原书图：边界条件与状态转移顺序（图解见 https://www.hello-algo.com/chapter_dynamic_programming/dp_solution_pipeline/）
-
+![边界条件与状态转移顺序](assets/min_path_sum_solution_initial_state.png)
 > **说明**
 >
 > 边界条件在动态规划中用于初始化 $dp$ 表，在搜索中用于剪枝。
@@ -449,8 +435,7 @@ int MinPathSumDFS(int[][] grid, int i, int j) {
 
 从本质上看，造成重叠子问题的原因为：**存在多条路径可以从左上角到达某一单元格**。
 
-> 📊 原书图：暴力搜索递归树（图解见 https://www.hello-algo.com/chapter_dynamic_programming/dp_solution_pipeline/）
-
+![暴力搜索递归树](assets/min_path_sum_dfs.png)
 每个状态都有向下和向右两种选择，从左上角走到右下角总共需要 $m + n - 2$ 步，所以最差时间复杂度为 $O(2^{m + n})$ ，其中 $n$ 和 $m$ 分别为网格的行数和列数。请注意，这种计算方式未考虑临近网格边界的情况，当到达网格边界时只剩下一种选择，因此实际的路径数量会少一些。
 
 #### 方法二：记忆化搜索
@@ -483,8 +468,7 @@ int MinPathSumDFSMem(int[][] grid, int[][] mem, int i, int j) {
 
 如下图所示，在引入记忆化后，所有子问题的解只需计算一次，因此时间复杂度取决于状态总数，即网格尺寸 $O(nm)$ 。
 
-> 📊 原书图：记忆化搜索递归树（图解见 https://www.hello-algo.com/chapter_dynamic_programming/dp_solution_pipeline/）
-
+![记忆化搜索递归树](assets/min_path_sum_dfs_mem.png)
 #### 方法三：动态规划
 
 基于迭代实现动态规划解法，代码如下所示：
@@ -518,8 +502,18 @@ int MinPathSumDP(int[][] grid) {
 
 数组 `dp` 大小为 $n \times m$ ，**因此空间复杂度为 $O(nm)$** 。
 
-> 📊 原书图：最小路径和的动态规划过程（12 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>、<10>、<11>、<12>）（图解见 https://www.hello-algo.com/chapter_dynamic_programming/dp_solution_pipeline/）
-
+![最小路径和的动态规划过程](assets/min_path_sum_dp_step1.png)
+![min_path_sum_dp_step2](assets/min_path_sum_dp_step2.png)
+![min_path_sum_dp_step3](assets/min_path_sum_dp_step3.png)
+![min_path_sum_dp_step4](assets/min_path_sum_dp_step4.png)
+![min_path_sum_dp_step5](assets/min_path_sum_dp_step5.png)
+![min_path_sum_dp_step6](assets/min_path_sum_dp_step6.png)
+![min_path_sum_dp_step7](assets/min_path_sum_dp_step7.png)
+![min_path_sum_dp_step8](assets/min_path_sum_dp_step8.png)
+![min_path_sum_dp_step9](assets/min_path_sum_dp_step9.png)
+![min_path_sum_dp_step10](assets/min_path_sum_dp_step10.png)
+![min_path_sum_dp_step11](assets/min_path_sum_dp_step11.png)
+![min_path_sum_dp_step12](assets/min_path_sum_dp_step12.png)
 #### 空间优化
 
 由于每个格子只与其左边和上边的格子有关，因此我们可以只用一个单行数组来实现 $dp$ 表。
@@ -562,8 +556,7 @@ int MinPathSumDPComp(int[][] grid) {
 
 观察下图，由于物品编号 $i$ 从 $1$ 开始计数，数组索引从 $0$ 开始计数，因此物品 $i$ 对应重量 $wgt[i-1]$ 和价值 $val[i-1]$ 。
 
-> 📊 原书图：0-1 背包的示例数据（图解见 https://www.hello-algo.com/chapter_dynamic_programming/knapsack_problem/）
-
+![0-1 背包的示例数据](assets/knapsack_example.png)
 我们可以将 0-1 背包问题看作一个由 $n$ 轮决策组成的过程，对于每个物体都有不放入和放入两种决策，因此该问题满足决策树模型。
 
 该问题的目标是求解“在限定背包容量下能放入物品的最大价值”，因此较大概率是一个动态规划问题。
@@ -631,8 +624,7 @@ int KnapsackDFS(int[] weight, int[] val, int i, int c) {
 
 观察递归树，容易发现其中存在重叠子问题，例如 $dp[1, 10]$ 等。而当物品较多、背包容量较大，尤其是相同重量的物品较多时，重叠子问题的数量将会大幅增多。
 
-> 📊 原书图：0-1 背包问题的暴力搜索递归树（图解见 https://www.hello-algo.com/chapter_dynamic_programming/knapsack_problem/）
-
+![0-1 背包问题的暴力搜索递归树](assets/knapsack_dfs.png)
 ### 方法二：记忆化搜索
 
 为了保证重叠子问题只被计算一次，我们借助记忆列表 `mem` 来记录子问题的解，其中 `mem[i][c]` 对应 $dp[i, c]$ 。
@@ -665,8 +657,7 @@ int KnapsackDFSMem(int[] weight, int[] val, int[][] mem, int i, int c) {
 
 下图展示了在记忆化搜索中被剪掉的搜索分支。
 
-> 📊 原书图：0-1 背包问题的记忆化搜索递归树（图解见 https://www.hello-algo.com/chapter_dynamic_programming/knapsack_problem/）
-
+![0-1 背包问题的记忆化搜索递归树](assets/knapsack_dfs_mem.png)
 ### 方法三：动态规划
 
 动态规划实质上就是在状态转移中填充 $dp$ 表的过程，代码如下所示：
@@ -695,8 +686,20 @@ int KnapsackDP(int[] weight, int[] val, int cap) {
 
 如下图所示，时间复杂度和空间复杂度都由数组 `dp` 大小决定，即 $O(n \times cap)$ 。
 
-> 📊 原书图：0-1 背包问题的动态规划过程（14 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>、<10>、<11>、<12>、<13>、<14>）（图解见 https://www.hello-algo.com/chapter_dynamic_programming/knapsack_problem/）
-
+![0-1 背包问题的动态规划过程](assets/knapsack_dp_step1.png)
+![knapsack_dp_step2](assets/knapsack_dp_step2.png)
+![knapsack_dp_step3](assets/knapsack_dp_step3.png)
+![knapsack_dp_step4](assets/knapsack_dp_step4.png)
+![knapsack_dp_step5](assets/knapsack_dp_step5.png)
+![knapsack_dp_step6](assets/knapsack_dp_step6.png)
+![knapsack_dp_step7](assets/knapsack_dp_step7.png)
+![knapsack_dp_step8](assets/knapsack_dp_step8.png)
+![knapsack_dp_step9](assets/knapsack_dp_step9.png)
+![knapsack_dp_step10](assets/knapsack_dp_step10.png)
+![knapsack_dp_step11](assets/knapsack_dp_step11.png)
+![knapsack_dp_step12](assets/knapsack_dp_step12.png)
+![knapsack_dp_step13](assets/knapsack_dp_step13.png)
+![knapsack_dp_step14](assets/knapsack_dp_step14.png)
 ### 空间优化
 
 由于每个状态都只与其上一行的状态有关，因此我们可以使用两个数组滚动前进，将空间复杂度从 $O(n^2)$ 降至 $O(n)$ 。
@@ -708,8 +711,12 @@ int KnapsackDP(int[] weight, int[] val, int cap) {
 
 下图展示了在单个数组下从第 $i = 1$ 行转换至第 $i = 2$ 行的过程。请思考正序遍历和倒序遍历的区别。
 
-> 📊 原书图：0-1 背包的空间优化后的动态规划过程（6 张分步图：<1>、<2>、<3>、<4>、<5>、<6>）（图解见 https://www.hello-algo.com/chapter_dynamic_programming/knapsack_problem/）
-
+![0-1 背包的空间优化后的动态规划过程](assets/knapsack_dp_comp_step1.png)
+![knapsack_dp_comp_step2](assets/knapsack_dp_comp_step2.png)
+![knapsack_dp_comp_step3](assets/knapsack_dp_comp_step3.png)
+![knapsack_dp_comp_step4](assets/knapsack_dp_comp_step4.png)
+![knapsack_dp_comp_step5](assets/knapsack_dp_comp_step5.png)
+![knapsack_dp_comp_step6](assets/knapsack_dp_comp_step6.png)
 在代码实现中，我们仅需将数组 `dp` 的第一维 $i$ 直接删除，并且把内循环更改为倒序遍历即可：
 
 ```csharp
@@ -745,8 +752,7 @@ int KnapsackDPComp(int[] weight, int[] val, int cap) {
 >
 > 给定 $n$ 个物品，第 $i$ 个物品的重量为 $wgt[i-1]$、价值为 $val[i-1]$ ，和一个容量为 $cap$ 的背包。**每个物品可以重复选取**，问在限定背包容量下能放入物品的最大价值。示例如下图所示。
 
-> 📊 原书图：完全背包问题的示例数据（图解见 https://www.hello-algo.com/chapter_dynamic_programming/unbounded_knapsack_problem/）
-
+![完全背包问题的示例数据](assets/unbounded_knapsack_example.png)
 #### 动态规划思路
 
 完全背包问题和 0-1 背包问题非常相似，**区别仅在于不限制物品的选择次数**。
@@ -797,8 +803,12 @@ int UnboundedKnapsackDP(int[] wgt, int[] val, int cap) {
 
 这个遍历顺序与 0-1 背包正好相反。请借助下图来理解两者的区别。
 
-> 📊 原书图：完全背包问题在空间优化后的动态规划过程（6 张分步图：<1>、<2>、<3>、<4>、<5>、<6>）（图解见 https://www.hello-algo.com/chapter_dynamic_programming/unbounded_knapsack_problem/）
-
+![完全背包问题在空间优化后的动态规划过程](assets/unbounded_knapsack_dp_comp_step1.png)
+![unbounded_knapsack_dp_comp_step2](assets/unbounded_knapsack_dp_comp_step2.png)
+![unbounded_knapsack_dp_comp_step3](assets/unbounded_knapsack_dp_comp_step3.png)
+![unbounded_knapsack_dp_comp_step4](assets/unbounded_knapsack_dp_comp_step4.png)
+![unbounded_knapsack_dp_comp_step5](assets/unbounded_knapsack_dp_comp_step5.png)
+![unbounded_knapsack_dp_comp_step6](assets/unbounded_knapsack_dp_comp_step6.png)
 代码实现比较简单，仅需将数组 `dp` 的第一维删除：
 
 ```csharp
@@ -831,8 +841,7 @@ int UnboundedKnapsackDPComp(int[] wgt, int[] val, int cap) {
 >
 > 给定 $n$ 种硬币，第 $i$ 种硬币的面值为 $coins[i - 1]$ ，目标金额为 $amt$ ，**每种硬币可以重复选取**，问能够凑出目标金额的最少硬币数量。如果无法凑出目标金额，则返回 $-1$ 。示例如下图所示。
 
-> 📊 原书图：零钱兑换问题的示例数据（图解见 https://www.hello-algo.com/chapter_dynamic_programming/unbounded_knapsack_problem/）
-
+![零钱兑换问题的示例数据](assets/coin_change_example.png)
 #### 动态规划思路
 
 **零钱兑换可以看作完全背包问题的一种特殊情况**，两者具有以下联系与不同点。
@@ -899,8 +908,21 @@ int CoinChangeDP(int[] coins, int amt) {
 
 下图展示了零钱兑换的动态规划过程，和完全背包问题非常相似。
 
-> 📊 原书图：零钱兑换问题的动态规划过程（15 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>、<10>、<11>、<12>、<13>、<14>、<15>）（图解见 https://www.hello-algo.com/chapter_dynamic_programming/unbounded_knapsack_problem/）
-
+![零钱兑换问题的动态规划过程](assets/coin_change_dp_step1.png)
+![coin_change_dp_step2](assets/coin_change_dp_step2.png)
+![coin_change_dp_step3](assets/coin_change_dp_step3.png)
+![coin_change_dp_step4](assets/coin_change_dp_step4.png)
+![coin_change_dp_step5](assets/coin_change_dp_step5.png)
+![coin_change_dp_step6](assets/coin_change_dp_step6.png)
+![coin_change_dp_step7](assets/coin_change_dp_step7.png)
+![coin_change_dp_step8](assets/coin_change_dp_step8.png)
+![coin_change_dp_step9](assets/coin_change_dp_step9.png)
+![coin_change_dp_step10](assets/coin_change_dp_step10.png)
+![coin_change_dp_step11](assets/coin_change_dp_step11.png)
+![coin_change_dp_step12](assets/coin_change_dp_step12.png)
+![coin_change_dp_step13](assets/coin_change_dp_step13.png)
+![coin_change_dp_step14](assets/coin_change_dp_step14.png)
+![coin_change_dp_step15](assets/coin_change_dp_step15.png)
 #### 空间优化
 
 零钱兑换的空间优化的处理方式和完全背包问题一致：
@@ -936,8 +958,7 @@ int CoinChangeDPComp(int[] coins, int amt) {
 >
 > 给定 $n$ 种硬币，第 $i$ 种硬币的面值为 $coins[i - 1]$ ，目标金额为 $amt$ ，每种硬币可以重复选取，**问凑出目标金额的硬币组合数量**。示例如下图所示。
 
-> 📊 原书图：零钱兑换问题 II 的示例数据（图解见 https://www.hello-algo.com/chapter_dynamic_programming/unbounded_knapsack_problem/）
-
+![零钱兑换问题 II 的示例数据](assets/coin_change_ii_example.png)
 #### 动态规划思路
 
 相比于上一题，本题目标是求组合数量，因此子问题变为：**前 $i$ 种硬币能够凑出金额 $a$ 的组合数量**。而 $dp$ 表仍然是尺寸为 $(n+1) \times (amt + 1)$ 的二维矩阵。
@@ -1017,16 +1038,14 @@ int CoinChangeIIDPComp(int[] coins, int amt) {
 
 如下图所示，将 `kitten` 转换为 `sitting` 需要编辑 3 步，包括 2 次替换操作与 1 次添加操作；将 `hello` 转换为 `algo` 需要 3 步，包括 2 次替换操作和 1 次删除操作。
 
-> 📊 原书图：编辑距离的示例数据（图解见 https://www.hello-algo.com/chapter_dynamic_programming/edit_distance_problem/）
-
+![编辑距离的示例数据](assets/edit_distance_example.png)
 **编辑距离问题可以很自然地用决策树模型来解释**。字符串对应树节点，一轮决策（一次编辑操作）对应树的一条边。
 
 如下图所示，在不限制操作的情况下，每个节点都可以派生出许多条边，每条边对应一种操作，这意味着从 `hello` 转换到 `algo` 有许多种可能的路径。
 
 从决策树的角度看，本题的目标是求解节点 `hello` 和节点 `algo` 之间的最短路径。
 
-> 📊 原书图：基于决策树模型表示编辑距离问题（图解见 https://www.hello-algo.com/chapter_dynamic_programming/edit_distance_problem/）
-
+![基于决策树模型表示编辑距离问题](assets/edit_distance_decision_tree.png)
 ### 动态规划思路
 
 **第一步：思考每轮的决策，定义状态，从而得到 $dp$ 表**
@@ -1052,8 +1071,7 @@ int CoinChangeIIDPComp(int[] coins, int amt) {
 2. 删除 $s[i-1]$ ，则剩余子问题 $dp[i-1, j]$ 。
 3. 将 $s[i-1]$ 替换为 $t[j-1]$ ，则剩余子问题 $dp[i-1, j-1]$ 。
 
-> 📊 原书图：编辑距离的状态转移（图解见 https://www.hello-algo.com/chapter_dynamic_programming/edit_distance_problem/）
-
+![编辑距离的状态转移](assets/edit_distance_state_transfer.png)
 根据以上分析，可得最优子结构：$dp[i, j]$ 的最少编辑步数等于 $dp[i, j-1]$、$dp[i-1, j]$、$dp[i-1, j-1]$ 三者中的最少编辑步数，再加上本次的编辑步数 $1$ 。对应的状态转移方程为：
 
 $$
@@ -1104,8 +1122,21 @@ int EditDistanceDP(string s, string t) {
 
 如下图所示，编辑距离问题的状态转移过程与背包问题非常类似，都可以看作填写一个二维网格的过程。
 
-> 📊 原书图：编辑距离的动态规划过程（15 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>、<10>、<11>、<12>、<13>、<14>、<15>）（图解见 https://www.hello-algo.com/chapter_dynamic_programming/edit_distance_problem/）
-
+![编辑距离的动态规划过程](assets/edit_distance_dp_step1.png)
+![edit_distance_dp_step2](assets/edit_distance_dp_step2.png)
+![edit_distance_dp_step3](assets/edit_distance_dp_step3.png)
+![edit_distance_dp_step4](assets/edit_distance_dp_step4.png)
+![edit_distance_dp_step5](assets/edit_distance_dp_step5.png)
+![edit_distance_dp_step6](assets/edit_distance_dp_step6.png)
+![edit_distance_dp_step7](assets/edit_distance_dp_step7.png)
+![edit_distance_dp_step8](assets/edit_distance_dp_step8.png)
+![edit_distance_dp_step9](assets/edit_distance_dp_step9.png)
+![edit_distance_dp_step10](assets/edit_distance_dp_step10.png)
+![edit_distance_dp_step11](assets/edit_distance_dp_step11.png)
+![edit_distance_dp_step12](assets/edit_distance_dp_step12.png)
+![edit_distance_dp_step13](assets/edit_distance_dp_step13.png)
+![edit_distance_dp_step14](assets/edit_distance_dp_step14.png)
+![edit_distance_dp_step15](assets/edit_distance_dp_step15.png)
 ### 空间优化
 
 由于 $dp[i,j]$ 是由上方 $dp[i-1, j]$、左方 $dp[i, j-1]$、左上方 $dp[i-1, j-1]$ 转移而来的，而正序遍历会丢失左上方 $dp[i-1, j-1]$ ，倒序遍历无法提前构建 $dp[i, j-1]$ ，因此两种遍历顺序都不可取。

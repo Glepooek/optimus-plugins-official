@@ -13,12 +13,11 @@
 > - **提取日期**：2026-08-29
 >
 > 本文为原书的演绎作品，依 SA 条款同样以 CC BY-NC-SA 4.0 授权，该授权独立于本仓库其余部分。
-> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解未导出、原位置以指针指向原书。
+> 相对原书的改动：代码示例仅保留 C# 一种语言（原书含 12 种），图解随书提取至本目录 `assets/`。
 
 ---
 
-> 📊 原书图：回溯（图解见 https://www.hello-algo.com/chapter_backtracking/index/）
-
+![回溯](assets/chapter_backtracking.jpg)
 > **摘要**
 >
 > 我们如同迷宫中的探索者，在前进的道路上可能会遇到困难。
@@ -52,8 +51,7 @@ void PreOrder(TreeNode? root) {
 }
 ```
 
-> 📊 原书图：在前序遍历中搜索节点（图解见 https://www.hello-algo.com/chapter_backtracking/backtracking_algorithm/）
-
+![在前序遍历中搜索节点](assets/preorder_find_nodes.png)
 ### 尝试与回退
 
 **之所以称之为回溯算法，是因为该算法在搜索解空间时会采用“尝试”与“回退”的策略**。当算法在搜索过程中遇到某个状态无法继续前进或无法得到满足条件的解时，它会撤销上一步的选择，退回到之前的状态，并尝试其他可能的选择。
@@ -91,8 +89,17 @@ void PreOrder(TreeNode? root) {
 
 观察下图所示的过程，**我们可以将尝试和回退理解为“前进”与“撤销”**，两个操作互为逆向。
 
-> 📊 原书图：尝试与回退（11 张分步图：<1>、<2>、<3>、<4>、<5>、<6>、<7>、<8>、<9>、<10>、<11>）（图解见 https://www.hello-algo.com/chapter_backtracking/backtracking_algorithm/）
-
+![尝试与回退](assets/preorder_find_paths_step1.png)
+![preorder_find_paths_step2](assets/preorder_find_paths_step2.png)
+![preorder_find_paths_step3](assets/preorder_find_paths_step3.png)
+![preorder_find_paths_step4](assets/preorder_find_paths_step4.png)
+![preorder_find_paths_step5](assets/preorder_find_paths_step5.png)
+![preorder_find_paths_step6](assets/preorder_find_paths_step6.png)
+![preorder_find_paths_step7](assets/preorder_find_paths_step7.png)
+![preorder_find_paths_step8](assets/preorder_find_paths_step8.png)
+![preorder_find_paths_step9](assets/preorder_find_paths_step9.png)
+![preorder_find_paths_step10](assets/preorder_find_paths_step10.png)
+![preorder_find_paths_step11](assets/preorder_find_paths_step11.png)
 ### 剪枝
 
 复杂的回溯问题通常包含一个或多个约束条件，**约束条件通常可用于“剪枝”**。
@@ -125,8 +132,7 @@ void PreOrder(TreeNode? root) {
 
 “剪枝”是一个非常形象的名词。如下图所示，在搜索过程中，**我们“剪掉”了不满足约束条件的搜索分支**，避免许多无意义的尝试，从而提高了搜索效率。
 
-> 📊 原书图：根据约束条件剪枝（图解见 https://www.hello-algo.com/chapter_backtracking/backtracking_algorithm/）
-
+![根据约束条件剪枝](assets/preorder_find_constrained_paths.png)
 ### 框架代码
 
 接下来，我们尝试将回溯的“尝试、回退、剪枝”的主体框架提炼出来，提升代码的通用性。
@@ -184,8 +190,7 @@ void Backtrack(List<TreeNode> state, List<TreeNode> choices, List<List<TreeNode>
 
 根据题意，我们在找到值为 $7$ 的节点后应该继续搜索，**因此需要将记录解之后的 `return` 语句删除**。下图对比了保留或删除 `return` 语句的搜索过程。
 
-> 📊 原书图：保留与删除 return 的搜索过程对比（图解见 https://www.hello-algo.com/chapter_backtracking/backtracking_algorithm/）
-
+![保留与删除 return 的搜索过程对比](assets/backtrack_remove_return_or_not.png)
 相比基于前序遍历的代码实现，基于回溯算法框架的代码实现虽然显得啰唆，但通用性更好。实际上，**许多回溯问题可以在该框架下解决**。我们只需根据具体问题来定义 `state` 和 `choices` ，并实现框架中的各个方法即可。
 
 ### 常用术语
@@ -275,8 +280,7 @@ void Backtrack(List<TreeNode> state, List<TreeNode> choices, List<List<TreeNode>
 
 如下图所示，我们可以将搜索过程展开成一棵递归树，树中的每个节点代表当前状态 `state` 。从根节点开始，经过三轮选择后到达叶节点，每个叶节点都对应一个排列。
 
-> 📊 原书图：全排列的递归树（图解见 https://www.hello-algo.com/chapter_backtracking/permutations_problem/）
-
+![全排列的递归树](assets/permutations_i.png)
 #### 重复选择剪枝
 
 为了实现每个元素只被选择一次，我们考虑引入一个布尔型数组 `selected` ，其中 `selected[i]` 表示 `choices[i]` 是否已被选择，并基于它实现以下剪枝操作。
@@ -286,8 +290,7 @@ void Backtrack(List<TreeNode> state, List<TreeNode> choices, List<List<TreeNode>
 
 如下图所示，假设我们第一轮选择 1 ，第二轮选择 3 ，第三轮选择 2 ，则需要在第二轮剪掉元素 1 的分支，在第三轮剪掉元素 1 和元素 3 的分支。
 
-> 📊 原书图：全排列剪枝示例（图解见 https://www.hello-algo.com/chapter_backtracking/permutations_problem/）
-
+![全排列剪枝示例](assets/permutations_i_pruning.png)
 观察上图发现，该剪枝操作将搜索空间大小从 $O(n^n)$ 减小至 $O(n!)$ 。
 
 #### 代码实现
@@ -313,8 +316,7 @@ List<List<int>> PermutationsI(int[] nums) {
 
 如下图所示，上述方法生成的排列有一半是重复的。
 
-> 📊 原书图：重复排列（图解见 https://www.hello-algo.com/chapter_backtracking/permutations_problem/）
-
+![重复排列](assets/permutations_ii.png)
 那么如何去除重复的排列呢？最直接地，考虑借助一个哈希集合，直接对排列结果进行去重。然而这样做不够优雅，**因为生成重复排列的搜索分支没有必要，应当提前识别并剪枝**，这样可以进一步提升算法效率。
 
 #### 相等元素剪枝
@@ -325,8 +327,7 @@ List<List<int>> PermutationsI(int[] nums) {
 
 从本质上看，**我们的目标是在某一轮选择中，保证多个相等的元素仅被选择一次**。
 
-> 📊 原书图：重复排列剪枝（图解见 https://www.hello-algo.com/chapter_backtracking/permutations_problem/）
-
+![重复排列剪枝](assets/permutations_ii_pruning.png)
 #### 代码实现
 
 在上一题的代码的基础上，我们考虑在每一轮选择中开启一个哈希集合 `duplicated` ，用于记录该轮中已经尝试过的元素，并将重复元素剪枝：
@@ -353,8 +354,7 @@ List<List<int>> PermutationsII(int[] nums) {
 
 下图展示了两个剪枝条件的生效范围。注意，树中的每个节点代表一个选择，从根节点到叶节点的路径上的各个节点构成一个排列。
 
-> 📊 原书图：两种剪枝条件的作用范围（图解见 https://www.hello-algo.com/chapter_backtracking/permutations_problem/）
-
+![两种剪枝条件的作用范围](assets/permutations_ii_pruning_summary.png)
 ## 13.3 子集和问题
 
 ### 无重复元素的情况
@@ -389,8 +389,7 @@ List<List<int>> SubsetSumINaive(int[] nums, int target) {
 
 这是因为搜索过程是区分选择顺序的，然而子集不区分选择顺序。如下图所示，先选 $4$ 后选 $5$ 与先选 $5$ 后选 $4$ 是不同的分支，但对应同一个子集。
 
-> 📊 原书图：子集搜索与越界剪枝（图解见 https://www.hello-algo.com/chapter_backtracking/subset_sum_problem/）
-
+![子集搜索与越界剪枝](assets/subset_sum_i_naive.png)
 为了去除重复子集，**一种直接的思路是对结果列表进行去重**。但这个方法效率很低，有两方面原因。
 
 - 当数组元素较多，尤其是当 `target` 较大时，搜索过程会产生大量的重复子集。
@@ -409,8 +408,7 @@ List<List<int>> SubsetSumINaive(int[] nums, int target) {
 2. 前两轮选择 $4$ 和 $5$ ，生成子集 $[4, 5, \dots]$ 。
 3. 若第一轮选择 $5$ ，**则第二轮应该跳过 $3$ 和 $4$** ，因为子集 $[5, 3, \dots]$ 和 $[5, 4, \dots]$ 与第 `1.` 步和第 `2.` 步中描述的子集完全重复。
 
-> 📊 原书图：不同选择顺序导致的重复子集（图解见 https://www.hello-algo.com/chapter_backtracking/subset_sum_problem/）
-
+![不同选择顺序导致的重复子集](assets/subset_sum_i_pruning.png)
 总结来看，给定输入数组 $[x_1, x_2, \dots, x_n]$ ，设搜索过程中的选择序列为 $[x_{i_1}, x_{i_2}, \dots, x_{i_m}]$ ，则该选择序列需要满足 $i_1 \leq i_2 \leq \dots \leq i_m$ ，**不满足该条件的选择序列都会造成重复，应当剪枝**。
 
 #### 代码实现
@@ -436,8 +434,7 @@ List<List<int>> SubsetSumI(int[] nums, int target) {
 
 下图所示为将数组 $[3, 4, 5]$ 和目标元素 $9$ 输入以上代码后的整体回溯过程。
 
-> 📊 原书图：子集和 I 回溯过程（图解见 https://www.hello-algo.com/chapter_backtracking/subset_sum_problem/）
-
+![子集和 I 回溯过程](assets/subset_sum_i.png)
 ### 考虑重复元素的情况
 
 > **思考**
@@ -448,8 +445,7 @@ List<List<int>> SubsetSumI(int[] nums, int target) {
 
 **造成这种重复的原因是相等元素在某轮中被多次选择**。在下图中，第一轮共有三个选择，其中两个都为 $4$ ，会产生两个重复的搜索分支，从而输出重复子集；同理，第二轮的两个 $4$ 也会产生重复子集。
 
-> 📊 原书图：相等元素导致的重复子集（图解见 https://www.hello-algo.com/chapter_backtracking/subset_sum_problem/）
-
+![相等元素导致的重复子集](assets/subset_sum_ii_repeat.png)
 #### 相等元素剪枝
 
 为解决此问题，**我们需要限制相等元素在每一轮中只能被选择一次**。实现方式比较巧妙：由于数组是已排序的，因此相等元素都是相邻的。这意味着在某轮选择中，若当前元素与其左边元素相等，则说明它已经被选择过，因此直接跳过当前元素。
@@ -472,8 +468,7 @@ List<List<int>> SubsetSumII(int[] nums, int target) {
 
 下图展示了数组 $[4, 4, 5]$ 和目标元素 $9$ 的回溯过程，共包含四种剪枝操作。请你将图示与代码注释相结合，理解整个搜索过程，以及每种剪枝操作是如何工作的。
 
-> 📊 原书图：子集和 II 回溯过程（图解见 https://www.hello-algo.com/chapter_backtracking/subset_sum_problem/）
-
+![子集和 II 回溯过程](assets/subset_sum_ii.png)
 ## 13.4 N 皇后问题
 
 > **思考**
@@ -482,12 +477,10 @@ List<List<int>> SubsetSumII(int[] nums, int target) {
 
 如下图所示，当 $n = 4$ 时，共可以找到两个解。从回溯算法的角度看，$n \times n$ 大小的棋盘共有 $n^2$ 个格子，给出了所有的选择 `choices` 。在逐个放置皇后的过程中，棋盘状态在不断地变化，每个时刻的棋盘就是状态 `state` 。
 
-> 📊 原书图：4 皇后问题的解（图解见 https://www.hello-algo.com/chapter_backtracking/n_queens_problem/）
-
+![4 皇后问题的解](assets/solution_4_queens.png)
 下图展示了本题的三个约束条件：**多个皇后不能在同一行、同一列、同一条对角线上**。值得注意的是，对角线分为主对角线 `\` 和次对角线 `/` 两种。
 
-> 📊 原书图：n 皇后问题的约束条件（图解见 https://www.hello-algo.com/chapter_backtracking/n_queens_problem/）
-
+![n 皇后问题的约束条件](assets/n_queens_constraints.png)
 ### 逐行放置策略
 
 皇后的数量和棋盘的行数都为 $n$ ，因此我们容易得到一个推论：**棋盘每行都允许且只允许放置一个皇后**。
@@ -496,8 +489,7 @@ List<List<int>> SubsetSumII(int[] nums, int target) {
 
 下图所示为 4 皇后问题的逐行放置过程。受画幅限制，下图仅展开了第一行的其中一个搜索分支，并且将不满足列约束和对角线约束的方案都进行了剪枝。
 
-> 📊 原书图：逐行放置策略（图解见 https://www.hello-algo.com/chapter_backtracking/n_queens_problem/）
-
+![逐行放置策略](assets/n_queens_placing.png)
 从本质上看，**逐行放置策略起到了剪枝的作用**，它避免了同一行出现多个皇后的所有搜索分支。
 
 ### 列与对角线剪枝
@@ -514,8 +506,7 @@ List<List<int>> SubsetSumII(int[] nums, int target) {
 
 同理，**次对角线上的所有格子的 $row + col$ 是恒定值**。我们同样也可以借助数组 `diags2` 来处理次对角线约束。
 
-> 📊 原书图：处理列约束和对角线约束（图解见 https://www.hello-algo.com/chapter_backtracking/n_queens_problem/）
-
+![处理列约束和对角线约束](assets/n_queens_cols_diagonals.png)
 ### 代码实现
 
 请注意，$n$ 维方阵中 $row - col$ 的范围是 $[-n + 1, n - 1]$ ，$row + col$ 的范围是 $[0, 2n - 2]$ ，所以主对角线和次对角线的数量都为 $2n - 1$ ，即数组 `diags1` 和 `diags2` 的长度都为 $2n - 1$ 。
