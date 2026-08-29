@@ -1,5 +1,49 @@
 # Changelog
 
+## [6.0.0] - 2026-08-29
+
+`csharp` 五条架构条款的通用部分收窄，改为引用 5.1.0 新建的 `architecture` 领域。这是 5.1.0 预告的迁移改造——新建领域只完成了一半工作，若不做本次收窄，同一条约束会在两个领域各自完整表述一遍，等于把重复从一处变成两处。
+
+**不兼容性**：五条 `csharp` 条目的正文范围与 `summary` 收窄，按 `id` 检索的消费者拿到的内容变了。`id`/`file`/`anchor` 全部不动，检索仍能命中；但读到的约束只剩 C# 特有增量，通用部分需按正文中的引用跳转到 `architecture`。经 grep 确认这五条**无任何消费者 skill 引用**，实际影响面仅限直接检索索引的使用者。
+
+### Changed
+
+- **五条 `csharp` 条目的正文收窄为「引用 + C# 特有增量」**，通用约束归入 `architecture`：
+
+  | `id` | 摘除的通用部分（去向） | 保留的 C# 特有增量 |
+  |---|---|---|
+  | `csharp.01.layering-direction` | 分层模型的选择与统一、依赖单向向内、禁循环与越层、跨层契约（`architecture/rules/01-layering.md` § 1、§ 2、§ 3） | 层与项目（程序集）一一对应，依赖方向由 `ProjectReference` 承载以便编译器直接拦截；跨层接口定义在内层项目；测试项目引用边界 |
+  | `csharp.03.solid-principles` | 五原则的可执行检查项表、SRP 常见误读（`architecture/rules/02-design-principles.md` § 1） | `public` 接口新增成员会破坏所有实现者（C# 特有的演进成本）、DIP 抽象归属内层项目、上帝类不通过 review |
+  | `csharp.03.composition-over-inheritance` | 复用优先组合、禁为复用方法而继承、深继承链须 review（`architecture/rules/02-design-principles.md` § 2） | 用 `sealed` 标记不打算被继承的类 |
+  | `csharp.03.dependency-injection` | 组合根唯一性、禁服务定位器与静态服务、生命周期的架构含义、构造期不得阻塞（`architecture/rules/09-composition-root.md` § 1、§ 3、§ 4） | 构造函数注入（禁属性注入与 `IServiceProvider` 直注）、`Transient`/`Scoped`/`Singleton` 的对应用途、`HttpClient` 注册为 `Singleton`、`Lazy<T>` 惰性推迟 |
+  | `csharp.03.domain-modeling-ddd` | 聚合根唯一入口、一次事务一个聚合、领域事件、领域层纯净性（`architecture/rules/03-ddd.md` § 4、§ 6、§ 7） | 值对象用 `record` / 实体用 `class` + 身份标识、领域层项目禁引 EF Core 与 `HttpClient`、领域类型禁带 `[Table]`/`[JsonPropertyName]` 标注 |
+
+- **`csharp.03.composition-over-inheritance` 的 `level` 由 MUST 降为 SHOULD**。摘除三条「必须/禁止」通用条款后，该节仅剩「**应该**：用 `sealed` 标记不打算被继承的类」一条——`level` 取小节最强条款级别，实测即为 SHOULD。级别声明必须跟随正文实际措辞，否则索引宣称的强度高于正文，review 时无从执行。
+- **两条 `enforcement` 由 `review` 改为 `ci`**，因为收窄后剩下的内容变成了工具可无歧义判定的落地约束（通过外壳检验：判的是实质而非外壳）：
+  - `csharp.01.layering-direction`：剩余条款是「层与项目一一对应、依赖方向由 `ProjectReference` 承载」——项目引用关系由编译器与架构测试库直接判定
+  - `csharp.03.domain-modeling-ddd`：剩余条款是「值对象用 `record`、领域层项目禁引 EF Core、领域类型禁带持久化标注」——类型选择、项目引用与特性标注均可由分析器判定
+- 五条的 `summary` 改写为反映收窄后的实际内容，并注明通用部分的去向；`reviewed_at` 更新为 2026-08-29（正文本次被实读并确认）。
+- `csharp/00-README.md`：领域边界声明补入 `architecture`（「架构层面的『该不该、选哪个、边界在哪』引用 architecture」）；「与仓库已有资产的关系」新增一行，点明 `01` 章第 6 节与 `03` 章第 1、2、6、8 节的通用约束在该领域。
+- `architecture/00-README.md`：C# 落地侧的章节清单由「§ 6 与 § 1、§ 8」更正为「§ 6 与 § 1、§ 2、§ 6、§ 8」——5.1.0 写入时按当时预定的三条迁移清单，实际迁移为五条。
+- `csharp/rules/01-project-structure.md`、`csharp/rules/03-design-principles.md` 篇首「更新历史」记录本次去重。
+
+### Fixed
+
+- **消除 5.1.0 遗留的六对 `architecture` ↔ `csharp` 高分重复候选**，`find_duplicates.py` 实测全部降至 0.6 以下（此前最高 0.917，为全库最高分）：
+
+  | 候选对 | 5.1.0 | 6.0.0 |
+  |---|---|---|
+  | `architecture.02.composition-over-inheritance` ↔ `csharp.03.composition-over-inheritance` | 0.917 | 已出前 20（< 0.447） |
+  | `architecture.03.aggregate` ↔ `csharp.03.domain-modeling-ddd` | 0.691 | 已出前 20 |
+  | `architecture.02.solid-checkpoints` ↔ `csharp.03.solid-principles` | 0.613 | 已出前 20 |
+  | `architecture.01.dependency-direction` ↔ `csharp.01.layering-direction` | 0.556 | 已出前 20 |
+  | `architecture.09.composition-root-uniqueness` ↔ `csharp.03.dependency-injection` | 0.537 | 已出前 20 |
+  | `architecture.01.layering-model-choice` ↔ `csharp.01.layering-direction` | 0.511 | 已出前 20 |
+
+  两领域间的最高残留为 0.477（`architecture.09.lifetime-architecture-impact` ↔ `csharp.09.dbcontext-lifecycle`），判定为**合理分层**：前者讲生命周期决定状态共享范围的架构含义，后者讲 `DbContext` 具体生命周期的踩坑点，不做迁移。
+
+**验收**：`check_index.py` 409 条 OK（条目数不变，未误删误增）、`check_refs.py --strict` 113 文件 OK、`unittest` 133 全绿、`git diff --check` 无空白污染、`architecture/rules/` 仍零 .NET 类型名。
+
 ## [5.1.0] - 2026-08-29
 
 新增 `architecture` 领域（第 7 个领域），承载**语言无关**的架构风格、分层契约、设计原则与选型判据。此前这类约束零散寄生在 `csharp` 领域内——架构级判断（依赖该指向哪、边界怎么定、什么规模该引入 DDD）挂在「C# 语言与通用工程实践」下，检索者无法按架构维度找到它们，非 C# 场景也无从复用。

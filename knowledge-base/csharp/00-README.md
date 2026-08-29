@@ -2,7 +2,7 @@
 
 > 面向团队的全覆盖 C# 开发总纲。**版本中立**——不绑定特定 .NET 版本，适用于所有主流 .NET 版本；编码风格与工程实践并重。
 
-本领域负责 C# 语言、编码风格、设计原则和通用 .NET 工程实践；.NET Runtime、SDK、目标框架、Windows 兼容性与生命周期事实归 `knowledge-base/dotnet/`，WPF/XAML 专属规则归 `knowledge-base/wpf/`。需要判断运行环境时引用 `dotnet`，不要在本领域复制平台支持矩阵。
+本领域负责 C# 语言、编码风格、设计原则和通用 .NET 工程实践；.NET Runtime、SDK、目标框架、Windows 兼容性与生命周期事实归 `knowledge-base/dotnet/`，WPF/XAML 专属规则归 `knowledge-base/wpf/`，语言无关的架构风格、分层契约与设计原则归 `knowledge-base/architecture/`。需要判断运行环境时引用 `dotnet`，架构层面的「该不该、选哪个、边界在哪」引用 `architecture`，不要在本领域复制平台支持矩阵或架构通用条款。
 
 ## 文档目的
 
@@ -78,6 +78,7 @@
 - `csharp-code-review` skill：本规范 `02` 章的编码层面是它的审查依据；review 流程见 `15`
 - `dotnet-upgrade` 系列 skills：版本升级与迁移以它们为准，本规范保持版本中立，不重复迁移细节
 - `knowledge-base/dotnet/`：提供 Runtime、SDK、目标框架、Windows 兼容性与生命周期 reference
+- `knowledge-base/architecture/`：语言无关的架构风格与设计原则。本领域 `01` 章第 6 节、`03` 章第 1、2、6、8 节的通用约束在该领域，本领域只保留 C# 特有增量
 - `dotnet-nuget:convert-to-cpm`：`10` 章强制中央包管理（CPM），落地用该 skill
 - `reference/refit.md`：Refit REST 客户端实践参考，见 `13` 章 API 设计相关条目
 

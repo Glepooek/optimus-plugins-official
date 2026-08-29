@@ -86,7 +86,7 @@
 
 ## 与仓库已有资产的关系
 
-- `knowledge-base/csharp/`：本规范的 C# 落地侧。`rules/01-project-structure.md` § 6 与 `rules/03-design-principles.md` § 1、§ 8 保留 C# 特有增量，通用约束在本领域
+- `knowledge-base/csharp/`：本规范的 C# 落地侧。`rules/01-project-structure.md` § 6 与 `rules/03-design-principles.md` § 1、§ 2、§ 6、§ 8 保留 C# 特有增量，通用约束在本领域
 - `knowledge-base/wpf/`：桌面 UI 的架构落地形态（MVVM 属分层在 UI 侧的具体形态）
 - `knowledge-base/design-patterns/`：单个设计模式的选用判据。本领域只做**架构风格**级别的选型（`rules/06-style-selection.md`），不写任何单个 GoF 模式的判据
 
