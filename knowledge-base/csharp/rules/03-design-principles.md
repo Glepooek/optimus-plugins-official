@@ -1,6 +1,6 @@
 # 03 · 面向对象与设计原则
 
-> 更新历史：2026-08-21 创建；2026-08-29 第 1、2、6、8 节的通用条款去重，改为引用 `knowledge-base/architecture/`，本篇仅保留 C# 特有增量。
+> 更新历史：2026-08-21 创建；2026-08-29 第 1、2、6、8 节的通用条款去重，改为引用 `knowledge-base/architecture/`；同日第 7 节的模式选用判据去重，改为引用 `knowledge-base/design-patterns/`，本篇仅保留 C# 特有增量。
 
 分层模型沿用 `01` 章第 6 节（团队统一的一种），本篇给出与代码直接挂钩的可执行设计约束。
 
@@ -158,10 +158,11 @@ services.AddHttpClient<WeatherClient>()
 
 ## 7. 设计模式适度使用
 
-- **必须**：模式服务目标，不为模式而模式；优先语言原生表达力（`switch 表达式`、委托参数）替代模板类模式
-- **应该**：常见模式按需采用：策略（算法族）、观察者（事件 / `IObservable`）、仓储（持久化抽象）、工厂（复杂创建）
-- **禁止**：为单例而单例——实例由 DI 容器管理，类内静态 `Instance` 属性反模式禁止
-- **禁止**：照搬 GoF 模板而不评估是否真正解决当前问题；解决不了问题就写简单代码
+模式的引入门槛、单个模式的引入与误用信号等**通用**判据见 `knowledge-base/design-patterns/rules/01-pattern-selection.md` § 1. 引入门槛。语言特性对模式的替代关系见 `knowledge-base/design-patterns/rules/06-modern-alternatives.md` § 1. 替代关系总览。反模式识别见 `knowledge-base/design-patterns/rules/05-antipatterns.md` § 1. 过度模式化。C# 侧的附加要求：
+
+- **禁止**：为单例而单例——实例由 DI 容器管理，类内静态 `Instance` 属性反模式禁止（生命周期注册见本篇第 6 节）
+- **应该**：替代模板类模式的 C# 语言构件按场景选择：算法族用委托参数、类型分派用 `switch` 表达式与模式匹配、通知用事件或 `IObservable<T>`、迭代用 `IEnumerable<T>` + `yield`
+- **禁止**：为 .NET 已提供实现的模式手写类结构——`IDisposable` 的 Dispose 模式（见 `06` 章）、`IEnumerable<T>` 的迭代器均属此类
 
 ## 8. 领域建模（若采用 DDD）
 

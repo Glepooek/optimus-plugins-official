@@ -1,8 +1,8 @@
 # 知识库（knowledge-base）
 
-> 版本：6.0.0
+> 版本：7.0.0
 
-跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`、`architecture`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
+跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`、`architecture`、`design-patterns`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
 
 ## 目录结构
 
@@ -28,7 +28,7 @@
 
 根目录另有 `catalog.json` 领域目录册，登记每个领域的内容分类、维护者、状态、主要消费者与最近审阅日期。新增或删除领域时必须同步维护——`check_index.py` 会校验 `catalog.json` 与实际领域目录双向一致（登记了不存在的领域、或存在未登记的领域都会报错）。
 
-领域职责边界：`dotnet` 负责 Runtime、.NET Framework、SDK、目标框架、操作系统兼容性与生命周期；`csharp` 负责 C# 语言和通用工程实践；`wpf` 负责 WPF/XAML 桌面 UI 技术栈；`git` 负责版本控制协作；`media` 负责媒体处理概念；`skill-authoring` 负责 Skill 创建与维护规范。领域可以相互引用，但不得复制同一事实或规则。
+领域职责边界：`dotnet` 负责 Runtime、.NET Framework、SDK、目标框架、操作系统兼容性与生命周期；`csharp` 负责 C# 语言和通用工程实践；`wpf` 负责 WPF/XAML 桌面 UI 技术栈；`git` 负责版本控制协作；`media` 负责媒体处理概念；`skill-authoring` 负责 Skill 创建与维护规范；`architecture` 负责语言无关的架构风格、分层契约与设计原则；`design-patterns` 负责设计模式的选用判据与误用识别。领域可以相互引用，但不得复制同一事实或规则。
 
 ## 消费方式
 

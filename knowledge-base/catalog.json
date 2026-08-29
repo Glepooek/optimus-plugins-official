@@ -79,6 +79,16 @@
       "consumers": [".claude/rules/skill-conventions.md", ".claude/skills/darwin-skill"],
       "reviewed_at": "2026-08-27",
       "notes": "开放 Agent Skills 规范的通用约束；本仓库专属约定见 .claude/rules/skill-conventions.md"
+    },
+    {
+      "domain": "design-patterns",
+      "title": "设计模式选用与反模式",
+      "categories": ["rules", "reference"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": [],
+      "reviewed_at": "2026-08-29",
+      "notes": "模式的选用判据与误用识别；架构风格选型引用 architecture，语言落地引用 csharp，WPF 特有形态引用 wpf"
     }
   ]
 }
