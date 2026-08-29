@@ -89,6 +89,16 @@
       "consumers": [],
       "reviewed_at": "2026-08-29",
       "notes": "模式的选用判据与误用识别；架构风格选型引用 architecture，语言落地引用 csharp，WPF 特有形态引用 wpf"
+    },
+    {
+      "domain": "algorithms",
+      "title": "算法与数据结构选型判据",
+      "categories": ["reference"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": [],
+      "reviewed_at": "2026-08-29",
+      "notes": "复杂度判断与数据结构选型；集合类型落地引用 csharp，层次归属引用 architecture。⚠️ reference/ 提取自《Hello 算法》(krahets)，以 CC BY-NC-SA 4.0 授权，独立于本仓库其余部分，许可证隔离在目录级别；rules/ 为自撰内容，待后续版本补入"
     }
   ]
 }

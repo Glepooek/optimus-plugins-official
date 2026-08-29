@@ -1,8 +1,8 @@
 # 知识库（knowledge-base）
 
-> 版本：7.0.0
+> 版本：7.1.0
 
-跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`、`architecture`、`design-patterns`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
+跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`、`architecture`、`design-patterns`、`algorithms`。其中 `dotnet`、`media`、`algorithms` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
 
 ## 目录结构
 
@@ -28,7 +28,7 @@
 
 根目录另有 `catalog.json` 领域目录册，登记每个领域的内容分类、维护者、状态、主要消费者与最近审阅日期。新增或删除领域时必须同步维护——`check_index.py` 会校验 `catalog.json` 与实际领域目录双向一致（登记了不存在的领域、或存在未登记的领域都会报错）。
 
-领域职责边界：`dotnet` 负责 Runtime、.NET Framework、SDK、目标框架、操作系统兼容性与生命周期；`csharp` 负责 C# 语言和通用工程实践；`wpf` 负责 WPF/XAML 桌面 UI 技术栈；`git` 负责版本控制协作；`media` 负责媒体处理概念；`skill-authoring` 负责 Skill 创建与维护规范；`architecture` 负责语言无关的架构风格、分层契约与设计原则；`design-patterns` 负责设计模式的选用判据与误用识别。领域可以相互引用，但不得复制同一事实或规则。
+领域职责边界：`dotnet` 负责 Runtime、.NET Framework、SDK、目标框架、操作系统兼容性与生命周期；`csharp` 负责 C# 语言和通用工程实践；`wpf` 负责 WPF/XAML 桌面 UI 技术栈；`git` 负责版本控制协作；`media` 负责媒体处理概念；`skill-authoring` 负责 Skill 创建与维护规范；`architecture` 负责语言无关的架构风格、分层契约与设计原则；`design-patterns` 负责设计模式的选用判据与误用识别；`algorithms` 负责算法与数据结构的选型判据与复杂度判断。领域可以相互引用，但不得复制同一事实或规则。
 
 ## 消费方式
 
@@ -144,6 +144,7 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
 - 不做自动生成索引的脚本——`tags`/`summary`/`level` 需要语义判断，机械提取质量不可靠。
 - 索引覆盖是渐进式的，不要求一次性覆盖全部规范文件——新增/优化 skill 引用到某条规则时，若该规则尚未登记索引，随手补一行即可，不必专项排期回填。
 - 迁移或重命名规范/reference 文件时，必须同步更新五处：索引 `file` 字段、索引 `source` 字段中的内部引用、领域 README 文件地图、正文交叉引用、消费者 skill 的引用路径（含 Markdown 链接目标）。
+- **外部作品的许可证隔离**：`algorithms/reference/` 提取自《Hello 算法》，以 CC BY-NC-SA 4.0 授权，独立于本仓库其余部分（`reference/LICENSE` 为其许可证全文，非 Markdown 故不登记索引）。SA 条款在**目录级别**隔离：不得把自撰规范内容混入该目录，也不得整段复制其正文到 `rules/`——`rules/` 只能引用它作为理由出处（`source` 字段）。该目录不接受本地编辑，更新时重新从上游 tag 提取。
 
 ## 与仓库已有资产的关系
 
