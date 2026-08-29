@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.9.0] - 2026-08-29
+
+### Added
+- `check_index.py` 新增 `check_domain_versions`：校验每个领域 `README.md` 顶部 `> 版本：x.y.z` 与该领域 `CHANGELOG.md` 首个版本条目一致，接入 `run_checks` 的全局检查区。取消全局版本号后版本号散落 9 处，靠人看必然漂移——README 说 7.2.1 而 CHANGELOG 最新是 8.0.0 这类不一致不会被任何其他检查发现，而消费者读的正是 README 那一行
+- Step 5 问题表新增 5 行、失败处理表新增 1 行，覆盖新校验的报错形态
+
+### Changed
+- **Step 6 整节重写**：版本号与 CHANGELOG 由「根 `README.md` + 根 `CHANGELOG.md`」改为「各领域 `README.md` + 各领域 `CHANGELOG.md`」。新增判断：一次变更涉及多个领域时，每个领域各自升版本、各自写 CHANGELOG，跨领域迁移两侧级别可以不同（迁出侧通常 Major，迁入侧可能只是 Minor）
+- Step 6 版本级别表的 Major 行补入「领域改名或条目 `id` 变更」——本次 `algorithms` → `data-structures-algorithms` 属此类，旧表未覆盖
+- Step 2 新建领域流程要求同时创建 `CHANGELOG.md`（首条目 `1.0.0`）与带版本行的 `README.md`；新领域起始 `1.0.0`，不套用 7.2.0 分叉点
+- 领域元数据文件路径由 `00-README.md` 改为 `README.md`（Step 2、Step 4 迁移五处、失败处理表）
+
 ## [1.8.0] - 2026-08-28
 
 ### Added

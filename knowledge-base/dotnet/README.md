@@ -1,5 +1,7 @@
 # .NET 平台与运行时知识库
 
+> 版本：7.2.1
+
 > 面向 .NET Runtime、.NET Framework、SDK、目标框架、操作系统兼容性与产品生命周期的描述性知识库。
 
 ## 文档目的
@@ -42,7 +44,7 @@
 - 平台支持矩阵属于时效性内容，新增 .NET 或 Windows 版本、支持策略变化时应复核
 - 文档必须区分“技术上可安装”“Microsoft 官方支持”和“Windows 本身仍受支持”
 - 来源、审阅日期和适用版本随内容一起维护
-- 新增或修改 reference 时同步更新 `index.jsonl`、根知识库版本和 `knowledge-base/CHANGELOG.md`
+- 新增或修改 reference 时同步更新 `index.jsonl`、本领域 `README.md` 顶部版本号和 `CHANGELOG.md`
 - 校验命令：`python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" dotnet`
 
 ## 与其他领域的关系

@@ -308,17 +308,21 @@ class TestCollectConsumers(unittest.TestCase):
             self.assertIn("knowledge-base/wpf/reference/why-mvvm.md", rels)
 
     def test_ignores_kb_changelog_and_readme(self):
-        """知识库的 CHANGELOG 与 README 记录的是历史事实与消费方式说明，不校验。"""
+        """知识库的 CHANGELOG 与 README 记录的是历史事实与消费方式说明，不校验。
+
+        7.2.1 起 CHANGELOG 按领域拆分（不再有根 knowledge-base/CHANGELOG.md），
+        领域级 CHANGELOG.md 同样不应被当作消费者扫描。
+        """
         with tempfile.TemporaryDirectory() as tmp:
             f = Fixture(tmp)
             kb = f.root / "knowledge-base"
-            (kb / "CHANGELOG.md").write_text("`rules/99-gone.md` §1 迁移记录\n", encoding="utf-8")
             (kb / "README.md").write_text("可写死 `file` § `章节` 引用\n", encoding="utf-8")
             (kb / "wpf" / "README.md").write_text("# wpf\n", encoding="utf-8")
+            (kb / "wpf" / "CHANGELOG.md").write_text("`rules/99-gone.md` §1 迁移记录\n", encoding="utf-8")
             rels = {p.relative_to(f.root).as_posix() for p in collect_consumers(f.root)}
-            self.assertNotIn("knowledge-base/CHANGELOG.md", rels)
             self.assertNotIn("knowledge-base/README.md", rels)
             self.assertNotIn("knowledge-base/wpf/README.md", rels)
+            self.assertNotIn("knowledge-base/wpf/CHANGELOG.md", rels)
 
     def test_ignores_changelog(self):
         with tempfile.TemporaryDirectory() as tmp:

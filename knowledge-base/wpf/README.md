@@ -1,5 +1,7 @@
 # WPF 开发规范
 
+> 版本：7.2.1
+
 > 面向团队的全覆盖 WPF 桌面应用开发总纲。**版本中立**——不绑定特定 .NET / WPF 版本，适用于所有主流版本；覆盖 XAML、MVVM、绑定、渲染、线程、性能、测试与部署的 WPF 技术栈特有实践。
 
 本领域负责 WPF/XAML、MVVM、绑定、控件、渲染、UI 线程和桌面部署等技术栈特有规则；通用 C# 语言与工程规范归 `knowledge-base/csharp/`，.NET Runtime、SDK、目标框架、Windows 兼容性与生命周期事实归 `knowledge-base/dotnet/`。本领域不复制通用平台支持矩阵。

@@ -8,6 +8,7 @@ from check_index import (
     check_anchor_exists,
     check_catalog,
     check_deprecated,
+    check_domain_versions,
     check_duplicate_ids,
     check_file_exists,
     check_file_path_safe,
@@ -431,7 +432,7 @@ class TestCheckOrphanFiles(unittest.TestCase):
             self.assertEqual(check_orphan_files(domain_dir, entries), [])
 
 
-def write_domain(base, domain, entries, files=None):
+def write_domain(base, domain, entries, files=None, version="7.2.1"):
     """在临时 base 目录下造一个领域：写入 index.jsonl 与 files 指定的 Markdown。"""
     domain_dir = base / domain
     domain_dir.mkdir(parents=True, exist_ok=True)
@@ -443,6 +444,13 @@ def write_domain(base, domain, entries, files=None):
         "".join(json.dumps(e, ensure_ascii=False) + "\n" for e in entries),
         encoding="utf-8",
     )
+    if version is not None:
+        domain_dir.joinpath("README.md").write_text(
+            f"# {domain}\n\n> 版本：{version}\n", encoding="utf-8")
+        domain_dir.joinpath("CHANGELOG.md").write_text(
+            f"# Changelog\n\n## [{version}] - 2026-08-29\n\n### Changed\n- x\n",
+            encoding="utf-8",
+        )
     return domain_dir
 
 
@@ -589,6 +597,57 @@ class TestCheckCatalog(unittest.TestCase):
                              "owner": "o", "status": "draft", "reviewed_at": "2026-08-27"}]
             }, ensure_ascii=False), encoding="utf-8")
             self.assertTrue(any("非法 status" in p for p in check_catalog(base)))
+
+
+class TestCheckDomainVersions(unittest.TestCase):
+    def _domain(self, base, name="csharp", readme_ver="7.2.1", changelog_ver="7.2.1"):
+        d = base / name
+        d.mkdir(parents=True, exist_ok=True)
+        d.joinpath("index.jsonl").write_text("", encoding="utf-8")
+        if readme_ver is not None:
+            d.joinpath("README.md").write_text(
+                f"# {name}\n\n> 版本：{readme_ver}\n\n正文\n", encoding="utf-8")
+        else:
+            d.joinpath("README.md").write_text(f"# {name}\n\n正文\n", encoding="utf-8")
+        if changelog_ver is not None:
+            d.joinpath("CHANGELOG.md").write_text(
+                f"# Changelog\n\n## [{changelog_ver}] - 2026-08-29\n\n### Changed\n- x\n",
+                encoding="utf-8")
+
+    def test_matching_versions_have_no_problems(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            self._domain(base)
+            self.assertEqual(check_domain_versions(base), [])
+
+    def test_mismatched_version_is_reported(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            self._domain(base, readme_ver="7.2.1", changelog_ver="8.0.0")
+            problems = check_domain_versions(base)
+            self.assertTrue(any("版本号不一致" in p and "7.2.1" in p and "8.0.0" in p
+                                for p in problems))
+
+    def test_missing_version_line_is_reported(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            self._domain(base, readme_ver=None)
+            self.assertTrue(any("README.md 缺少版本行" in p for p in check_domain_versions(base)))
+
+    def test_missing_changelog_is_reported(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            self._domain(base, changelog_ver=None)
+            self.assertTrue(any("CHANGELOG.md 不存在" in p for p in check_domain_versions(base)))
+
+    def test_changelog_without_version_entry_is_reported(self):
+        with tempfile.TemporaryDirectory() as d:
+            base = Path(d)
+            self._domain(base)
+            (base / "csharp" / "CHANGELOG.md").write_text(
+                "# Changelog\n\n还没有任何版本条目\n", encoding="utf-8")
+            self.assertTrue(any("CHANGELOG.md 无版本条目" in p
+                                for p in check_domain_versions(base)))
 
 
 class TestBuildAudit(unittest.TestCase):

@@ -1,5 +1,7 @@
 # Skill 创建规范
 
+> 版本：7.2.1
+
 > 面向团队的 Skill 创建总纲，参考 [Agent Skills](https://agentskills.io) 开放标准。覆盖 SKILL.md 格式规约、描述优化、质量评估、脚本使用与最佳实践，指导创建**可跨 runtime 使用、能精准触发、产出可靠**的 skill。
 
 ## 文档目的

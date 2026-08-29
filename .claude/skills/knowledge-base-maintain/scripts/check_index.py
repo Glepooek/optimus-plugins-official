@@ -29,6 +29,10 @@ ENFORCEMENTS = ("ci", "review", "advisory")
 STATUSES = ("active", "deprecated", "experimental")
 DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 
+# 领域版本号：README.md 顶部的 `> 版本：x.y.z` 与 CHANGELOG.md 首个 `## [x.y.z]`
+VERSION_LINE_RE = re.compile(r'^>\s*版本：\s*(?P<ver>\d+\.\d+\.\d+)\s*$', re.MULTILINE)
+CHANGELOG_VER_RE = re.compile(r'^##\s*\[(?P<ver>\d+\.\d+\.\d+)\]', re.MULTILINE)
+
 # 废弃标记：正文小节标题与 source 目标标题都用这一个词，只认一种写法便于机械校验
 DEPRECATED_MARK = "已废弃"
 
@@ -36,7 +40,7 @@ DEPRECATED_MARK = "已废弃"
 SUCCESSOR_RE = re.compile(r'[a-z0-9-]+\.(?:\d{2}|ref)\.[a-z0-9-]+|[a-z0-9-]+/(?:rules|reference)/[a-z0-9-]+\.md')
 
 # 领域元数据文件，不参与孤儿文件判定（不属于 rules/reference 内容）
-DOMAIN_META_FILES = {"README.md"}
+DOMAIN_META_FILES = {"README.md", "CHANGELOG.md"}
 
 
 def normalize_heading(line):
@@ -316,6 +320,44 @@ def check_catalog(base_dir):
     return problems
 
 
+def check_domain_versions(base_dir):
+    """校验每个领域 README.md 的版本行与其 CHANGELOG.md 最新条目一致。
+
+    取消全局版本号后，版本号散落在 9 个领域，靠人看必然漂移——README 说 7.2.1、
+    CHANGELOG 最新条目是 8.0.0 这类不一致不会被任何其他检查发现，
+    而消费者读的是 README 顶部那一行。
+    """
+    problems = []
+    for domain in collect_all_domains(base_dir):
+        domain_dir = base_dir / domain
+        readme = domain_dir / "README.md"
+        changelog = domain_dir / "CHANGELOG.md"
+
+        if not readme.exists():
+            problems.append(f"[{domain}] README.md 不存在：{readme}")
+            continue
+        m = VERSION_LINE_RE.search(readme.read_text(encoding="utf-8"))
+        if not m:
+            problems.append(f"[{domain}] README.md 缺少版本行（应为 `> 版本：x.y.z`）")
+            readme_ver = None
+        else:
+            readme_ver = m.group("ver")
+
+        if not changelog.exists():
+            problems.append(f"[{domain}] CHANGELOG.md 不存在：{changelog}")
+            continue
+        c = CHANGELOG_VER_RE.search(changelog.read_text(encoding="utf-8"))
+        if not c:
+            problems.append(f"[{domain}] CHANGELOG.md 无版本条目（应含 `## [x.y.z] - YYYY-MM-DD`）")
+            continue
+
+        if readme_ver and readme_ver != c.group("ver"):
+            problems.append(
+                f"[{domain}] 版本号不一致：README.md 为 {readme_ver}，"
+                f"CHANGELOG.md 最新条目为 {c.group('ver')}")
+    return problems
+
+
 def check_duplicate_ids(domain_entries):
     """id 全局唯一。domain_entries 应覆盖全部领域，而非仅本次校验的领域。"""
     seen = {}
@@ -378,6 +420,7 @@ def run_checks(base_dir, domains):
             problems.append(f"[{domain}] {e}")
     problems.extend(check_duplicate_ids(global_entries))
     problems.extend(check_catalog(base_dir))
+    problems.extend(check_domain_versions(base_dir))
     return problems
 
 

@@ -1,7 +1,5 @@
 # 知识库（knowledge-base）
 
-> 版本：7.2.0
-
 跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`、`architecture`、`design-patterns`、`data-structures-algorithms`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
 
 ## 目录结构
@@ -140,7 +138,7 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
   - **全局检查**（始终执行，即使只传一个领域）：`id` 全局唯一、`id` 前缀与领域归属一致、`catalog.json` 与实际领域双向一致。
 - 加 `--audit` 输出健康报告（记录数、`kind`/`level` 分布、规范文件的标题索引覆盖率、孤儿文件）。
 - 规范条款可选择性引用 `reference/*.md` 加强依据；引用单向，reference 不反向声明被谁引用。
-- 版本号见本文件顶部，变更规则与 CHANGELOG 格式见 `CHANGELOG.md`；日常新增/修改建议通过 `/knowledge-base-maintain` skill 完成，会自动同步索引与版本号。
+- **版本号按领域独立管理**：各领域版本号见该领域 `README.md` 顶部，变更历史见该领域 `CHANGELOG.md`；知识库不再有全局版本号（7.2.0 为分叉点，此前的全局版本历史已按领域归入各自 CHANGELOG）。一次变更涉及多个领域时，每个领域各自升版本、各自写 CHANGELOG。`check_index.py` 校验领域 README 版本行与其 CHANGELOG 最新条目一致。日常新增/修改建议通过 `/knowledge-base-maintain` skill 完成，会自动同步索引与版本号。
 - 不做自动生成索引的脚本——`tags`/`summary`/`level` 需要语义判断，机械提取质量不可靠。
 - 索引覆盖是渐进式的，不要求一次性覆盖全部规范文件——新增/优化 skill 引用到某条规则时，若该规则尚未登记索引，随手补一行即可，不必专项排期回填。
 - 迁移或重命名规范/reference 文件时，必须同步更新五处：索引 `file` 字段、索引 `source` 字段中的内部引用、领域 README 文件地图、正文交叉引用、消费者 skill 的引用路径（含 Markdown 链接目标）。

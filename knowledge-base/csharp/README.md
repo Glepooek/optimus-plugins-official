@@ -1,5 +1,7 @@
 # C# 开发规范
 
+> 版本：7.2.1
+
 > 面向团队的全覆盖 C# 开发总纲。**版本中立**——不绑定特定 .NET 版本，适用于所有主流 .NET 版本；编码风格与工程实践并重。
 
 本领域负责 C# 语言、编码风格、设计原则和通用 .NET 工程实践；.NET Runtime、SDK、目标框架、Windows 兼容性与生命周期事实归 `knowledge-base/dotnet/`，WPF/XAML 专属规则归 `knowledge-base/wpf/`，语言无关的架构风格、分层契约与设计原则归 `knowledge-base/architecture/`，设计模式的选用判据与误用识别归 `knowledge-base/design-patterns/`。需要判断运行环境时引用 `dotnet`，架构层面的「该不该、选哪个、边界在哪」引用 `architecture`，模式层面的「该不该用、误用信号」引用 `design-patterns`，不要在本领域复制平台支持矩阵、架构通用条款或模式选用判据。

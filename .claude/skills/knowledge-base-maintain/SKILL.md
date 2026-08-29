@@ -2,7 +2,7 @@
 name: knowledge-base-maintain
 description: 新增、修改、迁移、废弃 knowledge-base/ 下的规范条目或 reference 条目时使用；同步更新 index.jsonl 索引、CHANGELOG.md 与版本号，并跑一致性校验与语义查重。触发词："新增规范条目"、"知识库加一条"、"迁移知识库条目"、"废弃规范条目"、"校验知识库索引"、"知识库查重"。
 metadata:
-  version: "1.8.0"
+  version: "1.9.0"
   author: desktop client team
   category: tool
 compatibility: 需要本机 Python 3（跑本 skill scripts/ 下的 check_index.py 与 check_refs.py 做一致性校验），无 MCP 或第三方 CLI 依赖。
@@ -34,7 +34,7 @@ python --version
 
 依次询问用户（已在触发语句中提供的不重复问）：
 
-1. **`domain`**：目标领域（`csharp`/`wpf`/其他）。若目标领域目录不存在（`knowledge-base/<domain>/` 不存在），确认是新建领域——新建领域时先创建 `knowledge-base/<domain>/README.md`（参照 `knowledge-base/csharp/README.md` 的章节结构：文档目的、适用范围与读者、规范级别、阅读路径、文件地图）与空的 `knowledge-base/<domain>/index.jsonl`，并在 `knowledge-base/catalog.json` 的 `domains` 数组追加一条记录（`domain`/`title`/`categories`/`owner`/`status`/`consumers`/`reviewed_at`）——未登记会导致校验失败。
+1. **`domain`**：目标领域（`csharp`/`wpf`/其他）。若目标领域目录不存在（`knowledge-base/<domain>/` 不存在），确认是新建领域——新建领域时先创建 `knowledge-base/<domain>/README.md`（参照 `knowledge-base/csharp/README.md` 的章节结构：文档目的、适用范围与读者、规范级别、阅读路径、文件地图，**顶部须有 `> 版本：1.0.0` 版本行**）、`knowledge-base/<domain>/CHANGELOG.md`（首条目 `## [1.0.0] - <今天>`，版本号与 README 一致）与空的 `knowledge-base/<domain>/index.jsonl`，并在 `knowledge-base/catalog.json` 的 `domains` 数组追加一条记录（`domain`/`title`/`categories`/`owner`/`status`/`consumers`/`reviewed_at`）——未登记会导致校验失败。新领域起始 `1.0.0`，不套用 7.2.0 分叉点（该分叉点只适用于分叉时已存在的 9 个领域）。
 2. **`kind`**：`rule` 或 `reference`。
 3. 若 `kind=rule`：追问 **`level`**（`MUST`/`SHOULD`/`MAY`）。
 4. **正文归属**：`rule` 写入 `rules/` 下哪个规范文件的哪个章节（已有文件追加小节，或指出需要新建文件）；`reference` 写入 `reference/<主题slug>.md`（新文件，不编号）。
@@ -150,6 +150,11 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_index.py" --audit
 | `正文标题未标注已废弃` | 索引标了废弃但正文标题没加「（已废弃）」，读正文的人不知情 |
 | `source 指向已废弃的小节` | 活跃条目的理由挂在废弃内容上，改指其替代去向 |
 | `status=deprecated 不得标 enforcement=ci` | 已废弃却仍作为 CI 拦截依据，改 `advisory` 或删该字段 |
+| `README.md 缺少版本行` | 领域 README 顶部漏了 `> 版本：x.y.z`（须紧跟一级标题） |
+| `CHANGELOG.md 不存在` | 新建领域时漏建该领域 CHANGELOG |
+| `CHANGELOG.md 无版本条目` | CHANGELOG 只有标题、没有 `## [x.y.z] - YYYY-MM-DD` 条目 |
+| `版本号不一致` | 改了 README 版本行忘了写 CHANGELOG 条目（或反之）——两处必须同步 |
+| `README.md 不存在` | 领域目录有 `index.jsonl` 但缺元数据文件 |
 
 **改动了规范文件的章节标题或章节编号时**，还须校验 `§ 章节号` 引用——这类引用不在 `index.jsonl` 里，`check_index.py` 管不到。校验范围含消费者 skill 与**知识库正文自身**（跨领域去重会在正文留下 `csharp/rules/12-testing.md § 1` 这类引用，与 skill 里的一样脆弱）：
 
@@ -168,15 +173,20 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_refs.py"
 
 ## Step 6：同步版本号与 CHANGELOG（新增/修改/迁移/废弃场景，仅校验场景跳过）
 
-判断本次变更的版本升级级别：
+**版本号按领域独立管理**，知识库无全局版本号（7.2.0 为分叉点）。判断本次变更对**每个受影响领域**的升级级别：
 
 | 变更类型 | 版本升级 |
 |---|---|
 | 新增领域、新增规范条目、新增 reference 条目 | Minor `x.X.x` |
 | 修改已有规范/reference 内容、修正索引、文档优化 | Patch `x.x.X` |
-| 删除领域、删除规范条目、**废弃条目（`status` 改 `deprecated`）**、规范措辞产生不兼容语义变化（如 SHOULD 改 MUST） | Major `X.x.x` |
+| 删除领域、删除规范条目、**废弃条目（`status` 改 `deprecated`）**、规范措辞产生不兼容语义变化（如 SHOULD 改 MUST）、领域改名或条目 `id` 变更 | Major `X.x.x` |
 
-用 Edit 更新 `knowledge-base/README.md` 顶部 `> 版本：x.x.x`，并在 `knowledge-base/CHANGELOG.md` 顶部追加对应版本条目（格式同 skill CHANGELOG：`## [版本号] - YYYY-MM-DD` + `### Added`/`Changed`/`Removed`/`Fixed`，只写实际发生的类别）。
+**一次变更涉及多个领域时，每个领域各自升版本、各自写 CHANGELOG**——这是本模型下最容易做错的地方。跨领域迁移（如把条款从 `csharp` 迁到 `architecture`）两侧都要写：迁出侧记「收窄为引用 + 特有增量」，迁入侧记「接收通用约束」，两侧各自按自己的级别升版本（迁出侧通常是 Major，迁入侧可能只是 Minor）。
+
+改两处，二者版本号必须一致（`check_index.py` 会校验）：
+
+1. `knowledge-base/<domain>/README.md` 顶部 `> 版本：x.y.z`
+2. `knowledge-base/<domain>/CHANGELOG.md` 顶部追加 `## [版本号] - YYYY-MM-DD` + `### Added`/`Changed`/`Removed`/`Fixed`（只写实际发生的类别），**新条目放在最上方**——校验器取首个 `## [x.y.z]` 作为最新版本
 
 ## Step 7：提交
 
@@ -192,3 +202,4 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_refs.py"
 | `check_index.py` 报领域未登记到 `catalog.json` | 在 `catalog.json` 的 `domains` 追加该领域记录，`categories` 只填实际存在的分类目录 | 若该目录不应作为知识库领域（如误建），删除其 `index.jsonl` 或整个目录 |
 | 新建领域但用户未提供该领域的规范级别定义 | 参照 `knowledge-base/csharp/README.md` 的"规范级别"章节直接复用同一套 MUST/SHOULD/MAY 定义，无需重新设计 | 若用户希望该领域有不同的级别体系，先与用户确认具体差异再落地 |
 | 要废弃的条目仍被消费者 skill 引用 | 先把消费者引用改指替代去向，再标记废弃——否则消费者会继续读到一份不再维护的规则 | 若替代去向尚未确定（约束确实要保留但归属未决），不要先标废弃，与用户确认归属后再动 |
+| `check_index.py` 报版本号不一致 | 确认本次实际改了什么，据此定级别，再同步 README 版本行与 CHANGELOG 首条目 | 若是历史遗留不一致（非本次改动造成），以 CHANGELOG 最新条目为准修正 README——CHANGELOG 记录了变更事实，README 那一行只是展示 |
