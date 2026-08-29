@@ -22,7 +22,7 @@ from pathlib import Path
 
 # 消费者文件：plugins 下的 SKILL.md 与被 skill 引用的参考文档，以及知识库正文自身
 # ——跨领域去重会在正文里留下 `csharp/rules/12-testing.md § 1` 这类引用，形态与 skill
-# 里的一样脆弱。knowledge-base 的 CHANGELOG/README 与领域 00-README.md 不在其中：
+# 里的一样脆弱。knowledge-base 的 CHANGELOG/README 与领域 README.md 不在其中：
 # 前两者记录历史事实与消费方式说明，后者是文件地图（只列路径不引章节）。
 CONSUMER_GLOBS = (
     "plugins/*/skills/*/SKILL.md",
@@ -32,7 +32,7 @@ CONSUMER_GLOBS = (
 )
 
 # 领域识别：任何 knowledge-base/<domain>/ 出现处，用于给相对路径引用定基准
-# （文件名可能含大写，如 00-README.md，故领域提取与文件路径提取分开）
+# （领域元数据文件与根 README 同名，故领域提取与文件路径提取分开）
 DOMAIN_RE = re.compile(r'knowledge-base/(?P<domain>[a-z0-9-]+)/')
 
 # 目标文件 token：完整路径 / 领域内相对路径 / 同目录裸文件名

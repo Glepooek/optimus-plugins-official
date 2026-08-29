@@ -2,7 +2,7 @@
 name: commit-cc-plugin
 description: 在 optimus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户明确表达提交或推送意图，如说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"、"推一下"、"存一下"。
 metadata:
-  version: "3.4.2"
+  version: "3.4.3"
   author: desktop client team
 compatibility: 需要 Git 仓库环境及远程推送权限；无 MCP 或第三方 CLI 依赖。
 allowed-tools: Bash Edit
@@ -20,7 +20,7 @@ allowed-tools: Bash Edit
 - Conventional Commits、AI 协作者标注、hook 和敏感信息防护：[`knowledge-base/git/rules/02-commit-messages.md`](../../../knowledge-base/git/rules/02-commit-messages.md)
 - PR、review、合并策略和强制推送限制：[`knowledge-base/git/rules/03-pull-requests.md`](../../../knowledge-base/git/rules/03-pull-requests.md)
 - 版本号、tag 和发布流程：[`knowledge-base/git/rules/04-versioning-release.md`](../../../knowledge-base/git/rules/04-versioning-release.md)
-- 完整规则入口：[`knowledge-base/git/00-README.md`](../../../knowledge-base/git/00-README.md)
+- 完整规则入口：[`knowledge-base/git/README.md`](../../../knowledge-base/git/README.md)
 
 本 skill 只补充本仓库特有的发布编排、插件版本联动、符号链接镜像和暂存区 checkpoint；若本文件与 Git 知识库的通用规范冲突，以知识库为准。
 

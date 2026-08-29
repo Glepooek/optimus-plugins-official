@@ -15,7 +15,7 @@
 
 ## 规范级别
 
-沿用 [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) 语义，与 `knowledge-base/csharp/00-README.md` 同一套定义：
+沿用 [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) 语义，与 `knowledge-base/csharp/README.md` 同一套定义：
 
 | 级别 | 措辞 | 含义 | 违反处置 |
 |---|---|---|---|
@@ -71,7 +71,7 @@
 
 | 编号 | 文件 | 主题 |
 |---|---|---|
-| 00 | `00-README.md` | 总则、级别、许可证隔离、领域边界、索引 |
+| — | `README.md` | 总则、级别、许可证隔离、领域边界、索引 |
 | 01 | `rules/01-complexity.md` | 复杂度判断：声明与规模上限、量级边界、最差复杂度、空间约束、时空交换 |
 | 02 | `rules/02-data-structure-selection.md` | 结构选型：连续/离散存储、栈队列、哈希、有序结构、堆、图表示 |
 | 03 | `rules/03-recursion-iteration.md` | 递归与迭代：深度上限、尾递归的不可依赖性、重复计算、终止条件 |

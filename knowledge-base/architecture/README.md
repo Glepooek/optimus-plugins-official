@@ -15,7 +15,7 @@
 
 ## 规范级别
 
-沿用 [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) 语义，与 `knowledge-base/csharp/00-README.md` 同一套定义。各篇正文使用对应措辞，级别决定违反后的处置：
+沿用 [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119) 语义，与 `knowledge-base/csharp/README.md` 同一套定义。各篇正文使用对应措辞，级别决定违反后的处置：
 
 | 级别 | 措辞 | 含义 | 违反处置 |
 |---|---|---|---|
@@ -60,7 +60,7 @@
 
 | 编号 | 文件 | 主题 |
 |---|---|---|
-| 00 | `00-README.md` | 总则、级别、领域边界、执行、索引 |
+| — | `README.md` | 总则、级别、领域边界、执行、索引 |
 | 01 | `rules/01-layering.md` | 分层与依赖方向 |
 | 02 | `rules/02-design-principles.md` | 设计原则（SOLID 及其可执行检查项） |
 | 03 | `rules/03-ddd.md` | 领域驱动设计：战术模式与战略设计 |

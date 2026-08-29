@@ -34,7 +34,7 @@ python --version
 
 依次询问用户（已在触发语句中提供的不重复问）：
 
-1. **`domain`**：目标领域（`csharp`/`wpf`/其他）。若目标领域目录不存在（`knowledge-base/<domain>/` 不存在），确认是新建领域——新建领域时先创建 `knowledge-base/<domain>/00-README.md`（参照 `knowledge-base/csharp/00-README.md` 的章节结构：文档目的、适用范围与读者、规范级别、阅读路径、文件地图）与空的 `knowledge-base/<domain>/index.jsonl`，并在 `knowledge-base/catalog.json` 的 `domains` 数组追加一条记录（`domain`/`title`/`categories`/`owner`/`status`/`consumers`/`reviewed_at`）——未登记会导致校验失败。
+1. **`domain`**：目标领域（`csharp`/`wpf`/其他）。若目标领域目录不存在（`knowledge-base/<domain>/` 不存在），确认是新建领域——新建领域时先创建 `knowledge-base/<domain>/README.md`（参照 `knowledge-base/csharp/README.md` 的章节结构：文档目的、适用范围与读者、规范级别、阅读路径、文件地图）与空的 `knowledge-base/<domain>/index.jsonl`，并在 `knowledge-base/catalog.json` 的 `domains` 数组追加一条记录（`domain`/`title`/`categories`/`owner`/`status`/`consumers`/`reviewed_at`）——未登记会导致校验失败。
 2. **`kind`**：`rule` 或 `reference`。
 3. 若 `kind=rule`：追问 **`level`**（`MUST`/`SHOULD`/`MAY`）。
 4. **正文归属**：`rule` 写入 `rules/` 下哪个规范文件的哪个章节（已有文件追加小节，或指出需要新建文件）；`reference` 写入 `reference/<主题slug>.md`（新文件，不编号）。
@@ -74,7 +74,7 @@ python ".claude/skills/knowledge-base-maintain/scripts/find_duplicates.py" --top
 1. 用 Grep 在目标领域 `index.jsonl` 中按 `id` 或关键词定位现有记录行。
 2. 修改正文内容（若涉及跨目录迁移，如从 `rules/` 移到 `reference/`：先在新位置写入正文，再删除旧位置正文，最后更新索引行的 `file`/`anchor`/`kind` 字段——不得只改索引不改正文，也不得只改正文不改索引）。
 3. 用 Edit 更新 `index.jsonl` 中对应行的变化字段。
-4. **迁移或重命名文件时**，用 Grep 在全仓库反查引用该路径的位置并同步更新五处：索引 `file` 字段、索引 `source` 字段中的内部引用、领域 `00-README.md` 的文件地图、其他正文的交叉引用、消费者 skill 的引用（含 Markdown 链接目标 `](...)`，不只是反引号提及）。历史记录类文本（CHANGELOG、正文头部"更新历史"、`docs/superpowers/` 下的历史计划）记录的是当时事实，不改写。
+4. **迁移或重命名文件时**，用 Grep 在全仓库反查引用该路径的位置并同步更新五处：索引 `file` 字段、索引 `source` 字段中的内部引用、领域 `README.md` 的文件地图、其他正文的交叉引用、消费者 skill 的引用（含 Markdown 链接目标 `](...)`，不只是反引号提及）。历史记录类文本（CHANGELOG、正文头部"更新历史"、`docs/superpowers/` 下的历史计划）记录的是当时事实，不改写。
 5. **重排或重命名规范文件的章节时**（改动 `## N. 标题` 的编号或文本），消费者 skill 里的 `§ N` 引用会跟着失效，须一并更新——这类引用不在索引中，靠 Step 5 的 `check_refs.py` 兜底检出。
 
 ## Step 4.5（废弃条目）：标记而非删除
@@ -190,5 +190,5 @@ python ".claude/skills/knowledge-base-maintain/scripts/check_refs.py"
 | `check_index.py` 报 anchor 不匹配 | 打开目标文件确认标题文字的准确文本（含大小写、标点），更新索引 `anchor` 字段 | 若目标章节确实还不存在，先在正文补齐该章节标题，再回填索引 |
 | `check_index.py` 报孤儿文件 | 判断该文件是新建待登记（补索引行）还是应删除的残留（确认后删） | 若该文件有意不登记索引，说明它不属于 `rules/`/`reference/` 分类，与用户确认其归属 |
 | `check_index.py` 报领域未登记到 `catalog.json` | 在 `catalog.json` 的 `domains` 追加该领域记录，`categories` 只填实际存在的分类目录 | 若该目录不应作为知识库领域（如误建），删除其 `index.jsonl` 或整个目录 |
-| 新建领域但用户未提供该领域的规范级别定义 | 参照 `knowledge-base/csharp/00-README.md` 的"规范级别"章节直接复用同一套 MUST/SHOULD/MAY 定义，无需重新设计 | 若用户希望该领域有不同的级别体系，先与用户确认具体差异再落地 |
+| 新建领域但用户未提供该领域的规范级别定义 | 参照 `knowledge-base/csharp/README.md` 的"规范级别"章节直接复用同一套 MUST/SHOULD/MAY 定义，无需重新设计 | 若用户希望该领域有不同的级别体系，先与用户确认具体差异再落地 |
 | 要废弃的条目仍被消费者 skill 引用 | 先把消费者引用改指替代去向，再标记废弃——否则消费者会继续读到一份不再维护的规则 | 若替代去向尚未确定（约束确实要保留但归属未决），不要先标废弃，与用户确认归属后再动 |

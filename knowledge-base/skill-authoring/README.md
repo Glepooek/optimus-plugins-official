@@ -43,7 +43,7 @@
 
 | 编号 | 文件 | 主题 |
 |---|---|---|
-| 00 | `00-README.md` | 总则、级别、执行、索引 |
+| — | `README.md` | 总则、级别、执行、索引 |
 | 01 | `rules/01-skill-format.md` | SKILL.md 格式规约：目录结构、frontmatter、正文、文件引用、progressive disclosure |
 | 02 | `rules/02-description-optimization.md` | 描述优化：触发机制、写作原则、trigger eval、train/validation 切分 |
 | 03 | `rules/03-skill-evaluation.md` | skill 质量评估：测试用例、assertions、grading、benchmark、迭代循环 |

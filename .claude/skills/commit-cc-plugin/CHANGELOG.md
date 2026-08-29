@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.4.3] - 2026-08-29
+
+### Changed
+- Git 知识库入口链接随知识库领域元数据文件改名同步：`knowledge-base/git/00-README.md` → `README.md`
+
 ## [3.4.2] - 2026-08-27
 
 ### Changed

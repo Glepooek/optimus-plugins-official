@@ -10,7 +10,7 @@
 
 ```
 <domain>/
-├── 00-README.md         # 领域说明、阅读路径、分类说明
+├── README.md            # 领域说明、阅读路径、分类说明
 ├── index.jsonl          # 索引：rule + reference 统一编目
 ├── rules/               # 规范条款（MUST/SHOULD/MAY 语气）
 │   ├── 01-*.md ... 17-*.md
@@ -20,7 +20,7 @@
 
 目录约束：
 
-- `00-README.md`、`index.jsonl` 是领域导航元数据，始终位于领域根目录，不下沉到分类目录。
+- `README.md`、`index.jsonl` 是领域导航元数据，始终位于领域根目录，不下沉到分类目录。
 - `rules/` 只放可用于合规判断的规范正文；文件编号在 `rules/` 内保持既有顺序。
 - `reference/` 与 `rules/` 是**同级并列**关系，不是从属关系；reference 只解释概念、机制、工具和用法。
 - 索引的 `file` 始终是相对领域根目录的路径（`rules/05-error-handling.md`、`reference/video-codecs.md`）；正文内交叉引用同样采用该形式，与索引保持一致。

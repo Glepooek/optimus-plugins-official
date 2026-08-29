@@ -45,7 +45,7 @@
 
 | 编号 | 文件 | 主题 |
 |---|---|---|
-| 00 | `00-README.md` | 总则、级别、执行、索引 |
+| — | `README.md` | 总则、级别、执行、索引 |
 | 01 | `rules/01-environment.md` | 环境与技术选型 |
 | 02 | `rules/02-project-structure.md` | 项目结构与布局 |
 | 03 | `rules/03-mvvm.md` | MVVM 架构 |

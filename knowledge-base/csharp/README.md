@@ -44,7 +44,7 @@
 
 | 编号 | 文件 | 主题 |
 |---|---|---|
-| 00 | `00-README.md` | 总则、级别、执行、索引 |
+| — | `README.md` | 总则、级别、执行、索引 |
 | 01 | `rules/01-project-structure.md` | 环境与技术选型、解决方案与项目结构 |
 | 02 | `rules/02-coding-style.md` | 命名规范、编码风格、语言特性使用准则 |
 | 03 | `rules/03-design-principles.md` | 面向对象与设计原则 |

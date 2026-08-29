@@ -36,7 +36,7 @@ DEPRECATED_MARK = "已废弃"
 SUCCESSOR_RE = re.compile(r'[a-z0-9-]+\.(?:\d{2}|ref)\.[a-z0-9-]+|[a-z0-9-]+/(?:rules|reference)/[a-z0-9-]+\.md')
 
 # 领域元数据文件，不参与孤儿文件判定（不属于 rules/reference 内容）
-DOMAIN_META_FILES = {"00-README.md"}
+DOMAIN_META_FILES = {"README.md"}
 
 
 def normalize_heading(line):

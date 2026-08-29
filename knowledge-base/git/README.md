@@ -40,7 +40,7 @@
 
 | 编号 | 文件 | 主题 |
 |---|---|---|
-| 00 | `00-README.md` | 总则、级别、执行、索引 |
+| — | `README.md` | 总则、级别、执行、索引 |
 | 01 | `rules/01-branching.md` | 分支策略与命名规范 |
 | 02 | `rules/02-commit-messages.md` | 提交信息规范、提交前检查与敏感信息防护 |
 | 03 | `rules/03-pull-requests.md` | PR 规范与合并策略 |

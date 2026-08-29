@@ -410,7 +410,7 @@ class TestCheckOrphanFiles(unittest.TestCase):
     def test_readme_is_not_orphan(self):
         with tempfile.TemporaryDirectory() as d:
             domain_dir = Path(d)
-            (domain_dir / "00-README.md").write_text("# 领域说明\n", encoding="utf-8")
+            (domain_dir / "README.md").write_text("# 领域说明\n", encoding="utf-8")
             self.assertEqual(check_orphan_files(domain_dir, []), [])
 
     def test_reports_unindexed_markdown(self):
