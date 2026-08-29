@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.1] - 2026-08-29
+
+### Added
+- `check_orphan_files` 单元测试补 `test_changelog_is_not_orphan`，与既有 `test_readme_is_not_orphan` 对称——1.9.0 把 `DOMAIN_META_FILES` 扩为含 `CHANGELOG.md` 时漏配对应测试，仅靠其他测试间接覆盖
+
+### Fixed
+- 补记 1.9.0 遗漏的一条 Added：`DOMAIN_META_FILES` 新增 `CHANGELOG.md`（原仅 `README.md`）——9 个领域各自新建的 `CHANGELOG.md` 若不加入孤儿文件白名单，会被 `check_orphan_files` 误报为未索引的孤儿 Markdown
+
 ## [1.9.0] - 2026-08-29
 
 ### Added

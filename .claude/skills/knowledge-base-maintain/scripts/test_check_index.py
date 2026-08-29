@@ -414,6 +414,12 @@ class TestCheckOrphanFiles(unittest.TestCase):
             (domain_dir / "README.md").write_text("# 领域说明\n", encoding="utf-8")
             self.assertEqual(check_orphan_files(domain_dir, []), [])
 
+    def test_changelog_is_not_orphan(self):
+        with tempfile.TemporaryDirectory() as d:
+            domain_dir = Path(d)
+            (domain_dir / "CHANGELOG.md").write_text("# Changelog\n", encoding="utf-8")
+            self.assertEqual(check_orphan_files(domain_dir, []), [])
+
     def test_reports_unindexed_markdown(self):
         with tempfile.TemporaryDirectory() as d:
             domain_dir = Path(d)
