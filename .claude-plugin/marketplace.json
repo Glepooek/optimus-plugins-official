@@ -2,7 +2,7 @@
   "name": "optimus-plugins-official",
   "displayName": "Optimus 官方插件仓库",
   "description": "自定义 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强、权限通知等企业级开发工具链",
-  "version": "12.1.9",
+  "version": "12.2.0",
   "owner": {
     "name": "optimus",
     "url": "https://www.optimus.cn"
@@ -66,6 +66,18 @@
       "name": "optimus-media-plugin",
       "source": "./plugins/optimus-media-plugin",
       "description": "音视频处理：分析、转码压缩、裁剪缩放、在线下载与播放预览"
+    },
+    {
+      "name": "cangjie-skill",
+      "description": "把书、长视频、播客等高价值内容蒸馏成可执行 Agent Skills（外部引入：kangarooking/cangjie-skill，MIT License）",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/kangarooking/cangjie-skill.git",
+        "ref": "main",
+        "sha": "b633a4fad5a02f0fc6b2524d1ddf3ed50c753a40"
+      },
+      "strict": false,
+      "skills": ["./"]
     }
   ]
 }
