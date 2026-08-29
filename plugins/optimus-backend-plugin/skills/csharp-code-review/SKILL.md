@@ -2,7 +2,7 @@
 name: csharp-code-review
 description: 用于审查 C# 代码的 Microsoft 编码规范、命名标准、代码质量，以及异常处理/取消令牌传播等 API 健壮性问题。当用户提到：审查/检查/review C# 代码、.cs 文件、C# 项目代码规范、准备合并/PR、代码质量检查、命名约定问题、代码风格统一时，务必使用此 skill。也适用于用户询问"这段 C# 代码有什么问题"、"帮我看看这个类的命名"、"检查一下代码规范"等场景。
 metadata:
-  version: "1.5.4"
+  version: "1.5.5"
   author: desktop client team
   category: quality
 compatibility: 需要 .NET/C# 代码库；支持基于用户粘贴代码审查，也可扫描本地代码库（Grep/Glob）；无外部 CLI/MCP 依赖。
@@ -13,7 +13,7 @@ allowed-tools: Read Grep Glob
 
 ## 概述
 
-基于团队 C# 编写规范集（[`knowledge-base/csharp/`](../../../../knowledge-base/csharp/00-README.md)）的系统化代码审查。
+基于团队 C# 编写规范集（[`knowledge-base/csharp/`](../../../../knowledge-base/csharp/README.md)）的系统化代码审查。
 
 **核心原则**：通过全面的 checklist 驱动审查，确保不遗漏任何违规。规范不是约束，而是帮助团队写出一致、可维护、专业的代码。
 
@@ -107,7 +107,7 @@ allowed-tools: Read Grep Glob
 
 ## 权威参考
 
-团队规范以 [`knowledge-base/csharp/`](../../../../knowledge-base/csharp/00-README.md) 为准——本 skill 的审查依据直接来自该规范集，不额外维护规则文本。语言层的通用惯例背景可参考：
+团队规范以 [`knowledge-base/csharp/`](../../../../knowledge-base/csharp/README.md) 为准——本 skill 的审查依据直接来自该规范集，不额外维护规则文本。语言层的通用惯例背景可参考：
 
 - [Microsoft C# 编码规范](https://learn.microsoft.com/zh-cn/dotnet/csharp/fundamentals/coding-style/coding-conventions)
 - [Microsoft 标识符命名规则](https://learn.microsoft.com/zh-cn/dotnet/csharp/fundamentals/coding-style/identifier-names)

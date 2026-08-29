@@ -2,7 +2,7 @@
 name: wpf-code-review
 description: 用于审查 WPF 代码的 MVVM 架构、XAML 编写规范、数据绑定、控件/依赖属性、资源主题、布局渲染、线程调度、性能、异常/安全等全量规范，并覆盖虚拟化、Freezable 冻结、Shape 优化等性能诊断。当用户提到：审查/检查/review WPF 代码、.xaml 文件、WPF 项目代码规范、准备合并/PR、代码质量检查、界面卡顿、滚动慢、内存高、MVVM 规范、绑定规范时，务必使用此 skill。
 metadata:
-  version: "2.0.4"
+  version: "2.0.5"
   author: desktop client team
   category: quality
 compatibility: 需要 .NET/WPF/XAML 代码库；支持基于用户粘贴代码审查，也可扫描本地代码库（Grep/Glob）；可直接编辑修复（Edit）；无需额外 CLI/MCP。
@@ -13,7 +13,7 @@ allowed-tools: Read Grep Glob Edit
 
 ## 概述
 
-基于团队 WPF 开发规范集（[`knowledge-base/wpf/`](../../../../knowledge-base/wpf/00-README.md)）的系统化代码审查，覆盖架构、XAML、绑定、控件、线程、性能到异常/安全的全量维度。**核心原则**：通过全面的 checklist 驱动审查，确保不遗漏任何违规；规范不是约束，而是帮助团队写出一致、可维护、可扩展、可测的界面代码。
+基于团队 WPF 开发规范集（[`knowledge-base/wpf/`](../../../../knowledge-base/wpf/README.md)）的系统化代码审查，覆盖架构、XAML、绑定、控件、线程、性能到异常/安全的全量维度。**核心原则**：通过全面的 checklist 驱动审查，确保不遗漏任何违规；规范不是约束，而是帮助团队写出一致、可维护、可扩展、可测的界面代码。
 
 ## 审查流程
 
@@ -121,7 +121,7 @@ allowed-tools: Read Grep Glob Edit
 
 ## 权威参考
 
-团队规范以 [`knowledge-base/wpf/`](../../../../knowledge-base/wpf/00-README.md) 为准——本 skill 的审查依据直接来自该规范集，不额外维护规则文本。通用背景可参考：
+团队规范以 [`knowledge-base/wpf/`](../../../../knowledge-base/wpf/README.md) 为准——本 skill 的审查依据直接来自该规范集，不额外维护规则文本。通用背景可参考：
 
 - [WPF 文档（.NET Desktop）](https://learn.microsoft.com/zh-cn/dotnet/desktop/wpf/overview/index)
 - [优化 WPF 应用程序性能](https://learn.microsoft.com/zh-cn/dotnet/desktop/wpf/advanced/optimizing-wpf-application-performance)

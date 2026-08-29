@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.0.5] - 2026-08-29
+
+### Fixed
+- 权威参考的两处 Markdown 链接目标随知识库领域元数据文件改名同步：`knowledge-base/wpf/00-README.md` → `README.md`。不改会成为坏链
+
 ## [2.0.4] - 2026-08-28
 
 ### Fixed
