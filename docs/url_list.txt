@@ -2,3 +2,10 @@
 https://claude.com/blog/how-to-configure-hooks
 https://claude.com/blog/using-claude-md-files
 https://claude.com/blog/improved-web-search-with-dynamic-filtering
+https://claude.com/blog/prompt-caching
+https://claude.com/blog/beyond-permission-prompts-making-claude-code-more-secure-and-autonomous
+https://claude.com/blog/prompt-generator
+https://claude.com/blog/evaluate-prompts
+https://claude.com/blog/prompt-improver
+https://claude.com/blog/best-practices-for-prompt-engineering
+https://claude.com/blog/skills-explained
