@@ -1,15 +1,15 @@
 ---
-name: sync-agent-skills
-description: 将 skill 源目录以符号链接同步到各 AI 工具的 skills 目录，维护单一 source of truth。默认 source：~/.agents/skills/，默认 targets：~/.claude/skills/ 和 ~/.kiro/skills/。支持自定义：source=<路径> target=<路径1,路径2,...>。触发词：同步 skills、sync agent skills、链接 skills、更新 skill 链接、sync-agent-skills、link skills、update skill symlinks。不适用：仅需查看已有链接状态而不修改时，无需触发本 skill。
+name: sync-skill-symlinks
+description: 将 skill 源目录以符号链接同步到各 AI 工具的 skills 目录，维护单一 source of truth。默认 source：~/.agents/skills/，默认 targets：~/.claude/skills/、~/.kiro/skills/ 和 ~/.codex/skills/。支持自定义：source=<路径> target=<路径1,路径2,...>。触发词：同步 skills、sync skill symlinks、链接 skills、更新 skill 链接、link skills、update skill symlinks。不适用：仅需查看已有链接状态而不修改时，无需触发本 skill。
 metadata:
-  version: "1.2.0"
+  version: "2.0.0"
   author: desktop client team
   category: tool
 compatibility: 纯文件系统操作（符号链接管理）；Windows 下需开发者模式或管理员权限，macOS/Linux 原生支持 ln -s。
 allowed-tools: Bash
 ---
 
-# sync-agent-skills
+# sync-skill-symlinks
 
 将 skill 源目录中的所有 skill 子目录以符号链接形式分发到各 AI 工具的 skills 目录，使用户只需维护一个 source of truth。
 
@@ -26,7 +26,7 @@ allowed-tools: Bash
 ```powershell
 # 默认值
 $source    = "$env:USERPROFILE\.agents\skills"
-$targets   = @("$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.kiro\skills")
+$targets   = @("$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.kiro\skills", "$env:USERPROFILE\.codex\skills")
 $useCustom = $false
 
 # 从用户消息中提取 source= 和 target= 参数
@@ -58,7 +58,7 @@ if ($useCustom) {
 ```bash
 # 默认值
 source_dir="$HOME/.agents/skills"
-targets=("$HOME/.claude/skills" "$HOME/.kiro/skills")
+targets=("$HOME/.claude/skills" "$HOME/.kiro/skills" "$HOME/.codex/skills")
 use_custom=false
 
 # 从用户消息中提取 source= 和 target= 参数
@@ -205,14 +205,14 @@ echo "🔍 发现 ${#skills[@]} 个 skill: ${skills[*]}"
 
 ## Step 3 — 创建符号链接
 
-`$targets` 由 Step 0 赋值（默认：`~/.claude/skills/` 和 `~/.kiro/skills/`）。对每个目标目录逐一处理：父目录不存在则静默跳过（默认 targets）；自动创建目标目录本身；链接不存在则新建，已存在但目标路径不符则自动更新，目标路径一致则跳过，非符号链接则警告。
+`$targets` 由 Step 0 赋值（默认：`~/.claude/skills/`、`~/.kiro/skills/` 和 `~/.codex/skills/`）。对每个目标目录逐一处理：父目录不存在则静默跳过（默认 targets）；自动创建目标目录本身；链接不存在则新建，已存在但目标路径不符则自动更新，目标路径一致则跳过，非符号链接则警告。
 
 **Windows PowerShell：**
 
 ```powershell
 # $targets 由 Step 0 赋值；此处兜底仅在 Step 0 未执行时生效
 if (-not $targets) {
-    $targets = @("$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.kiro\skills")
+    $targets = @("$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.kiro\skills", "$env:USERPROFILE\.codex\skills")
 }
 
 $created = 0; $skipped = 0; $warned = 0
@@ -258,7 +258,7 @@ foreach ($target in $targets) {
 ```bash
 # targets 由 Step 0 赋值；此处兜底仅在 Step 0 未执行时生效
 if [ ${#targets[@]} -eq 0 ]; then
-    targets=("$HOME/.claude/skills" "$HOME/.kiro/skills")
+    targets=("$HOME/.claude/skills" "$HOME/.kiro/skills" "$HOME/.codex/skills")
 fi
 created=0; skipped=0; warned=0
 
@@ -377,6 +377,6 @@ fi
 
 如需在所有项目会话中使用本 skill（而非仅在加载了 `optimus-devops-plugin` 的会话中）：
 
-1. 将本目录复制到 `~/.agents/skills/sync-agent-skills/`
+1. 将本目录复制到 `~/.agents/skills/sync-skill-symlinks/`
 2. 在任意已加载本 skill 的会话中输入「同步 skills」
-3. skill 会将 `sync-agent-skills` 自身链接到目标目录，之后全局生效
+3. skill 会将 `sync-skill-symlinks` 自身链接到目标目录，之后全局生效

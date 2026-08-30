@@ -71,7 +71,7 @@
 **Skills（4个）:**
 - `jenkins-build` — Jenkins CI/CD 构建触发
 - `weekly-report` — 工作周报转写（四段式标准格式）
-- `sync-agent-skills` — Agent Skills 同步
+- `sync-skill-symlinks` — skill 目录符号链接同步（Claude/Kiro/Codex）
 - `project-analyze` — 项目结构分析
 
 **Hooks（内置自动加载）:**

@@ -1,3 +1,9 @@
+## [2.0.0] - 2026-08-30
+
+### Changed
+- **破坏性变更**：skill 重命名 `sync-agent-skills` → `sync-skill-symlinks`，消除与 Agent Skills（agentskills.io 规范术语）的命名混淆；旧名称触发词失效
+- 默认 targets 新增 `~/.codex/skills/`（Codex CLI 数据目录下的全局 skills 目录，与 `~/.claude/skills/`、`~/.kiro/skills/` 并列；用户机器实测确认：`~/.codex/skills/` 下已存在 Codex 内置的 `.system/` 系统 skill 集，以及用户手动创建的指向 `~/.agents/skills/` 的符号链接，证实该路径是 Codex 真实读取的全局位置）
+
 ## [1.2.0] - 2026-06-30
 
 ### Added
