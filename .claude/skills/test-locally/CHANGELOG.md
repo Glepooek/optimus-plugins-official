@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.1] - 2026-08-30
+
+### Added
+- 新增 `known-issues.md` 使用期反馈记录机制（空模板），配套仓库新增的 skill 持续优化硬性约定，见 `knowledge-base/skill-authoring/rules/06-continuous-improvement.md`
+
 ## [1.0.0] - 2026-07-11
 
 ### Added

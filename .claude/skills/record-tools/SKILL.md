@@ -2,7 +2,7 @@
 name: record-tools
 description: 将工具/资源（CLI、MCP、Agent、Skill、Plugin等）的信息抓取整理并归档到仓库根目录 tools.md，自动判断分类、检测重复。触发词："记录这个工具"、"整理进tools.md"、"归档这个CLI/MCP"、"catalog this tool"、"把这个加到工具清单"。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
 compatibility: 优先使用 playwright-cli（通过 npx 调用，需 Node.js 环境）抓取网页；不可用时降级为 WebFetch。写入目标固定为仓库根目录 tools.md。
 allowed-tools: Bash WebFetch Read Edit Write

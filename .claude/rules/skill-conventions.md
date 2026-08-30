@@ -188,4 +188,4 @@ Step 1..N 竖排 ASCII 流程框，概述核心执行步骤（不需要照抄 SK
 
 **适用范围**：本约定自 2026-08-30 生效起，适用于此后**新建**的 skill。已有 skill 的回填按"先试点、验证后推广"分阶段进行——当前处于试点阶段（见下），试点结果确认可行后再推广至全仓库其余插件；本次生效**不代表**尚未回填 `known-issues.md` 的其他现有 skill 立即被判定为不合规。
 
-**当前试点范围**：`plugins/optimus-decision-plugin/` 的 8 个 skill。
+**当前试点范围**：`plugins/optimus-decision-plugin/` 的 8 个 skill；`.claude/skills/`（除自身不受仓库版本管辖的 `darwin-skill/` 外）的 `commit-cc-plugin`、`knowledge-base-maintain`、`record-tools`、`sync-cc-docs-to-youdaonote`、`sync-cc-tips`、`test-locally` 共 6 个 skill。
