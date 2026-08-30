@@ -12,11 +12,19 @@ Anthropic Console 新增自动化测试与评估工具，帮助开发者更轻�
 
 ## 一、生成提示词
 
-内置的提示词生成器由 Claude 3.5 Sonnet 驱动，用户描述一个任务（示例为"分类处理客户支持的来件请求"），即可获得一份草拟的提示词。之后用户可以自动生成测试输入变量，或手动输入，以预览 Claude 的响应结果。
+内置的提示词生成器由 Claude 3.5 Sonnet 驱动，用户描述一个任务（示例为"分类处理客户支持的来件请求"），即可获得一份草拟的提示词。
+
+![Anthropic Console 提示词生成器的应用界面](../assets/prompt-generator-console.png)
+
+之后用户可以自动生成测试输入变量，或手动输入，以预览 Claude 的响应结果。
+
+![提示词生成与 Claude 响应的应用界面](../assets/prompt-generation-response.png)
 
 ## 二、生成测试套件
 
 新的"Evaluate"功能让用户可以直接在 Console 中构建测试套件，而不必手动在电子表格或代码中维护测试用例。测试用例可以手动添加、通过 CSV 导入，或自动生成，并可调整 Claude 解读变量要求的方式。
+
+![多个提示词响应的对比模式应用界面](../assets/prompt-comparison-mode.png)
 
 ## 三、评估模型响应并迭代
 
