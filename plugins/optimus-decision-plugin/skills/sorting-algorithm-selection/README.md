@@ -1,6 +1,6 @@
 # sorting-algorithm-selection
 
-> 版本：1.1.0 | 分类：decision
+> 版本：1.1.1 | 分类：decision
 
 用户在纠结"这批数据该用什么排序算法"时，给出基于《Hello 算法》的五维评价体系（效率/原地/稳定/自适应/比较）与退化场景规避建议。
 

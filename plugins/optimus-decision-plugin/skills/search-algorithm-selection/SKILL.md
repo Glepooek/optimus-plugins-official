@@ -2,7 +2,7 @@
 name: search-algorithm-selection
 description: 用户在工程实践中纠结"在已确定的存储结构上该用什么算法查找数据"时触发——如是否该维护有序索引来支持二分查找、小数据量是否值得排序后二分、哈希查找和树查找该怎么选；用户会说"该用二分查找还是线性查找""要不要为了查找快维护有序索引""哈希查找和树查找选哪个""binary search or linear search""hash lookup vs tree lookup"等。不适用于：面试刷题式的"实现一个二分查找"代码请求、已明确指定必须使用某查找算法的场景、存储结构本身尚未确定（该场景应先用数据结构选型决策）。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: decision
 compatibility: 纯知识决策类 skill，无外部 CLI/MCP 依赖；可选用 Read/Grep/Glob 查看用户当前代码库以判断已有数据规模和更新频率，辅助给出更精准建议。

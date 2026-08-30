@@ -2,7 +2,7 @@
 name: divide-and-conquer-problem-check
 description: 用户面对一个可能拆解为子问题的问题，纠结"能不能用分治策略解"或"该用分治还是动态规划"时触发——如判断子问题是否真正独立、设计合并步骤的开销、区分分治与递归/DP的界限；用户会说"这个问题能用分治解吗""子问题需要合并吗""分治和动态规划该怎么区分""can I use divide and conquer here""is this problem suitable for D&C"等。不适用于：已经明确要用分治只是想要具体代码实现的请求、纯粹询问某个分治算法（归并排序等）本身的实现原理而非适用性判断。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: decision
 compatibility: 纯知识决策类 skill，无外部 CLI/MCP 依赖；可选用 Read/Grep/Glob 查看用户当前代码库以判断已有递归实现的子问题划分方式，辅助给出更精准建议。

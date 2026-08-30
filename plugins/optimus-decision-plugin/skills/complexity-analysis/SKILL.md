@@ -2,7 +2,7 @@
 name: complexity-analysis
 description: 用户需要评估或对比方案效率、在多个实现之间做工程选型依据时触发——如"这个方案的时间复杂度是多少""该按平均情况还是最差情况来评估""为什么空间复杂度分析只看最差情况""这两个方案哪个更适合有延迟要求的场景"。不适用于：单纯要求"用大 O 表示法写出某段代码的复杂度"这类纯粹的静态分析作业式提问（应直接给出推导过程，不套用本 skill 的场景决策流程）、已经算好复杂度只是想确认计算是否正确的场景。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: decision
 compatibility: 纯知识决策类 skill，无外部 CLI/MCP 依赖；可选用 Read/Grep/Glob 查看用户当前代码库以判断已有实现的复杂度特征，辅助给出更精准建议。

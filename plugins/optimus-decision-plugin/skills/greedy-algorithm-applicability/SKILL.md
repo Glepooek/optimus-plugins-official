@@ -2,7 +2,7 @@
 name: greedy-algorithm-applicability
 description: 用户面对一个优化问题，纠结"贪心算法在这里能不能保证最优解"或需要验证贪心策略正确性时触发——如零钱兑换类问题、区间收缩类问题、想用直觉性的"局部最优"策略但不确定是否可靠；用户会说"贪心在这个场景靠谱吗""这个策略能保证最优解吗""贪心为什么给出了错误答案""is greedy optimal here""does greedy work for this problem"等。不适用于：已经证明或已知贪心必然适用的标准教科书问题（如最小生成树的Kruskal/Prim）、纯粹要求贪心算法代码实现而非正确性判断的请求。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: decision
 compatibility: 纯知识决策类 skill，无外部 CLI/MCP 依赖；可选用 Read/Grep/Glob 查看用户当前代码库以判断已有贪心实现是否配有正确性证明或测试对比，辅助给出更精准建议。

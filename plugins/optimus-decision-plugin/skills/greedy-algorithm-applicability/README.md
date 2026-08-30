@@ -1,6 +1,6 @@
 # greedy-algorithm-applicability
 
-> 版本：1.1.0 | 分类：decision
+> 版本：1.1.1 | 分类：decision
 
 用户面对优化问题纠结"贪心策略能不能保证最优解"时，给出基于《Hello 算法》的贪心选择性质+最优子结构双判据与证伪优先的怀疑顺序。
 

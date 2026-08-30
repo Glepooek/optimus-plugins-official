@@ -2,7 +2,7 @@
 name: backtracking-algorithm-template
 description: 用户面对一个搜索/约束满足类问题（求所有可行方案、排列组合、路径规划配置），纠结"该怎么设计回溯框架"或"该不该用回溯"时触发——如全排列、子集和、N皇后类问题的状态/选择/剪枝设计，或判断回溯是否是该组合优化问题的最佳解法；用户会说"这个问题怎么用回溯解""怎么设计剪枝逻辑""回溯效率太低怎么优化""backtracking template for this problem""how to design pruning logic"等。不适用于：已经确定要用回溯只是想要具体代码实现的请求、问题目标是求单一最优解而非穷举所有方案（这类应优先考虑动态规划）。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: decision
 compatibility: 纯知识决策类 skill，无外部 CLI/MCP 依赖；可选用 Read/Grep/Glob 查看用户当前代码库以判断已有搜索实现的剪枝逻辑，辅助给出更精准建议。

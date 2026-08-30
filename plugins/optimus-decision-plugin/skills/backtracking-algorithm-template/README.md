@@ -1,6 +1,6 @@
 # backtracking-algorithm-template
 
-> 版本：1.1.0 | 分类：decision
+> 版本：1.1.1 | 分类：decision
 
 用户面对搜索/约束满足类问题，纠结"该怎么设计回溯框架"时，给出基于《Hello 算法》的状态/选择/剪枝/解判定四要素与"尝试-剪枝-回退"通用模板。
 

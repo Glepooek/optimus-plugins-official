@@ -2,7 +2,7 @@
 name: sorting-algorithm-selection
 description: 用户在工程实践中纠结"这批数据该用什么排序算法/策略"时触发——如多级排序、大数据量排序、内存受限场景排序、排序结果被意外打乱的问题排查；用户会说"这个场景该用哪种排序""要不要用内置排序还是自己实现""多级排序结果乱了""sort algorithm for this case""quicksort vs merge sort"等。不适用于：面试刷题式的"手写快速排序"代码实现请求、已明确指定必须使用某排序算法的场景、纯粹询问某排序算法的实现步骤而非选型决策。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: decision
 compatibility: 纯知识决策类 skill，无外部 CLI/MCP 依赖；可选用 Read/Grep/Glob 查看用户当前代码库以判断已有排序实现和数据规模，辅助给出更精准建议。

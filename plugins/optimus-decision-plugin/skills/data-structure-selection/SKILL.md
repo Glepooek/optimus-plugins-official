@@ -2,7 +2,7 @@
 name: data-structure-selection
 description: 用户在工程实践中纠结"这个场景该用什么数据结构/容器"时触发——如数组/链表/栈/队列/哈希表/树/堆/图之间的选型决策；用户会说"用数组还是链表""要不要用哈希表""这个场景选什么数据结构合适""array or linked list""should I use a hash map"等。不适用于：面试刷题式的"标准答案"提问、已明确指定必须使用某结构的场景、具体语言标准库内部实现细节对比（如 Java HashMap vs Python dict 差异）。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: decision
 compatibility: 纯知识决策类 skill，无外部 CLI/MCP 依赖；可选用 Read/Grep/Glob 查看用户当前代码库以判断已有数据规模、访问模式，辅助给出更精准建议。

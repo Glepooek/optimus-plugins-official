@@ -1,6 +1,6 @@
 # search-algorithm-selection
 
-> 版本：1.1.0 | 分类：decision
+> 版本：1.1.1 | 分类：decision
 
 用户在存储结构已确定的前提下，纠结"该用什么算法查找数据"时，给出基于《Hello 算法》的二分查找三前提与哈希/树查找取舍框架。
 

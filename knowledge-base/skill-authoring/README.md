@@ -1,6 +1,6 @@
 # Skill 创建规范
 
-> 版本：7.2.1
+> 版本：7.3.0
 
 > 面向团队的 Skill 创建总纲，参考 [Agent Skills](https://agentskills.io) 开放标准。覆盖 SKILL.md 格式规约、描述优化、质量评估、脚本使用与最佳实践，指导创建**可跨 runtime 使用、能精准触发、产出可靠**的 skill。
 
@@ -37,8 +37,8 @@
 
 | 读者 | 必读 | 选读 |
 |---|---|---|
-| 首次创建 skill | `01` `04` | `02` `05` |
-| 优化既有 skill | `02` `03` `05` | 其余 |
+| 首次创建 skill | `01` `04` | `02` `05` `06` |
+| 优化既有 skill | `02` `03` `05` `06` | 其余 |
 | 全部成员 | 本文件、`01` | — |
 
 ## 文件地图
@@ -51,6 +51,7 @@
 | 03 | `rules/03-skill-evaluation.md` | skill 质量评估：测试用例、assertions、grading、benchmark、迭代循环 |
 | 04 | `rules/04-script-usage.md` | 脚本使用：one-off 命令、自包含脚本、agentic 设计 |
 | 05 | `rules/05-best-practices.md` | 最佳实践：经验来源、上下文预算、控制校准、指令模式 |
+| 06 | `rules/06-continuous-improvement.md` | 持续优化：创建后基线评估、known-issues.md 反馈记录、累积阈值触发 darwin-skill 优化 |
 
 ## 索引与机器消费
 

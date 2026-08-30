@@ -2,6 +2,13 @@
 
 本领域自 7.2.1 起使用**独立版本号**。7.2.0 及之前为知识库统一全局版本号时代，相关条目见下方「全局版本时代」，其版本号为当时的全局版本。
 
+## [7.3.0] - 2026-08-30
+
+### Added
+- 新增 `rules/06-continuous-improvement.md`（持续优化）：创建后强制 darwin-skill 基线评估、`known-issues.md` 使用期反馈记录规范、"待处理"满3条强制触发优化循环、与 darwin-skill 的现实边界说明
+- `index.jsonl` 新增 3 条 `skill-authoring.06.*` rule 索引；补登 `reference/darwin-skill-optimization.md` 的 reference 索引（修复此前的孤儿文件警告）
+- README 文件地图新增 `06` 行，阅读路径表补入 `06`
+
 ## [7.2.1] - 2026-08-29
 
 ### Changed

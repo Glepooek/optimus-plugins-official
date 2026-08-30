@@ -1,6 +1,6 @@
 # divide-and-conquer-problem-check
 
-> 版本：1.1.0 | 分类：decision
+> 版本：1.1.1 | 分类：decision
 
 用户面对可能拆解为子问题的问题，纠结"能不能用分治解"时，给出基于《Hello 算法》的可分解/子问题独立/可合并三条件自检法。
 

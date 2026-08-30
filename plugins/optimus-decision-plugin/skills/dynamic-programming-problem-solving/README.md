@@ -1,6 +1,6 @@
 # dynamic-programming-problem-solving
 
-> 版本：1.1.0 | 分类：decision
+> 版本：1.1.1 | 分类：decision
 
 用户面对可分解为子问题的优化/计数问题，纠结"能不能用DP解、状态该怎么定义"时，给出基于《Hello 算法》的三大特性判据与三步解题法。
 

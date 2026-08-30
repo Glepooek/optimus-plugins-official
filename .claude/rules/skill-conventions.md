@@ -181,3 +181,11 @@ Step 1..N 竖排 ASCII 流程框，概述核心执行步骤（不需要照抄 SK
 **图表约定**：全部用纯 ASCII box-drawing 字符（`┌─┐│└┘├┤▼→↓★`）绘制，不使用 Mermaid、不嵌入图片——保证在任意终端/编辑器/纯文本 diff 里都能正确渲染和阅读。
 
 不要求单独的"安装"章节——本仓库 skill 通过插件市场随所属插件整体安装，没有独立于插件的安装步骤；运行依赖已在 SKILL.md 的 `compatibility` 字段声明，无需在 README 重复。
+
+## Skill 持续优化的强制约定
+
+完整机制（创建后基线评估、`known-issues.md` 格式、累积阈值触发优化、与 darwin-skill 的现实边界）见 `knowledge-base/skill-authoring/rules/06-continuous-improvement.md`，本篇只说明本仓库的落地范围。
+
+**适用范围**：本约定自 2026-08-30 生效起，适用于此后**新建**的 skill。已有 skill 的回填按"先试点、验证后推广"分阶段进行——当前处于试点阶段（见下），试点结果确认可行后再推广至全仓库其余插件；本次生效**不代表**尚未回填 `known-issues.md` 的其他现有 skill 立即被判定为不合规。
+
+**当前试点范围**：`plugins/optimus-decision-plugin/` 的 8 个 skill。

@@ -2,7 +2,7 @@
 name: dynamic-programming-problem-solving
 description: 用户面对一个可分解为子问题的优化/计数问题，纠结"能不能用动态规划解、该怎么设计状态转移方程"时触发——如背包类问题、路径规划、编辑距离、状态定义是否遗漏历史依赖；用户会说"这个问题能用动态规划解吗""怎么定义dp状态""为什么我的DP转移方程结果不对""dynamic programming for this problem""how to define dp state"等。不适用于：面试刷题式的"这道题标准解法是什么"提问、已确定要用DP只是想要具体某语言的代码实现、问题目标是穷举所有方案而非求最优解（这类应转向回溯）。
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: decision
 compatibility: 纯知识决策类 skill，无外部 CLI/MCP 依赖；可选用 Read/Grep/Glob 查看用户当前代码库以判断已有实现的状态设计，辅助给出更精准建议。
