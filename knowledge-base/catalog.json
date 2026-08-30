@@ -99,6 +99,16 @@
       "consumers": [],
       "reviewed_at": "2026-08-29",
       "notes": "复杂度判断与数据结构选型；集合类型落地引用 csharp，层次归属引用 architecture。⚠️ reference/ 提取自《Hello 算法》(krahets)，以 CC BY-NC-SA 4.0 授权，独立于本仓库其余部分，许可证隔离在目录级别；rules/ 为自撰内容，不受 SA 传染"
+    },
+    {
+      "domain": "mcp",
+      "title": "MCP（Model Context Protocol）",
+      "categories": ["rules", "reference"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": [],
+      "reviewed_at": "2026-08-30",
+      "notes": "开发者使用视角的 MCP 协议知识（架构、server/client 概念、接入方式、构建实践）+ 授权安全规范条款；内容取自 modelcontextprotocol.io 官方文档 2026-07-28 版本，不收录完整 Specification/SEP/社区治理文档"
     }
   ]
 }
