@@ -1,8 +1,8 @@
 ---
 name: project-analyze
-description: 对项目进行全面分析，输出功能、技术栈、架构、目录结构、数据模型、API 接口、部署方式、依赖关系等专业概览报告。触发词：快速了解一个项目，评估项目技术选型和架构质量，为新成员生成项目入门文档，梳理服务依赖关系，分析这个项目，项目概览，了解这个仓库，analyze project，project overview。
+description: 对项目进行全面分析，输出功能、技术栈、架构、目录结构、数据模型、接口与通信、部署方式、依赖关系等专业概览报告，支持 Web/H5、WPF 桌面、Android、iOS、HarmonyOS（鸿蒙）、Flutter、纯后端等多种项目形态并自动适配分析维度。触发词：快速了解一个项目，评估项目技术选型和架构质量，为新成员生成项目入门文档，梳理服务依赖关系，分析这个项目，项目概览，了解这个仓库，analyze project，project overview。
 metadata:
-  version: "2.0.0"
+  version: "2.2.0"
   author: desktop client team
   category: generator
 compatibility: 需要 Git（clone/pull/log 分析）；可选调用 optimus-office-plugin:docx-writer 将报告转 Word。
@@ -15,6 +15,10 @@ allowed-tools: Glob Grep Read Write Edit Bash Task
 
 对项目进行深度分析，生成一份专业、详细、结构化的项目概览报告，让新成员在 5 分钟内全面了解项目的业务定位、技术选型、系统架构、代码结构、依赖关系和部署方式。
 
+14 个章节按"认知定位→技术构成→行为表面→交付依赖→落地评估"5 层递进排列（见"5 层分组"）：先回答"是什么"，再回答"用什么造的"，再回答"运行时具体做什么"，再回答"怎么交付、依赖谁、如何上手"，最后回答"值不值得信任"。这个数字不是套用某个外部行业标准，而是历次实践归纳的结果——本次重构给它补上了结构依据，而不是让维度数随意膨胀。
+
+项目形态不同，关键分析维度也不同：Web/H5 项目关心接口清单和前端路由，WPF 桌面项目关心 View/ViewModel 绑定和 MVVM 框架，Android/iOS/HarmonyOS 原生项目关心页面清单和权限声明，Flutter 关心 Widget 树和跨端状态管理，纯后端项目没有前端可分析。本 skill 通过**平台画像识别**（见"第一步"）自动判定项目形态（Web/H5、WPF、Android、iOS、HarmonyOS、Flutter、纯后端共 7 选一），14 个章节编号保持不变，但"行为表面"层的第 7/8/9/10 章内容规格随画像切换（见"平台章节适配矩阵"），避免对非 Web 项目机械套用 Web 模板产出空洞或猜测内容。HarmonyOS 和 Flutter 在本仓库无既有规范沉淀，判定信号和插槽内容基于公开通用知识设计，置信度低于有 `knowledge-base/wpf/` 支撑的 WPF 画像，报告中会显式标注。
+
 ## 输入
 
 | 输入 | 必选 | 说明 |
@@ -22,9 +26,54 @@ allowed-tools: Glob Grep Read Write Edit Bash Task
 | 仓库地址或本地路径 | 是 | 项目URL（如 `https://github.com/{org}/{repo}`）或本地已克隆路径 |
 | 关注重点 | 否 | 如"重点看后端架构"、"关注数据库设计"、"梳理微服务依赖" |
 
+## Step 0：需求预告
+
+处理用户请求前，先比对"仓库地址或本地路径"是否已在触发语句或上下文中给出。缺失时一次性询问，不要进入工作流程后再反应式追问；已提供则跳过本环节直接进入第一步。"关注重点"为可选项，缺失不阻塞执行。依赖项（Git 是否可用）不参与本环节判断，留给第一步的前置校验实际检测。
+
 ## 输出
 
-`doc/project-overview.md`，包含以下 14 个章节。
+`docs/project-overview.md`，包含以下 14 个章节，按 5 层递进模型分组。
+
+### 5 层分组
+
+| 层 | 章节 | 回答的问题 | 是否随平台画像分叉 |
+|------|------|-----------|------------------|
+| 1. 认知定位 | 1 项目概况 / 2 业务上下文 / 3 功能清单 | 这是什么、为谁而建、能做什么 | 否 |
+| 2. 技术构成 | 4 技术栈 / 5 系统架构 / 6 目录结构 | 用什么造的、怎么分层、代码在哪 | 否 |
+| 3. 行为表面 | 7 数据模型 / 8 接口与通信 / 9 界面与交互 / 10 状态管理 | 运行时存了什么数据、怎么和外界通信、给谁看、界面状态如何流动 | **是**——全 skill 唯一随画像切换插槽内容的 4 章 |
+| 4. 交付依赖 | 11 部署与运维 / 12 内部依赖与集成 / 13 快速上手路径 | 怎么发布上线、依赖谁、新人如何接入 | 否 |
+| 5. 落地评估 | 14 项目评估与风险 | 值不值得信任、风险在哪 | 否 |
+
+第 3 层"行为表面"的 4 章之所以分叉：这 4 个问题对所有交互式软件都成立（问题本身平台无关），但答案的载体因平台而异（数据库表 vs 本地存储实体；REST 端点 vs HttpClient/Retrofit 封装；路由表 vs Activity 清单/View-ViewModel 绑定；Redux vs MVVM/ArkUI 状态）——因此编号和标题保持稳定，只切换内容规格。
+
+### 平台画像判定
+
+第 7/8/9/10 章的内容规格由项目的平台画像决定，判定发生在"第一步"的运行条件检查中。七选一，按优先级取第一个命中的画像：
+
+| 优先级 | 画像 | 判定信号（任一命中即可） | 置信度 |
+|------|------|------------------------|--------|
+| 1 | Flutter | `pubspec.yaml` 存在 且 `lib/main.dart` 存在 | 高 |
+| 2 | HarmonyOS（鸿蒙） | 存在 `AppScope/app.json5`，或 `build-profile.json5` + `*.ets` 文件 | 中——无 knowledge-base 既有规范支撑，判定信号基于公开通用知识设计 |
+| 3 | WPF/桌面 | `*.csproj` 含 `<UseWPF>true</UseWPF>`，或存在 `App.xaml` + `*.xaml` 文件 | 高——有 `knowledge-base/wpf/` 完整规范支撑 |
+| 4 | Android | 存在 `AndroidManifest.xml`，或 `build.gradle(.kts)` + `src/main/java\|kotlin` | 高 |
+| 5 | iOS | 存在 `*.xcodeproj`/`*.xcworkspace`，或 `Podfile`/`Package.swift` + `*.swift`/`*.m` | 高 |
+| 6 | 纯后端 | 存在后端框架特征（`pom.xml`/`go.mod` 等）且**不存在**前端目录（无 `views`/`pages`/`components`，无前端依赖特征的 `package.json`） | 高 |
+| 7 | Web/H5（默认） | 前后端信号皆有，或无法命中以上任一画像时的兜底默认 | 兜底 |
+
+**Flutter 必须最先判定**：Flutter 项目会自动生成 `android/`、`ios/` 原生壳子目录，若先判定 Android/iOS 信号会把 Flutter 项目误判为原生项目——必须先排除 Flutter 特征再落到原生判定（见"反例与黑名单"）。
+
+### 平台章节适配矩阵
+
+章节编号和标题保持不变，仅内容规格随画像切换：
+
+| 章节 | Web/H5（默认） | WPF/桌面 | Android | iOS | HarmonyOS | Flutter | 纯后端 |
+|------|----------------|----------|---------|-----|-----------|---------|--------|
+| 7. 数据模型 | ER 关系图 | 有本地DB/ORM同左；否则"不适用，桌面项目无持久层" | Room/SQLite 实体（若有） | CoreData/SQLite 实体（若有） | 关系型数据库(RDB)/分布式数据管理实体（若有） | sqflite/Hive/Drift 等本地模型（若有） | ER 关系图（同左） |
+| 8. 接口与通信 | 端点清单 | 调用后端API时列出调用清单（HttpClient/Refit等）；否则"不适用" | Retrofit/OkHttp 调用清单 | Alamofire/URLSession 调用清单 | `@ohos.net.http` 调用清单 | dio/http package 调用清单 | 端点清单（同左） |
+| 9. 界面与交互 | 路由表 | **替换为** View/ViewModel 清单及绑定关系，命名判定引用 `knowledge-base/wpf/rules/02-project-structure.md` | **替换为** Activity/Fragment清单 + 权限声明清单 + 构建变体(flavor) | **替换为** ViewController/Scene清单 + 权限声明(Info.plist) + Scheme | **替换为** Page/Ability清单 + 权限声明(module.json5) | **替换为** Widget树/路由(Navigator/GoRouter) + 页面清单 | "不适用（纯后端项目）" |
+| 10. 状态管理 | 数据流分析 | **替换为** MVVM框架识别（引用 `knowledge-base/wpf/rules/03-mvvm.md`）+ DI容器 + 控件库（引用 `knowledge-base/wpf/rules/17-common-libraries.md`） | **替换为** ViewModel+LiveData/StateFlow、SharedPreferences | **替换为** Combine/SwiftUI State、UserDefaults | **替换为** ArkUI状态机制(@State/@Prop/AppStorage) | **替换为** Provider/Riverpod/Bloc + SharedPreferences | "不适用（纯后端项目）" |
+
+HarmonyOS、Flutter 两画像的插槽内容基于公开通用知识设计，无本仓库既有规范支撑，分析置信度低于其他画像，报告开头需显式标注（见"第一步"CHECKPOINT）。
 
 ### 图表生成规范
 
@@ -35,13 +84,22 @@ allowed-tools: Glob Grep Read Write Edit Bash Task
 | 上下游系统图 | 2.2 | 配置文件中的外部服务地址、SDK 依赖 | 展示 用户→前端→后端→数据库/外部服务 的完整链路，标注协议 |
 | 架构分层图 | 5.2 | controller/service/repository 目录 | 按层展示，标注每层的类数量和关键类名 |
 | ER 关系图 | 7.2 | entity/models/schemas 目录的 ORM 注解或模型定义 | 展示实体间 1:N/N:1 关系，列出关键字段。Java 项目从 JPA 注解提取，Python 从 SQLAlchemy/Django Model 提取，Go 从 struct tag 提取 |
-| CI/CD 流程图 | 10.2 | Jenkinsfile/workflows/builds/ | 展示 Git→构建→镜像→部署 流水线和多环境拓扑 |
+| CI/CD 流程图 | 11.2 | Jenkinsfile/workflows/builds/ | 展示 Git→构建→镜像→部署 流水线和多环境拓扑 |
 
 图表在实际分析项目时根据源码动态生成，SKILL 模板中不包含具体图表内容。
 
 ## 工作流程
 
-### 第一步：获取项目源码
+### 第一步：前置校验与获取项目源码
+
+**执行前置校验（四类检查）：**
+
+1. **依赖检查**：确认 Git 可用（`git --version`），不可用则报错终止，提示用户安装 Git
+2. **输入参数检查**：本地路径是否存在，或 URL 格式是否合法；不合法报错终止
+3. **输出参数检查**：确认 `doc/` 的父目录（仓库根）存在且可写；不可写报错终止
+4. **运行条件检查（可协商风险）**：目录扫描后进行平台画像识别（见"输出"章节"平台画像判定"）。若信号冲突或全部未命中导致置信度低，🔴 CHECKPOINT 显式询问用户确认项目类型——不报错终止，因为仍可按 Web/H5 默认继续，只是章节内容精准度会打折扣
+
+**获取源码：**
 
 根据用户提供的输入，按以下优先级获取源码：
 
@@ -58,7 +116,7 @@ allowed-tools: Glob Grep Read Write Edit Bash Task
   → 或提示用户提供已克隆的本地路径
 ```
 
-🔴 **CHECKPOINT · 项目确认**：向用户展示识别到的项目名称、技术栈类型、文件数量，确认分析范围无误后再继续。如果是 Monorepo，询问用户要分析哪个子项目。
+🔴 **CHECKPOINT · 项目确认**：向用户展示识别到的项目名称、**平台画像**（Web/H5、WPF/桌面、Android、iOS、HarmonyOS、Flutter、纯后端）、技术栈类型、文件数量，确认分析范围无误后再继续。如果是 Monorepo，询问用户要分析哪个子项目。平台画像置信度低时（信号冲突或全部未命中）在此处一并确认；识别结果为 HarmonyOS 或 Flutter 时，额外提示"该画像无 knowledge-base 既有规范支撑，判定信号与插槽内容基于公开通用知识设计，建议人工复核分析结论"。
 
 ### 第二步：快速扫描与并行读取
 
@@ -127,13 +185,13 @@ Glob(**) 或 Bash(find . -maxdepth 3) → 获取完整项目结构，识别技�
 | 4. 技术栈 | package.json / pom.xml / go.mod | 直接提取版本号 |
 | 5. 系统架构 | 目录结构 + Security + Service | 推断架构模式，生成架构 ASCII 图 |
 | 6. 目录结构 | Glob 扫描结果 | 直接输出，标注职责 |
-| 7. 数据模型 | Entity/Model 文件 | 提取字段和关联，生成 ER ASCII 图 |
-| 8. API 接口 | Controller 文件 | 逐个列出端点 |
-| 9. 前端页面 | App.js / router | 提取路由表 |
-| 10. 部署运维 | Dockerfile + Jenkinsfile + build.sh | 提取流程，生成 CI/CD ASCII 图 |
-| 11. 内部依赖 | application.yml + pom.xml/package.json | 提取外部服务和 SDK |
-| 12. 快速上手 | README + application.yml | 整理环境搭建步骤 |
-| 13. 状态管理 | contexts/ / store/ | 分析数据流 |
+| 7. 数据模型 | 见"平台章节适配矩阵"（7画像来源速查，含 Entity/Model 文件、Room/CoreData/RDB/sqflite 等本地存储实体） | 提取字段和关联，生成 ER ASCII 图；不适用画像标注不适用 |
+| 8. 接口与通信 | 见"平台章节适配矩阵"（Controller 文件，或各平台网络封装：HttpClient/Retrofit/Alamofire/`@ohos.net.http`/dio） | 逐个列出端点或网络调用 |
+| 9. 界面与交互 | 见"平台章节适配矩阵"（路由入口、View+ViewModel文件、Activity/ViewController/Page/Widget树 + 权限声明文件） | 提取路由表 / 绑定关系 / 页面清单+权限声明；纯后端标注不适用 |
+| 10. 状态管理 | 见"平台章节适配矩阵"（contexts/store/、DI容器配置、各平台状态框架） | 分析数据流 / 框架识别 / 本地存储机制；纯后端标注不适用 |
+| 11. 部署运维 | Dockerfile + Jenkinsfile + build.sh | 提取流程，生成 CI/CD ASCII 图 |
+| 12. 内部依赖 | application.yml + pom.xml/package.json | 提取外部服务和 SDK |
+| 13. 快速上手 | README + application.yml | 整理环境搭建步骤 |
 | 14. 评估与风险 | 全部已读文件 | 综合评估，引用具体文件 |
 
 🔴 **CHECKPOINT · 分析确认**：向用户展示关键发现摘要（技术栈、架构模式、核心模块数量、依赖关系），确认分析方向正确后再生成完整报告。如果用户有关注重点（如"重点看后端架构"），在此处确认是否已充分覆盖。
@@ -216,7 +274,7 @@ Glob(**) 或 Bash(find . -maxdepth 3) → 获取完整项目结构，识别技�
 ## 5. 系统架构
 
 ### 5.1 架构模式
-{单体/微服务/前后端分离/BFF}
+{单体/微服务/前后端分离/BFF/桌面单体(MVVM)/移动端原生/跨平台(Flutter)/分布式(HarmonyOS)}
 
 ### 5.2 架构图
 {ASCII 架构分层图}
@@ -232,73 +290,114 @@ Glob(**) 或 Bash(find . -maxdepth 3) → 获取完整项目结构，识别技�
 
 ## 7. 数据模型
 
+{按平台画像切换，见"平台章节适配矩阵"：Web/H5/纯后端为 ER 关系图；WPF 有本地DB/ORM同左，否则"不适用，桌面项目无持久层"；Android/iOS/HarmonyOS/Flutter 为本地存储模型（若有）}
+
 ### 7.1 核心实体
 | 实体 | 关键字段 | 说明 |
 |------|---------|------|
 
-### 7.2 ER 关系图
-{ASCII ER 关系图}
+### 7.2 ER 关系图 / 本地存储模型
+{ASCII ER 关系图（Web/H5/纯后端/WPF有本地DB）；或 Room/CoreData/RDB/sqflite 等本地存储实体列表（Android/iOS/HarmonyOS/Flutter）}
 
-## 8. API 接口
+## 8. 接口与通信
 
-### 8.1 接口清单
+{Web/H5/纯后端：接口清单；WPF/Android/iOS/HarmonyOS/Flutter：调用后端API的清单（若无后端调用则标注"不适用"）}
+
+### 8.1 接口清单 / 网络调用清单
 | 模块 | 方法 | 路径 | 认证 | 说明 |
 |------|------|------|------|------|
 
 ### 8.2 关键接口示例
 {请求/响应示例}
 
-## 9. 前端页面
+## 9. 界面与交互（Web/H5：路由表）/（WPF：View 与 ViewModel 清单）/（Android/iOS/HarmonyOS：页面与权限清单）/（Flutter：Widget 与路由清单）/（纯后端：不适用）
+
+**Web/H5：**
 | 路由 | 页面 | 功能 | 权限 |
 |------|------|------|------|
 
-## 10. 部署与运维
+**WPF/桌面**（命名判定引用 `knowledge-base/wpf/rules/02-project-structure.md`）：
+| View | ViewModel | 绑定方式 | 职责 |
+|------|-----------|---------|------|
 
-### 10.1 本地开发
+**Android：**
+| 页面（Activity/Fragment） | 功能 | 权限声明 | 构建变体(flavor) |
+|------|------|---------|------------------|
+
+**iOS：**
+| 页面（ViewController/Scene） | 功能 | 权限声明(Info.plist) | Scheme |
+|------|------|---------------------|--------|
+
+**HarmonyOS**（置信度中，判定信号基于公开通用知识）：
+| 页面（Page/Ability） | 功能 | 权限声明(module.json5) |
+|------|------|------------------------|
+
+**Flutter**（置信度中，判定信号基于公开通用知识）：
+| Widget/路由(Navigator/GoRouter) | 功能 | 说明 |
+|------|------|------|
+
+**纯后端：** 不适用（纯后端项目）
+
+## 10. 状态管理（Web/H5：数据流分析）/（WPF：MVVM 框架与依赖注入）/（Android/iOS/HarmonyOS/Flutter：本地存储与状态管理）/（纯后端：不适用）
+
+**Web/H5：** {数据流分析}
+
+**WPF/桌面：** MVVM 框架识别（Prism/CommunityToolkit.Mvvm/原生，引用 `knowledge-base/wpf/rules/03-mvvm.md`）+ DI 容器 + 控件库选型（引用 `knowledge-base/wpf/rules/17-common-libraries.md`）
+
+**Android：** ViewModel + LiveData/StateFlow、SharedPreferences
+
+**iOS：** Combine/SwiftUI State、UserDefaults
+
+**HarmonyOS**（置信度中）：ArkUI 状态机制（@State/@Prop/AppStorage）
+
+**Flutter**（置信度中）：Provider/Riverpod/Bloc + SharedPreferences
+
+**纯后端：** 不适用（纯后端项目）
+
+## 11. 部署与运维
+
+### 11.1 本地开发
 {环境要求 + 安装步骤 + 启动命令}
 
-### 10.2 CI/CD 流水线
+### 11.2 CI/CD 流水线
 {ASCII CI/CD 流程图}
 
-### 10.3 环境配置
+### 11.3 环境配置
 | 环境 | 用途 | 访问地址 |
 |------|------|---------|
 
-### 10.4 环境变量
+### 11.4 环境变量
 | 变量 | 说明 |
 |------|------|
 
-## 11. 内部依赖与集成
+## 12. 内部依赖与集成
 
-### 11.1 依赖的内部服务
+### 12.1 依赖的内部服务
 | 服务 | 调用方式 | 用途 |
 |------|---------|------|
 
-### 11.2 依赖的内部公共库/SDK
+### 12.2 依赖的内部公共库/SDK
 | 库名 | 版本 | 用途 |
 |------|------|------|
 
-### 11.3 被依赖情况
+### 12.3 被依赖情况
 | 下游服务 | 调用方式 | 说明 |
 |---------|---------|------|
 
-### 11.4 消息队列/事件
+### 12.4 消息队列/事件
 | Topic/Queue | 生产/消费 | 说明 |
 |-------------|----------|------|
 
-## 12. 快速上手路径
+## 13. 快速上手路径
 
-### 12.1 环境搭建
+### 13.1 环境搭建
 {完整步骤}
 
-### 12.2 核心业务操作
+### 13.2 核心业务操作
 {主要操作路径}
 
-### 12.3 调试技巧
+### 13.3 调试技巧
 {日志、断点、常见问题}
-
-## 13. 前端状态管理
-{数据流分析，纯后端项目标注"不适用"}
 
 ## 14. 项目评估与风险
 
@@ -337,9 +436,9 @@ Glob(**) 或 Bash(find . -maxdepth 3) → 获取完整项目结构，识别技�
 | Monorepo | 不限 | 按子项目 | 先识别边界，每个子项目独立分析 |
 
 外部项目（非公司内部仓库）适配：
-- 第 11 章仅列出可从代码推断的依赖（package.json/pom.xml/go.mod 中的第三方库），无法分析内部服务调用关系时标注"无法从代码推断"
+- 第 12 章仅列出可从代码推断的依赖（package.json/pom.xml/go.mod 中的第三方库），无法分析内部服务调用关系时标注"无法从代码推断"
 - 第 2 章业务定位从 README 推断，缺少 README 时标注"待补充"
-- 第 10 章 CI/CD 仅分析仓库中已有的配置文件，不推测外部 CI 平台
+- 第 11 章 CI/CD 仅分析仓库中已有的配置文件，不推测外部 CI 平台
 
 大型项目提速策略：
 - `Glob(dir/**)` 一次获取整个目录的文件列表，再针对性 Read 核心文件
@@ -355,11 +454,12 @@ Glob(**) 或 Bash(find . -maxdepth 3) → 获取完整项目结构，识别技�
 | 1 | **猜测数据模型而非从代码提取** | 报告中 Entity 字段与实际代码不符，误导开发者 | 必须从源码中的 ORM 注解/模型定义提取，无法确认时标注"未读取到源码，待确认" |
 | 2 | **API 接口用通配符 `*` 代替具体端点** | 读者无法知道实际有哪些接口，报告失去参考价值 | 逐个从 Controller 源码提取；如文件过多则抽样 + 标注"仅列出部分，完整列表见源码" |
 | 3 | **在报告中硬编码敏感信息** | 泄露密码、Token、内部 IP | 所有敏感值替换为 `[password]`、`[secret]`、`[token]`、`10.x.x.x` 等占位符 |
-| 4 | **对纯后端项目生成前端章节** | 第 9/13 章内容空洞，浪费读者时间 | 标注"不适用（纯后端项目）"并跳过 |
+| 4 | **对纯后端项目生成前端章节，或对非 Web 画像强行套用 Web 插槽模板** | 第 9/10 章内容空洞或产出猜测内容，浪费读者时间 | 按"平台画像判定"结果选用对应插槽内容；不适用时标注"不适用（{画像}项目）"并跳过 |
 | 5 | **一次性写入超长报告** | Write 工具可能截断，表格/代码块在中间断开 | 分段写入：先 Write 前半部分，再 Edit 追加后半部分 |
 | 6 | **编造项目信息而非从源码推断** | 业务定位、团队名称等与实际不符 | 从 README、git log、配置文件中提取；无法确认时标注"待确认" |
 | 7 | **忽略 Monorepo 边界** | 分析了不相关的子项目，报告臃肿 | 先识别 Monorepo 结构，确认用户要分析的子项目范围 |
 | 8 | **ASCII 图表用 Mermaid 代码块** | 部分环境无法渲染 Mermaid，图表显示为源码 | 始终使用 Unicode 方框字符绘制 ASCII 艺术图 |
+| 9 | **将 Flutter 项目误判为 Android/iOS 原生项目** | Flutter 项目自动生成 `android/`/`ios/` 原生壳子目录，若先判定原生信号会导致画像误判，第9/10章套用错误模板 | 判定时先排除 Flutter 特征（`pubspec.yaml` + `lib/main.dart`），再落到 Android/iOS 判定，见"平台画像判定"优先级 |
 
 ## 错误处理
 
@@ -381,16 +481,18 @@ Glob(**) 或 Bash(find . -maxdepth 3) → 获取完整项目结构，识别技�
 |--------|---------|---------|
 | API 接口是否有通配符 `*` | `Grep("\\| \\* \\|", report_path)` | 用 `Grep` 搜索 Controller 中的路由注解，展开为具体端点 |
 | 是否缺少业务上下文 | 检查是否有第 2 章 | 从 README、配置文件、服务调用中推断业务定位 |
-| 是否缺少快速上手路径 | 检查是否有第 12 章 | 从 README 和配置提取环境搭建步骤 |
-| 是否分析了状态管理 | 检查是否有第 13 章 | 用 `Glob` 查找 Context/Store 文件，Read 后分析数据流 |
+| 是否缺少快速上手路径 | 检查是否有第 13 章 | 从 README 和配置提取环境搭建步骤 |
+| 是否分析了状态管理 | 检查是否有第 10 章 | 用 `Glob` 查找 Context/Store 文件，Read 后分析数据流 |
 | 是否有风险分析 | 检查是否有第 14 章 | 检查 N+1、索引、分页、输入校验等 |
-| 内部依赖是否完整 | 检查第 11 章是否有空表 | 从配置文件、HTTP Client、MQ 配置中提取 |
+| 内部依赖是否完整 | 检查第 12 章是否有空表 | 从配置文件、HTTP Client、MQ 配置中提取 |
 | 技术栈版本是否完整 | 检查版本列是否有空值 | 从 package.json/pom.xml/go.mod 补全 |
 | 评估是否有依据 | 检查评分是否附带说明 | 引用具体代码文件作为依据 |
 
 ## 质量检查
 
 - [ ] 14 个章节全部输出，无遗漏
+- [ ] 报告开头已注明识别到的平台画像（Web/H5、WPF/桌面、Android、iOS、HarmonyOS、Flutter、纯后端）；HarmonyOS/Flutter 画像已标注置信度提示
+- [ ] 第 7/8/9/10 章内容规格与平台画像匹配，未对非 Web 画像强行套用 Web 插槽模板
 - [ ] 业务上下文清晰，上下游关系明确
 - [ ] 技术栈版本号从 package.json/pom.xml 等准确提取
 - [ ] 数据模型从实际代码中提取，非猜测

@@ -13,5 +13,30 @@
     "id": 3,
     "prompt": "分析这个仓库整体的架构和内部依赖关系",
     "expected": "识别 monorepo 结构，分析跨插件依赖，生成架构图和依赖关系"
+  },
+  {
+    "id": 4,
+    "prompt": "分析一下这个WPF桌面应用的项目结构",
+    "expected": "识别为 WPF/桌面画像，第9章输出View与ViewModel清单及绑定关系，第10章输出MVVM框架识别+DI容器+控件库分析，第7/8章视是否有本地持久层/后端调用而定"
+  },
+  {
+    "id": 5,
+    "prompt": "帮我了解一下这个 Android 项目都有哪些页面和权限",
+    "expected": "识别为 Android 画像，第9章输出Activity/Fragment清单+权限声明+构建变体，第10章输出本地存储与状态管理，第7章视是否有本地数据库而定"
+  },
+  {
+    "id": 6,
+    "prompt": "分析这个纯后端 Java 服务的架构",
+    "expected": "识别为纯后端画像（无前端目录），第9/10章标注'不适用（纯后端项目）'，其余12章正常输出，第7/8章按现有ER图/接口清单逻辑输出"
+  },
+  {
+    "id": 7,
+    "prompt": "帮我分析一下这个 Flutter 项目，看看它的页面结构和状态管理方案",
+    "expected": "识别为 Flutter 画像（优先于其自带的 android/ios 子目录判定），第9章输出Widget树/路由清单，第10章输出Provider/Riverpod/Bloc等状态管理框架识别，CHECKPOINT提示该画像置信度中等（无knowledge-base既有规范支撑）"
+  },
+  {
+    "id": 8,
+    "prompt": "这是一个鸿蒙 HarmonyOS 应用，帮我梳理一下页面和权限声明",
+    "expected": "识别为 HarmonyOS 画像，第9章输出Page/Ability清单+module.json5权限声明，第10章输出ArkUI状态机制(@State/@Prop/AppStorage)分析，CHECKPOINT提示该画像置信度中等（无knowledge-base既有规范支撑）"
   }
 ]
