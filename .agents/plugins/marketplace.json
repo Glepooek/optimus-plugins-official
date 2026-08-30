@@ -49,6 +49,12 @@
       "source": { "source": "local", "path": "./plugins/optimus-media-plugin" },
       "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
       "category": "Media"
+    },
+    {
+      "name": "optimus-decision-plugin",
+      "source": { "source": "local", "path": "./plugins/optimus-decision-plugin" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "Decision"
     }
   ]
 }

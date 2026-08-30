@@ -2,7 +2,7 @@
   "name": "optimus-plugins-official",
   "displayName": "Optimus 官方插件仓库",
   "description": "自定义 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强、权限通知等企业级开发工具链",
-  "version": "12.2.0",
+  "version": "12.3.0",
   "owner": {
     "name": "optimus",
     "url": "https://www.optimus.cn"
@@ -66,6 +66,11 @@
       "name": "optimus-media-plugin",
       "source": "./plugins/optimus-media-plugin",
       "description": "音视频处理：分析、转码压缩、裁剪缩放、在线下载与播放预览"
+    },
+    {
+      "name": "optimus-decision-plugin",
+      "source": "./plugins/optimus-decision-plugin",
+      "description": "决策支持型工具：把书籍蒸馏出的方法论转化为工程实践中的选型决策依据（数据结构/算法策略/复杂度分析）"
     },
     {
       "name": "cangjie-skill",

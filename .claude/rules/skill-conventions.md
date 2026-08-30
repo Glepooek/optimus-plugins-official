@@ -48,6 +48,7 @@ metadata:
 | generator | 代码/文档生成类（创建 PRD、代码、测试用例、报告等产物） |
 | tool | 工具类（格式转换、数据同步、CI 触发、脚本初始化等） |
 | platform | 平台专项类（如未来出现 android/ios/harmony 专属 skill） |
+| decision | 决策支持类（给出选型结论/适用性判断/权衡依据，不产出代码或文件，落地实现留给人工接手） |
 
 ### compatibility
 
@@ -158,7 +159,7 @@ skill 处理用户请求的**第一步**，必须先对比"该 skill 需要哪�
 
 ### 所处层级
 
-用 ASCII box-drawing 图，以 `metadata.category` 的 5 个取值（workflow/quality/generator/tool/platform）为层级，标出本 skill 所处层，及直接上下游 skill（用 `★` 标记本 skill）。复合 skill 的子 skill 标注所属主流程及所在阶段。确无上下游依赖时，仍保留本章节，图中注明"无上下游，独立使用"——不允许跳过该章节。
+用 ASCII box-drawing 图，以 `metadata.category` 的 6 个取值（workflow/quality/generator/tool/platform/decision）为层级，标出本 skill 所处层，及直接上下游 skill（用 `★` 标记本 skill）。复合 skill 的子 skill 标注所属主流程及所在阶段。确无上下游依赖时，仍保留本章节，图中注明"无上下游，独立使用"——不允许跳过该章节。
 
 ### 触发词 / 内部触发条件
 

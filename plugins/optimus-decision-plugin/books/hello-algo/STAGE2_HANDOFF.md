@@ -5,7 +5,7 @@
 
 ## 已完成（第 1 个 skill，作为范本）
 
-`plugins/optimus-learning-plugin/skills/data-structure-selection/` 已完整产出四个文件：
+`plugins/optimus-decision-plugin/skills/data-structure-selection/` 已完整产出四个文件：
 - `SKILL.md`（六字段 frontmatter + 完整 R/I/A1/A2/E/B 六段）
 - `CHANGELOG.md`（`[1.0.0]`）
 - `README.md`（固定 ASCII 图结构五章节）
@@ -27,7 +27,7 @@
 
 ## 待完成的 7 个 skill（严格按此顺序，来自阶段 0 已确认的工程优先级）
 
-按 `plugins/optimus-learning-plugin/books/hello-algo/verified.md` 里的 merged_from 字段取原文引用/案例/反例素材，全部素材已在阶段 1 candidates 和阶段 1.5 verified.md 中就位，**无需重新读原书**：
+按 `plugins/optimus-decision-plugin/books/hello-algo/verified.md` 里的 merged_from 字段取原文引用/案例/反例素材，全部素材已在阶段 1 candidates 和阶段 1.5 verified.md 中就位，**无需重新读原书**：
 
 ### 2. complexity-analysis（复杂度分析方法）
 - merged_from: frameworks[f01], principles[p01-p04]
@@ -53,10 +53,10 @@
 - merged_from: frameworks[f12], principles[p30,p31], cases[c19,c20,c21], counter_examples[c20,c21]
 
 ## 每个 skill 的产出清单（4 文件，缺一不可）
-1. `plugins/optimus-learning-plugin/skills/<slug>/SKILL.md`
-2. `plugins/optimus-learning-plugin/skills/<slug>/CHANGELOG.md`
-3. `plugins/optimus-learning-plugin/skills/<slug>/README.md`
-4. `plugins/optimus-learning-plugin/skills/<slug>/test-prompts.json`（5-10 条，含应调用/诱饵/边界三类，诱饵至少 1 条是同书兄弟 skill 场景）
+1. `plugins/optimus-decision-plugin/skills/<slug>/SKILL.md`
+2. `plugins/optimus-decision-plugin/skills/<slug>/CHANGELOG.md`
+3. `plugins/optimus-decision-plugin/skills/<slug>/README.md`
+4. `plugins/optimus-decision-plugin/skills/<slug>/test-prompts.json`（5-10 条，含应调用/诱饵/边界三类，诱饵至少 1 条是同书兄弟 skill 场景）
 
 ## 阶段 2 之后仍需做的事（勿遗漏）
 
@@ -64,11 +64,11 @@
 - **阶段 4 压力测试**：可用独立 sub-agent 盲测每个 skill 的 test-prompts.json，未过的回炉阶段 2
 - **阶段 5 交付**：生成 `books/hello-algo/DIGEST.md`，询问用户安装位置
 - **插件基础设施**（贯穿性，尚未开始）：
-  - `plugins/optimus-learning-plugin/.codex-plugin/plugin.json`（参考 `plugins/optimus-media-plugin/.codex-plugin/plugin.json` 模板）
+  - `plugins/optimus-decision-plugin/.codex-plugin/plugin.json`（参考 `plugins/optimus-media-plugin/.codex-plugin/plugin.json` 模板）
   - 注册到 `.claude-plugin/marketplace.json`（Minor 版本升级）和 `.agents/plugins/marketplace.json`
-  - `plugins/optimus-learning-plugin/` 顶层可能需要一个说明性 README（参考其他插件顶层结构，本次未确认，需要时再问用户）
+  - `plugins/optimus-decision-plugin/` 顶层可能需要一个说明性 README（参考其他插件顶层结构，本次未确认，需要时再问用户）
 - **跨插件重复性自检**（按 AGENTS.md 约束，大概率无重叠但流程要求）
 - **提交推送**：必须用 `commit-cc-plugin` skill，禁止手动 git 操作；提交前需按仓库规则用 `darwin-skill` 给新 skill 评分（Minor/Major 升级前置要求）
 
 ## 断点续跑指引
-`plugins/optimus-learning-plugin/books/hello-algo/PIPELINE_STATE.md` 需要在每完成一个 skill 后更新勾选项，当前该文件仍停留在"阶段 1.5 已完成"的旧状态，需要同步更新为"阶段 2 进行中（1/8 完成）"。
+`plugins/optimus-decision-plugin/books/hello-algo/PIPELINE_STATE.md` 需要在每完成一个 skill 后更新勾选项，当前该文件仍停留在"阶段 1.5 已完成"的旧状态，需要同步更新为"阶段 2 进行中（1/8 完成）"。

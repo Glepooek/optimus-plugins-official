@@ -1,0 +1,26 @@
+{
+  "name": "optimus-decision-plugin",
+  "version": "12.3.0",
+  "description": "决策支持型工具：把书籍/长内容蒸馏出的方法论转化为工程实践中的选型决策依据（数据结构/算法策略/复杂度分析）",
+  "skills": "./skills/",
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT",
+  "interface": {
+    "displayName": "Optimus Decision",
+    "shortDescription": "书籍方法论蒸馏出的工程决策支持 skill 集",
+    "longDescription": "决策支持型工具：把书籍/长内容蒸馏出的方法论转化为工程实践中的选型决策依据（数据结构/算法策略/复杂度分析），不产出代码或文件，落地实现留给人工接手",
+    "developerName": "Optimus",
+    "category": "Decision",
+    "capabilities": [
+      "Skills"
+    ],
+    "defaultPrompt": [
+      "这个场景该用什么数据结构"
+    ]
+  }
+}

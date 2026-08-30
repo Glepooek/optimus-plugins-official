@@ -1,6 +1,6 @@
 # data-structure-selection
 
-> 版本：1.0.0
+> 版本：1.1.0 | 分类：decision
 
 用户在写代码时纠结"这个场景该用什么数据结构"时，给出基于《Hello 算法》的空间换时间权衡框架和选型建议。
 
@@ -8,7 +8,7 @@
 
 ```
 ┌─────────────────────────────────────────────┐
-│         optimus-learning-plugin              │
+│         optimus-decision-plugin              │
 │                                               │
 │   ┌───────────────────────────────────┐     │
 │   │  complexity-analysis (地基)        │     │
