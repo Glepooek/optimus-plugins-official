@@ -4,7 +4,7 @@
 
 ## 仓库定位
 
-自定义插件仓库，8 个领域插件提供企业级开发工具链，**同时支持 Claude Code 与 OpenAI Codex 双 harness**。
+自定义插件仓库，提供企业级开发工具链，**同时支持 Claude Code 与 OpenAI Codex 双 harness**。
 
 各插件职责见 `.claude-plugin/marketplace.json` 的 `description` 字段。
 
@@ -44,7 +44,9 @@
 Python 脚本单元测试（**本机无 `pytest`，只能用 `unittest`**）：
 
 ```bash
-python -m unittest discover -s .claude/skills/sync-cc-docs-to-youdaonote/scripts -p "test_*.py"
+# 维护型 skill（各自独立跑，unittest discover 不递归跨目录）
+python -m unittest discover -s .claude/skills/sync-cc-docs-to-youdaonote/scripts -p "test_*.py"  # 77 tests
+python -m unittest discover -s .claude/skills/knowledge-base-maintain/scripts -p "test_*.py"     # 139 tests
 ```
 
 ---
@@ -62,13 +64,13 @@ python -m unittest discover -s .claude/skills/sync-cc-docs-to-youdaonote/scripts
 
 若变更涉及 `plugins/` 下某插件，其 `.codex-plugin/plugin.json` 的 `version` 字段须同步改为相同值（该文件的 `version` 从 `.claude-plugin/marketplace.json` 抄录，不是独立真源）。
 
-Minor/Major 升级建议先用 `darwin-skill` 对改动的 skill 评分，新分数不得低于改动前（不允许倒退），否则先修正再提交。
+Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分数 ≥ 改动前分数才可提交，倒退则先修正。（评分产物落在 gitignore 的 `.claude/skills/darwin-skill/results.tsv`，不进版本库。）
 
 ---
 
 ## Skill frontmatter 规范
 
-Skill frontmatter / CHANGELOG 规范见 `.claude/rules/skill-conventions.md`（编辑 SKILL.md / CHANGELOG.md / AGENT.md 时自动加载）。该规范同时约束两个 harness——frontmatter 字段是 Codex 也会原样读取缓存的内容，不存在"仅 Claude 遵守"的特例。
+Skill frontmatter / CHANGELOG 规范见 `.claude/rules/skill-conventions.md`（编辑 SKILL.md / CHANGELOG.md 或 `plugins/*/skills/` 下的 README.md 时自动加载）。该规范同时约束两个 harness——frontmatter 字段是 Codex 也会原样读取缓存的内容，不存在"仅 Claude 遵守"的特例。
 
 ---
 
@@ -119,6 +121,6 @@ Skill frontmatter / CHANGELOG 规范见 `.claude/rules/skill-conventions.md`（�
 | 提交流程 | 强制 `/commit-cc-plugin` skill | 标准 git + Conventional Commits，禁止 `--no-verify` |
 | Hooks | SessionStart（技巧轮播）、Notification（权限通知）生效 | 无对应机制，Claude 侧 hooks 在 Codex 中不生效 |
 | 维护型 skill 镜像目录 | `.kiro/skills/<name>` | `.agents/skills/<name>` |
-| 插件标识文件 | `.claude-plugin/marketplace.json`（含全部 8 插件） | 额外的 `.agents/plugins/marketplace.json` + 每插件 `.codex-plugin/plugin.json` |
+| 插件标识文件 | `.claude-plugin/marketplace.json`（含全部插件） | 额外的 `.agents/plugins/marketplace.json` + 每插件 `.codex-plugin/plugin.json` |
 
 除以上五项，其余所有规则（约束、frontmatter、版本管理、docs/knowledge-base 划分、本地测试）对两个 harness 一视同仁，不需要也不应该分叉处理。

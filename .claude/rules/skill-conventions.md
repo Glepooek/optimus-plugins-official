@@ -2,13 +2,12 @@
 paths:
   - "**/SKILL.md"
   - "**/CHANGELOG.md"
-  - "**/AGENT.md"
-  - "**/README.md"
+  - "plugins/*/skills/**/README.md"
 ---
 
 ## 编辑铁律：禁止无关格式化
 
-编辑 SKILL.md / CHANGELOG.md / AGENT.md / README.md 时，只改动语义相关的内容，不增删空行、不调整缩进、不做表格对齐等纯格式化改动。仓库已配置 `.prettierignore`（排除 `*.md`）和 `.vscode/settings.json`（禁用 markdown 自动格式化）作为防护，但仍需自查：提交前看 `git diff`，若出现大片纯空白/缩进变化而无实际内容变化，说明格式化工具介入了，应撤销重做。
+编辑 SKILL.md / CHANGELOG.md / README.md 时，只改动语义相关的内容，不增删空行、不调整缩进、不做表格对齐等纯格式化改动。仓库已配置 `.prettierignore`（排除 `*.md`）和 `.vscode/settings.json`（禁用 markdown 自动格式化）作为防护，但仍需自查：提交前看 `git diff`，若出现大片纯空白/缩进变化而无实际内容变化，说明格式化工具介入了，应撤销重做。
 
 ## Skill frontmatter 规范
 
