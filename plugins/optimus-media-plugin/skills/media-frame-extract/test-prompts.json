@@ -2,16 +2,31 @@
   {
     "id": 1,
     "prompt": "帮我截取 D:\\video\\demo.mp4 第 1 分 30 秒那一帧，存成 D:\\video\\cover.png",
-    "expected": "信息齐全（输入/时间点/输出均已给）→ Step 0-3 前置校验（引用 PREFLIGHT.md）→ Step 4 ffprobe 查总时长，确认 00:01:30 未超出 → 单帧模式，无需 CHECKPOINT → Step 5 执行 ffmpeg -y -ss 00:01:30 -i input -frames:v 1 output；必须带 -frames:v 1，且不得设计快速/精确双模式（-ss 在 -i 前对解码输出已帧精确）"
+    "expected": "信息齐全（输入/时间点/输出均已给）→ Step 0-3 前置校验（引用 PREFLIGHT.md）→ Step 4 一条 ffprobe 同时查 codec_type 与 duration，确认含视频流且 00:01:30 未超出总时长 → 单帧模式，无需 CHECKPOINT → Step 5 执行 ffmpeg -y -ss 00:01:30 -i input -frames:v 1 -update 1 output；-frames:v 1 与 -update 1 必须成对出现，且不得设计快速/精确双模式（-ss 在 -i 前对解码输出已帧精确）。执行后须确认输出文件存在，不仅凭退出码判定成功"
   },
   {
     "id": 2,
     "prompt": "把 D:\\video\\long.mp4 每隔 2 秒截一张图放到 D:\\frames\\ 下",
-    "expected": "措辞含「每隔」→ 多帧等间隔模式。Step 4 ffprobe 查总时长后预估张数=时长/2，若视频较长（如 30 分钟→900 张）超过 200 → 🔴 CHECKPOINT 必须告知具体预估数量与输出目录，询问是否继续或改用更大间隔，未确认不得执行 → Step 5 执行 ffmpeg -y -i input -vf fps=1/2 D:\\frames\\frame_%03d.png，输出路径必须含 %03d 占位符"
+    "expected": "措辞含「每隔」→ 多帧等间隔模式。Step 4 查总时长后预估张数=ceil(时长÷2)，若视频较长（如 30 分钟→900 张）超过 200 → 🔴 CHECKPOINT 必须告知具体预估数量与输出目录，询问是否继续或改用更大间隔，未确认不得执行 → Step 5 执行 ffmpeg -y -i input -vf fps=1/2 D:\\frames\\frame_%03d.png，输出路径必须含 %03d 占位符（缺失会在写第二张时报 Error muxing a packet 中断，残留序列第一张）"
   },
   {
     "id": 3,
     "prompt": "给这个视频截个封面图",
     "expected": "缺输入路径、时间点、输出路径 → Step 0 一次性询问全部缺失项。关键：不得擅自取 00:00:00 作为时间点——首帧常为黑场或片头，多数情况下不是用户想要的封面图，必须询问用户想要哪个时间点的画面"
+  },
+  {
+    "id": 4,
+    "prompt": "帮我截取 D:\\audio\\song.wav 第 2 秒的画面，存成 D:\\audio\\cover.png",
+    "expected": "盲区探测（2026-09-01 基线）：输入无视频流，属硬约束拦截场景。陷阱是 Step 4 的时长探测（ffprobe -show_entries format=duration）对 wav 会成功返回 3.000000、退出码 0，无法据此识别——必须另行确认视频流存在（如探 v:0 的 codec_type），在 Step 4 就终止，而不是走到 Step 5 才吃 Output file does not contain any stream 报错"
+  },
+  {
+    "id": 5,
+    "prompt": "截取 D:\\video\\short.mp4 第 1 分 30 秒的那一帧存成 D:\\video\\pic.png（该视频实际只有 5 秒）",
+    "expected": "盲区探测（2026-09-01 基线）：Step 4 查得总时长 5s 后必须判定 00:01:30 超出范围并终止。若漏掉该预检直接执行，ffmpeg 会以退出码 0 结束、不产出任何文件、仅打印 Output file is empty——只看退出码的 agent 会向用户误报成功。执行后还须确认输出文件确实存在，不能仅凭退出码判定成功"
+  },
+  {
+    "id": 6,
+    "prompt": "把 D:\\video\\tiny.mp4（时长 5 秒）每隔 3 秒截一张图存到 D:\\frames\\ 下",
+    "expected": "盲区探测（2026-09-01 基线）：实测 5s 视频按 3s 间隔会产出 2 张（t=0 与 t=3），按 2s 间隔产出 3 张，按 1s 间隔产出 5 张——即接近 ceil(时长÷间隔)，用「时长÷间隔」预告会系统性少算约 1 张。向用户预估数量时不得少报，且短视频（预估张数很少）不应触发数量过多的 CHECKPOINT"
   }
 ]

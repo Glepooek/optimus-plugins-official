@@ -2,16 +2,36 @@
   {
     "id": 1,
     "prompt": "把 D:\\video\\meeting.mp4 里的音频提取出来，保存到 D:\\audio\\meeting.m4a",
-    "expected": "信息齐全（输入/输出路径均已给）→ Step 0-3 前置校验（引用 PREFLIGHT.md，输出路径≠输入路径）→ Step 4 ffprobe 查 a:0 编码，若为 aac 则与 .m4a 兼容，属情况② → Step 5 执行 ffmpeg -y -i input -vn -c:a copy output，无损提取，告知用户未重新编码、音质无损失"
+    "expected": "信息齐全（输入/输出路径均已给）→ Step 0-3 前置校验（引用 PREFLIGHT.md，输出路径≠输入路径）→ Step 4 一条 ffprobe 列出全部流，确认有音频流、有视频流、只有一条音轨，音频编码为 aac 与 .m4a 兼容 → 命中情况④ → Step 5 执行 ffmpeg -y -i input -vn -map 0:a:0 -c:a copy output，无损提取，告知用户未重新编码、音质无损失。-map 0:a:0 不得省略"
   },
   {
     "id": 2,
     "prompt": "把这个 mp4 转成 mp3",
-    "expected": "缺输出路径 → Step 0 一次性询问。Step 4 ffprobe 查得源音频为 aac，与 .mp3 不兼容，命中情况③ 🔴 CHECKPOINT：必须告知 aac→mp3 属二次有损压缩、音质损失比首次明显且体积未必更小，并按对照表建议改用 .m4a/.aac 可无损搬运；用户确认后才执行 -c:a libmp3lame -b:a 192k，不得静默转码"
+    "expected": "缺输出路径 → Step 0 一次性询问。Step 4 查得源音频为 aac，与 .mp3 不兼容，命中情况⑤ 🔴 CHECKPOINT：须说明目标格式装不下 aac 需重新编码，源已是有损故结果只会更差、不存在变好的可能（不得声称「损失比首次明显」——实测二者信噪比仅差约 0.5 dB），并对照 Step 4 查得的源码率说明体积是增是减，同时按对照表建议改用 .m4a/.aac 可无损搬运；用户确认后才执行 -c:a libmp3lame 并按源码率选 -b:a，不得静默转码、不得固定填 192k"
   },
   {
     "id": 3,
     "prompt": "提取 D:\\clip\\silent.mp4 的音轨到 D:\\clip\\out.wav",
-    "expected": "Step 4 ffprobe 查询 a:0 编码返回空 → 命中情况① 硬约束：源文件无音频流，无法提取，返回错误信息并终止，不进入 Step 5，也不得用户确认绕过；同时不得把该情况误判为文件损坏（后者是 ffprobe 命令本身报错，应按 media-analyze 排查）"
+    "expected": "Step 4 的流列表中没有 codec_type=audio → 命中情况① 硬约束：源文件无音频流，无法提取，返回错误信息并终止，不进入 Step 5，也不得用户确认绕过；同时不得把该情况误判为文件损坏（后者是 ffprobe 命令本身报错，应按 media-analyze 排查）。不得因为已走到 Step 5 而尝试去掉 -map 让 ffmpeg 自动选流"
+  },
+  {
+    "id": 4,
+    "prompt": "把 D:\\audio\\podcast.m4a 里的音轨提取出来存成 D:\\audio\\podcast.aac",
+    "expected": "回归测试（源自 2026-09-01 基线盲区）：输入本身就是纯音频。Step 4 的流列表中没有 codec_type=video → 命中情况② 硬约束，终止并告知用户该文件本身就是音频、应调用 media-audio-convert。判据必须是有无 codec_type=video 行——纯音频文件同样返回退出码 0 与正常音频编码，不能只看音频信息或退出码"
+  },
+  {
+    "id": 5,
+    "prompt": "把 D:\\video\\lecture.mp4 的音频存成 D:\\audio\\lecture.wav，不要重新编码",
+    "expected": "回归测试（源自 2026-09-01 基线盲区）：源为 aac、目标 .wav 属不兼容，命中情况⑤，且须触发其中的 .wav 专项 ⛔ 警告——不能指望命令自己失败，因为 -c:a copy 写入 .wav 会以退出码 0 静默成功并产出 format_name=wav/codec_name=aac 的错配文件。必须说明用户「不要重新编码」与「要 .wav」二者不可同时满足，让用户在改用 .m4a/.aac 无损搬运、或接受解码为 pcm_s16le 之间选择"
+  },
+  {
+    "id": 6,
+    "prompt": "把 D:\\rec\\screen-record.mp4（手机录屏，音频码率很低）的音轨提取成 mp3",
+    "expected": "回归测试（源自 2026-09-01 基线盲区）：Step 4 已包含 bit_rate 字段。命中情况⑤ 需重新编码时，须按源码率落在三档取值表的哪一档来决定 -b:a，源码率明显低于 192k 时取不高于源码率的值。不得固定填 192k——实测 60k 源套用 192k 会让体积涨到 3 倍且音质毫无提升"
+  },
+  {
+    "id": 7,
+    "prompt": "这个视频有中文和英文两条音轨，帮我把中文那条提取出来",
+    "expected": "回归测试（源自 2026-09-01 基线盲区）：Step 4 的流列表中有多个 codec_type=audio → 命中情况③ 🔴 CHECKPOINT，列出各条音轨的索引/编码/码率/语言标签让用户指认，未确认不得执行。Step 5 用用户选定的 -map 0:a:<索引>。不得依赖 ffmpeg 默认选轨（按 disposition 挑「最佳」轨，与按索引的 a:0 未必同一条），也不得靠时长差异去判断是否取错（实测双轨时长一致）"
   }
 ]

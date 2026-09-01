@@ -1,6 +1,6 @@
 # media-audio-extract
 
-> 版本：1.0.0 | 分类：tool
+> 版本：1.0.1 | 分类：tool
 
 从视频文件中提取音频流，产出纯音频文件。默认流复制无损搬运，仅在目标格式装不下源编码时降级为重新编码。
 
@@ -34,15 +34,20 @@ Step 0-3  前置校验（引用 media-ffmpeg-common/PREFLIGHT.md）
           （输出路径校验含：父目录可写 + 输出路径 ≠ 输入路径）
           未指定输出扩展名时不擅自假定 .mp3，先询问目标格式
    ↓
-Step 4  执行前校验：ffprobe -select_streams a:0 查源音频编码
-         ├─ ① 输出为空 → 源无音频流，硬约束终止
-         ├─ ② 编码与目标扩展名兼容 → 走流复制
-         └─ ③ 不兼容（如 aac→.mp3）🔴 CHECKPOINT
-              告知可能为二次有损 + 建议无损扩展名 → 用户确认后转码
+Step 4  执行前校验：一条 ffprobe 列出全部流的 index/codec_type/codec_name/bit_rate
+         先判流结构（三项硬门槛）：
+         ├─ ① 无 codec_type=audio → 源无音频流，硬约束终止
+         ├─ ② 无 codec_type=video → 输入是纯音频，终止并指向 media-audio-convert
+         └─ ③ 多条 audio 流 → 🔴 CHECKPOINT 列出各轨让用户指认
+         再判编码兼容性：
+         ├─ ④ 编码与目标扩展名兼容 → 走流复制
+         └─ ⑤ 不兼容（如 aac→.mp3）🔴 CHECKPOINT
+              按源编码是否有损据实说明代价 + 对照源码率说明体积走向
+              （目标为 .wav 时 ⛔ 特别当心：copy 不报错但产错配文件）
    ↓
-Step 5  执行提取
-         ├─ 流复制模式：-vn -c:a copy（无损）
-         └─ 重新编码模式：-vn -c:a <编码器> -b:a 192k
+Step 5  执行提取（-map 0:a:0 不可省略，保证与 Step 4 探测的是同一条流）
+         ├─ 流复制模式：-vn -map 0:a:0 -c:a copy（无损）
+         └─ 重新编码模式：-vn -map 0:a:0 -c:a <编码器> -b:a <据源码率取值>
 ```
 
 ## 产出物数据流
@@ -62,8 +67,9 @@ Step 5  执行提取
                                               audio-container-formats.md
                                               audio-codecs.md / audio-parameters.md
 
-media-audio-extract ──Step4 自行执行 ffprobe 查 a:0 编码──▶ （不调用 media-analyze）
+media-audio-extract ──Step4 自行执行 ffprobe 列出全部流──▶ （不调用 media-analyze）
+media-audio-extract ──输入是纯音频时终止并指向──▶ media-audio-convert
 media-audio-extract ──用户如需继续转换──▶ media-audio-convert（人工另行触发，非自动衔接）
 ```
 
-不被其他 skill 调度。Step 4 直接执行单字段 ffprobe 探测命令查询音频编码，不调用 media-analyze 的全量 JSON 展示型命令——只需一个 `codec_name` 字段，不需要整份流信息。不参与组合请求编排。
+不被其他 skill 调度。Step 4 直接执行一条 ffprobe 探测命令列出全部流的 `index`/`codec_type`/`codec_name`/`bit_rate`，不调用 media-analyze 的全量 JSON 展示型命令——只需这四个字段，不需要整份流信息，但也不能更少：这四个字段分别支撑"有无音频流""有无视频流""几条音轨""编码与码率"四项判定。不参与组合请求编排。

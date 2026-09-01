@@ -2,7 +2,7 @@
 name: media-audio-convert
 description: Use when user wants to convert an audio file to another audio format or change its bitrate, sample rate, or channel count — 音频格式转换、wav转mp3、flac转aac、音频转码、改音频码率、改采样率、音频转单声道、无损转有损。Not for extracting audio from video (that is media-audio-extract), video container conversion, or codec/format inspection.
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg/ffprobe 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -31,19 +31,25 @@ allowed-tools: Bash
 
 | 参数 | 缺省行为 |
 |---|---|
-| 码率 `-b:a` | 有损目标编码取 192k；无损目标编码不适用 |
+| 码率 `-b:a` | 有损目标编码按 Step 4 查得的源码率决定取值（规则见 Step 5），不固定取 192k；无损目标编码不适用 |
 | 采样率 `-ar` | 不传该参数，沿用源文件采样率 |
 | 声道数 `-ac` | 不传该参数，沿用源文件声道数 |
 
 ### Step 4：执行前校验
 
-先无条件执行以下命令查询源文件的**真实音频编码**，不得依据扩展名推断：
+先无条件执行以下命令查询源文件的**真实音频编码与码率**，不得依据扩展名推断：
 
 ```bash
-ffprobe -v error -select_streams a:0 -show_entries stream=codec_name,sample_rate,channels -of default=nw=1 <input>
+ffprobe -v error -show_entries stream=index,codec_type,codec_name,sample_rate,channels,bit_rate -of default=nw=1 <input>
 ```
 
+`bit_rate` 不可省略——后续判定体积走向、以及决定目标码率取值都依赖它，缺了它只能给出方向固定的经验陈述，而那些陈述在不少组合下是错的。同理不要加 `-select_streams a:0`：那样看不到文件里有没有视频流，而这对应一条硬约束（见下）。
+
 ⛔ **STOP**：命令报错、非零退出码或输出为空时，说明文件已损坏、不是音频文件，或编码不受当前 ffmpeg 构建支持。返回错误信息告知用户，建议先用 media-analyze 排查，终止任务，不进入 Step 5。
+
+⛔ **STOP**：输出中**出现 `codec_type=video`** 时，说明输入是视频文件而非纯音频。返回错误信息说明本 skill 只处理纯音频到纯音频，从视频中提取音轨应调用 `media-audio-extract`，终止任务，不进入 Step 5。
+
+判据必须是"有无 `codec_type=video` 行"，**不能靠能否查到音频编码**——视频文件里的音频流同样能被正常查出编码与码率，只看音频信息无法与纯音频文件区分。若在此放行，Step 5 的转换命令会静默丢弃视频流并产出音频文件，用户无从知晓画面去哪了。
 
 > 「后缀 ≠ 真实编码」的判断方法与常见格式辨析见 [`knowledge-base/media/reference/audio-container-formats.md`](../../../../knowledge-base/media/reference/audio-container-formats.md) §2「常见音频格式辨析」与 §3「后缀 vs 编码的判断方法」；各编码的有损/无损性质见 [`audio-codecs.md`](../../../../knowledge-base/media/reference/audio-codecs.md) §1「音频编码分类」。
 
@@ -51,16 +57,18 @@ ffprobe -v error -select_streams a:0 -show_entries stream=codec_name,sample_rate
 
 | 源真实编码 → 目标编码 | 性质 | 需告知用户什么 |
 |---|---|---|
-| 无损 → 无损（FLAC→ALAC、WAV→FLAC） | 无损转换 | 无音质损失，可直接执行；WAV→FLAC 还会显著减小体积 |
-| 无损 → 有损（FLAC→MP3、WAV→AAC） | 首次有损 | 会产生首次有损压缩、不可逆，原文件建议保留；体积会明显减小 |
-| **有损 → 有损（AAC→MP3、MP3→AAC）** | **二次有损** | 🔴 音质损失比首次压缩明显（在已丢失细节的基础上再压一次），且体积未必更小。询问用户是否确有必要，或改为保留原格式 |
+| 无损 → 无损（FLAC→ALAC、WAV→FLAC） | 无损转换 | 无音质损失，可直接执行；PCM（WAV）源转 FLAC/ALAC 还会显著减小体积 |
+| 无损 → 有损（FLAC→MP3、WAV→AAC） | 首次有损 | 会产生首次有损压缩、不可逆，原文件建议保留。体积走向取决于源是哪种无损：PCM（WAV）源会大幅减小；FLAC/ALAC 源本身已压缩，转有损后**可能反而增大**（实测 44649 B 的 FLAC 转 AAC 得 73394 B，涨 64%），须对照 Step 4 查得的源码率据实说明 |
+| **有损 → 有损（AAC→MP3、MP3→AAC）** | **二次有损** | 🔴 转换会在已丢失细节的基础上再压一次，结果质量只会低于现有文件、不存在变好的可能；体积也不一定减小——目标码率高于源码率时反而会增大。对比 Step 4 查得的源码率与将要使用的目标码率，据实说明质量与体积各自的走向，再询问用户是否确有必要，或建议保留原格式。**不得声称"损失比首次压缩明显"**——实测首次有损与二次有损的信噪比仅相差约 0.5 dB（30.47 dB vs 30.01 dB），夸大风险同样是误导 |
 | 有损 → 无损（MP3→FLAC、AAC→WAV） | 无意义放大 | 🔴 已丢失的细节无法恢复，转成无损格式只会让体积大幅增加而音质不变。询问用户是否确认继续 |
-| **编码相同，仅容器不同（AAC in `.m4a` → `.aac`）** | **只需重封装** | 🔴 无需转码。告知用户可用流复制无损换容器，避免无谓的二次有损，走 Step 5 的重封装模式 |
+| **编码相同，仅容器不同（AAC in `.m4a` → `.aac`）** | **只需重封装** | 🔴 无需转码，可用流复制无损换容器，避免无谓的二次有损，走 Step 5 的重封装模式。同时告知：音频数据本身无损，但 `.m4a`→`.aac`（ADTS）会丢失容器级的 gapless 播放元数据，实测产物比源多出 1844 个采样（含 1024 采样的 AAC 编码器预热），造成约 23 ms 的起始偏移——对连续播放的整张专辑轨道有影响，对单曲通常无感 |
 
 判定要点：
 
 - **必须用查得的真实编码判定，不能用扩展名**。用户说"把 .m4a 转 mp3"时，`.m4a` 里是 ALAC 则属"无损→有损"，是 AAC 则属"二次有损"——两者要告知的内容完全不同
-- 目标编码由输出扩展名推定：`.mp3`→MP3（有损）、`.aac`/`.m4a`→AAC（有损，`.m4a` 也可装 ALAC 但本 skill 默认取 AAC）、`.opus`→Opus（有损）、`.ogg`→Vorbis（有损）、`.flac`→FLAC（无损）、`.wav`→PCM（无损）
+- 目标编码由输出扩展名推定：`.mp3`→MP3（有损）、`.aac`→AAC（有损）、`.opus`→Opus（有损）、`.ogg`→Vorbis（有损）、`.flac`→FLAC（无损）、`.wav`→PCM（无损）
+- **`.m4a` 是容器不是编码，既可装 AAC（有损）也可装 ALAC（无损），不得一律推定为 AAC**：用户明确说了目标编码（如"转成 ALAC 存成 song.m4a"）时以用户所说为准，此时 wav→ALAC 属"无损→无损"而非"无损→有损"，告知内容与走的编码器都不同；用户只给了 `.m4a` 扩展名而未提编码时才默认 AAC，并在告知中说明"按 AAC 处理，如需无损请指明 ALAC"
+- **体积与质量的走向必须对照 Step 4 查得的源 `bit_rate` 得出**，不得套用方向固定的结论。同一句"转成 aac"，源是 320k 的 mp3 与源是 96k 的 mp3，体积一个减小一个增大
 - 用户明确指定了 `-ar`/`-ac` 且数值低于源文件时（如 48000→44100、立体声→单声道），额外告知这是不可逆的信息丢失
 
 > 采样率与声道数的含义、降采样/缩混的影响见 [`audio-parameters.md`](../../../../knowledge-base/media/reference/audio-parameters.md) §1「采样率」与 §3「声道数」。
@@ -70,7 +78,7 @@ ffprobe -v error -select_streams a:0 -show_entries stream=codec_name,sample_rate
 **默认模式（重新编码）：**
 
 ```bash
-ffmpeg -y -i <input> -c:a <目标编码器> -b:a 192k <output>
+ffmpeg -y -i <input> -c:a <目标编码器> -b:a <目标码率> <output>
 ```
 
 **重封装模式（Step 4 判定为"编码相同，仅容器不同"，用户确认后）：**
@@ -82,25 +90,35 @@ ffmpeg -y -i <input> -c:a copy <output>
 **带参数调整（用户明确指定采样率/声道数时，按需追加）：**
 
 ```bash
-ffmpeg -y -i <input> -c:a <目标编码器> -b:a 192k -ar 44100 -ac 2 <output>
+ffmpeg -y -i <input> -c:a <目标编码器> -b:a <目标码率> -ar 44100 -ac 2 <output>
 ```
 
 目标编码器按输出扩展名选取：
 
-| 输出扩展名 | 编码器 | 是否接受 `-b:a` |
+| 输出扩展名 | 编码器 | 是否需要 `-b:a` |
 |---|---|---|
 | `.mp3` | `libmp3lame` | 是 |
-| `.m4a`、`.aac` | `aac` | 是 |
+| `.aac` | `aac` | 是 |
+| `.m4a` | 默认 `aac`；用户指明 ALAC 时用 `alac` | `aac` 是；`alac` 否（无损） |
 | `.opus` | `libopus` | 是 |
 | `.ogg` | `libvorbis` | 是 |
 | `.flac` | `flac` | **否**（无损） |
 | `.wav` | `pcm_s16le` | **否**（无压缩） |
 
-- `-b:a 192k`：有损编码下音质与体积的常见平衡点。用户要求"音质优先"可提到 256k/320k，"体积优先"可降到 128k；无损编码器不接受该参数，须省略，否则 ffmpeg 会忽略或报错
+`<目标码率>` 依据 Step 4 查得的源 `bit_rate` 决定，**不得固定填 192k**：
+
+| 情形 | 目标码率取值 |
+|---|---|
+| 源为无损（PCM/FLAC/ALAC） | 取 192k（常见平衡点）；用户要求"音质优先"可取 256k/320k |
+| 源为有损且码率高于 192k | 取 192k 或与源相当的值 |
+| 源为有损且码率低于 192k | 取不高于源码率的值——调高目标码率不会让音质变好，只会让体积增大 |
+
+- `-b:a <目标码率>`：取值见上表。无损编码器（`flac`/`pcm_s16le`/`alac`）应省略该参数——传入既不报错也不告警，属完全无效（实测带与不带产物 MD5 相同），但保留它会误导读者以为码率对无损编码有意义
 - `-ar <采样率>`：仅在用户明确要求时传入。不传则沿用源采样率——**不要主动"标准化"到 44100**，那是不必要的重采样，会引入额外失真
 - `-ac <声道数>`：仅在用户明确要求时传入。`-ac 1` 缩混为单声道会永久丢失立体声信息
-- `-c:a copy`：重封装模式专用，不解码不重编码，无音质损失
+- `-c:a copy`：重封装模式专用，不解码不重编码，音频数据无损；但容器级元数据可能丢失（见 Step 4 末行的 gapless 说明）
 - `-y`：覆盖策略见 `../media-ffmpeg-common/PREFLIGHT.md` 的「覆盖策略」，不得省略
+
 
 参数说明见 `../media-ffmpeg-common/CLI-REFERENCE.md`。
 
@@ -112,9 +130,10 @@ ffmpeg -y -i <input> -c:a <目标编码器> -b:a 192k -ar 44100 -ac 2 <output>
 |---|---|---|
 | `Unknown encoder 'libmp3lame'` / `'libopus'` / `'libvorbis'` | 当前 ffmpeg 构建未包含该音频编码器 | 执行 `ffmpeg -encoders` 确认可用编码器，提示用户更换含完整编码器的发行版，或改选构建已支持的输出格式 |
 | 重封装模式报 `Could not find tag for codec` | Step 4 误判为"编码相同仅容器不同"，实际目标容器装不下该编码 | 回到 Step 4 复核真实编码与目标扩展名的对应关系，改走重新编码模式 |
-| 转换后文件体积反而变大 | 有损→无损（如 MP3→FLAC），或有损→有损时目标码率高于源码率 | 属预期现象，说明 Step 4 已告知的权衡；建议改回与源相当或更低的码率，或保留原格式 |
-| 输入是视频文件而非纯音频 | 用户混淆了本 skill 与 media-audio-extract 的职责 | 明确告知从视频提取音轨应调用 `media-audio-extract`，本 skill 只处理纯音频到纯音频，不代为兼容 |
-| 转换后音质明显下降但参数看起来正常 | 源文件本就是低码率有损编码，二次编码放大了失真 | 复核 Step 4 查得的源编码与码率，说明这是二次有损的固有结果，无法通过调高目标码率挽回 |
+| 转换后文件体积反而变大 | 三种情形：有损→无损（如 MP3→FLAC）；有损→有损且目标码率高于源码率；无损→有损但源是 FLAC/ALAC（本身已压缩，实测 FLAC 44649 B → AAC 73394 B） | 属预期现象，说明 Step 4 已告知的权衡；建议改回与源相当或更低的码率，或保留原格式 |
+| 输入是视频文件而非纯音频 | 用户混淆了本 skill 与 media-audio-extract 的职责。正常情况下 Step 4 的 `codec_type=video` 判定已拦截，出现该情况说明探测被跳过或加了 `-select_streams a:0` | 明确告知从视频提取音轨应调用 `media-audio-extract`，本 skill 只处理纯音频到纯音频，不代为兼容。同时回头补做 Step 4 的视频流判定 |
+| 重封装后单曲播放正常，但整张专辑连续播放时曲目之间出现细微间隙 | `.m4a`→`.aac`（ADTS）丢失了容器级 gapless 播放元数据，实测产物比源多 1844 个采样（含 1024 采样编码器预热），起始偏移约 23 ms | 音频数据本身无损，属容器能力差异而非转换错误。需要 gapless 时保留 `.m4a` 容器不做转换 |
+| 转换后音质下降，但参数看起来正常 | 源文件本就是低码率有损编码，再压一次使失真叠加 | 复核 Step 4 查得的源编码与码率，说明这是有损→有损的固有结果，无法通过调高目标码率挽回（调高只会增大体积）。注意据实说明，不要夸大为"损失远大于首次压缩" |
 
 本 skill 输入输出都是纯音频，与视频处理链无交集，不参与 `../media-ffmpeg-common/REFERENCE.md` "组合请求处理约定"中的顺序编排。
 
@@ -124,10 +143,16 @@ ffmpeg -y -i <input> -c:a <目标编码器> -b:a 192k -ar 44100 -ac 2 <output>
 
 - 不要依据扩展名推断源编码——必须先 ffprobe 查真实编码，`.m4a` 里可能是 AAC 也可能是 ALAC，两者的转换性质完全不同（Step 4）
 - 不要跳过 Step 4 的损失类型告知直接执行转换——用户有权在动手前知道这次是首次有损、二次有损还是无意义放大
-- 不要在"有损→有损"场景下不加说明就转换——这是本 skill 最容易造成用户不满的场景（音质降了、体积还没小）
+- 不要在"有损→有损"场景下不加说明就转换——这是本 skill 最容易造成用户不满的场景（音质降了、体积可能还变大）
+- 不要声称二次有损的"损失比首次压缩明显"——实测二者信噪比仅相差约 0.5 dB（30.47 vs 30.01），正确说法是"只会更差、不会更好"。夸大与掩盖同样是误导（Step 4）
+- 不要给出"无损→有损体积会明显减小"这类方向固定的结论——只对 PCM（WAV）源成立，FLAC/ALAC 源本身已压缩，转有损后可能反而增大（Step 4）
+- 不要把 `.m4a` 一律推定为 AAC——它既可装 AAC 也可装 ALAC，用户指明 ALAC 时属"无损→无损"，误判会让告知内容和编码器双双出错（Step 4 判定要点）
+- 不要固定用 `-b:a 192k`——须依据 Step 4 查得的源码率取值，源码率低于目标码率时只会增大体积而音质无提升（Step 5）
+- 不要给 Step 4 的探测命令省略 `bit_rate` 或加 `-select_streams a:0`——前者会让体积/码率判断退化为猜测，后者会看不到视频流而放行视频输入（Step 4）
+- 不要只告知"重封装无音质损失"就结束——`.m4a`→`.aac` 还会丢失 gapless 播放元数据（约 23 ms 起始偏移），音频数据无损不等于播放体验无差异（Step 4 末行）
 - 不要在"编码相同仅容器不同"时执行重新编码——应走 `-c:a copy` 重封装，避免无谓的二次有损（Step 4 末行）
 - 不要在 ffprobe 查询源编码失败时继续执行，应立即返回错误信息并终止（Step 4）
-- 不要给无损编码器（`flac`/`pcm_s16le`）传 `-b:a`——它们不接受码率参数
+- 不要给无损编码器（`flac`/`pcm_s16le`/`alac`）传 `-b:a`——传入不会报错也不会告警，属完全无效参数（实测产物 MD5 与不传时相同），保留它会误导读者以为码率对无损编码有意义
 - 不要主动"标准化"采样率或声道数——用户未要求时不传 `-ar`/`-ac`，重采样与缩混都是不可逆的信息丢失
-- 不要承接从视频提取音轨的诉求（输入是 `.mp4`/`.mkv` 等视频文件）——那是 `media-audio-extract` 的职责，本 skill 输入必须是纯音频
+- 不要承接从视频提取音轨的诉求（输入是 `.mp4`/`.mkv` 等视频文件）——那是 `media-audio-extract` 的职责，Step 4 的 `codec_type=video` 判定会硬拦截，本 skill 输入必须是纯音频
 - 不要支持视频容器格式转换（如 mp4→mkv）——那是 `media-convert` 的职责

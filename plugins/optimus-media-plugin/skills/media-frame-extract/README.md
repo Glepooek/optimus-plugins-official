@@ -1,6 +1,6 @@
 # media-frame-extract
 
-> 版本：1.0.0 | 分类：tool
+> 版本：1.0.1 | 分类：tool
 
 从视频中提取静态图片。单帧模式取指定时间点的一帧（封面图），多帧等间隔模式每 N 秒截一张（预览序列）。
 
@@ -34,14 +34,19 @@ Step 0-3  前置校验（引用 media-ffmpeg-common/PREFLIGHT.md）
           （输出路径校验含：父目录可写 + 输出路径 ≠ 输入路径）
           按模式区分必需信息；未给时间点时不擅自取 00:00:00
    ↓
-Step 4  执行前校验：ffprobe 查总时长（失败则文件损坏，终止）
+Step 4  执行前校验：一条 ffprobe 同时查 codec_type 与 duration
+         ├─ 无 codec_type=video 行 → 不含视频流，硬约束终止
+         │   （纯音频同样 exit=0 且有 duration，不能只看退出码或时长）
          ├─ 单帧模式：时间点 ≤ 总时长？超出 → 硬约束终止
-         └─ 多帧模式：预估张数 = 总时长 ÷ 间隔
+         │   （超范围时 ffmpeg exit=0 却不产文件，必须预检）
+         └─ 多帧模式：预估张数 = ceil(总时长 ÷ 间隔)
               └─ > 200 张 🔴 CHECKPOINT 告知预估数量，确认后继续
    ↓
 Step 5  执行提取（只有一种 -ss 写法，不设双模式）
-         ├─ 单帧：-ss <时间点> -i input -frames:v 1 out.png
+         ├─ 单帧：-ss <时间点> -i input -frames:v 1 -update 1 out.png
+         │   （两参数必须成对：只带 -update 1 会静默产出末帧）
          └─ 多帧：-i input -vf fps=1/<间隔> out_%03d.png
+         执行后确认输出文件确实存在，不仅凭退出码判定成功
 ```
 
 ## 产出物数据流
@@ -62,6 +67,6 @@ Step 5  执行提取（只有一种 -ss 写法，不设双模式）
                                               media-parameters.md §2（帧率）
 ```
 
-不被其他 skill 调度。Step 4 直接执行单字段 ffprobe 探测命令查询总时长，不调用 media-analyze 的全量 JSON 展示型命令。不参与组合请求编排。
+不被其他 skill 调度。Step 4 直接执行一条 ffprobe 探测命令取 `codec_type` 与 `duration` 两个字段，不调用 media-analyze 的全量 JSON 展示型命令。不参与组合请求编排。
 
 与 media-play 的界线：media-play 是实时预览（不产出文件），本 skill 是导出静态图片（产出文件）。用户说"看一下这个视频"走 media-play，说"截一张图"走本 skill。

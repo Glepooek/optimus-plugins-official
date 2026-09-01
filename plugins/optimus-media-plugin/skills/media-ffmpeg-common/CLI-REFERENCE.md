@@ -22,13 +22,15 @@
 | `-pass <1\|2>` | 两轮编码（two-pass）的轮次标记；第一轮分析画面复杂度分布，第二轮据此精确分配码率 | media-compress 目标码率模式 |
 | `-an` | 禁用音频流，仅处理视频；用于两轮编码第一轮不产出音频以节省分析时间 | media-compress 目标码率模式第一轮 |
 | `-vn` | 禁用视频流，仅保留音频；与 `-an` 互为镜像 | media-audio-extract（丢弃画面只取音轨，不可省略） |
-| `-c:a copy` | 音频流复制，不解码不重编码，无音质损失 | media-audio-extract 默认模式、media-audio-convert 重封装模式 |
-| `-b:a <码率>` | 音频目标码率，如 `192k`；仅有损编码器接受，`flac`/`pcm_s16le` 等无损编码器须省略 | media-compress（固定 128k）、media-audio-extract / media-audio-convert 重新编码模式（默认 192k） |
+| `-c:a copy` | 音频流复制，不解码不重编码，音频数据无损；但容器级元数据可能丢失（如 `.m4a`→`.aac` 会丢 gapless 播放信息） | media-audio-extract 默认模式、media-audio-convert 重封装模式 |
+| `-b:a <码率>` | 音频目标码率，如 `192k`。无损编码器（`flac`/`pcm_s16le`/`alac`）应省略——传入不报错也不告警，属完全无效参数 | media-compress（固定 128k）、media-audio-extract / media-audio-convert 重新编码模式（依源码率取值，不固定 192k） |
+| `-map 0:a:<索引>` | 显式指定处理第 N 条音频流（按索引，`0` 为第一条）。不带 `-map` 时 ffmpeg 按流的 disposition 挑"最佳"轨，与按索引取的 `a:0` 未必是同一条 | media-audio-extract（不可省略，保证探测对象与提取对象一致） |
 | `-ar <采样率>` | 音频采样率，如 `44100`；不传则沿用源文件采样率，不要主动"标准化" | media-audio-convert（仅用户明确要求时） |
 | `-ac <声道数>` | 音频声道数，`1` 为单声道、`2` 为立体声；缩混不可逆 | media-audio-convert（仅用户明确要求时） |
-| `-frames:v <帧数>` | 输出指定帧数后停止；截图取 `1`。省略会从起点一直导出到视频结尾 | media-frame-extract 单帧模式（不可省略） |
-| `-vf fps=1/<秒数>` | 滤镜层按固定时间间隔抽帧，如 `fps=1/60` 为每 60 秒一帧。与 `-r`（改变输出视频帧率）用途不同 | media-frame-extract 多帧等间隔模式 |
-| `%03d` | 输出文件名中的序号占位符，产出 `_001`/`_002` 递增编号；多帧输出省略会导致每帧覆盖同一文件 | media-frame-extract 多帧等间隔模式（不可省略） |
+| `-frames:v <帧数>` | 输出指定帧数后停止；截图取 `1`。必须与 `-update 1` 成对使用：只带 `-update 1` 而漏掉本参数，会一路解码到结尾并把输出覆盖成末帧（退出码 0、无报错）；两者都漏则写第二帧时报错中断 | media-frame-extract 单帧模式（不可省略） |
+| `-update 1` | 允许反复写入同一个输出文件名，用于产出单张图片。不带它时 image2 muxer 每次都会打印"文件名不含序号 pattern"的警告——产出正确但易被误判为执行失败 | media-frame-extract 单帧模式（不可省略，与 `-frames:v 1` 成对） |
+| `-vf fps=1/<秒数>` | 滤镜层按固定时间间隔抽帧，如 `fps=1/60` 为每 60 秒一帧。与 `-r`（在输出端丢帧改变帧率）机制不同，产出张数也不同——同一 5 秒视频 `-r 0.5` 得 4 张、`-vf fps=1/2` 得 3 张 | media-frame-extract 多帧等间隔模式 |
+| `%03d` | 输出文件名中的序号占位符，产出 `_001`/`_002` 递增编号。多帧输出省略会让 image2 muxer 在写第二张时报 `Error muxing a packet: Invalid argument` 并中断，残留文件是序列**第一张**（不是最后一张） | media-frame-extract 多帧等间隔模式（不可省略） |
 
 ## 概念解释
 

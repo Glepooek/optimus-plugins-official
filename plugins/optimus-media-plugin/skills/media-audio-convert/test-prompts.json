@@ -2,16 +2,31 @@
   {
     "id": 1,
     "prompt": "把 D:\\music\\song.flac 转成 mp3，输出到 D:\\music\\song.mp3",
-    "expected": "信息齐全 → Step 0-3 前置校验（引用 PREFLIGHT.md）→ Step 4 ffprobe 查真实编码为 flac（无损），目标 mp3（有损），判定为「无损→有损，首次有损」→ 🔴 CHECKPOINT 告知会产生首次有损压缩且不可逆、建议保留原文件、体积会明显减小 → 用户确认后 Step 5 执行 ffmpeg -y -i input -c:a libmp3lame -b:a 192k output"
+    "expected": "信息齐全 → Step 0-3 前置校验（引用 PREFLIGHT.md）→ Step 4 一条 ffprobe 查真实编码与码率，确认无 codec_type=video、编码为 flac（无损），目标 mp3（有损），判定为「无损→有损，首次有损」→ 🔴 CHECKPOINT 告知会产生首次有损压缩且不可逆、建议保留原文件；体积走向须对照查得的源码率据实说明，不得直接断言「会明显减小」——FLAC 本身已压缩，源码率不高时转有损可能反而增大（实测 44649 B 的 FLAC 转 AAC 得 73394 B）→ 用户确认后 Step 5 执行 ffmpeg -y -i input -c:a libmp3lame -b:a <据源码率取值> output"
   },
   {
     "id": 2,
     "prompt": "把 D:\\audio\\voice.m4a 转成 mp3 存到 D:\\audio\\voice.mp3",
-    "expected": "关键：不得依据 .m4a 扩展名推断编码。Step 4 必须 ffprobe 查真实编码——若为 aac，判定为「有损→有损，二次有损」，🔴 CHECKPOINT 必须告知音质损失比首次压缩明显（在已丢失细节上再压一次）且体积未必更小，询问是否确有必要或保留原格式；若查得为 alac，则判定为「无损→有损，首次有损」，告知内容完全不同"
+    "expected": "关键：不得依据 .m4a 扩展名推断编码。Step 4 必须查真实编码——若为 aac，判定为「有损→有损」，🔴 CHECKPOINT 须说明结果只会低于现有文件、不存在变好的可能，并对比源码率与目标码率分别说明质量与体积走向，询问是否确有必要或保留原格式；不得声称「损失比首次压缩明显」（实测二者信噪比仅差 0.46 dB）。若查得为 alac，则判定为「无损→有损，首次有损」，告知内容完全不同"
   },
   {
     "id": 3,
     "prompt": "我这个 m4a 文件想换成 aac 后缀，帮我转一下",
-    "expected": "Step 4 ffprobe 查得真实编码为 aac，目标 .aac 也是 aac → 命中「编码相同，仅容器不同」→ 🔴 CHECKPOINT 告知无需转码，可用流复制无损换容器，避免无谓二次有损 → Step 5 走重封装模式 ffmpeg -y -i input -c:a copy output，不得执行重新编码"
+    "expected": "Step 4 查得真实编码为 aac，目标 .aac 也是 aac → 命中「编码相同，仅容器不同」→ 🔴 CHECKPOINT 告知无需转码、可用流复制无损换容器，同时须说明音频数据虽无损但会丢失容器级 gapless 播放元数据（实测多出 1844 个采样、起始偏移约 23 ms），整张专辑连续播放时曲目间会有细微间隙 → Step 5 走重封装模式 ffmpeg -y -i input -c:a copy output，不得执行重新编码"
+  },
+  {
+    "id": 4,
+    "prompt": "把 D:\\music\\raw.wav 转成 ALAC，存到 D:\\music\\song.m4a",
+    "expected": "回归测试（源自 2026-09-01 基线盲区）：用户明确指定了编码（ALAC）但用了通用容器扩展名。Step 4 的判定要点要求以用户所说的编码为准，本次应判为「无损→无损」而非「无损→有损」——告知无音质损失、PCM 源转 ALAC 体积会减小，Step 5 用 -c:a alac 且省略 -b:a。不得因扩展名是 .m4a 就推定 AAC 并播报首次有损的 CHECKPOINT"
+  },
+  {
+    "id": 5,
+    "prompt": "把 D:\\video\\clip.mp4 转成 mp3",
+    "expected": "回归测试（源自 2026-09-01 基线盲区）：Step 4 的流列表中出现 codec_type=video → 硬约束终止，告知本 skill 只处理纯音频到纯音频，从视频提取音轨应调用 media-audio-extract。判据必须是该行是否存在——视频里的音频流同样能正常查出编码与码率，不能只看音频信息；若放行，Step 5 会静默丢弃视频流而用户无从知晓"
+  },
+  {
+    "id": 6,
+    "prompt": "把 D:\\music\\lowrate.mp3（96kbps）转成 aac，我想要 320k 的高音质",
+    "expected": "回归测试（源自 2026-09-01 基线盲区）：Step 4 已包含 bit_rate，须查得源为 96k 后据实说明两个方向——质量上不可能因目标码率更高而变好（已丢失的细节无法恢复，只会在此基础上再压一次），体积上反而会明显增大。Step 5 的 -b:a 应按「源为有损且码率低于 192k → 取不高于源码率的值」这一档取值，不得照用户要求填 320k 也不得固定填 192k"
   }
 ]
