@@ -1,5 +1,7 @@
 # 环境检测与通用报错处理
 
+本文承载**执行中**才会暴露的 ffmpeg 报错处理；**执行前**的前置校验流程（Step 0-3）与其失败场景见 `PREFLIGHT.md`，命令行参数速查见 `CLI-REFERENCE.md`，安装指引见 `INSTALL.md`。
+
 ## 环境检测
 
 执行任何 media-* skill 的命令前，先确认 ffmpeg/ffprobe 已安装：
@@ -17,7 +19,8 @@ ffmpeg -version && ffprobe -version
 | `Unknown encoder 'libx264'` | ffmpeg 编译时未包含该编码器 | 执行 `ffmpeg -encoders \| grep x264` 确认，提示用户更换包含完整编码器的发行版（如 Windows 用 gyan.dev 的 full 构建） |
 | `Permission denied` | 输出路径无写权限，或目标文件正被其他程序（如播放器）占用 | 确认输出目录存在且当前用户有写权限；关闭占用该文件的程序后重试 |
 | `Invalid data found when processing input` | 输入文件已损坏，或格式/编码不受当前 ffmpeg 构建支持 | 先用 media-analyze 对应的 `ffprobe` 命令探测确认文件是否可读 |
-| 命令挂起无输出，等待用户输入 | ffmpeg 检测到输出文件已存在，交互式询问是否覆盖 | 命令中加入 `-y`（覆盖）或 `-n`（不覆盖，存在则跳过） |
+| 命令挂起无输出等待输入，或输出 `Not overwriting - exiting` 后直接结束 | 命令漏了 `-y`，ffmpeg 检测到输出文件已存在，交互式询问是否覆盖；Claude 非交互执行下 stdin 不可用，遂阻塞或读到 EOF 后退出 | 补上 `-y`。各 skill 的命令模板本应已带 `-y`，出现此现象说明模板被改动时漏掉了该参数，覆盖策略见 `PREFLIGHT.md` 的「覆盖策略」 |
+| 输出文件损坏、体积异常为 0，或源文件被破坏 | 输出路径与输入路径指向同一文件，ffmpeg 边读源文件边向同一路径写入 | 硬约束，见 `PREFLIGHT.md` Step 3 ②：输出路径不得与输入路径相同。原始数据不可恢复，只能改用其他输出路径重做 |
 
 ## 组合请求处理约定
 
@@ -26,6 +29,21 @@ ffmpeg -version && ffprobe -version
 ### 判定
 
 用户诉求的关键词命中 ≥2 个 skill 的触发词范围（分辨率转换/压缩体积/片段截取/帧率转换/格式转换），即视为组合请求。media-analyze 属于只读查询、media-play 属于只读播放，二者均不参与本约定的顺序编排，可随时按需先行或穿插调用（media-analyze 确认原始参数，media-play 预览效果）。
+
+### 不参与编排的 skill（及其原因）
+
+编排顺序只覆盖 5 个"视频进、视频出"的 skill。其余 6 个不参与，原因分三类——不是遗漏：
+
+| skill | 不参与的原因 |
+|---|---|
+| media-analyze | 只读查询，不产出文件，可随时先行或穿插调用 |
+| media-play | 只读播放，不产出文件，可随时调用以预览效果 |
+| media-download | 输入是 URL 而非本地文件，下载完成即终态，不自动衔接后续处理 |
+| media-audio-extract | **产出物类型改变**：产出纯音频，无法再进入视频处理链 |
+| media-frame-extract | **产出物类型改变**：产出图片，无法再进入视频处理链 |
+| media-audio-convert | 输入输出均为纯音频，与视频处理链无交集 |
+
+后三者是「终态操作」：产出物不再是可继续加工的视频，因此不存在"接在编排链某一环之后"的语义。用户提出"提取音频后再压缩"这类诉求时，应说明音频压缩属于 media-audio-convert 的码率调整，而非视频编排链里的 media-compress。
 
 ### 执行顺序（固定，不随用户描述顺序改变）
 

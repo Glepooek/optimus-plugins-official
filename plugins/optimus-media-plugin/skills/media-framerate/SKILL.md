@@ -2,7 +2,7 @@
 name: media-framerate
 description: Use when user wants to change a video's frame rate — 帧率转换、改帧率、转帧率、60fps转30fps、提高帧率、降低帧率、补帧。Not for resolution changes, compression, trimming, or codec/format inspection.
 metadata:
-  version: "1.0.3"
+  version: "1.0.4"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -17,28 +17,11 @@ allowed-tools: Bash
 
 ## 使用方法
 
-### Step 0：需求预告
+### Step 0-3：前置校验
 
-处理用户请求的第一步：对比本 skill 需要的信息与用户在触发语句或上下文中已提供的信息，一次性列出缺失项统一询问，不逐个 Step 反应式追问。
+执行 `../media-ffmpeg-common/PREFLIGHT.md` 的 Step 0-3 完整流程：需求预告 → 确认环境 → 校验输入文件 → 确认输出路径（含父目录可写、输出路径不得与输入路径相同两项校验）。
 
-- 需要比对的信息：输入文件路径、目标帧率、输出文件路径——用户已明确提供的项不重复询问，若这三项已经齐全，跳过本步骤直接进入 Step 1
-- ffmpeg 依赖是否安装**不参与本环节比对**：这是系统状态而非用户可主动提供的信息，不作为缺失项询问用户，也不影响是否跳过本步骤的判断；依赖状态由 Step 1 实际检测
-
-本步骤不做实际系统调用，仅做信息是否齐全的静态比对。
-
-### Step 1：确认环境
-
-执行 `../media-ffmpeg-common/REFERENCE.md` 中的环境检测命令，确认 `ffmpeg` 可用。检查失败（命令不存在）：引导用户参考 `../media-ffmpeg-common/INSTALL.md` 安装，返回错误信息并终止任务，不进入后续步骤。
-
-### Step 2：校验输入文件
-
-检查用户提供的输入文件路径是否存在。不存在时返回错误信息告知用户核对路径，终止任务，不进入后续步骤。
-
-### Step 3：确认输出路径
-
-🔴 CHECKPOINT：向用户确认或根据上下文给出明确的输出文件路径，不得省略直接执行；未确认前不得进入 Step 4。
-
-确认路径后校验其父目录是否存在且可写。父目录不存在或无写权限时返回错误信息告知用户，终止任务；输出文件本身此刻不存在属正常状态，不作为失败条件。
+本 skill 的必需信息：**输入文件路径、目标帧率、输出文件路径**。转换模式（简单复制/运动插帧）有默认取值（简单复制），不属于必需信息，缺失不阻塞。
 
 ### Step 4：执行前校验
 
@@ -54,45 +37,38 @@ allowed-tools: Bash
 **默认模式（简单复制/丢帧）：**
 
 ```bash
-ffmpeg -i <input> -r <目标帧率> -c:v libx264 -crf 18 -c:a copy <output>
+ffmpeg -y -i <input> -r <目标帧率> -c:v libx264 -crf 18 -c:a copy <output>
 ```
 
 **运动插帧模式（用户选择，仅提高帧率时可用）：**
 
 ```bash
-ffmpeg -i <input> -filter:v "minterpolate=fps=<目标帧率>" -c:v libx264 -crf 18 -c:a copy <output>
+ffmpeg -y -i <input> -filter:v "minterpolate=fps=<目标帧率>" -c:v libx264 -crf 18 -c:a copy <output>
 ```
 
 - `-r <目标帧率>`：设定输出帧率，高于原始帧率时机械复制已有帧凑数，低于原始帧率时均匀丢帧
 - `minterpolate=fps=<目标帧率>`：运动补偿插帧滤镜，通过分析相邻帧的运动矢量生成中间帧，仅用于提高帧率场景
 - `-crf 18`：帧率转换本身不应引入额外画质损失，取"画质优先"档位，与 media-trim 精确模式的画质取值保持一致
 - `-c:a copy`：帧率转换不涉及音频处理，音频流直接透传
+- `-y`：覆盖策略见 `../media-ffmpeg-common/PREFLIGHT.md` 的「覆盖策略」，不得省略
 
 参数说明见 `../media-ffmpeg-common/CLI-REFERENCE.md`。
 
 ## 失败处理
 
-参见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。以下是本 skill 特有的失败场景，按"触发条件 / 一线修复 / 仍失败兜底"三段式列出：
+前置校验（Step 0-3）的失败场景、磁盘空间不足与编码器错误等通用场景见 `../media-ffmpeg-common/PREFLIGHT.md` 的「通用失败处理」；执行中暴露的 ffmpeg 报错见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。以下是本 skill 特有的失败场景，按"触发条件 / 一线修复 / 仍失败兜底"三段式列出：
 
 | 触发条件 | 一线修复 | 仍失败兜底 |
 |---|---|---|
-| Step 1：`ffmpeg`/`ffprobe` 命令不存在 | 引导用户参考 `../media-ffmpeg-common/INSTALL.md` 安装，安装后需重新打开终端使 PATH 生效 | 已按文档安装仍报命令不存在：提示检查 PATH 环境变量是否真正写入生效，或改用完整可执行文件路径调用 |
-| Step 2：输入文件路径不存在 | 提示用户核对路径拼写、盘符、多余引号或转义字符 | 路径含中文/空格导致解析异常：改用不含特殊字符的路径，或确认终端编码设置正确 |
-| Step 3：输出目录不存在 | 提示用户确认目录路径或改用已存在的目录 | 用户坚持要求写入不存在的目录：明确询问是否需要 Claude 代为创建该目录，不得未经确认擅自 `mkdir` |
-| Step 3：输出目录存在但无写权限 | 提示用户更换有写权限的输出目录 | 权限问题实为目标文件被其他程序占用（非目录权限本身）：参考 `../media-ffmpeg-common/REFERENCE.md` 的 `Permission denied` 处理建议 |
 | Step 4：ffprobe 查询原始帧率失败或返回空 | 该异常与 media-analyze 判定文件损坏/格式不支持为同一类问题，先按 media-analyze 的失败处理排查该文件是否可读 | media-analyze 判定文件确实无法解析：终止本次帧率转换任务，不得跳过帧率判断直接假设"提高"或"降低"场景 |
-| Step 5：转换命令报编码器错误（如 `Unknown encoder`） | 参见 `../media-ffmpeg-common/REFERENCE.md` 的 `Unknown encoder 'libx264'` 处理建议，确认 ffmpeg 构建是否包含该编码器 | 更换完整编码器构建后仍报同一错误：文件本身的视频流可能已损坏，改用 Step 4 的 ffprobe 结果复核该流是否可正常读取 |
-| Step 5：转换命令因磁盘空间不足中断 | 提示用户清理输出磁盘空间，或改用其他有足够剩余空间的磁盘作为输出路径 | 清理后仍中断：改用 `-crf` 更高（画质更低、体积更小）的档位重试，或换用更大容量的存储设备 |
 | Step 5：运动插帧模式下命令长时间无输出 | 告知用户 `minterpolate` 计算量远高于普通编码，处理时长可能是简单模式的数倍到数十倍，属正常现象 | 用户明确表示无法接受该等待时长：改用简单复制模式重新执行 Step 5 |
 | Step 5：运动插帧结果出现画面扭曲/伪影 | 说明运动矢量估算在高速运动、遮挡、场景切换处容易失真，属算法固有局限 | 用户要求消除伪影：告知无法通过调参完全消除，需在"改用简单复制模式"与"接受该权衡"之间二选一 |
 
-若用户同时提出分辨率转换或压缩体积诉求，不要在本 skill 命令中叠加 `-vf scale`/`-crf` 等参数，应分别调用对应 skill；组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"。
+若用户同时提出分辨率转换或压缩体积诉求，不要在本 skill 命令中叠加 `-vf scale`/`-preset` 等参数，应分别调用对应 skill；组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"。
 
 ## 不要做什么
 
-- 不要在 ffmpeg 环境检测失败时继续执行，应立即返回错误信息并终止（Step 1）
-- 不要在输入文件路径不存在时继续执行，应立即返回错误信息并终止（Step 2）
-- 不要在用户未确认输出路径前执行命令（Step 3 的检查点）
-- 不要在输出目录不存在或不可写时继续执行，应立即返回错误信息并终止（Step 3）
+前置校验相关的通用反例见 `../media-ffmpeg-common/PREFLIGHT.md` 的「不要做什么（前置校验部分）」。以下是本 skill 特有的反例：
+
 - 不要在提高帧率场景下不加说明就默认使用简单复制模式——应先告知用户该模式不会提升流畅度，并询问是否改用运动插帧（Step 4 的检查点）
-- 不要在本 skill 的命令中叠加 `-vf scale`/`-crf` 等参数——用户同时提出分辨率转换或压缩体积诉求时，应另行调用 `media-resize`/`media-compress` skill 处理，组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"
+- 不要把命令中固定的 `-crf 18` 当作可调的压缩旋钮——它是本 skill 的固定画质档位，不是压缩手段；用户提出压缩体积诉求时应另行调用 `media-compress`，不在本 skill 命令中叠加 `-preset` 等压缩参数，也不叠加 `-vf scale` 分辨率参数（分辨率诉求调 `media-resize`），组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"

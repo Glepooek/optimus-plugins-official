@@ -2,7 +2,7 @@
 name: media-resize
 description: Use when user wants to change a video's resolution — 分辨率转换、1080p转720p、改分辨率、缩放视频、视频转清晰度。Not for compression at the same resolution, trimming, or codec/format analysis.
 metadata:
-  version: "1.2.3"
+  version: "1.2.4"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -13,32 +13,15 @@ allowed-tools: Bash
 
 ## 功能概述
 
-将单个视频文件转换到指定分辨率（如 1080p → 720p），音频流直接透传不重新编码。仅支持单文件，输出路径必须由用户或 Claude 显式指定，不做隐式命名推导。
+将单个视频文件转换到指定分辨率（如 1080p → 720p）。`-vf scale` 缩放必然触发视频流重新编码（取"画质优先"档位 CRF 18），音频流直接透传不重新编码。仅支持单文件，输出路径必须由用户或 Claude 显式指定，不做隐式命名推导。
 
 ## 使用方法
 
-### Step 0：需求预告
+### Step 0-3：前置校验
 
-处理用户请求的第一步：对比本 skill 需要的信息与用户在触发语句或上下文中已提供的信息，一次性列出缺失项统一询问，不逐个 Step 反应式追问。
+执行 `../media-ffmpeg-common/PREFLIGHT.md` 的 Step 0-3 完整流程：需求预告 → 确认环境 → 校验输入文件 → 确认输出路径（含父目录可写、输出路径不得与输入路径相同两项校验）。
 
-- 需要比对的信息：输入文件路径、目标分辨率、输出文件路径——用户已明确提供的项不重复询问，若这三项已经齐全，跳过本步骤直接进入 Step 1
-- ffmpeg 依赖是否安装**不参与本环节比对**：这是系统状态而非用户可主动提供的信息，不作为缺失项询问用户，也不影响"是否跳过本步骤"的判断；依赖状态由 Step 1 实际检测，需要时可提示"执行时会自动检测 ffmpeg 环境"，但不构成阻塞
-
-本步骤不做实际系统调用（不检测 ffmpeg 是否真的安装、不检测文件是否真的存在），仅做信息是否齐全的静态比对，实际检测由 Step 1-4 完成。
-
-### Step 1：确认环境
-
-执行 `../media-ffmpeg-common/REFERENCE.md` 中的环境检测命令，确认 `ffmpeg` 可用。检查失败（命令不存在）：引导用户参考 `../media-ffmpeg-common/INSTALL.md` 安装，返回错误信息并终止任务，不进入后续步骤。
-
-### Step 2：校验输入文件
-
-检查用户提供的输入文件路径是否存在。不存在时返回错误信息告知用户核对路径，终止任务，不进入后续步骤。
-
-### Step 3：确认输出路径
-
-🔴 CHECKPOINT：向用户确认或由 Claude 根据上下文给出明确的输出文件路径，不得省略 `-o`/输出参数直接执行；未确认前不得进入 Step 4。
-
-确认路径后校验其父目录是否存在且可写。父目录不存在或无写权限时返回错误信息告知用户，终止任务；输出文件本身此刻不存在属正常状态，不作为失败条件。
+本 skill 的必需信息：**输入文件路径、目标分辨率、输出文件路径**。
 
 ### Step 4：执行前校验
 
@@ -56,19 +39,21 @@ ffprobe 查询成功后，🔴 CHECKPOINT：判断以下两种情况——命中
 ### Step 5：执行转换
 
 ```bash
-ffmpeg -i <input> -vf scale=-2:<目标高度> -c:a copy <output>
+ffmpeg -y -i <input> -vf scale=-2:<目标高度> -c:v libx264 -crf 18 -c:a copy <output>
 ```
 
 - `-2` 表示按另一边等比例自动计算并保证结果为偶数，避免用户口头描述"转 720p"时还需手动换算对应宽度
 - 常见目标：1080p→720p 用 `scale=-2:720`；720p→480p 用 `scale=-2:480`
 - 若用户直接给出目标宽高（而非标准分辨率名称），改为 `scale=<宽>:<高>`
+- `-c:v libx264 -crf 18`：`-vf scale` 必然触发视频重新编码，显式指定编码器与画质档位，不依赖 ffmpeg 按输出容器推断默认值（输出为 `.mkv` 等容器时默认编码器可能并非 libx264）；`-crf 18` 取"画质优先"档位，与 media-framerate、media-trim 精确模式、media-convert 转码模式的取值保持一致
 - `-c:a copy`：分辨率转换不涉及音频处理，音频流直接透传，避免不必要的有损重新编码
+- `-y`：覆盖策略见 `../media-ffmpeg-common/PREFLIGHT.md` 的「覆盖策略」，不得省略
 
 参数说明见 `../media-ffmpeg-common/CLI-REFERENCE.md`。
 
 ## 失败处理
 
-参见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。以下是本 skill 特有的失败场景：
+前置校验（Step 0-3）的失败场景与通用 ffmpeg 报错见 `../media-ffmpeg-common/PREFLIGHT.md` 的「通用失败处理」与 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。以下是本 skill 特有的失败场景：
 
 | 触发条件 | 一线修复 | 仍失败兜底 |
 |---|---|---|
@@ -76,12 +61,11 @@ ffmpeg -i <input> -vf scale=-2:<目标高度> -c:a copy <output>
 
 ## 不要做什么
 
-- 不要在 ffmpeg 环境检测失败时继续执行，应立即返回错误信息并终止（Step 1）
-- 不要在输入文件路径不存在时继续执行，应立即返回错误信息并终止（Step 2）
-- 不要在用户未确认输出路径前执行命令（Step 3 的检查点）
-- 不要在输出目录不存在或不可写时继续执行，应立即返回错误信息并终止（Step 3）
+前置校验相关的通用反例见 `../media-ffmpeg-common/PREFLIGHT.md` 的「不要做什么（前置校验部分）」。以下是本 skill 特有的反例：
+
 - 不要在 ffprobe 查询原始分辨率本身失败时，误判为放大/宽高比问题并要求用户核对目标分辨率，应告知文件可能已损坏（Step 4）
 - 不要在用户未确认放大画质损失前直接执行放大命令（Step 4 的检查点）
 - 不要在宽高比不一致时静默拉伸画面而不告知用户
 - 不要凭空假设输入文件名或路径——用户描述模糊时应先向用户确认具体文件
-- 不要在本 skill 的命令中叠加 `-crf`/`-preset` 等压缩参数或 `-r`/`minterpolate` 等帧率参数——用户同时提出压缩体积或帧率转换诉求时，应分别另行调用 `media-compress`/`media-framerate` skill 处理，组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"
+- 不要省略命令中的 `-c:v libx264`，让 ffmpeg 按输出容器推断编码器——缩放必然重新编码，编码器与画质档位必须显式指定
+- 不要把命令中固定的 `-crf 18` 当作可调的压缩旋钮——它是本 skill 的固定画质档位，不是压缩手段；用户提出压缩体积诉求时应另行调用 `media-compress`，不在本 skill 命令中叠加 `-preset` 等压缩参数，也不叠加 `-r`/`minterpolate` 等帧率参数（帧率诉求调 `media-framerate`），组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"

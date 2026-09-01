@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "把 D:\\video\\meeting.mp4 里的音频提取出来，保存到 D:\\audio\\meeting.m4a",
+    "expected": "信息齐全（输入/输出路径均已给）→ Step 0-3 前置校验（引用 PREFLIGHT.md，输出路径≠输入路径）→ Step 4 ffprobe 查 a:0 编码，若为 aac 则与 .m4a 兼容，属情况② → Step 5 执行 ffmpeg -y -i input -vn -c:a copy output，无损提取，告知用户未重新编码、音质无损失"
+  },
+  {
+    "id": 2,
+    "prompt": "把这个 mp4 转成 mp3",
+    "expected": "缺输出路径 → Step 0 一次性询问。Step 4 ffprobe 查得源音频为 aac，与 .mp3 不兼容，命中情况③ 🔴 CHECKPOINT：必须告知 aac→mp3 属二次有损压缩、音质损失比首次明显且体积未必更小，并按对照表建议改用 .m4a/.aac 可无损搬运；用户确认后才执行 -c:a libmp3lame -b:a 192k，不得静默转码"
+  },
+  {
+    "id": 3,
+    "prompt": "提取 D:\\clip\\silent.mp4 的音轨到 D:\\clip\\out.wav",
+    "expected": "Step 4 ffprobe 查询 a:0 编码返回空 → 命中情况① 硬约束：源文件无音频流，无法提取，返回错误信息并终止，不进入 Step 5，也不得用户确认绕过；同时不得把该情况误判为文件损坏（后者是 ffprobe 命令本身报错，应按 media-analyze 排查）"
+  }
+]

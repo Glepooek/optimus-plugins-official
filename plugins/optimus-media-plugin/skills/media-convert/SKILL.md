@@ -1,8 +1,8 @@
 ---
 name: media-convert
-description: Use when user wants to change a media file's container format — 格式转换、转成mp4、转成mov、转换容器、mp4转mkv、avi转mp4、换个格式。Not for resolution changes, frame rate changes, compression at the same format, or trimming.
+description: Use when user wants to change a media file's container format — 格式转换、转成mp4、转成mov、转换容器、mp4转mkv、avi转mp4、换个格式。Not for resolution changes, frame rate changes, compression at the same format, trimming, or pure audio format conversion (that is media-audio-convert).
 metadata:
-  version: "1.0.1"
+  version: "1.0.3"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -13,39 +13,26 @@ allowed-tools: Bash
 
 ## 功能概述
 
-将单个音视频文件转换到指定容器格式（如 mp4↔mov↔mkv↔avi）。默认使用流复制（remux，`-c copy`）不重新编码，速度快且无画质损失；仅当目标容器不支持源文件的编码时才降级为重新编码（转码）。仅支持单文件，不支持纯音频格式转换（如 wav→mp3），输出路径必须由用户或 Claude 显式指定。
+将单个音视频文件转换到指定容器格式（如 mp4↔mov↔mkv↔avi）。默认使用流复制（remux，`-c copy`）不重新编码，速度快且无画质损失；仅当目标容器不支持源文件的编码时才降级为重新编码（转码）。仅支持单文件，输出路径必须由用户或 Claude 显式指定。
+
+本 skill 只处理**视频容器**格式转换。纯音频到纯音频的格式转换（如 wav→mp3、flac→aac）由 `media-audio-convert` 承接；从视频中提取音轨由 `media-audio-extract` 承接——两者的输入输出形态与判断逻辑都与本 skill 不同，不在此扩展。
 
 ## 使用方法
 
-### Step 0：需求预告
+### Step 0-3：前置校验
 
-处理用户请求的第一步：对比本 skill 需要的信息与用户在触发语句或上下文中已提供的信息，一次性列出缺失项统一询问，不逐个 Step 反应式追问。
+执行 `../media-ffmpeg-common/PREFLIGHT.md` 的 Step 0-3 完整流程：需求预告 → 确认环境 → 校验输入文件 → 确认输出路径（含父目录可写、输出路径不得与输入路径相同两项校验）。
 
-- 需要比对的信息：输入文件路径、目标格式、输出文件路径——用户已明确提供的项不重复询问，若这三项已经齐全，跳过本步骤直接进入 Step 1
-- ffmpeg 依赖是否安装**不参与本环节比对**：这是系统状态而非用户可主动提供的信息，不作为缺失项询问用户，也不影响是否跳过本步骤的判断；依赖状态由 Step 1 实际检测
+本 skill 的必需信息：**输入文件路径、目标格式、输出文件路径**。
 
-本步骤不做实际系统调用，仅做信息是否齐全的静态比对。
-
-### Step 1：确认环境
-
-执行 `../media-ffmpeg-common/REFERENCE.md` 中的环境检测命令，确认 `ffmpeg` 可用。检查失败（命令不存在）：引导用户参考 `../media-ffmpeg-common/INSTALL.md` 安装，返回错误信息并终止任务，不进入后续步骤。
-
-### Step 2：校验输入文件
-
-检查用户提供的输入文件路径是否存在。不存在时返回错误信息告知用户核对路径，终止任务，不进入后续步骤。
-
-### Step 3：确认输出路径
-
-🔴 CHECKPOINT：向用户确认或根据上下文给出明确的输出文件路径，不得省略直接执行；未确认前不得进入 Step 4。输出文件的扩展名须与用户要求的目标格式一致。
-
-确认路径后校验其父目录是否存在且可写。父目录不存在或无写权限时返回错误信息告知用户，终止任务；输出文件本身此刻不存在属正常状态，不作为失败条件。
+本 skill 在 Step 3 追加要求：输出文件的扩展名须与用户要求的目标格式一致。
 
 ### Step 4：执行转换
 
 **默认先尝试 remux 模式（流复制，不重新编码）：**
 
 ```bash
-ffmpeg -i <input> -c copy <output>
+ffmpeg -y -i <input> -c copy <output>
 ```
 
 - **remux 成功**：任务完成，无画质损失。
@@ -56,17 +43,18 @@ ffmpeg -i <input> -c copy <output>
 **转码模式（remux 失败且用户确认后）：**
 
 ```bash
-ffmpeg -i <input> -c:v libx264 -crf 18 -c:a aac <output>
+ffmpeg -y -i <input> -c:v libx264 -crf 18 -c:a aac <output>
 ```
 
 - `-crf 18`：格式转换本身不应引入明显额外画质损失，取"画质优先"档位，与 media-trim 精确模式、media-framerate 的画质取值保持一致
+- `-y`：覆盖策略见 `../media-ffmpeg-common/PREFLIGHT.md` 的「覆盖策略」，remux 与转码两条命令均不得省略
 - 转码模式若仍失败（非编码兼容性原因，如文件本身损坏），参见"失败处理"
 
 参数说明见 `../media-ffmpeg-common/CLI-REFERENCE.md`。
 
 ## 失败处理
 
-参见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。以下是本 skill 特有的失败场景：
+前置校验（Step 0-3）的失败场景、磁盘空间不足与编码器错误等通用场景见 `../media-ffmpeg-common/PREFLIGHT.md` 的「通用失败处理」；执行中暴露的 ffmpeg 报错见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。以下是本 skill 特有的失败场景：
 
 | 触发条件 | 原因 | 处理建议 |
 |---|---|---|
@@ -77,11 +65,10 @@ ffmpeg -i <input> -c:v libx264 -crf 18 -c:a aac <output>
 
 ## 不要做什么
 
-- 不要在 ffmpeg 环境检测失败时继续执行，应立即返回错误信息并终止（Step 1）
-- 不要在输入文件路径不存在时继续执行，应立即返回错误信息并终止（Step 2）
-- 不要在用户未确认输出路径前执行命令（Step 3 的检查点）
-- 不要在输出目录不存在或不可写时继续执行，应立即返回错误信息并终止（Step 3）
+前置校验相关的通用反例见 `../media-ffmpeg-common/PREFLIGHT.md` 的「不要做什么（前置校验部分）」。以下是本 skill 特有的反例：
+
 - 不要在 remux 失败时未经用户确认就直接静默切换为转码模式——必须先告知会产生画质损失（Step 4 的检查点）
 - 不要凭空维护一份容器/编码兼容性对照表预判是否需要转码——直接尝试 remux，以实际报错结果驱动降级判断
-- 不要支持纯音频格式转换（如 wav→mp3、flac→aac），仅处理音视频容器格式转换
+- 不要支持纯音频格式转换（如 wav→mp3、flac→aac）——那是 `media-audio-convert` 的职责，本 skill 仅处理视频容器格式转换；用户提出纯音频转换诉求时，告知调用 `media-audio-convert`，不要为此放开 remux-first 逻辑去兼容纯音频
+- 不要承接从视频提取音轨的诉求（如"把这个 mp4 转成 mp3"实际是想要音频）——那是 `media-audio-extract` 的职责；识别到用户想要的是纯音频产出而非换容器时，转交对应 skill
 - 不要在本 skill 的命令中叠加 `-vf scale`/`-crf`（压缩用途）/`-ss`/`-to`/`-r` 等参数——用户同时提出分辨率/压缩/截取/帧率诉求时，应分别另行调用对应 skill，组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"

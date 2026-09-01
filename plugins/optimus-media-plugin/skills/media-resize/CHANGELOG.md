@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.4] - 2026-09-01
+
+### Fixed
+- 命令模板补上遗漏的 `-c:v libx264`：`-vf scale` 必然触发视频重新编码，此前未指定编码器，交由 ffmpeg 按输出容器推断，输出为 `.mkv` 等容器时可能落到非 libx264 编码器；同时把隐式的 libx264 默认 CRF（23）改为显式 `-crf 18`，与 media-framerate、media-trim 精确模式、media-convert 转码模式的"画质优先"档位对齐——此前本 skill 是唯一未声明画质档位的重编码 skill，实际画质低于同族其他 skill
+- 命令模板补上 `-y`：Claude 非交互执行下，缺 `-y` 会在输出文件已存在时让 ffmpeg 等待 stdin，结果是静默失败（`Not overwriting - exiting`）或阻塞，且报错原因与"文件已存在"看不出关联。`../media-ffmpeg-common/REFERENCE.md` 与 `CLI-REFERENCE.md` 早已声明该用 `-y`，命令模板未落实
+- 「功能概述」补充"缩放必然触发视频流重新编码"的事实：此前只写"音频流直接透传不重新编码"，易被理解为整体无损
+
+### Changed
+- Step 0-3 收敛为引用 `../media-ffmpeg-common/PREFLIGHT.md`，本 skill 只声明必需信息（输入文件路径、目标分辨率、目标输出路径）；Step 4/5 编号不变，不影响正文内既有的 Step 交叉引用
+- Step 0 移除本 skill 独有的"需要时可提示'执行时会自动检测 ffmpeg 环境'"一句——该句是 5 个写操作 skill 中仅此一处的漂移，收敛后统一由 PREFLIGHT.md 表述
+- 「失败处理」「不要做什么」的通用条目收敛到 PREFLIGHT.md，本文只保留特有场景；新增两条特有反例（不得省略 `-c:v`、不得把固定的 `-crf 18` 当作可调压缩旋钮）
+- 「不要做什么」末条修正自相矛盾的表述：原文写"不要在本 skill 命令中叠加 `-crf`"，而命令模板本身已带固定的 `-crf 18`，改为区分"固定画质档位"与"作为压缩手段的可调 CRF"
+
 ## [1.2.3] - 2026-08-26
 
 ### Changed

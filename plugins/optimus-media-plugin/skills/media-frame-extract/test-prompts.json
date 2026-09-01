@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "帮我截取 D:\\video\\demo.mp4 第 1 分 30 秒那一帧，存成 D:\\video\\cover.png",
+    "expected": "信息齐全（输入/时间点/输出均已给）→ Step 0-3 前置校验（引用 PREFLIGHT.md）→ Step 4 ffprobe 查总时长，确认 00:01:30 未超出 → 单帧模式，无需 CHECKPOINT → Step 5 执行 ffmpeg -y -ss 00:01:30 -i input -frames:v 1 output；必须带 -frames:v 1，且不得设计快速/精确双模式（-ss 在 -i 前对解码输出已帧精确）"
+  },
+  {
+    "id": 2,
+    "prompt": "把 D:\\video\\long.mp4 每隔 2 秒截一张图放到 D:\\frames\\ 下",
+    "expected": "措辞含「每隔」→ 多帧等间隔模式。Step 4 ffprobe 查总时长后预估张数=时长/2，若视频较长（如 30 分钟→900 张）超过 200 → 🔴 CHECKPOINT 必须告知具体预估数量与输出目录，询问是否继续或改用更大间隔，未确认不得执行 → Step 5 执行 ffmpeg -y -i input -vf fps=1/2 D:\\frames\\frame_%03d.png，输出路径必须含 %03d 占位符"
+  },
+  {
+    "id": 3,
+    "prompt": "给这个视频截个封面图",
+    "expected": "缺输入路径、时间点、输出路径 → Step 0 一次性询问全部缺失项。关键：不得擅自取 00:00:00 作为时间点——首帧常为黑场或片头，多数情况下不是用户想要的封面图，必须询问用户想要哪个时间点的画面"
+  }
+]

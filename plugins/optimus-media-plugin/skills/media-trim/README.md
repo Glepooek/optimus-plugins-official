@@ -1,6 +1,6 @@
 # media-trim
 
-> 版本：1.1.3 | 分类：tool
+> 版本：1.1.4 | 分类：tool
 
 从音视频文件中截取指定时间段，默认流复制快速截取，提供帧精确的重新编码模式作为备选。
 
@@ -27,17 +27,14 @@
 ## 业务逻辑流程图
 
 ```
-Step 0  需求预告：一次性列出缺失信息并询问（信息已齐全则跳过）
-   ↓
-Step 1  确认 ffmpeg 环境可用（依赖检查）
-   ↓
-Step 2  校验输入文件是否存在（输入参数检查）
-   ↓
-Step 3  确认输出路径与截取模式 🔴 CHECKPOINT + 校验输出目录可写（输出参数检查）
+Step 0-3  前置校验（引用 media-ffmpeg-common/PREFLIGHT.md）
+          需求预告 → ffmpeg 环境 → 输入文件存在 → 输出路径 🔴 CHECKPOINT
+          （输出路径校验含：父目录可写 + 输出路径 ≠ 输入路径）
+          本 skill 在 Step 3 追加确认截取模式（默认快速）
    ↓
 Step 4  执行前校验：起止时间是否超过视频总时长（运行条件检查，硬约束直接终止）
    ↓
-Step 5  执行截取
+Step 5  执行截取（两种模式均带 -y）
          ├─ 快速模式：-ss/-to 在 -i 之前 + -c copy
          └─ 精确模式：-ss/-to 在 -i 之后 + 重新编码
 ```
@@ -49,7 +46,8 @@ Step 5  执行截取
 ## Skill 依赖关系图
 
 ```
-用户 ──触发──▶ media-trim ──引用──▶ media-ffmpeg-common/REFERENCE.md
+用户 ──触发──▶ media-trim ──引用──▶ media-ffmpeg-common/PREFLIGHT.md（Step 0-3）
+                               └──▶ media-ffmpeg-common/REFERENCE.md
                                └──▶ media-ffmpeg-common/CLI-REFERENCE.md
                                └──▶ media-ffmpeg-common/INSTALL.md
 media-trim ──调用（Step4 执行前校验）──▶ media-analyze

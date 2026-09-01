@@ -2,7 +2,7 @@
 name: media-trim
 description: Use when user wants to cut a specific segment out of a media file — 片段截取、截取视频、剪切一段、掐头去尾、截取某个时间段。Not for resolution changes, compression, or codec/format inspection.
 metadata:
-  version: "1.1.3"
+  version: "1.1.4"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -17,28 +17,13 @@ allowed-tools: Bash
 
 ## 使用方法
 
-### Step 0：需求预告
+### Step 0-3：前置校验
 
-处理用户请求的第一步：对比本 skill 需要的信息与用户在触发语句或上下文中已提供的信息，一次性列出缺失项统一询问，不逐个 Step 反应式追问。
+执行 `../media-ffmpeg-common/PREFLIGHT.md` 的 Step 0-3 完整流程：需求预告 → 确认环境 → 校验输入文件 → 确认输出路径（含父目录可写、输出路径不得与输入路径相同两项校验）。
 
-- 需要比对的信息：输入文件路径、起止时间点、输出文件路径——用户已明确提供的项不重复询问，若已经齐全，跳过本步骤直接进入 Step 1；截取模式（快速/精确）有默认取值（快速），不属于必需信息，缺失不阻塞
-- ffmpeg 依赖是否安装**不参与本环节比对**：这是系统状态而非用户可主动提供的信息，不作为缺失项询问用户，也不影响是否跳过本步骤的判断；依赖状态由 Step 1 实际检测
+本 skill 的必需信息：**输入文件路径、起止时间点、输出文件路径**。截取模式（快速/精确）有默认取值（快速），不属于必需信息，缺失不阻塞。
 
-本步骤不做实际系统调用，仅做信息是否齐全的静态比对。
-
-### Step 1：确认环境
-
-执行 `../media-ffmpeg-common/REFERENCE.md` 中的环境检测命令，确认 `ffmpeg` 可用。检查失败（命令不存在）：引导用户参考 `../media-ffmpeg-common/INSTALL.md` 安装，返回错误信息并终止任务，不进入后续步骤。
-
-### Step 2：校验输入文件
-
-检查用户提供的输入文件路径是否存在。不存在时返回错误信息告知用户核对路径，终止任务，不进入后续步骤。
-
-### Step 3：确认输出路径与截取模式
-
-🔴 CHECKPOINT：向用户确认输出文件路径，不得省略直接执行；未确认前不得进入 Step 4。默认使用快速模式；仅当用户明确要求"精确到帧"或对截取点精度有要求时，才使用精确模式。
-
-确认路径后校验其父目录是否存在且可写。父目录不存在或无写权限时返回错误信息告知用户，终止任务；输出文件本身此刻不存在属正常状态，不作为失败条件。
+本 skill 在 Step 3 追加确认截取模式：默认使用快速模式；仅当用户明确要求"精确到帧"或对截取点精度有要求时，才使用精确模式。
 
 ### Step 4：执行前校验
 
@@ -52,16 +37,18 @@ allowed-tools: Bash
 **默认模式（快速，流复制）：**
 
 ```bash
-ffmpeg -ss <start> -to <end> -i <input> -c copy <output>
+ffmpeg -y -ss <start> -to <end> -i <input> -c copy <output>
 ```
 
 **精确模式（重新编码，帧精确）：**
 
 ```bash
-ffmpeg -i <input> -ss <start> -to <end> -c:v libx264 -crf 18 -c:a aac <output>
+ffmpeg -y -i <input> -ss <start> -to <end> -c:v libx264 -crf 18 -c:a aac <output>
 ```
 
 ⚠️ **注意：`-ss` 参数在 `-i` 前后位置决定截取行为，不是可以随意调换的写法差异。** 放在 `-i` 之前是输入端 seek（快速模式所用），会对齐到最近的关键帧；放在 `-i` 之后是输出端 seek（精确模式所用），帧精确但速度慢很多。两种模式的命令模板中 `-ss`/`-to` 与 `-i` 的相对顺序不可互换。
+
+`-y` 是全局选项，固定放在命令最前，不参与上述 seek 语义——它位于 `-i` 之前不代表"输入端"含义，也不影响 `-ss` 与 `-i` 的相对位置判断。覆盖策略见 `../media-ffmpeg-common/PREFLIGHT.md` 的「覆盖策略」，不得省略。
 
 > 流复制（`-c copy`）快速模式与转码（重新编码）精确模式的取舍见 [`knowledge-base/media/reference/media-stream-basics.md`](../../../../knowledge-base/media/reference/media-stream-basics.md) §3「转码、重封装、流复制」；"对齐到最近关键帧"中的关键帧概念见 `video-codecs.md` 的「关键帧（I / P / B 帧）与 GOP」小节。
 
@@ -69,19 +56,19 @@ ffmpeg -i <input> -ss <start> -to <end> -c:v libx264 -crf 18 -c:a aac <output>
 
 ## 失败处理
 
-除 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表外，本 skill 特有的失败场景：
+前置校验（Step 0-3）的失败场景、磁盘空间不足与编码器错误等通用场景见 `../media-ffmpeg-common/PREFLIGHT.md` 的「通用失败处理」；执行中暴露的 ffmpeg 报错见 `../media-ffmpeg-common/REFERENCE.md` 的通用报错处理表。以下是本 skill 特有的失败场景：
 
 | 触发条件 | 处理 |
 |---|---|
 | 快速模式下截取起点画面出现绿屏/花屏 | 说明是因为对齐到了非关键帧附近，建议改用精确模式重新截取 |
 
-若用户同时提出分辨率转换、压缩体积或帧率转换诉求，不要在本 skill 命令中叠加 `-vf scale`/`-crf`/`-r` 等参数，应分别调用对应 skill；组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"。
+若用户同时提出分辨率转换、压缩体积或帧率转换诉求，不要在本 skill 命令中叠加 `-vf scale`/`-preset`/`-r` 等参数，应分别调用对应 skill；组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"。
 
 ## 不要做什么
 
-- 不要在 ffmpeg 环境检测失败时继续执行，应立即返回错误信息并终止（Step 1）
-- 不要在输入文件路径不存在时继续执行，应立即返回错误信息并终止（Step 2）
-- 不要在用户未确认输出路径前执行命令（Step 3 的检查点）
-- 不要在输出目录不存在或不可写时继续执行，应立即返回错误信息并终止（Step 3）
+前置校验相关的通用反例见 `../media-ffmpeg-common/PREFLIGHT.md` 的「不要做什么（前置校验部分）」。以下是本 skill 特有的反例：
+
 - 不要在起始/结束时间超过视频总时长时继续执行，应立即返回错误信息并终止（Step 4，硬约束不可用户确认绕过）
 - 不要在 ffprobe 查询总时长本身失败时，误判为时间戳问题并要求用户核对时间戳，应告知文件可能已损坏（Step 4）
+- 不要互换 `-ss`/`-to` 与 `-i` 的相对顺序——两种模式的 seek 语义由该顺序决定（Step 5）
+- 不要把精确模式命令中固定的 `-crf 18` 当作可调的压缩旋钮——它是本 skill 的固定画质档位，不是压缩手段；用户提出压缩体积诉求时应另行调用 `media-compress`，不在本 skill 命令中叠加 `-preset` 等压缩参数，也不叠加 `-vf scale`/`-r` 等参数，组合请求的执行顺序与方式见 `../media-ffmpeg-common/REFERENCE.md` 的"组合请求处理约定"

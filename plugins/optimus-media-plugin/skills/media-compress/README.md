@@ -1,6 +1,6 @@
 # media-compress
 
-> 版本：1.2.2 | 分类：tool
+> 版本：1.2.4 | 分类：tool
 
 在不改变分辨率的前提下压缩音视频文件体积，支持 CRF 画质因子模式与两轮编码目标码率模式，二选一。
 
@@ -27,13 +27,9 @@
 ## 业务逻辑流程图
 
 ```
-Step 0  需求预告：一次性列出缺失信息并询问（信息已齐全则跳过）
-   ↓
-Step 1  确认 ffmpeg 环境可用（依赖检查）
-   ↓
-Step 2  校验输入文件是否存在（输入参数检查）
-   ↓
-Step 3  确认输出路径 🔴 CHECKPOINT + 校验输出目录可写（输出参数检查）
+Step 0-3  前置校验（引用 media-ffmpeg-common/PREFLIGHT.md）
+          需求预告 → ffmpeg 环境 → 输入文件存在 → 输出路径 🔴 CHECKPOINT
+          （输出路径校验含：父目录可写 + 输出路径 ≠ 输入路径）
    ↓
 Step 4  确定压缩模式与参数
          ├─ CRF 模式（默认）：按用户描述映射 CRF 取值
@@ -43,8 +39,8 @@ Step 4  确定压缩模式与参数
              （硬约束：码率 ≤ 0 直接终止）
    ↓
 Step 5  执行压缩
-         ├─ CRF 模式：ffmpeg -crf <取值> -preset medium
-         └─ 目标码率模式：两轮编码 -pass 1 → -pass 2
+         ├─ CRF 模式：ffmpeg -y -crf <取值> -preset medium
+         └─ 目标码率模式：两轮编码 -pass 1 → -pass 2（两轮均带 -y）
 ```
 
 ## 产出物数据流
@@ -54,7 +50,8 @@ Step 5  执行压缩
 ## Skill 依赖关系图
 
 ```
-用户 ──触发──▶ media-compress ──引用──▶ media-ffmpeg-common/REFERENCE.md
+用户 ──触发──▶ media-compress ──引用──▶ media-ffmpeg-common/PREFLIGHT.md（Step 0-3）
+                                    └──▶ media-ffmpeg-common/REFERENCE.md
                                     └──▶ media-ffmpeg-common/CLI-REFERENCE.md
                                     └──▶ media-ffmpeg-common/INSTALL.md
 media-compress ──调用（Step4 目标码率模式计算）──▶ media-analyze

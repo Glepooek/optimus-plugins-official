@@ -1,7 +1,7 @@
 {
   "name": "optimus-media-plugin",
-  "version": "12.1.8",
-  "description": "音视频处理：分析、转码压缩、裁剪缩放、在线下载与播放预览",
+  "version": "13.1.0",
+  "description": "音视频处理：分析、转码压缩、裁剪缩放、音轨提取与音频转换、视频截图、在线下载与播放预览",
   "skills": "./skills/",
   "author": {
     "name": "optimus",
@@ -13,7 +13,7 @@
   "interface": {
     "displayName": "Optimus Media",
     "shortDescription": "音视频处理工具集",
-    "longDescription": "音视频处理：分析、转码压缩、裁剪缩放、在线下载与播放预览",
+    "longDescription": "音视频处理：分析、转码压缩、裁剪缩放、音轨提取与音频转换、视频截图、在线下载与播放预览",
     "developerName": "Optimus",
     "category": "Media",
     "capabilities": [
