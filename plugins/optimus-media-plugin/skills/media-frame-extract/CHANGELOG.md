@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.2] - 2026-09-01
+
+### Fixed
+- **修正多帧模式的抽帧位置描述**：1.0.1 写"抽帧从 `t=0` 起算，因此 5 秒视频按 3 秒间隔得到 `t=0`、`t=3` 两张"。验证轮 judge 用 framemd5 把输出帧哈希反查源帧号，证明取帧落在**每个区间中段**——5 秒 30fps 视频按 2 秒间隔，三张图取自源帧 29/89/149（t≈0.97/2.97/4.97），与源帧 0/60/120 的画面逐字节不同。真实机制是 `-vf fps` 对每个输入帧算 `round(t ÷ 间隔)` 映射输出序号（默认 `round=near`），同序号内后来的帧顶掉先前的，故每桶留下"跨过中点前的最后一帧"。已补充"第一张不是视频首帧"的告知要求，并指出要首帧或精确时间点应改用单帧模式
+- **修正张数公式 `ceil` → `round`（四舍五入）**：1.0.1 用 `ceil`，实测 4s@3s 得 1 张（`ceil`=2）、7s@3s 得 2 张（`ceil`=3）、10s@3s 得 3 张（`ceil`=4），各多报 1 张。9 组测试中 `round` 全中。1.0.1 举的三例（5s @ 1/2/3s）恰好全落在 `ceil` 正确的一侧，属样本选择性掩盖公式错误
+- **删除"用整除会系统性少报约 1 张"**：该说法不成立——10s@3s 与 7s@3s 的整除结果恰好等于实际张数，`ceil` 才是系统性多报
+- 修正缺 `%03d` 的报错原文：1.0.1 写作 `Error muxing a packet: Invalid argument`，实为把两行拼成一行——真实 stderr 中 `Error muxing a packet` 与 `Task finished with error: Invalid argument` 是**两行**，按拼接串去匹配永远匹配不到。改用 image2 muxer 自己给出的首选匹配串 `Cannot write more than one file with the same name. Are you missing the -update option or a sequence pattern?`（该行直接点明根因与解法，比下游的 muxer 报错信息量高），辅以末行 `Conversion failed!` 确认中断。其余引用处改为指向失败表（同时减少同一内容的重复展开）
+
+### Added
+- 失败表新增 1 条（用户反馈第一张不是视频开头的画面 → 属 `-vf fps` 固有行为，非命令问题）；反例清单新增 2 条（不得用 `ceil` 预估、不得声称抽出的是 `t=0`/`t=N` 的画面或"第一张是首帧"）
+
 ## [1.0.1] - 2026-09-01
 
 ### Fixed

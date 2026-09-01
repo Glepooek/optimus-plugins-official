@@ -2,7 +2,7 @@
 name: media-audio-extract
 description: Use when user wants to pull the audio track out of a video file — 提取音频、提取音轨、视频转音频、扒音频、从视频里提取声音、视频转mp3、只要声音不要画面。Not for audio-to-audio format conversion (that is media-audio-convert), video container conversion, or codec/format inspection.
 metadata:
-  version: "1.0.1"
+  version: "1.0.3"
   author: desktop client team
   category: tool
 compatibility: 需要用户本机已安装 ffmpeg/ffprobe 并加入 PATH，参见 ../media-ffmpeg-common/INSTALL.md。
@@ -36,6 +36,8 @@ ffprobe -v error -show_entries stream=index,codec_type,codec_name,bit_rate -of d
 ```
 
 不要给该命令加 `-select_streams a:0`：只探第一条音频流会看不到"有没有视频流""有几条音轨"，而这两项各自对应一条硬约束（见下）。一条命令拿到全部流信息，后续四项判定都基于同一份输出。
+
+⚠️ **`bit_rate` 可能取不到，这是探测能力的边界，不要编造替代值**：mkv 容器不在流头部存码率，实测其中的音频流与视频流 `bit_rate` **均返回 `N/A`**（mp4 里的 aac 则正常返回，如 59997）。此时**不得用 `format=bit_rate` 顶替**——那是含视频流的总码率（实测同一文件为 489595，而音频只占其中一小部分），拿它当音频码率会严重高估。源码率取不到时按 Step 5 的"源码率未知"一档处理，即向用户说明无法探测并让用户决定，不要默默套用默认值。
 
 **先判定流结构（三项），再判定编码兼容性：**
 
@@ -81,7 +83,7 @@ ffprobe -v error -show_entries stream=index,codec_type,codec_name,bit_rate -of d
 
 告知用户：目标格式装不下当前音频编码（说出具体编码名与目标扩展名），需要重新编码。同时按源编码性质据实说明代价：
 
-- **源编码已是有损**（`aac`/`mp3`/`opus`/`vorbis`）：转换会在已丢失细节的基础上再压一次，结果质量只会低于现有文件、不存在变好的可能。不要声称"损失比首次压缩明显"——实测首次有损与二次有损的信噪比仅相差约 0.5 dB，夸大风险同样是误导
+- **源编码已是有损**（`aac`/`mp3`/`opus`/`vorbis`）：转换会在已丢失细节的基础上再压一次，结果质量只会低于现有文件、不存在变好的可能（这是实测中唯一无例外的结论）。但**不要给出固定的损失量级**——实测额外信噪比降幅跨度达 0.02～28.7 dB，随素材宽带程度、目标编码器与码率档剧烈变化，"仅差约 X dB"与"损失惨重"都会在相当一部分场景下误导用户
 - **源编码是无损**（`flac`/`alac`/PCM）：这是首次有损压缩，不可逆，建议保留原文件
 - **体积走向**：对照本步骤查得的源 `bit_rate` 与将要使用的目标码率据实说明——目标码率低于源码率则体积减小，高于则反而增大。不要给出方向固定的结论
 
@@ -89,7 +91,13 @@ ffprobe -v error -show_entries stream=index,codec_type,codec_name,bit_rate -of d
 
 用户改选无损扩展名则回到情况④；坚持原目标格式则进入 Step 5 的重新编码模式。
 
-⛔ **`.wav` 是唯一不会报错的不兼容目标，须格外当心**：其余容器遇到装不下的编码会直接失败（各 muxer 报错串不同，如 aac→`.mp3` 报 `Invalid audio stream. Exactly one MP3 audio stream is required.`、alac→`.aac` 报 `adts muxer supports only codec aac for type audio`、flac→`.m4a` 报 `Could not find tag for codec flac in stream #0`），但 `-c:a copy` 写入 `.wav` 会**以退出码 0 静默成功**，产出 `format_name=wav` 而 `codec_name=aac` 的容器/编码错配文件——播放兼容性无保障，解码时报 `Input buffer exhausted before END element found`。因此目标为 `.wav` 而源不是 PCM 时，必须在此拦下走本情况的 CHECKPOINT，不能指望命令自己失败。
+⛔ **不兼容组合的失败方式并不一致，不得把"命令会自己报错"当作安全网**：必须靠本步骤的兼容表事先拦截，而不是依赖 ffmpeg 失败来兜底。实测同一批不兼容组合分成两类——
+
+- **会报错的（相对安全）**，且各 muxer 措辞完全不同：aac→`.mp3` 报 `Invalid audio stream. Exactly one MP3 audio stream is required.`；alac→`.aac` 报 `adts muxer supports only codec aac for type audio`；flac→`.m4a` 报 `Could not find tag for codec flac in stream #0`；alac/opus→`.wav` 报 `Codec <编码> not supported in WAVE format`
+- **静默成功的（危险）**：aac/mp3/flac→`.wav` 以退出码 0 完成，产出 `format_name=wav` 而 `codec_name=aac` 的容器/编码错配文件，解码时报 `Input buffer exhausted before END element found`（且解码命令退出码仍为 0）；flac→`.opus`、flac→`.ogg` 同样退出码 0 且无告警，产出"扩展名声称 Opus、内容是 FLAC"的文件——后者甚至解码正常、数据无损，**只有后缀在撒谎，比 wav 错配更难发现**
+
+因此目标扩展名不在兼容表对应行内时，一律在此拦下走本情况的 CHECKPOINT。**不要按扩展名去猜哪些组合会静默、哪些会报错**：同一个 `.wav` 对 aac 静默、对 alac 报错，规律不可靠。
+
 
 ### Step 5：执行提取
 
@@ -116,8 +124,9 @@ ffmpeg -y -i <input> -vn -map 0:a:0 -c:a <目标编码器> -b:a <目标码率> <
 | 高于 192k | 取 192k（常见平衡点）；用户要求"音质优先"可取 256k/320k |
 | 接近 192k（约 128k–256k） | 取与源码率相同或略低的值 |
 | 明显低于 192k（如录屏、语音录制常见的 64k 上下） | 取不高于源码率的值 |
+| 取不到（`bit_rate=N/A`，常见于 mkv 容器） | 🔴 **CHECKPOINT**：向用户说明源码率无法探测（容器未记录），询问是接受 192k 默认值还是指定具体码率。不得默默套用 192k——若源音轨本是低码率，那会白白放大体积；也不得用 `format=bit_rate` 推算，那是含视频的总码率 |
 
-源码率低而目标码率高时，音质不会提升（已丢失的信息无法恢复），只会让文件变大——实测源 60k 的音轨套用 192k，产出体积是源音轨的 3 倍且无任何音质收益。
+源码率低而目标码率高时，音质不会提升（已丢失的信息无法恢复），只会让文件变大——实测源 60k 的音轨套用 192k，产出体积是源音轨的 2.6～3.1 倍（随目标编码器而异）且无任何音质收益。
 
 - `-vn`：丢弃视频流，只保留音频。这是本 skill 与 `media-convert` 的根本区别——不是换容器，而是只取其中一条流
 - `-map 0:a:0`：显式指定提取第一条音频流。不可省略——不带 `-map` 时 ffmpeg 按 disposition 与属性挑选"最佳"轨，与按索引取的 `a:0` 未必是同一条（见 Step 4 情况③的实测），会导致 Step 4 的探测对象与实际提取的流不一致
@@ -136,8 +145,8 @@ ffmpeg -y -i <input> -vn -map 0:a:0 -c:a <目标编码器> -b:a <目标码率> <
 
 | 触发条件 | 原因 | 处理建议 |
 |---|---|---|
-| 流复制报容器装不下编码，各 muxer 报错串不同：`Invalid audio stream. Exactly one MP3 audio stream is required.`（→`.mp3`）、`adts muxer supports only codec aac for type audio`（→`.aac`）、`Could not find tag for codec <编码> in stream #0`（→`.m4a`/`.mov`） | 目标容器装不下源音频编码，即 Step 4 情况⑤被漏判 | 回到 Step 4 重新查询源编码并走 CHECKPOINT 流程，不要直接静默改为重新编码。不要按单一报错串去匹配——不同 muxer 措辞完全不同，判据应是"流复制失败"这一事实 |
-| 产出 `.wav` 文件退出码 0，但播放异常；`ffprobe` 显示 `format_name=wav` 而 `codec_name` 不是 PCM | `-c:a copy` 写入 `.wav` 时 ffmpeg 不报错，直接把非 PCM 编码塞进 wav 容器，产出容器与编码错配的文件 | 改用重新编码模式（`-c:a pcm_s16le`）重做，或改用能无损承载源编码的扩展名。该文件解码时会报 `Input buffer exhausted before END element found`，且**解码命令的退出码仍是 0**，不能靠退出码发现 |
+| 流复制报容器装不下编码，各 muxer 报错串不同：`Invalid audio stream. Exactly one MP3 audio stream is required.`（→`.mp3`）、`adts muxer supports only codec aac for type audio`（→`.aac`）、`Could not find tag for codec <编码> in stream #0`（→`.m4a`/`.mov`）、`Codec <编码> not supported in WAVE format`（alac/opus→`.wav`） | 目标容器装不下源音频编码，即 Step 4 情况⑤被漏判 | 回到 Step 4 重新查询源编码并走 CHECKPOINT 流程，不要直接静默改为重新编码。不要按单一报错串去匹配——不同 muxer 措辞完全不同，判据应是"流复制失败"这一事实 |
+| 流复制退出码 0，但产物的容器与编码不匹配：`ffprobe` 显示 `format_name` 与扩展名声称的格式不符（如 `format_name=wav` 而 `codec_name=aac`，或扩展名为 `.opus` 而 `codec_name=flac`） | `-c:a copy` 对部分不兼容组合不报错，直接把编码塞进目标容器。实测 aac/mp3/flac→`.wav` 与 flac→`.opus`/`.ogg` 均属此类 | 改用重新编码模式重做，或改用能无损承载源编码的扩展名。`.wav` 错配文件解码时会报 `Input buffer exhausted before END element found` 且**解码命令退出码仍是 0**；`.opus`/`.ogg` 错配文件解码完全正常、数据无损，只有后缀在撒谎，更难发现——两者都只能靠核对 `format_name` 与 `codec_name` 是否匹配来判断 |
 | `Stream map '' matches no streams.` / `Failed to set value '0:a:0' for option 'map'` | `-map` 指向的音频流不存在，即 Step 4 情况①（无音频流）被漏判 | 回到 Step 4 用完整流列表确认音频流是否存在，不要改为去掉 `-map` 让 ffmpeg 自动选流——那会掩盖"源文件没有音轨"这个真实原因 |
 | `Unknown encoder 'libmp3lame'` / `'libopus'` | 当前 ffmpeg 构建未包含该音频编码器（与视频编码器缺失同类问题） | 执行 `ffmpeg -encoders` 确认可用编码器，提示用户更换含完整编码器的发行版，或改选构建已支持的输出格式 |
 | 提取出的音频不是用户想要的那条音轨（如要中文得到英文） | 源文件含多条音频流，而命令按索引取了第一条 | 该问题**不会**表现为时长差异（多语言音轨时长通常一致，实测双轨均为 5.000000），只能靠核对内容发现。回到 Step 4 情况③列出全部音轨让用户指认，再用对应的 `-map 0:a:<索引>` 重做 |
@@ -158,10 +167,13 @@ ffmpeg -y -i <input> -vn -map 0:a:0 -c:a <目标编码器> -b:a <目标码率> <
 - 不要省略 `-vn`——缺了它 ffmpeg 会尝试把视频流也写进音频容器，导致失败或产出非预期文件
 - 不要省略 `-map 0:a:0`——不带 `-map` 时 ffmpeg 按 disposition 挑"最佳"轨，与按索引取的 `a:0` 未必是同一条，会导致 Step 4 探测的流与实际提取的流不一致（Step 5）
 - 不要给 Step 4 的探测命令加 `-select_streams a:0`——只看第一条音频流就看不到有无视频流、有几条音轨，两项硬约束都会失守（Step 4）
-- 不要固定用 `-b:a 192k`——须依据 Step 4 查得的源码率取值，源码率低时套用 192k 只会让体积变大而音质毫无提升（实测源 60k 套 192k，体积涨到 3 倍）
-- 不要声称二次有损"音质损失比首次压缩明显"——实测二者信噪比仅相差约 0.5 dB，正确说法是"只会更差、不会更好"，夸大与掩盖同样是误导
+- 不要固定用 `-b:a 192k`——须依据 Step 4 查得的源码率取值，源码率低时套用 192k 只会让体积变大而音质毫无提升（实测源 60k 套 192k，体积涨到 2.6～3.1 倍，随编码器而异）；源码率取不到（`N/A`）时也不得默默套用 192k，须按 Step 5 的"源码率未知"一档走 CHECKPOINT
+- 不要用 `format=bit_rate` 顶替音频流码率——本 skill 的输入含视频流，format 级是总码率（实测同一文件 489595 bps 而音频只占一小部分），据此选码率会严重高估（Step 4）
+- 不要给出固定的二次有损音质损失量级——实测额外降幅跨度达 0.02～28.7 dB，随素材、编码器与码率档剧烈变化（机制：二代信噪比被一代封顶）。"仅差约 X dB"与"损失惨重"都会误导；可确定的只有方向："只会更差、不会更好"
 - 不要靠时长差异判断是否取错了音轨——多语言音轨时长通常一致（实测双轨均为 5.000000），只能靠核对内容发现
-- 不要按单一报错串去识别"容器装不下编码"——不同 muxer 的措辞完全不同（`.mp3`/`.aac`/`.m4a` 三种报错串各异），判据应是流复制失败这一事实
+- 不要按单一报错串去识别"容器装不下编码"——不同 muxer 的措辞完全不同（`.mp3`/`.aac`/`.m4a`/`.wav` 四种报错串各异），判据应是流复制失败这一事实
+- 不要预设不兼容组合会自己报错来兜底——实测 aac/mp3/flac→`.wav` 与 flac→`.opus`/`.ogg` 都是退出码 0 静默产出错配文件，而同一个 `.wav` 对 alac/opus 却会报错，规律不可按扩展名推断；拦截必须由 Step 4 的兼容表在执行前完成
+- 不要把"扩展名与产物 `format_name` 一致"当作成功判据——flac 塞进 `.opus` 时 `format_name=ogg` 看着合理、解码也正常，但内容是 FLAC 而非 Opus，须同时核对 `codec_name`
 - 不要靠退出码判断解码是否正常——容器/编码错配的文件解码时会打印错误但退出码仍为 0（实测）
 - 不要承接纯音频到纯音频的格式转换（如 wav→mp3、flac→aac）——本 skill 的输入必须是含视频流的文件，Step 4 情况②会硬拦截纯音频输入，纯音频转换应调用 `media-audio-convert`
 - 不要在提取完成后自动调用其他 media-* skill 做后续处理，也不写入组合请求编排链条
