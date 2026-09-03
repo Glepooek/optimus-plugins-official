@@ -37,7 +37,7 @@ sessionstart/
 
 ### 技巧分类
 
-tips.txt 包含 293 条技巧，涵盖以下分类：
+tips.txt 包含 267 条技巧，涵盖以下分类：
 
 - **[交互]** - 基本交互命令和快捷键
 - **[工具]** - Claude Code 内置工具使用
@@ -47,8 +47,8 @@ tips.txt 包含 293 条技巧，涵盖以下分类：
 - **[集成]** - Skills、Plugins、MCP 集成
 - **[工作流与自动化]** - 高级工作流程
 - **[排障]** - 问题诊断和排查
-- **[Skill]** - 预定义工作流技能
-- **[Skill·插件名]** - 特定插件提供的 skill（如 `[Skill·superpowers]`、`[Skill·code-review]`、`[Skill·frontend-design]`、`[Skill·commit-commands]`）
+- **[Skill]** - 内置 skill 与 SKILL.md frontmatter 配置项
+- **[Skill·superpowers]** - superpowers 插件提供的 skill（与已安装的 14 个 skill 一一对应）
 - **[MCP]** - Model Context Protocol 服务器
 - **[高级]** - 高级特性和用法
 

@@ -1,12 +1,10 @@
 [交互] 🚀 /fast 快速模式\n功能：/fast 不带参数在开/关之间切换，也可显式写 /fast on 与 /fast off；它让 Opus 以更快速度输出，并不会降级到更小的模型，目前适用于 Opus 5 与 Opus 4.8\n效果：来回试方案时缩短等待且不牺牲模型能力——「变快就等于换了小模型」是关于它最常见的误解\n例子：/fast on 显式开启；/fast off 显式关闭；不带参数则在两者之间切换
 ---
-[Skill·commit-commands] 💾 /commit 自动提交\n功能：读取 git status、git diff HEAD、当前分支和最近 10 条提交后，一次性完成暂存与提交；它不是内置命令，来自官方 commit-commands 插件（同插件还提供 /commit-push-pr 与 /clean_gone），未安装该插件时不存在\n效果：把「看改动 → 写 message → 提交」压成一步；注意它不强制 Conventional Commits 等格式规范，需要固定格式请自建 skill 约束\n例子：/commit 分析当前改动并直接创建提交；先 /plugin 安装 commit-commands 才能使用
----
 [交互] 🔍 /remember 会话记忆\n功能：保存当前会话的重要状态和上下文\n效果：下次会话可以快速恢复工作进度，无需重新说明背景\n例子：在完成一个复杂任务后使用 /remember 保存进度
 ---
 [交互] 🌿 /worktree 隔离环境\n功能：在独立的 git worktree 中工作，不影响主工作区\n效果：可以同时处理多个功能分支，互不干扰\n例子：/worktree feature-x 创建隔离环境开发新功能
 ---
-[交互] 🔄 /loop 定期任务\n功能：设置定期执行的任务或命令；省略间隔则进入自定节奏动态模式（Claude 自行决定下次唤醒时间），不带 prompt 则进入自主循环默认模式，v2.1.248 起这两种模式在 Bedrock/Vertex/Foundry 上也一律可用（此前受限）；v2.1.243 起连续空转唤醒（Claude 无事可做）在终端折叠成单行而非逐条打印\n效果：按指定间隔自动运行，适合监控、轮询等场景；动态模式让轮询节奏随任务状态自适应，不必手动估算间隔；空转折叠让长时间静默守候不再刷屏\n例子：/loop 5m 检查部署状态 - 每5分钟检查一次；/loop 盯着 CI 跑完 省略间隔交由 Claude 自定节奏；/loop 不带 prompt 进入自主循环模式
+[交互] 🔄 /loop 定期任务\n功能：设置定期执行的任务或命令；省略间隔则进入自定节奏动态模式（Claude 自行决定下次唤醒时间），不带 prompt 则进入自主循环默认模式；v2.1.243 起连续空转唤醒（Claude 无事可做）在终端折叠成单行而非逐条打印\n效果：按指定间隔自动运行，适合监控、轮询等场景；动态模式让轮询节奏随任务状态自适应，不必手动估算间隔；空转折叠让长时间静默守候不再刷屏\n例子：/loop 5m 检查部署状态 - 每5分钟检查一次；/loop 盯着 CI 跑完 省略间隔交由 Claude 自定节奏；/loop 不带 prompt 进入自主循环模式
 ---
 [交互] 🧹 /clear 清空会话\n功能：快速清空当前对话历史，开始一个干净的新上下文\n效果：避免旧上下文干扰当前问题，适合切换任务时使用\n例子：/clear 后重新描述当前问题，让 Claude 聚焦新任务
 ---
@@ -104,7 +102,7 @@
 ---
 [CLI] 🤖 claude agents 后台会话管理\n功能：查看所有 Claude Code 后台会话（运行中/等待/已完成），行内展示 done/total 扇出进度；--json 输出含 id、state、waitingFor 字段，加 --all 可查看全部历史\n效果：统一管理多个并行会话，了解各会话进度，适合多任务并行开发\n例子：claude agents 查看进度；claude agents --json --all 获取完整结构化列表；←← 在会话内直接进入视图
 ---
-[集成] 🎯 Skills 与命令的区别\n功能：Skill 是预定义的工作流程，让 Claude 按既定步骤做事，可由 Claude 自行判断调用，也可由你用斜杠触发；斜杠输入里混着三种东西——内置命令（/clear、/init）、插件提供的 command（/commit 来自 commit-commands 插件）、以及 skill（内置的 /simplify、插件的 superpowers 系列）\n效果：分清三者才知道某个功能装了什么才有：内置的始终可用，插件 command 与 skill 卸载插件即消失；/skills 与 /plugin 分别列出后两类\n例子：/skills 查看当前有哪些 skill 可用；某个斜杠命令用不了时先用 /plugin list --disabled 确认提供它的插件没被禁用
+[集成] 🎯 Skills 与命令的区别\n功能：Skill 是预定义的工作流程，让 Claude 按既定步骤做事，可由 Claude 自行判断调用，也可由你用斜杠触发；斜杠输入里混着三种东西——内置命令（/clear、/init、/security-review）、内置 skill（update-config、claude-api、debug 等 16 个）、以及插件提供的 command 与 skill（如 superpowers 系列）\n效果：分清三者才知道某个功能装了什么才有——内置的始终可用，插件的 command 与 skill 卸载插件即消失；/skills 列出全部可用 skill，/plugin 查插件归属\n例子：/skills 查看当前有哪些 skill 可用；某个斜杠命令用不了时先用 /plugin list --disabled 确认提供它的插件没被禁用
 ---
 [集成] 🔌 Plugins 扩展系统\n功能：从市场安装插件扩展 Claude 的能力\n效果：获取社区贡献的技能、MCP 服务器和自定义命令\n例子：安装 superpowers 插件获取高级开发工作流
 ---
@@ -124,7 +122,7 @@
 ---
 [排障] 📈 /status 会话状态\n功能：查看当前 Claude Code 会话和环境状态\n效果：快速了解当前配置、模式或连接状态，适合排查“为什么行为不一样”\n例子：感觉本次会话和之前表现不同，可以先看 /status
 ---
-[交互] ⚙️ /config 快速配置\n功能：打开交互式配置界面修改 settings.json，或直接用 /config key=value 语法设置单个配置项（支持 interactive、-p 和 Remote Control 模式）；/config --help 列出所有可用的 key=value 简写键；Enter 和 Space 均可更改选项，Esc 保存并关闭\n效果：无需手动编辑 JSON，通过 UI 快速调整配置；直接写 key=value 更快\n例子：/config 修改主题、模型等常用设置；/config thinking=false 直接关闭思考；/config --help 查看所有可设置项
+[交互] ⚙️ /config 快速配置\n功能：打开交互式配置界面修改 settings.json，或直接用 /config key=value 语法设置单个配置项（支持 interactive 与 -p 模式）；/config --help 列出所有可用的 key=value 简写键；Enter 和 Space 均可更改选项，Esc 保存并关闭\n效果：无需手动编辑 JSON，通过 UI 快速调整配置；直接写 key=value 更快\n例子：/config 修改主题、模型等常用设置；/config thinking=false 直接关闭思考；/config --help 查看所有可设置项
 ---
 [交互] 🔌 /mcp MCP 管理\n功能：查看和管理当前连接的 MCP 服务器\n效果：检查 MCP 服务器状态、查看可用工具和资源\n例子：/mcp 查看 GitHub、数据库等 MCP 服务器连接状态
 ---
@@ -172,6 +170,10 @@
 ---
 [工具] ⏱️ ScheduleWakeup 动态循环\n功能：在 /loop 动态模式下安排下次唤醒时间\n效果：根据任务状态智能调整轮询间隔\n例子：ScheduleWakeup(delaySeconds=300) 5分钟后再检查
 ---
+[Skill·superpowers] 🧭 using-superpowers 技能调用总则\n功能：superpowers 的元技能，规定对话开始时先检查有无适用 skill，且必须在任何回应（包括反问澄清）之前就调用；它把「只要有 1% 可能适用就必须用」写成硬性规则，并附一张自我合理化红旗清单——「这只是个简单问题」「我得先探索代码库」「这个 skill 是过度设计」都在其中\n效果：防止 Claude 凭直觉直接开工而跳过既定流程，这是 skill 体系最常见的失效方式；多个 skill 同时适用时它还规定流程类优先于实现类，即先 brainstorming 对齐设计再动手写代码\n例子：它通常由 SessionStart 自动注入无需手动触发；想让 Claude 重申调用纪律时写 /superpowers:using-superpowers
+---
+[Skill·superpowers] 💡 brainstorming 想法转设计\n功能：任何创造性工作（加功能、建组件、改行为）动手前该先走的一步：先判断这个请求需要多重的流程，再通过对话理解上下文、打磨想法、给出设计，最后要你确认才继续\n效果：把「我想加个 X」收敛成边界明确的设计再动手，避免按错误理解一路写完几十个文件；与 writing-plans 的分工是——它负责搞清要做什么，writing-plans 负责怎么做\n例子：/superpowers:brainstorming 我想给项目加个权限系统 先对齐设计再进入实现
+---
 [Skill·superpowers] 📝 writing-plans 编写计划\n功能：为多步骤任务编写详细实施计划\n效果：进入计划模式，编写结构化实施方案\n例子：大型重构前使用 writing-plans 制定详细计划
 ---
 [Skill·superpowers] ✅ executing-plans 执行计划\n功能：执行已批准的实施计划，带检查点\n效果：按计划逐步实施，每步完成后验证\n例子：executing-plans 执行重构计划，分步验证
@@ -194,9 +196,7 @@
 ---
 [Skill·superpowers] 🌳 using-git-worktrees 使用工作树\n功能：使用 git worktree 隔离开发环境\n效果：多分支并行开发，互不干扰\n例子：/superpowers:using-git-worktrees 同时修 bug 和开发新功能
 ---
-[Skill·frontend-design] 🎨 frontend-design 前端设计\n功能：创建高质量、独特的前端界面\n效果：根据需求设计并实现生产级 UI\n例子：frontend-design 设计新的用户界面
----
-[Skill] 🧹 /simplify 清理式审查并应用修复\n功能：v2.1.154 起 /simplify 只做 cleanup 类审查（复用、简化、效率、抽象层级）并直接把修改应用到工作区，不再排查 bug——找正确性缺陷请改用 /code-review\n效果：重构或改完功能后一键收敛代码质量，改动直接落到工作区无需手动誊抄；与 /code-review 职责明确分离，各跑各的互不干扰\n例子：/simplify 清理最近改动并应用修复；找 bug 改用 /code-review high
+[Skill·superpowers] ✍️ writing-skills 编写与验证技能\n功能：新建、修改或上线前验证 skill 的方法论，核心主张是「写 skill 就是把 TDD 用在流程文档上」——先定义怎样算失败，再写文档让它先不通过、改到通过\n效果：避免写出「读着有道理但实际不改变行为」的 skill；同时说明个人 skill 放在 ~/.claude/skills/，而 ~/.agents/skills/ 是 Codex、Copilot CLI、Gemini CLI 共同识别的跨 runtime 别名\n例子：/superpowers:writing-skills 把这段反复手工执行的排查流程沉淀成 skill
 ---
 [Skill] 🔌 claude-api 构建 API 应用\n功能：构建、调试、优化 Claude API 应用，带三个子命令：prompt-audit 审计提示词与工具描述里针对旧模型写的过时模式；upgrade 把 Python 项目的 anthropic SDK 从 0.x 迁到 1.x（含超时写法 httpx.Timeout → anthropic.Timeout）；cost-optimize 剖析项目 API 支出并逐项验证降本杠杆（缓存、token 精简、batch、effort、模型选择），每次只做一处可度量的改动；此外覆盖 Admin API（成员与邀请、workspace、API key、限流报表、CMEK 等）\n效果：换模型后不确定哪些提示词该改，用 prompt-audit 扫一遍；账单太贵时用 cost-optimize 把「贵」变成有序的逐项优化，避免一次改一堆参数后无法归因\n例子：claude-api prompt-audit 检查提示词是否残留旧模型时代的写法；claude-api cost-optimize 剖析支出并逐步落实降本措施
 ---
@@ -206,9 +206,7 @@
 ---
 [交互] 🆕 /init 生成 CLAUDE.md\n功能：/init 是内置命令（不是 skill），扫描代码库后生成一份起始版 CLAUDE.md，把构建命令、目录结构、代码风格等写进去\n效果：新项目接入 Claude Code 的第一步；注意生成的是起点而非终点——/doctor 会专门检查 CLAUDE.md 里是否堆了能从代码库直接推导出的冗余描述，那些内容只会白占每轮上下文\n例子：新仓库里跑一次 /init 生成起始 CLAUDE.md，再手工补上「只有人才知道」的约定（如禁用某库、发布流程）；之后用 /doctor 检查是否需要裁剪
 ---
-[Skill·code-review] 📋 /review 与 /code-review 合并\n功能：v2.1.223 起 /review 已改为 /code-review 的别名，统一走 /code-review 审查当前 diff 或 PR，语法 /code-review <level> <pr#>，level 支持 low/medium/high/xhigh/max 五档努力程度，用 /code-review ultra 触发云端深度审查；不带 level 直接输入 /code-review 会复用上一次使用的级别\n效果：不再需要区分"快速审查"和"深度审查"两个命令，只需切换 effort 级别即可覆盖日常检查到全面审计的全部场景\n例子：/review 1234 等价于 /code-review 1234；/code-review high 1234 用高强度多代理模式深度审查 PR#1234；/code-review ultra 发起云端深度审查
----
-[Skill] 🔒 security-review 安全审查\n功能：对当前分支进行安全审查\n效果：检查安全漏洞、敏感信息泄露\n例子：security-review 合并前进行安全检查
+[交互] 🔒 /security-review 安全审查\n功能：对当前分支进行安全审查\n效果：检查安全漏洞、敏感信息泄露\n例子：security-review 合并前进行安全检查
 ---
 [MCP] 🐙 GitHub MCP 详解\n功能：通过 MCP 直接操作 GitHub\n效果：创建 PR、管理 issue、查看代码、运行检查\n例子：使用 GitHub MCP 直接在对话中创建和管理 PR
 ---
@@ -232,8 +230,6 @@
 ---
 [交互] 🎯 /goal 目标驱动模式\n功能：设置完成条件，Claude 跨轮次持续工作直到目标达成；后台任务卡住会主动 check-in，v2.1.239 起改为退避节奏（30 分钟 → 1 小时 → 之后每 2 小时一次，而非固定每 30 分钟，可用 CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0 关闭）；遇到不可恢复错误（如登录失效、额度耗尽、上下文溢出）时自动清除目标并提示，而非继续空转；v2.1.239 起通过 claude --resume 选择器恢复会话时，会一并恢复该会话原来激活的目标\n效果：适合复杂多步骤任务，Claude 会自动判断目标是否完成，无需手动监控每一步；异常场景下不会无意义地保持目标待命状态；退避节奏减少长任务下不必要的频繁打断；恢复会话后无需重新设置目标即可继续追踪完成度\n例子：/goal "所有测试通过且代码覆盖率 > 80%" 让 Claude 自动完成并验证；CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0 claude 关闭后台任务超时主动检查；claude --resume 选中一个曾设置过 /goal 的会话，目标状态自动恢复继续追踪
 ---
-[交互] 🔍 /ultrareview 并行代码审查\n功能：启动云端多代理并行代码审查\n效果：多个专门审查代理同时检查不同方面（安全、性能、可读性），比单次审查更全面\n例子：/ultrareview 在提交重要功能前进行全面并行审查
----
 [交互] 👁️ /focus 焦点模式\n功能：切换焦点/详细视图模式\n效果：焦点模式隐藏工具调用细节，只显示最终对话；详细模式显示所有操作\n例子：/focus 在日常对话时切换到焦点模式减少噪音
 ---
 [交互] 🖥️ /tui 全屏渲染模式\n功能：切换到无闪烁全屏 TUI（终端用户界面）渲染\n效果：减少输出刷新时的屏幕闪烁，提升长时间工作的视觉体验\n例子：/tui 开启全屏模式，让输出更稳定流畅
@@ -245,8 +241,6 @@
 [交互] ⚡ /effort 努力程度调节\n功能：交互式滑块调节努力程度（标签 Faster/Smarter），档位 low/medium/high/xhigh/max，另有 auto 交由模型自行判断、以及 ultracode 触发多 agent 动态工作流；选择器里按 s 表示「仅本会话生效」（与 /model 的 s 一致）；默认档位按模型分别保存，切模型时各自记住自己的设置\n效果：high/xhigh/max 更深思熟虑但慢，low/medium 快；按模型记忆意味着可以给 Opus 设 xhigh、给 Haiku 设 low，来回切换不必重设；启动标志 --effort 只为当次会话解除新模型的默认档位锁定，不永久改写\n例子：/effort 选 xhigh 处理关键架构决策；/effort 后按 s 只对本会话临时提到 max；/effort auto 交给模型自行判断；claude --effort high 启动时单次拔高
 ---
 [交互] 🖱️ /scroll-speed 滚轮速度\n功能：调整终端鼠标滚轮滚动速度\n效果：根据个人习惯优化滚动体验，在长输出时快速导航\n例子：/scroll-speed 3 将滚轮速度设为 3
----
-[CLI] 🔍 claude ultrareview 非交互审查\n功能：claude ultrareview [目标] 以非交互模式运行多代理代码审查，打印结果到 stdout；支持 --json 获取原始 JSON payload、--timeout <分钟> 覆盖默认 30 分钟超时\n效果：适合在 CI/CD 流水线中自动执行代码审查，退出码 0 表示成功，1 表示失败\n例子：claude ultrareview 1234 审查 PR#1234；claude ultrareview --json > review.json 保存结构化结果
 ---
 [CLI] 🏷️ claude plugin tag 发布标签\n功能：为当前插件创建发布版本的 git 标签\n效果：规范化插件版本发布流程，自动打标签并关联版本信息\n例子：claude plugin tag 在插件发布时创建版本标签
 ---
@@ -290,8 +284,6 @@
 ---
 [交互] 🔀 /workflows 工作流记录\n功能：查看 ultracode 动态工作流的运行记录和实时进度；在工作流 agent 详情视图中按 f 键可按状态过滤 agent 列表\n效果：了解多 agent 并行工作流各阶段的执行状态、耗时和结果；按 f 筛选运行中/完成/等待中的 agent\n例子：/workflows 在 ultracode 运行期间查看各子 agent 的执行进度；进入 agent 详情后按 f 只看失败的 agent
 ---
-[Skill·code-review] 🔍 /code-review 手动触发、后台执行与 --fix / --comment\n功能：v2.1.215 起 Claude 不再自行运行 /code-review 和 /verify，需要时由你显式输入；v2.1.218 起以后台子代理方式运行，评审不占用主对话上下文；支持 --fix 自动应用修复、--comment 把意见发为 GitHub PR 内联评论（GitLab 仓库改走 glab mr note）\n效果：模型不会在你没要求时擅自消耗额度做评审；审查耗时不阻塞你继续对话，结果也不挤占当前上下文\n例子：改完代码后输入 /code-review 手动发起评审；/code-review --comment 把 findings 同步为 PR 内联评论；用 /verify 单独校验完成度
----
 [交互] 📊 /usage 用量与成本明细（别名 /cost、/stats）\n功能：三个名字是同一个命令；按 skills/subagents/plugins/MCP 服务器/Loops 分类展示 token 消耗，Loops 维度逐个列出运行次数、总量与单次平均；另含 prompt cache 明细（命中率、未命中次数、重新缓存 token、warm/cold）和网关消费上限用户的 Spend limit 进度条，同一组数据状态栏脚本可从 prompt_cache 与 rate_limits.spend_limit 字段读到\n效果：定位真正的费用黑洞而不是只看总额——命中率低说明每轮都在重发上下文（常见诱因：频繁切模型、改 system prompt、贴大图）；某个 loop 单次 token 高说明每轮做得太多，运行次数高说明间隔设得太密\n例子：/usage 看哪个 skill 或 MCP 吃掉最多 token；命中率不足 30% 时检查是否在会话中反复切模型；状态栏脚本读 input.prompt_cache.hit_ratio 常驻显示缓存健康度
 ---
 [配置] 👁️ skillOverrides 可见度控制\n功能：在 settings.json 中配置 skillOverrides，控制每个 skill 对 Claude 的可见度\n效果：off 完全隐藏、user-invocable-only 仅用户可调用、name-only 只知道名称不知详情\n例子：{"skillOverrides": {"my-skill": "off"}} 临时禁用某个 skill 而不卸载插件
@@ -318,8 +310,6 @@
 ---
 [Hook] ➕ Stop Hook additionalContext\n功能：Stop/SubagentStop hook 现在可在返回值中附加 additionalContext，让当前 turn 在 hook 介入后继续运行\n效果：hook 可以向 Claude 补充信息（如检查结果、外部状态），而不是直接结束 turn\n例子：Stop hook 检测到测试未通过，返回 additionalContext 告知 Claude 错误详情，Claude 自动继续修复
 ---
-[配置] ☁️ Bedrock/Vertex Auto 模式\n功能：Bedrock、Vertex、Foundry 上的 Auto 模式 v2.1.207 起默认开启，无需再手动设置 CLAUDE_CODE_ENABLE_AUTO_MODE；可在 settings.json 设置 disableAutoMode: true 关闭\n效果：云端部署场景默认享受 Auto 自动调配推理资源，按任务复杂度动态分配算力；不需要时可显式关闭\n例子：v2.1.207+ 在 Bedrock/Vertex/Foundry 上开箱即用 Auto 模式；{"disableAutoMode": true} 关闭该行为
----
 [CLI] ⚠️ --dangerously-skip-permissions 跳过所有权限检查\n功能：claude --dangerously-skip-permissions 完全跳过所有权限提示，等价于 --permission-mode bypassPermissions；注意：仍然尊重 deny 规则，不会绕过 managed 策略，也不绕过沙盒。与 --allow-dangerously-skip-permissions 不同：后者只是把 bypassPermissions 加入 Shift+Tab 循环而不立即启用\n效果：全自动化执行、CI 脚本、无人值守任务的终极提速手段，代价是放弃所有安全确认\n例子：claude --dangerously-skip-permissions "自动修复所有 lint 错误并提交"；claude --permission-mode plan --allow-dangerously-skip-permissions 先从 plan 模式开始，需要时再 Shift+Tab 切换到 bypass
 ---
 [CLI] 🪶 --bare 极简模式\n功能：claude --bare 跳过 hooks、skills、plugins、MCP、自动记忆、CLAUDE.md 的发现和加载，只保留 Bash/Read/Edit 工具；设置 CLAUDE_CODE_SIMPLE 环境变量；常与 -p 配合用于脚本\n效果：启动更快，工具集最小，适合对工具集有明确要求的自动化脚本或性能敏感场景；注意 --safe-mode 保留认证/模型/权限逻辑，--bare 连这些也精简\n例子：claude --bare -p "统计这个目录下 ts 文件数量" 极速无配置执行
@@ -329,12 +319,6 @@
 [CLI] 💰 --max-budget-usd 花费上限\n功能：claude -p --max-budget-usd <金额> 设置本次 API 调用的最大花费（仅 -p 模式），超出上限自动停止\n效果：防止自动化脚本或长任务意外消耗大量费用，设定安全边界\n例子：claude -p --max-budget-usd 2.00 "完整分析这个代码库" 花费不超过 2 美元；claude -p --max-budget-usd 0.50 --max-turns 5 "生成报告" 双重约束
 ---
 [CLI] 🔄 --max-turns 限制轮次\n功能：claude -p --max-turns <数字> 限制 agentic 轮次，超出后以错误退出（仅 -p 模式），默认无限制\n效果：防止任务失控循环；配合 --max-budget-usd 双重保护自动化任务\n例子：claude -p --max-turns 10 "自动修复所有测试失败" 最多尝试 10 轮
----
-[CLI] 🧪 --betas beta 功能\n功能：claude --betas <header名> 在 API 请求中加入 beta header，仅适用于 API key 用户；可开启实验性功能如 interleaved-thinking\n效果：抢先体验尚未正式发布的模型能力\n例子：claude --betas interleaved-thinking 开启交叉思考模式
----
-[CLI] 🌐 --cloud / --remote 创建云端会话\n功能：claude --cloud "任务描述"（--remote 为等价别名）在 claude.ai 上创建新的 web 会话；--teleport 将云端 web 会话迁移回本地终端继续；三者均为隐藏 flag，不出现在 claude --help 输出中，且需要交互式终端\n效果：在浏览器端开始任务，之后用 --teleport 拉回终端处理，或反向将本地任务推到云端协作\n例子：claude --cloud "调查这个内存泄漏问题"；claude --teleport 将 web 会话拉回本地终端
----
-[CLI] 🖥️ --remote-control 远程控制\n功能：claude --remote-control 启动支持远程控制的交互会话，可从 claude.ai 或 Claude App 控制本地 Claude Code；--remote-control-session-name-prefix 设置自动生成名称的前缀\n效果：手机/平板/另一台电脑通过 Claude App 远程指挥本地终端的 Claude Code 执行任务\n例子：claude --remote-control "My Project"；claude remote-control --remote-control-session-name-prefix dev-box 生成 dev-box-xxx 格式名称
 ---
 [CLI] 🔗 --from-pr 从 PR 恢复\n功能：claude --from-pr <PR号或URL> 恢复与指定 PR 关联的会话，支持 GitHub/GitLab/Bitbucket；Claude 创建 PR 时自动建立关联\n效果：直接从 PR 上下文恢复工作，无需手动查找会话 ID\n例子：claude --from-pr 1234 恢复关联 PR#1234 的会话；claude --from-pr https://github.com/org/repo/pull/1234
 ---
@@ -352,23 +336,15 @@
 ---
 [CLI] 🔄 claude respawn / attach / rm 后台会话管理\n功能：claude respawn <id> 重启会话（保留对话历史），--all 重启所有会话；claude attach <id> 挂载后台会话到当前终端；claude rm <id> 从列表移除会话（transcript 仍保留在本地可通过 --resume 恢复）；claude stop <id> 停止会话\n效果：精细管理多个后台 agent 的生命周期\n例子：claude respawn --all 升级 Claude Code 后批量重启所有后台会话；claude attach 7c5dcf5d 进入某个后台任务查看进度
 ---
-[CLI] 🔑 claude setup-token 长期 token\n功能：claude setup-token 为 CI 和脚本生成长期 OAuth token，打印到终端不保存（需要 Claude 订阅）；用于自动化环境认证\n效果：避免在 CI 中使用短期 token 或 API key，长期 token 更适合持久化自动化\n例子：claude setup-token 生成后复制到 CI 环境变量 ANTHROPIC_AUTH_TOKEN
----
 [交互] 🎯 高质量提问框架\n功能：精确提问让 Claude 输出质量显著提升，三要素：检查维度 + 操作范围 + 成功标准\n效果：避免"帮我看看"类模糊指令导致的方向偏差，一次到位减少来回\n例子：❌ "核对一下" → ✅ "核对所有条目，重点检查：命令语法、重复条目、分类标签是否准确，不符合官方文档的直接修正"
 ---
 [交互] 📐 提问维度补全技巧\n功能：在模糊问题上补充三个维度：操作对象（对什么）、操作动作（做什么）、验收标准（什么算完成）\n效果：Claude 获得足够上下文后一次性给出完整答案，而不是来回澄清\n例子：❌ "优化一下" → ✅ "优化 tips.txt 中的 CLI 类条目，目标：例子中的命令都是完整可执行形式，无语法错误"
 ---
 [配置] 🔒 Tool(param:value) 权限参数匹配\n功能：settings.json 的 allow/deny 规则支持 Tool(param:value) 语法匹配工具输入参数，支持 * 通配符\n效果：可以按参数值精细控制工具权限，如按模型名阻止特定子代理\n例子：deny: ["Agent(model:opus)"] 阻止使用 Opus 模型的子代理；allow: ["Read(src/**)"] 只允许读取 src 目录
 ---
-[配置] 📱 CLAUDE_CLIENT_PRESENCE_FILE 环境变量\n功能：设置 CLAUDE_CLIENT_PRESENCE_FILE 指向一个标记文件，Claude 检测到文件存在时抑制移动端推送通知\n效果：在电脑前工作时避免手机收到重复通知，离席时自动恢复推送\n例子：CLAUDE_CLIENT_PRESENCE_FILE=~/.claude-present claude 启动时创建标记文件
----
 [配置] 🔗 footerLinksRegexes 底部链接匹配\n功能：settings.json 中配置 footerLinksRegexes 正则表达式数组，用于在 footer 行匹配链接徽章\n效果：自定义 footer 显示的链接内容，由用户或托管设置配置\n例子：{"footerLinksRegexes": ["https://jira\\.company\\.com/.*"]} 在 footer 显示 Jira 链接徽章
 ---
-[配置] 🛡️ enforceAvailableModels 托管模型限制\n功能：托管设置 enforceAvailableModels 启用后，availableModels 白名单也约束 Default 模型，用户或项目设置无法扩大托管列表；org 配置的限制同时作用于模型选择器、--model、/model 和 ANTHROPIC_MODEL，选择受限模型时显示"restricted by your organization's settings"提示\n效果：企业环境中强制执行模型白名单，防止用户绕过限制，并在各入口给出明确反馈\n例子：{"enforceAvailableModels": true, "availableModels": ["sonnet", "haiku"]} 只允许使用这两个模型；用户尝试用 --model opus 时收到组织限制提示
----
 [配置] 🖱️ wheelScrollAccelerationEnabled 滚轮加速\n功能：settings.json 中设置 wheelScrollAccelerationEnabled: false 禁用全屏模式下鼠标滚轮滚动加速\n效果：获得线性滚动体验，避免加速导致滚动过快难以定位\n例子：{"wheelScrollAccelerationEnabled": false} 禁用滚轮加速，适合精确浏览长输出
----
-[配置] 🏖️ sandbox.allowAppleEvents 沙箱 Apple Events\n功能：settings.json 中设置 sandbox.allowAppleEvents: true 允许沙箱命令在 macOS 上发送 Apple Events\n效果：沙箱内的脚本可以与其他 macOS 应用交互（如自动化 AppleScript）\n例子：{"sandbox": {"allowAppleEvents": true}} 允许沙箱内执行 AppleScript 自动化
 ---
 [高级] 🪆 子代理嵌套生成\n功能：子代理可以生成自己的子代理，最多支持 5 层嵌套深度；v2.1.219 起默认嵌套深度从 1（不嵌套）提升为 3，可用 CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH 环境变量调整，设为 1 可禁用嵌套\n效果：复杂任务可以递归分解，每层子代理专注于子任务，默认即可获得多层委派能力，无需额外配置\n例子：Agent 派生一个研究 agent，该 agent 再派生多个搜索 agent 并行收集信息；CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=1 禁用嵌套
 ---
@@ -376,13 +352,9 @@
 ---
 [高级] 🛡️ Auto 模式破坏性命令防护\n功能：Auto 模式自动拦截破坏性操作：git reset --hard、git checkout -- .、git clean -fd、git stash drop、git commit --amend（非 agent 创建的会话）、篡改会话 transcript 文件（v2.1.205+）；以及 terraform/pulumi/cdk destroy（未指定 stack 时）\n效果：防止自动化脚本误执行不可逆操作或篡改会话记录，保护代码、基础设施和审计追溯完整性\n例子：Auto 模式下 Claude 发起 git reset --hard 或试图修改 transcript 文件都会被自动拦截，需要用户手动确认
 ---
-[配置] 🔗 attribution.sessionUrl 链接控制\n功能：settings.json 中设置 attribution.sessionUrl: false，在 web/Remote Control 会话的提交和 PR 中省略 claude.ai 链接\n效果：企业或私有化部署场景中不希望代码含有 claude.ai 链接时使用\n例子：{"attribution": {"sessionUrl": false}} 使提交信息不含 claude.ai 会话链接
----
 [集成] 📂 嵌套 .claude/skills 目录支持\n功能：嵌套的 .claude/skills 目录现在支持加载；名称冲突时显示为 <dir>:<name>；嵌套 .claude/ 目录中，距离最近的 agent/workflow/output-style 配置优先\n效果：子目录可以有自己的 skills 配置，方便 monorepo 场景按子项目隔离 skill 集\n例子：projects/frontend/.claude/skills/my-skill 会以 frontend:my-skill 形式加载
 ---
 [CLI] 🔑 claude mcp login/logout MCP 认证\n功能：claude mcp login <名称> 和 claude mcp logout <名称> 直接在 CLI 中完成 MCP 服务器认证，无需打开交互式 /mcp 菜单；支持 --no-browser 将认证重定向到 stdin，适合 SSH 远程环境\n效果：CI/CD 流水线或 SSH 会话中也能完成 MCP OAuth 认证，不依赖图形界面\n例子：claude mcp login github 在 CLI 认证 GitHub MCP；claude mcp login jira --no-browser 在 SSH 中通过 stdin 完成认证
----
-[配置] 🖥️ teammateMode iterm2 设置\n功能：settings.json 中设置 teammateMode: "iterm2" 使用 iTerm2 原生 pane 运行 teammate；当自动模式找不到 it2 CLI 时显示警告\n效果：在 iTerm2 上获得更原生的多 pane 体验，比 tmux 启动更快集成更紧密\n例子：{"teammateMode": "iterm2"} 在 iTerm2 中启用原生 pane 模式；找不到 it2 CLI 时按提示安装 iTerm2 Shell Integration
 ---
 [配置] 🔒 sandbox.credentials 凭证保护\n功能：settings.json 中设置 sandbox.credentials: false，阻止沙箱命令读取凭证文件（如 ~/.netrc、~/.aws/credentials）和含密钥的环境变量\n效果：沙箱模式下进一步隔离敏感信息，防止代码执行期间意外泄露 API key 或凭证文件\n例子：{"sandbox": {"credentials": false}} 禁止沙箱命令访问凭证文件和密钥环境变量
 ---
@@ -414,17 +386,13 @@
 ---
 [交互] 🖱️ 全屏模式菜单鼠标点击\n功能：全屏 TUI 模式下，权限提示、/model、/config 等选择菜单新增鼠标点击支持\n效果：无需仅靠键盘方向键选择选项，直接用鼠标点击即可选中\n例子：全屏模式下遇到权限确认或 /model 选择菜单时，直接用鼠标点击对应选项完成选择
 ---
-[Skill] 📊 /dataviz 图表设计技能\n功能：/dataviz 技能提供图表和仪表盘设计指导，附带可运行的调色板校验器\n效果：数据可视化场景中获得专业设计建议，自动校验配色方案的可访问性\n例子：/dataviz 设计一个销售数据仪表盘，自动检查颜色对比度是否符合无障碍标准
----
-[交互] 📚 堆叠斜杠技能调用\n功能：在一行中堆叠多个斜杠技能调用（如 /skill-a /skill-b do XYZ），最多同时加载 5 个技能\n效果：一次调用组合多个技能能力，无需分多轮对话分别触发\n例子：/code-review /security-review 审查这个 PR 同时启用代码审查和安全审查两个技能
+[交互] 📚 堆叠斜杠技能调用\n功能：在一行中堆叠多个斜杠技能调用（如 /skill-a /skill-b do XYZ），最多同时加载 5 个技能\n效果：一次调用组合多个技能能力，无需分多轮对话分别触发\n例子：/superpowers:brainstorming /superpowers:writing-plans 先做设计头脑风暴再产出实施计划，一行内串起两个技能
 ---
 [Hook] 🔔 后台代理通知 Hook\n功能：后台代理需要输入或完成任务时，触发 Notification hook（事件类型为 agent_needs_input 或 agent_completed）\n效果：后台代理状态变更时自动通知用户，无需手动轮询检查\n例子：后台代理完成代码生成后通过 Notification hook 发送桌面通知提醒你检查结果
 ---
 [高级] 🤖 后台子代理默认自动化\n功能：v2.1.198 起子代理默认在后台运行（此前为渐进灰度）；v2.1.221 起细化为：在 worktree 中完成任务后自动 commit、push 以保留工作成果，仅当任务确实需要时才开 draft PR，遵循项目 CLAUDE.md 的 git 指令，并始终在结束时报告工作产出的位置\n效果：主任务无需等待子代理完成即可继续工作；不再无条件开 PR，减少不必要的 PR 噪音，同时保证工作成果不会因为没有报告而被忽视\n例子：Agent 派生一个后台代码修复任务，完成后按需生成 draft PR 或仅推送分支，并在结束时明确告知代码所在分支/PR
 ---
 [配置] 🌊 Dynamic workflow size 工作流规模\n功能：在 /config 中设置动态工作流的规模指引（advisory guideline，非硬性上限），控制 Claude 创建动态工作流时的 agent 数量倾向\n效果：small（精简）适合快速任务减少 token 开销；medium（平衡）适合日常开发；large（全面）适合复杂审计和需要高覆盖的场景\n例子：/config 设置 workflowSizeGuideline 为 small 获得精简工作流；设为 large 让 Claude 倾向使用更多 agent 并行
----
-[配置] 🏢 组织默认模型\n功能：管理员在组织控制台设置默认模型，用户 /model 中显示 "Org default" 或 "Role default" 标记\n效果：企业统一模型选择，用户无需手动配置即可使用组织推荐模型\n例子：/model 查看带 "Org default" 标记的组织推荐模型，无需手动设置
 ---
 [交互] 📛 可读默认会话名\n功能：v2.1.196 起启动时自动生成可读的会话名称，也可用 -n 或 /rename 手动命名\n效果：多会话并行时快速区分不同任务，/resume 列表和 claude agents 中一目了然\n例子：claude -n "refactor-auth" 启动时指定名称；会话内 /rename my-feature 重命名；claude --resume refactor-auth 按名称恢复
 ---
@@ -502,8 +470,6 @@
 ---
 [Skill] 🚫 disable-model-invocation frontmatter\n功能：在 SKILL.md frontmatter 中声明 disable-model-invocation: true，禁止 Claude 自主调用该 skill；用户仍可通过斜杠命令手动触发；Claude 尝试调用时会被引导告知用户"请手动运行该 skill"，而不是自己模仿其工作流\n效果：适合只应由人工决定时机的高风险或高成本 skill（如生产部署、大规模重构），防止模型在未被要求时擅自触发\n例子：frontmatter 加入 disable-model-invocation: true 后，Claude 判断该场景适用该 skill 时会提示"建议你运行 /该skill"，而不是自己执行同等逻辑
 ---
-[CLI] 🖥️ claude self-hosted-runner 自托管环境\n功能：Team/Enterprise 专属，把自己的机器或容器变成 Claude Code web/mobile/desktop 会话可调度的执行环境；--base-dir 指定基础目录（不可写则启动即报错而非静默失败），--defer-shutdown-max-min 收到 SIGTERM 后继续服务已附着的会话若干分钟再退出，--proxy-authorization-command / --proxy-authorization-file 为需要每次新鲜签发 header 的出口代理提供认证，--client-label（或 SELF_HOSTED_RUNNER_CLIENT_LABEL）覆盖默认取主机名的注册标签\n效果：云端发起的任务实际跑在你控制的机器上，满足数据不出内网这类合规要求；标签可读让 k8s 随机 pod 名那种实例在调度界面上能认出来\n例子：claude self-hosted-runner --base-dir /opt/claude-runner 注册一个可供云端调度的环境；加 --client-label build-farm-01 用可读标签替代随机主机名
----
 [配置] 📂 plugin skills 路径 "." 与校验提示优化\n功能：v2.1.221 起 plugin.json 的 skills 路径字段接受 "."，表示插件根目录本身就是 skill 目录；根目录直接放 SKILL.md 时的校验报错会提示改用插件根目录写法\n效果：单 skill 插件不必再额外建一层子目录，plugin 结构可以更扁平\n例子：plugin.json 中 "skills": ["."] 让插件根目录直接作为唯一 skill 的目录
 ---
 [交互] 🔌 /plugin install 立即激活\n功能：v2.1.221 起通过 /plugin 安装的插件，在安全的情况下立即激活，不再要求先手动 /reload-plugins\n效果：装完插件马上可用，减少一步手动操作\n例子：/plugin 搜索安装某插件后，无需再输入 /reload-plugins 即可直接使用其 skill
@@ -516,17 +482,11 @@
 ---
 [交互] 📨 @ 提及其他会话\n功能：在输入框中输入 @ 加会话名可以提及另一个 Claude 会话，Claude 随后会用 SendMessage 直接联系该会话\n效果：多会话协作时无需手动切换到目标会话再发消息，在当前对话里 @ 一下即可转发\n例子：@refactor-auth 帮我看看这个函数是否受影响 让当前会话直接向 refactor-auth 会话发消息
 ---
-[CLI] 🦊 GitLab 与 GitHub 同等支持\n功能：插件市场可直接克隆裸 gitlab.com 仓库 URL（含嵌套子组）；-w / --worktree 与 claude agents 视图接受 GitLab merge request URL（MR 显示为 !N）；配置了 GitLab remote 并认证过 glab CLI 时，footer 与状态栏显示 MR !N 及 draft/pending/green 状态，glab mr create/merge/close/reopen/note/update 会被识别并刷新徽章；/code-review --comment 在 GitLab 仓库改走 glab mr note 发表评审意见\n效果：GitLab 用户的插件安装、worktree/MR 集成与评审闭环与 GitHub 拉平，不必再绕道手工操作\n例子：claude -w https://gitlab.com/group/subgroup/repo/-/merge_requests/42 直接检出该 MR 对应分支；认证 glab 后 footer 自动显示当前分支关联 MR 的状态
----
-[配置] 🧠 CLAUDE_CODE_TOOL_MEMORY_LIMIT 内存限制\n功能：v2.1.233 起新增 opt-in 环境变量，为 Linux 上的 Bash 工具命令设置 cgroup 内存上限\n效果：防止失控的构建或命令耗尽内存拖垮整个会话，适合运行不可信或资源密集型命令的场景\n例子：CLAUDE_CODE_TOOL_MEMORY_LIMIT=2G claude 限制 Bash 命令最多使用 2GB 内存
+[CLI] 🦊 GitLab 与 GitHub 同等支持\n功能：插件市场可直接克隆裸 gitlab.com 仓库 URL（含嵌套子组）；-w / --worktree 与 claude agents 视图接受 GitLab merge request URL（MR 显示为 !N）；配置了 GitLab remote 并认证过 glab CLI 时，footer 与状态栏显示 MR !N 及 draft/pending/green 状态，glab mr create/merge/close/reopen/note/update 会被识别并刷新徽章\n效果：GitLab 用户的插件安装与 worktree/MR 集成与 GitHub 拉平，不必再绕道手工操作\n例子：claude -w https://gitlab.com/group/subgroup/repo/-/merge_requests/42 直接检出该 MR 对应分支；认证 glab 后 footer 自动显示当前分支关联 MR 的状态
 ---
 [配置] 🌐 CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS 缓存时长\n功能：v2.1.233 起新增环境变量，配置 WebFetch 工具的会话级 URL 缓存存活时间，默认保持不变（15 分钟）\n效果：需要更频繁获取最新页面内容，或反过来延长缓存减少重复请求时可按需调整\n例子：CLAUDE_CODE_WEBFETCH_CACHE_TTL_MS=60000 claude 将 WebFetch 缓存时长缩短为 1 分钟
 ---
 [集成] 📦 插件市场 command 源\n功能：v2.1.229 起 marketplace.json 支持 command 类插件源：本地命令（如某个 IDE）打印插件目录路径，每次会话重新解析并应用，无需重启；mode: "link" 直接就地使用该目录\n效果：IDE 或其他工具可以动态提供插件目录，插件内容变化后下次会话自动生效\n例子：marketplace.json 中配置 source: "command" 让某个本地脚本的输出路径作为插件目录来源
----
-[Skill·commit-commands] ⚠️ /commit-push-pr 危险标志需人工确认\n功能：v2.1.229 起 /commit-push-pr 中带危险标志的 git/gh 命令（如 --force、--amend、--no-verify）不再自动批准，需要人工确认后才执行\n效果：防止自动化提交流程中意外强推、修改历史提交或跳过校验钩子造成不可逆后果\n例子：/commit-push-pr 流程中若涉及 git push --force，会先弹出确认提示而非直接执行
----
-[交互] ⏳ 用量限额到期自动续接\n功能：v2.1.234 起 claude.ai 使用限额重置后，Claude Code 自动继续之前中断的会话；可在 /config 的 "Continue automatically at usage limit" 关闭\n效果：额度耗尽导致会话暂停后无需手动盯着重置时间再手动恢复，节省等待成本\n例子：额度用尽后会话自动挂起，限额重置时刻一到自动续接工作；/config 找到该开关按需关闭
 ---
 [交互] 🪟 工作中打开常用面板\n功能：v2.1.234 起 /permissions 可在 Claude 工作时打开，规则改动立即应用到当前轮次；/add-dir、/autocompact、/theme、/help、/config、/advisor 弹窗也支持在全屏 TUI 模式下工作时打开\n效果：不必等当前任务跑完才能查看或调整权限、主题等设置，减少等待和打断\n例子：Claude 正在执行长任务时直接输入 /permissions 调整规则，改动立即对本轮生效
 ---
@@ -540,19 +500,13 @@
 ---
 [配置] 🧬 ANTHROPIC_DEFAULT_MODEL 默认模型\n功能：v2.1.236 起新增环境变量 ANTHROPIC_DEFAULT_MODEL，设置新会话启动时使用的默认模型；与 ANTHROPIC_MODEL 不同，/model 的手动选择会覆盖此默认值并跨会话持久化\n效果：每次打开新会话自动使用指定模型，无需每次手动 /model 切换；手动切换后优先级更高\n例子：ANTHROPIC_DEFAULT_MODEL=claude-sonnet-4-20250514 设置默认模型；/model opus 手动切换后会覆盖默认值并持久保留
 ---
-[工具] 🔔 notify_when_idle 空闲通知\n功能：v2.1.236 起 SendMessage 支持 notify_when_idle 参数：请求目标会话在下次空闲时发送一次通知，仅 macOS/Linux 可用；opt-in、一次性、无轮询\n效果：跨会话协作时不必反复轮询检查对方状态，空闲时自动收到通知\n例子：SendMessage(to="code-review", notify_when_idle=true, message="PR ready for review") 让 code-review 会话空闲时通知你
----
 [配置] ⌨️ keybindingFlavor 键位偏好\n功能：v2.1.238 起 settings.json 新增 keybindingFlavor 设置，设为 "readline" 时 Ctrl+W 在提示符中删除到前一个空白（类似 Bash）；默认 "classic" 行为不变；v2.1.239 起 "readline" 同时匹配 Bash 的单词级按键：Alt+F 和 Ctrl/Option+→ 跳到单词末尾，Alt+D 删除到单词末尾（Ctrl+Y 可粘贴回删除内容），标点符号也作为单词分隔符\n效果：习惯 Bash/readline 键位的用户可获得一致的删除体验，不必迁就默认行为\n例子：{"keybindingFlavor": "readline"} 让 Ctrl+W 删除到前一个空白；不设置则保持 classic 默认
 ---
 [工具] 📇 /list-agents 列出团队伙伴\n功能：v2.1.239 起 /list-agents 命令（ListAgents 工具的斜杠命令形式）列出你的在线 teammate；此前只有子代理和其他普通会话会出现在列表中，可联系的 teammate 反而不显示\n效果：多 agent 团队协作时能一眼确认哪些 teammate 当前在线可联系，不必先尝试 SendMessage 才知道对方是否可达\n例子：/list-agents 查看当前所有可联系的 teammate 及其在线状态，再用 SendMessage 联系其中的某个
 ---
 [CLI] 🔒 --restricted 受限模式\n功能：v2.1.248 起新增 --restricted 标志（或环境变量 CLAUDE_CODE_RESTRICTED=1），一次性收紧会话能力：移除所有会执行命令或代码的内置工具以及 WebFetch（除非在 --tools 中显式点名保留），文件工具被限制在工作目录内，拒绝 bypassPermissions 权限模式，并忽略用户级、项目级和 local 设置文件\n效果：面对不完全可信的代码库或需要交给他人代跑的会话时，用一个标志就得到"只读分析"级别的安全边界，不必逐条配置 deny 规则，也不担心某个项目里的 settings.json 悄悄放宽权限\n例子：claude --restricted 以受限模式审读一个来源不明的仓库；CLAUDE_CODE_RESTRICTED=1 claude 通过环境变量对整批会话生效；claude --restricted --tools WebFetch 受限的同时保留网页抓取能力
 ---
-[配置] ⏳ prompt cache TTL 精细控制\n功能：v2.1.243 起新增 promptCacheTtl 与 subagentPromptCacheTtl 两个设置，让 API key 与云厂商（Bedrock/Vertex/Foundry）用户把主对话的 prompt cache 保持 1 小时、同时让子代理停留在 5 分钟；v2.1.248 起 agent frontmatter 支持 experimental.cacheTtl（取值 "5m" 或 "1h"），在未配置全局 subagent TTL 时提供按 agent 粒度的缓存 TTL\n效果：主对话长时间思考不会因缓存过期而重付全量输入费用，而短命的子代理不必为用不到的 1 小时缓存写入付溢价——两侧分开设置比统一取值省钱；单个高频复用的 agent 还能单独延长 TTL\n例子：{"promptCacheTtl": "1h", "subagentPromptCacheTtl": "5m"} 主对话 1 小时缓存、子代理 5 分钟；agent frontmatter 里写 experimental.cacheTtl: "1h" 让这一个 agent 单独用 1 小时缓存
----
-[配置] 🎚️ modelPicker 自定义模型选择器\n功能：v2.1.243 起新增 modelPicker 设置，用有序、带标签的模型列表定制 /model 选择器；模型 id 支持任意拼写形式（含 Vertex/Bedrock 的完整 id），列表可以追加到内置阵容之后，也可以整体替换掉内置列表\n效果：团队只用其中 2-3 个模型时，选择器不再塞满十几个无关选项；云厂商用户可以把冗长的 Vertex/Bedrock 模型 id 映射成人类可读的标签，切换模型不必记住完整 id\n例子：{"modelPicker": {"mode": "replace", "models": [{"id": "claude-opus-5", "label": "主力 Opus"}, {"id": "claude-sonnet-5", "label": "日常 Sonnet"}]}} 让 /model 只显示这两项；mode 用 append 则保留内置列表并追加自定义项
----
-[配置] 💰 modelPricing 企业合约价\n功能：v2.1.243 起新增 modelPricing 托管设置，把组织协商的每模型费率和折扣系数应用到 /cost、状态栏以及遥测中的成本数字上，替代公开列表价\n效果：签了折扣合约的企业不再看到虚高的成本估算，/cost 和状态栏显示的金额与实际账单一致，成本治理和内部分摊有了可信数据源\n例子：在 managed-settings.json 中配置 {"modelPricing": {"claude-opus-5": {"input": 10, "output": 40}, "discountMultiplier": 0.8}} 后，/cost 按合约价而非 list price 计算
+[配置] 🎚️ modelPicker 自定义模型选择器\n功能：v2.1.243 起新增 modelPicker 设置，用有序、带标签的模型列表定制 /model 选择器；模型 id 支持任意拼写形式（含网关下发的完整 id），列表可以追加到内置阵容之后，也可以整体替换掉内置列表\n效果：团队只用其中 2-3 个模型时，选择器不再塞满十几个无关选项；走自定义网关时可以把冗长的模型 id 映射成人类可读的标签，切换模型不必记住完整 id\n例子：{"modelPicker": {"mode": "replace", "models": [{"id": "claude-opus-5", "label": "主力 Opus"}, {"id": "claude-sonnet-5", "label": "日常 Sonnet"}]}} 让 /model 只显示这两项；mode 用 append 则保留内置列表并追加自定义项
 ---
 [工具] 📮 SendFeedback 反馈草稿\n功能：v2.1.247 起新增 SendFeedback 工具，会话中出了问题时 Claude 可以主动起草一份反馈报告，你在 /feedback 中审阅后再决定是否发送；用 settings.json 的 feedbackDrafts 设置可关闭\n效果：踩到 bug 的当下由 Claude 把上下文（做了什么、期望什么、实际发生什么）整理成结构化报告，比事后凭记忆手写反馈更完整；草稿必须经你确认才发出，不会自动上报会话内容\n例子：Claude 遇到工具异常后起草反馈，用 /feedback 审阅并发送；{"feedbackDrafts": false} 完全关闭该行为
 ---
@@ -564,13 +518,7 @@
 ---
 [工具] ✂️ subagent maxTurns 部分结果\n功能：v2.1.246 起子代理触及 maxTurns 上限而停止时，会把已产出的内容标记为"部分结果"返回，并附带用 SendMessage 继续该子代理的提示，而不是伪装成已完成\n效果：不再误把截断的半成品当成最终答案——这是最危险的一类静默失败；看到部分标记后可以直接 SendMessage 让同一个子代理带着原有上下文接着做，不必换新代理从头再来\n例子：子代理返回结果带"部分"标记时，用 SendMessage(to="<子代理名>", message="继续") 让它接着完成剩余工作
 ---
-[CLI] 🔑 /login Console 无密钥登录\n功能：v2.1.243 起 /login → Anthropic Console 下新增"Sign in with your Console account"（推荐选项），与创建 API key 的方式并列，让不允许使用 API key 的组织也能登录\n效果：不必为每个开发者签发和轮换长期 API key，减少凭据散落在本地配置里的面；对禁用 API key 的合规环境来说，这是唯一可行的 Console 登录路径\n例子：/login 后选 Anthropic Console → "Sign in with your Console account" 用 Console 账号直接登录，无需生成 API key
----
-[集成] 🌐 /web-setup 连接 GitHub\n功能：v2.1.243 起 /status 新增一行显示 Claude Code on the web 的 GitHub 连接状态（Pro/Max），未连接时指向 /web-setup；同时给未连接的 claude.ai 用户加了指引提示。v2.1.248 起 /web-setup 会在 GitHub CLI token 缺少 workflow scope 时告警，因为超大仓库的推送在缺该 scope 时可能被拒\n效果：不必等到云端会话推送失败才发现 GitHub 没连或 scope 不全；workflow scope 缺失是一类典型的"小仓库没事、大仓库失败"隐性问题，提前告警省下排查时间\n例子：/status 查看 GitHub 是否已连接；/web-setup 完成连接，若提示缺 workflow scope 则用 gh auth refresh -s workflow 补齐
----
 [CLI] 🚫 --permission-prompts none 无人值守拒绝提示\n功能：v2.1.259 起新增 --permission-prompts none，专为无人看守的 headless 主机设计：任何本该弹出权限提示的操作一律自动拒绝，而当前权限模式（包括 auto 模式）该放行的照常放行\n效果：与 --dangerously-skip-permissions 恰好相反——前者"全放"、它是"凡需确认即拒"，让 CI 或定时任务在无人应答时安全地失败而不是挂起等输入，也不会因为没人点确认就静默放过高危操作\n例子：claude --permission-prompts none -p "跑单元测试并汇总失败项" 在 CI 中执行，遇到需确认的操作直接拒绝并继续；配合 --permission-mode auto 让智能判断决定放行范围，剩下的一律拒
----
-[配置] 🏢 managedMcpServers 托管 MCP 服务器\n功能：v2.1.259 起新增 managedMcpServers 托管设置，组织可以向全体成员下发 HTTP/SSE 类型的 MCP 服务器（条目结构与 .mcp.json 相同，指定本地命令启动的条目会被跳过）；同时 allowedMcpServers 的语义改为只管用户自己添加的服务器，托管下发的 managed-mcp.json 条目不再被用户白名单过滤掉，要屏蔽需改用 deniedMcpServers\n效果：企业无需让每个成员手动配 MCP 就能统一提供内部工具接入；但升级后原本靠 allowedMcpServers 挡掉的托管服务器会开始加载，需要主动检查\n例子：在 managed-settings.json 中配置 {"managedMcpServers": {"internal-api": {"type": "sse", "url": "https://mcp.corp.internal/sse"}}} 全员生效；{"deniedMcpServers": ["internal-api"]} 显式屏蔽某个托管服务器
 ---
 [配置] 🕐 timeFormat 与 timeZone 时间显示\n功能：v2.1.257 起新增 timeFormat（"Time format"）和 timeZone 两个设置，控制每轮结束的时钟和 transcript 视图时间戳的显示方式；timeFormat 支持 12 小时制、24 小时制、24 小时 UTC，或直接给一个 strftime 格式串\n效果：跨时区协作时统一用 UTC 记录，回看 transcript 对齐日志和监控图表不必心算时差；习惯 24 小时制的开发者不再被 AM/PM 干扰\n例子：{"timeFormat": "24h"} 切到 24 小时制；{"timeFormat": "24h-utc"} 统一按 UTC 显示；{"timeFormat": "%H:%M:%S", "timeZone": "Asia/Shanghai"} 用自定义 strftime 格式并锁定时区
 ---

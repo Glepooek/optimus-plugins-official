@@ -75,12 +75,12 @@
 - `project-analyze` — 项目结构分析
 
 **Hooks（内置自动加载）:**
-- `SessionStart` — 会话启动展示技巧（293条智能轮播，带进度追踪）
+- `SessionStart` — 会话启动展示技巧（267条智能轮播，带进度追踪）
 - `Notification` — Windows 权限提示通知
 
 **关键文件:**
 - `hooks/hooks.json` — Hook 配置
-- `hooks/sessionstart/tips.txt` — 293条技巧库
+- `hooks/sessionstart/tips.txt` — 267条技巧库
 - `hooks/sessionstart/show-tip.sh` — 轮播脚本
 - `hooks/notification/permission-notify.ps1` — 通知脚本
 

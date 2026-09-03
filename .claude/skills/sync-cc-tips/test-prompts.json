@@ -43,5 +43,40 @@
     "id": 9,
     "prompt": "识别出 2 条新增 + 1 条修改，展示变更预览后，通过 AskUserQuestion 选择「取消，不做任何修改」，继续执行 /sync-cc-tips",
     "expected": "命中第四步 CHECKPOINT 的取消分支：立即停止，输出「操作已取消，tips.txt 未修改」，不执行 Edit 写入、不进行第五步数字同步、不调用 commit-cc-plugin、不更新 .last-synced-version（而不是要求用户手打 y/n 自由文本）"
+  },
+  {
+    "id": 10,
+    "prompt": "准备把 changelog 中某个新能力作为 [Skill] 条目写入 tips.txt，运行 /sync-cc-tips",
+    "expected": "写入前先验证该名字的实际归属：内置 skill 看二进制 no({name:...}) 注册、subagent 看 agentType、内置命令看命令表、插件看其 skills//commands/ 目录。若实际是 subagent 或命令则不得用 [Skill] 标签（它断言「可用 skill 方式调用」），改用 [交互]/[配置]；归属判定不出来时同样不使用 [Skill]"
+  },
+  {
+    "id": 11,
+    "prompt": "新增一条介绍某 superpowers skill 的条目，changelog 原文使用的是该 skill 的口语简称，运行 /sync-cc-tips",
+    "expected": "例子字段必须是可直接粘贴执行的完整形式：插件 skill 带命名空间前缀（如 /superpowers:test-driven-development），不得沿用 tdd、debugging 这类简称。正文叙述允许用简称，例子字段不允许——例子是给人照抄的"
+  },
+  {
+    "id": 12,
+    "prompt": "在一条已有条目末尾补充一句说明后，运行 /sync-cc-tips 的第五步格式校验",
+    "expected": "格式校验除验证前 4 字段前缀依次为 标题/功能/效果/例子 之外，还须统计每条内 功能：/效果：/例子： 各前缀的出现次数，任一 > 1 即报错。不得用「字段数 > 4」替代该检查——--add-dir 条目有意使用 5 段按平台分列例子"
+  },
+  {
+    "id": 13,
+    "prompt": "changelog 提到 /stats 的新能力，而 tips.txt 已有一条 /usage 条目（两者为同一命令的别名），运行 /sync-cc-tips",
+    "expected": "第二步构建「已覆盖标识符集」时把别名映射一并展开（usage←cost,stats 等 21 组），识别 /stats 命中已有 /usage 条目，判定为已覆盖或需修改，而不是新增重复条目；若需合并，标题中标全所有别名以便后续 sync 能靠字面命中"
+  },
+  {
+    "id": 14,
+    "prompt": "tips.txt 中已存在三条都在讲 /code-review 的条目，运行 /sync-cc-tips",
+    "expected": "除「新条目 vs 已有条目」的单向判重外，还须按主标识符对库内已有条目分组扫描，同组 ≥ 2 条时列出供人工判断能否合并，并在第四步变更预览中作为待合并项呈现——冗余是历次 sync 累积产生的，每次单看都不重复"
+  },
+  {
+    "id": 15,
+    "prompt": "changelog 说某功能此前在特定平台受限、现已全面可用，而 tips.txt 中已有该功能的条目，运行 /sync-cc-tips",
+    "expected": "第四步按原地替换而非追加处理：把「vX 起某平台也可用（此前受限）」改写为现状陈述，不保留纯粹的能力扩大史。仅当用户可能仍在使用旧写法时（如某命令已成为另一命令的别名）才保留变更历史"
+  },
+  {
+    "id": 16,
+    "prompt": "changelog 新增了一个 macOS 专属设置项，以及一个需组织管理员写 managed-settings 才生效的托管设置，运行 /sync-cc-tips",
+    "expected": "第三步新增判定须先过环境门：命中硬性阻断条件（平台不符 / 需特定席位 / 需组织管理员权限 / 需云厂商 SDK / 需 claude.ai 账号会话 / 本机无提供者）则跳过，并在摘要「⏭️ 跳过」中注明原因，而不是写入库中占位。判据是有无硬性阻断，不是功能听起来是否企业向——走自定义网关时网关类条目反而可用"
   }
 ]
