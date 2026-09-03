@@ -22,6 +22,13 @@ SPEC = """# 03 · MVVM 架构
 ## 7. 事件与订阅
 """
 
+# 章节标题本身含半角双引号——规范文件里合法且实际出现过
+# （media/reference/audio-container-formats.md 曾为 `## 3. "后缀 vs 编码"的判断方法`）
+SPEC_QUOTED_HEADING = """# 音频封装格式
+
+## 3. "后缀 vs 编码"的判断方法
+"""
+
 
 class Fixture:
     """构造 <root>/knowledge-base/<domain>/rules|reference/ 与 <root>/plugins/... 的最小仓库结构。"""
@@ -38,6 +45,14 @@ class Fixture:
         path = self.consumer_dir / name
         path.write_text(body, encoding="utf-8")
         return path
+
+    def quoted_heading_spec(self):
+        """额外写入一份标题含半角双引号的规范文件，返回其领域内相对路径。"""
+        (self.spec_dir.parent / "reference").mkdir(exist_ok=True)
+        (self.spec_dir.parent / "reference" / "audio-container-formats.md").write_text(
+            SPEC_QUOTED_HEADING, encoding="utf-8"
+        )
+        return "reference/audio-container-formats.md"
 
 
 class TestNormalize(unittest.TestCase):
@@ -121,6 +136,32 @@ class TestExtractRefs(unittest.TestCase):
                 c = f.consumer(f'knowledge-base/wpf/README.md\n\n`rules/03-mvvm.md` §7 {quoted}\n')
                 self.assertEqual(extract_refs(c, f.root)[0][4], "事件与订阅", quoted)
                 self.assertEqual(check_consumer(c, f.root), ([], []), quoted)
+
+    def test_captures_quoted_title_containing_halfwidth_quotes(self):
+        """`§3「"后缀 vs 编码"的判断方法」` —— 章节标题自身含半角双引号时仍须可校验。
+
+        回归锁：定界符集合曾与捕获组排除集共用 `"`（`[「“"][^」”"]+[」”"]`），
+        导致标题含半角引号的章节无法写出任何能通过校验的引用——忠实照抄标题反而报失效。
+        定界符须配对：`「…」` 只被 `」` 终止，内部的 `"` 属标题正文。
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            rel = f.quoted_heading_spec()
+            title = '"后缀 vs 编码"的判断方法'
+            for quoted in (f"「{title}」", f"“{title}”"):
+                c = f.consumer(
+                    f"knowledge-base/wpf/README.md\n\n`{rel}` §3 {quoted}\n",
+                    name=f"C{ord(quoted[0])}.md")
+                self.assertEqual(extract_refs(c, f.root)[0][4], title, quoted)
+                self.assertEqual(check_consumer(c, f.root), ([], []), quoted)
+
+    def test_halfwidth_quoted_title_still_terminates_on_own_delimiter(self):
+        """半角 `"…"` 形态不受本次放宽影响：它必须仍被下一个 `"` 终止。"""
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Fixture(tmp)
+            c = f.consumer('knowledge-base/wpf/README.md\n\n`rules/03-mvvm.md` §7 "事件与订阅"\n')
+            self.assertEqual(extract_refs(c, f.root)[0][4], "事件与订阅")
+            self.assertEqual(check_consumer(c, f.root), ([], []))
 
     def test_subsection_title_separated_by_space_only(self):
         """`§ 2.1 属性变更通知` —— 子章节号里的点已被编号吃掉，标题靠空格分隔。

@@ -43,6 +43,11 @@ BARE_NAME_RE = re.compile(r'`(?P<name>[a-z0-9][a-z0-9-]*\.md)`')
 # 章节引用：§ 后跟编号，可选跟标题（引号包裹，或 `.`/空格 分隔的裸文本）
 #
 # 引号形态认「」/""/“”三种——实际写法都出现过，只认一种会把另两种判成脆弱引用。
+# 三种形态各写一个分支、各自只排除自己的闭定界符，不能合并成
+# `[「“"][^」”"]+[」”"]`：那样写等于隐式规定「章节标题不得含半角双引号」，
+# 因为标题里的 `"` 会提前终止捕获。规范文件的标题含半角引号是合法的
+# （如 `## 3. "后缀 vs 编码"的判断方法`），此时忠实照抄标题的引用反而会被
+# 判成失效——校验器不该反过来限制被校验内容的用字。
 #
 # 两处不能放宽：
 # 1. 编号与裸标题之间必须有 `.`/`．`/空格 分隔——`§7要求订阅须配对` 里紧贴编号的
@@ -59,7 +64,9 @@ PROSE_LEAD = r'的|地|得|要求|规定|说明|定义|提到|指出|所述|中|
 SECTION_RE = re.compile(
     r'§\s*(?P<num>\d+(?:\.\d+)*)'
     r'(?:'
-    r'\s*[「“"](?P<quoted>[^」”"]+)[」”"]'
+    r'\s*「(?P<cjk>[^」]+)」'
+    r'|\s*“(?P<curly>[^”]+)”'
+    r'|\s*"(?P<straight>[^"]+)"'
     r'|\s*[.．]\s*(?P<plain>[^§|；;、。，\n]*)'
     rf'|[ 　](?!(?:{PROSE_LEAD}))(?P<spaced>[^§|；;、。，\n]*)'
     r')?'
@@ -149,7 +156,8 @@ def extract_refs(consumer_path, repo_root):
     for line_no, line in enumerate(text.splitlines(), start=1):
         for domain, rel, tail, last_dir in iter_file_segments(line, default_domain, last_dir):
             for m in SECTION_RE.finditer(tail):
-                title = m.group("quoted") or m.group("plain") or m.group("spaced") or ""
+                title = (m.group("cjk") or m.group("curly") or m.group("straight")
+                         or m.group("plain") or m.group("spaced") or "")
                 title = normalize(title)
                 if NOISE_TITLE_RE.match(title):
                     title = None
