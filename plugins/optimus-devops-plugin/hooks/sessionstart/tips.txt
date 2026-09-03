@@ -580,26 +580,13 @@
 ---
 [配置] 🔤 spellcheck 拼写检查\n功能：v2.1.235 起新增可选的 settings.json 设置项 spellcheck，开启后输入提示词时会用本机已安装的 aspell、hunspell 或 ispell 之一，对拼错的单词加下划线标记\n效果：编写长提示词时能实时发现拼写错误，无需额外插件，直接复用本机现成的拼写检查工具\n例子：{"spellcheck": true}，需预先安装 aspell/hunspell/ispell 三者之一；输入拼错单词时会被下划线标出
 ---
-
-[交互] 🎯 Concise 输出风格
-功能：v2.1.237 起内置 Concise 输出风格：Claude 直接给出结果，跳过前言和旁白，但工作深度不变；在 /config 的 Output style 中选择
-效果：适合不需要详细解释、只想快速拿到结果的场景，减少输出冗余
-例子：/config → Output style → Concise 切换后，回复会更简洁直接；需要详细解释时再切回默认风格
+[交互] 🎯 Concise 输出风格\n功能：v2.1.237 起内置 Concise 输出风格：Claude 直接给出结果，跳过前言和旁白，但工作深度不变；在 /config 的 Output style 中选择\n效果：适合不需要详细解释、只想快速拿到结果的场景，减少输出冗余\n例子：/config → Output style → Concise 切换后，回复会更简洁直接；需要详细解释时再切回默认风格
 ---
-[配置] 🧬 ANTHROPIC_DEFAULT_MODEL 默认模型
-功能：v2.1.236 起新增环境变量 ANTHROPIC_DEFAULT_MODEL，设置新会话启动时使用的默认模型；与 ANTHROPIC_MODEL 不同，/model 的手动选择会覆盖此默认值并跨会话持久化
-效果：每次打开新会话自动使用指定模型，无需每次手动 /model 切换；手动切换后优先级更高
-例子：ANTHROPIC_DEFAULT_MODEL=claude-sonnet-4-20250514 设置默认模型；/model opus 手动切换后会覆盖默认值并持久保留
+[配置] 🧬 ANTHROPIC_DEFAULT_MODEL 默认模型\n功能：v2.1.236 起新增环境变量 ANTHROPIC_DEFAULT_MODEL，设置新会话启动时使用的默认模型；与 ANTHROPIC_MODEL 不同，/model 的手动选择会覆盖此默认值并跨会话持久化\n效果：每次打开新会话自动使用指定模型，无需每次手动 /model 切换；手动切换后优先级更高\n例子：ANTHROPIC_DEFAULT_MODEL=claude-sonnet-4-20250514 设置默认模型；/model opus 手动切换后会覆盖默认值并持久保留
 ---
-[工具] 🔔 notify_when_idle 空闲通知
-功能：v2.1.236 起 SendMessage 支持 notify_when_idle 参数：请求目标会话在下次空闲时发送一次通知，仅 macOS/Linux 可用；opt-in、一次性、无轮询
-效果：跨会话协作时不必反复轮询检查对方状态，空闲时自动收到通知
-例子：SendMessage(to="code-review", notify_when_idle=true, message="PR ready for review") 让 code-review 会话空闲时通知你
+[工具] 🔔 notify_when_idle 空闲通知\n功能：v2.1.236 起 SendMessage 支持 notify_when_idle 参数：请求目标会话在下次空闲时发送一次通知，仅 macOS/Linux 可用；opt-in、一次性、无轮询\n效果：跨会话协作时不必反复轮询检查对方状态，空闲时自动收到通知\n例子：SendMessage(to="code-review", notify_when_idle=true, message="PR ready for review") 让 code-review 会话空闲时通知你
 ---
-[配置] ⌨️ keybindingFlavor 键位偏好
-功能：v2.1.238 起 settings.json 新增 keybindingFlavor 设置，设为 "readline" 时 Ctrl+W 在提示符中删除到前一个空白（类似 Bash）；默认 "classic" 行为不变；v2.1.239 起 "readline" 同时匹配 Bash 的单词级按键：Alt+F 和 Ctrl/Option+→ 跳到单词末尾，Alt+D 删除到单词末尾（Ctrl+Y 可粘贴回删除内容），标点符号也作为单词分隔符
-效果：习惯 Bash/readline 键位的用户可获得一致的删除体验，不必迁就默认行为
-例子：{"keybindingFlavor": "readline"} 让 Ctrl+W 删除到前一个空白；不设置则保持 classic 默认
+[配置] ⌨️ keybindingFlavor 键位偏好\n功能：v2.1.238 起 settings.json 新增 keybindingFlavor 设置，设为 "readline" 时 Ctrl+W 在提示符中删除到前一个空白（类似 Bash）；默认 "classic" 行为不变；v2.1.239 起 "readline" 同时匹配 Bash 的单词级按键：Alt+F 和 Ctrl/Option+→ 跳到单词末尾，Alt+D 删除到单词末尾（Ctrl+Y 可粘贴回删除内容），标点符号也作为单词分隔符\n效果：习惯 Bash/readline 键位的用户可获得一致的删除体验，不必迁就默认行为\n例子：{"keybindingFlavor": "readline"} 让 Ctrl+W 删除到前一个空白；不设置则保持 classic 默认
 ---
 [工具] 📇 /list-agents 列出团队伙伴\n功能：v2.1.239 起 /list-agents 命令（ListAgents 工具的斜杠命令形式）列出你的在线 teammate；此前只有子代理和其他普通会话会出现在列表中，可联系的 teammate 反而不显示\n效果：多 agent 团队协作时能一眼确认哪些 teammate 当前在线可联系，不必先尝试 SendMessage 才知道对方是否可达\n例子：/list-agents 查看当前所有可联系的 teammate 及其在线状态，再用 SendMessage 联系其中的某个
 ---

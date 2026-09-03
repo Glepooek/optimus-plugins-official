@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.2] - 2026-09-03
+
+### Fixed
+- 第五步同步点清单从「只有 2 处」补全为 **4 处**，新增 `plugins/optimus-devops-plugin/.codex-plugin/plugin.json`（`interface.longDescription`）与 `.kiro/steering/plugins.md` 两处——这两处随 Codex 兼容层和 Kiro steering 引入，此前从未被收录，导致 `.kiro/steering/plugins.md` 的条目数长期停在 425 而未被任何一轮同步发现
+- 定位命令从「按固定文件列表 grep」改为**全仓库扫描**（`grep -rn '条技巧' --include='*.json' --include='*.md'` 并排除本 skill 自身文档），避免新增同步点后再次因清单未更新而漏改；PowerShell 的 `Select-String` 循环数组同步补齐两个新路径
+- 甄别表补充 4 行：2 行新增的 ✅ 更新项，1 行 `show-tip.sh` 脚本注释的 ❌ 不动项，原有 ❌ 不动项保持不变
+- 版本升级说明补充 `.codex-plugin/plugin.json` 的 `version` 须与 marketplace.json 同值（AGENTS.md 要求），并要求升级前先比对当前值——实测该文件曾落后真源两个 Patch（13.0.0 vs 13.1.2）
+- 兜底表与第六步摘要模板中的「两处」措辞、「已同步」文件列表同步更新为四处
+
 ## [1.2.1] - 2026-08-30
 
 ### Added

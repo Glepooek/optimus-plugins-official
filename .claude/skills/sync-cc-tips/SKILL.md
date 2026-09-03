@@ -2,7 +2,7 @@
 name: sync-cc-tips
 description: 从 Claude Code 最新 changelog 自动同步 tips.txt：新增未覆盖条目、修正过时内容、删除已废弃功能，同步所有文档数字，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 metadata:
-  version: "1.2.1"
+  version: "1.2.2"
   author: desktop client team
 compatibility: 需要网络访问 raw.githubusercontent.com 拉取 changelog；流程末尾调用 commit-cc-plugin skill 完成提交推送。
 allowed-tools: Bash WebFetch Read Edit Task
@@ -230,23 +230,27 @@ grep -c '^---$' "$f"    # 分隔符数（应与上面完全相等）
 
 两数不等说明格式有破损（某条漏了分隔符，或删除条目后残留分隔符），此时以 `^\[` 行数为准，并回到第四步修复分隔符后重新计数。另可用「旧条目数 + 新增 − 删除」做第三重校验，三者应一致。
 
-**只有 2 处含条目总数**，逐一将旧数字替换为新总数：
+**共 4 处含条目总数**，逐一将旧数字替换为新总数：
 
 | 文件 | 位置 | 形式 |
 |---|---|---|
 | `.claude-plugin/marketplace.json` | `optimus-devops-plugin` 的 `description` | `SessionStart（N条技巧智能轮播）` |
 | `plugins/optimus-devops-plugin/hooks/README.md` | 「技巧分类」小节首行 | `tips.txt 包含 N 条技巧，涵盖以下分类：` |
+| `plugins/optimus-devops-plugin/.codex-plugin/plugin.json` | `interface.longDescription` | `SessionStart（N条技巧智能轮播）` |
+| `.kiro/steering/plugins.md` | devops 插件文件清单中的 tips.txt 行 | `` - `hooks/sessionstart/tips.txt` — N条技巧库 `` |
+
+> 后两处是 Codex 兼容层与 Kiro steering 引入后新增的同步点，2026-09-03 前的 skill 版本未收录，导致 `.kiro/steering/plugins.md` 的数字长期停在 425 而未被发现。新增此类含条目数的表述时必须同步扩充本表。
 
 先用一条命令定位全部候选，再按下表甄别，避免误改：
 
 ```bash
-# Bash
-grep -rn '条技巧' .claude-plugin/marketplace.json README.md plugins/optimus-devops-plugin/hooks/README.md
+# Bash — 全仓库扫，避免遗漏未收录的新同步点
+grep -rn '条技巧' --include='*.json' --include='*.md' . | grep -vE 'sync-cc-tips/(SKILL|CHANGELOG)\.md'
 ```
 
 ```powershell
 # PowerShell（本机默认 shell，无 grep）——分文件输出以区分两个同名 README.md
-foreach ($f in @('.claude-plugin/marketplace.json','README.md','plugins/optimus-devops-plugin/hooks/README.md')) {
+foreach ($f in @('.claude-plugin/marketplace.json','README.md','plugins/optimus-devops-plugin/hooks/README.md','plugins/optimus-devops-plugin/.codex-plugin/plugin.json','.kiro/steering/plugins.md')) {
   Write-Output "=== $f ==="
   Select-String -Path $f -Pattern '条技巧' -Encoding utf8 | ForEach-Object { "  L{0}: {1}" -f $_.LineNumber, $_.Line.Trim() }
 }
@@ -258,20 +262,23 @@ foreach ($f in @('.claude-plugin/marketplace.json','README.md','plugins/optimus-
 |---|---|---|
 | `marketplace.json` devops `description` | ✅ 更新 | 条目总数 |
 | `hooks/README.md`「tips.txt 包含 N 条技巧」 | ✅ 更新 | 条目总数 |
+| `.codex-plugin/plugin.json`「longDescription」 | ✅ 更新 | 条目总数（Codex 侧描述，与 marketplace description 同文案） |
+| `.kiro/steering/plugins.md`「tips.txt — N条技巧库」 | ✅ 更新 | 条目总数 |
 | `hooks/README.md`「默认每次显示 2 条技巧」 | ❌ 不动 | 单次展示条数，与总数无关 |
 | `hooks/README.md`「每条技巧使用 `---` 分隔」 | ❌ 不动 | 格式说明，不含数字 |
+| `show-tip.sh`「每次选择 N 条技巧」「合并多条技巧」 | ❌ 不动 | 脚本注释，且脚本逻辑不在本 skill 职责范围 |
 | `README.md` 插件列表行「SessionStart（技巧轮播）」 | ❌ 不动 | 有意不含数字，避免多处同步失准 |
 | `marketplace.json` 顶层 `description` | ❌ 不动 | 仅工具链概述，从不含条目数 |
 
 > 若某一天 `README.md` 或顶层 `description` 被改成含具体数字的表述，需同步扩充上表——但**不要主动往这些位置添加数字**，同步点越少越不易失准。
 
-同时将 `.claude-plugin/marketplace.json` 的 `version` 做 **Patch 升级**（`x.x.X`），因为这是已有内容的更新/修复，符合版本管理规范。
+同时将 `.claude-plugin/marketplace.json` 的 `version` 做 **Patch 升级**（`x.x.X`），因为这是已有内容的更新/修复，符合版本管理规范。升级后按 AGENTS.md 要求把 `plugins/optimus-devops-plugin/.codex-plugin/plugin.json` 的 `version` 改为**相同值**（该文件从 marketplace.json 抄录，不是独立真源）——升级前先比对两者当前值，若已不一致说明历史同步漏过，本次一并纠正到同值。
 
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
 | 某处文件不存在（如路径变更） | 跳过该处，继续更新其余文件 | 在摘要中列出"未同步"文件，不阻断提交 |
-| 数字 pattern 在两处应更新位置中找不到 | 用上面的 `grep -rn '条技巧'` 确认格式是否变更 | 跳过并在摘要注明，不修改该文件 |
-| 两处数字更新后彼此不一致 | 以 tips.txt 实际 `^\[` 行数为准 | 报告具体不一致位置 |
+| 数字 pattern 在四处应更新位置中找不到 | 用上面的全仓库 `grep -rn '条技巧'` 确认格式是否变更 | 跳过并在摘要注明，不修改该文件 |
+| 四处数字更新后彼此不一致 | 以 tips.txt 实际 `^\[` 行数为准 | 报告具体不一致位置 |
 
 > 🔴 **CHECKPOINT**：若命中上表"数字不一致"分支，报告具体差异位置后用 `AskUserQuestion` 发起确认：
 > - `question`: "同步文档数字时发现不一致：{具体差异位置}。是否以 tips.txt 实际 `^\[` 行数（{X}）为准继续提交？"
@@ -300,7 +307,7 @@ foreach ($f in @('.claude-plugin/marketplace.json','README.md','plugins/optimus-
 ⏭️  跳过  N 条（已覆盖 / 非用户可操作功能）
 
 📊 条目总数：{旧数} → {新数}
-📄 已同步：marketplace.json · hooks/README.md
+📄 已同步：marketplace.json · hooks/README.md · .codex-plugin/plugin.json · .kiro/steering/plugins.md
 🔖 版本：{旧版本} → {新版本}（Patch）
 🔖 同步锚点：v{锚点版本} → v{最新版本}
 
