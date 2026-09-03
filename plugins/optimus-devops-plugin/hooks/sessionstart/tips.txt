@@ -10,7 +10,7 @@
 ---
 [交互] 🧹 /clear 清空会话\n功能：快速清空当前对话历史，开始一个干净的新上下文\n效果：避免旧上下文干扰当前问题，适合切换任务时使用\n例子：/clear 后重新描述当前问题，让 Claude 聚焦新任务
 ---
-[交互] 🗜️ /compact 压缩上下文\n功能：压缩当前会话，保留关键信息并减少上下文占用\n效果：长对话里可以降低上下文压力，同时尽量保留核心进展\n例子：讨论很久后用 /compact，把历史整理成更紧凑的上下文
+[交互] 🗜️ /compact 压缩上下文\n功能：压缩当前会话，保留关键信息并减少上下文占用；可以在后面直接跟一句自定义指示，告诉它保留什么、丢弃什么\n效果：长对话降低上下文压力的同时尽量保住核心进展；带指示的压缩明显更可控——默认压缩会按它自己的判断取舍，你指明重点才不会把关键内容压掉\n例子：/compact 让它自行整理；/compact 请重点保留测试输出和代码改动，文件读取内容可以完整丢弃 指定取舍标准
 ---
 [交互] 🔁 /resume 恢复会话\n功能：恢复之前的 Claude Code 会话，继续上次的工作\n效果：不用重新解释背景，适合跨时间续做同一个任务\n例子：重新打开终端后用 /resume 继续昨天的调试过程
 ---
@@ -104,7 +104,7 @@
 ---
 [CLI] 🤖 claude agents 后台会话管理\n功能：查看所有 Claude Code 后台会话（运行中/等待/已完成），行内展示 done/total 扇出进度；--json 输出含 id、state、waitingFor 字段，加 --all 可查看全部历史\n效果：统一管理多个并行会话，了解各会话进度，适合多任务并行开发\n例子：claude agents 查看进度；claude agents --json --all 获取完整结构化列表；←← 在会话内直接进入视图
 ---
-[集成] 🎯 Skills 工作流程\n功能：Skills 是预定义的工作流程，让 Claude 遵循特定步骤\n效果：确保复杂任务按最佳实践执行，提高质量和一致性\n例子：/commit 调用 commit skill 确保提交流程规范
+[集成] 🎯 Skills 与命令的区别\n功能：Skill 是预定义的工作流程，让 Claude 按既定步骤做事，可由 Claude 自行判断调用，也可由你用斜杠触发；斜杠输入里混着三种东西——内置命令（/clear、/init）、插件提供的 command（/commit 来自 commit-commands 插件）、以及 skill（内置的 /simplify、插件的 superpowers 系列）\n效果：分清三者才知道某个功能装了什么才有：内置的始终可用，插件 command 与 skill 卸载插件即消失；/skills 与 /plugin 分别列出后两类\n例子：/skills 查看当前有哪些 skill 可用；某个斜杠命令用不了时先用 /plugin list --disabled 确认提供它的插件没被禁用
 ---
 [集成] 🔌 Plugins 扩展系统\n功能：从市场安装插件扩展 Claude 的能力\n效果：获取社区贡献的技能、MCP 服务器和自定义命令\n例子：安装 superpowers 插件获取高级开发工作流
 ---
@@ -128,9 +128,7 @@
 ---
 [交互] 🔌 /mcp MCP 管理\n功能：查看和管理当前连接的 MCP 服务器\n效果：检查 MCP 服务器状态、查看可用工具和资源\n例子：/mcp 查看 GitHub、数据库等 MCP 服务器连接状态
 ---
-[交互] 🧩 /plugins 插件管理\n功能：查看已安装插件和可用技能\n效果：快速了解哪些插件已启用，哪些 skills 可用\n例子：/plugins 查看 superpowers、code-review 等插件状态
----
-[交互] 🎯 /skills 技能列表\n功能：查看所有可用的 skills 及其用途\n效果：当你忘记某个 skill 名称或用法时快速查找\n例子：/skills 查看 brainstorming、tdd、debugging 等 skill
+[交互] 🎯 /skills 技能列表\n功能：查看当前所有可用 skill 的真实名称与用途\n效果：忘记 skill 叫什么时最可靠的入口——调用必须用这里列出的完整名称，日常口头简称（tdd、debugging 之类）并不能直接触发\n例子：/skills 列出 superpowers:test-driven-development、superpowers:systematic-debugging 等真实名称，照抄其中一个再调用
 ---
 [交互] ⏸️ Ctrl+C 中断或清空输入\n功能：官方定义是「中断，或清空输入」两件事：有操作正在运行时中断它；无操作运行时第一次按清空 prompt 输入，第二次按直接退出 Claude Code\n效果：一个键覆盖「停下它」和「重写输入」两种诉求；但空提示符下连按两次会退出会话，想只清空输入更稳的是 Esc Esc（清空且存入历史，可用 ↑ 找回）\n例子：Claude 跑偏时按 Ctrl+C 立即中断；输入写乱了按一次 Ctrl+C 清空，别顺手再按第二次
 ---
@@ -150,7 +148,7 @@
 ---
 [配置] 📂 .claude 目录结构\n功能：~/.claude 存储全局配置、插件、hooks\n效果：了解配置文件位置，便于手动调整\n例子：~/.claude/settings.json 全局配置，~/.claude/hooks 自定义 hooks
 ---
-[配置] 📊 statusLine 状态栏\n功能：配置自定义状态栏显示信息\n效果：实时显示 git 状态、任务进度等信息\n例子：statusLine 显示当前分支、未提交改动数量
+[配置] 📊 statusLine 状态栏与 statusline-setup 代理\n功能：settings.json 的 statusLine 配置自定义状态栏（脚本可读 JSON 输入，含 prompt_cache、rate_limits.spend_limit 等字段）；配套的 statusline-setup 是内置**子代理**而不是 skill——它没有斜杠命令，无法用 /statusline-setup 触发，只能由 Claude 以 subagent_type "statusline-setup" 派生\n效果：状态栏常驻显示分支、未提交改动数、缓存命中率、预算余量等，不必反复敲命令查；想改状态栏直接用自然语言说，Claude 会派出那个专职代理去改，改完后续调整仍会交回同一个代理\n例子：说「状态栏加上当前分支和未提交文件数」由 Claude 派 statusline-setup 代理完成；子代理状态行另由 subagentStatusLine 配置
 ---
 [配置] 🎨 theme 主题\n功能：设置 Claude Code 界面主题\n效果：选择喜欢的颜色方案，提升视觉体验\n例子：theme: "dark-ansi" 使用深色 ANSI 主题
 ---
@@ -166,7 +164,7 @@
 ---
 [工具] 💬 SendMessage 跨会话与跨机器消息\n功能：向团队中的其他 agent 或其他 Claude Code 会话发消息，macOS/Linux/Windows 三端均支持同账号跨机器收发；用 ListAgents 发现可联系对象（列表中显示为 "name [ref]"，可按名称主动发起对话而不必等对方先开口），ListAgents 也会告知本会话自己叫什么名字\n效果：多会话协作不必手动切窗口转达；配合 crossSessionInbound、dialogExpiry 设置可要求陌生会话或 bypass 权限会话的来信先经人工审批；注意子代理发出的消息以父会话身份出去，对方的回复投递到父会话而非子代理自身\n例子：说「让 tester 会话跑一遍回归」由 Claude 调 SendMessage 通知；先 ListAgents 列出其他机器上的会话，再按名称发起跨机器对话
 ---
-[工具] 🎯 Skill 调用技能\n功能：调用预定义的 skill 执行特定工作流\n效果：使用专家级工作流确保质量和一致性\n例子：Skill(skill="brainstorming") 在编码前进行设计头脑风暴
+[工具] 🎯 Skill 调用技能\n功能：Claude 用 Skill 工具调用预定义 skill 执行特定工作流；插件提供的 skill 必须写命名空间全称，斜杠形式同理——superpowers 的 TDD 技能真名是 test-driven-development，并不存在 /tdd 这种简写\n效果：确保复杂任务按专家级工作流推进；记不住全名时先用 /skills 列出真实名称，凭印象猜简写会直接失败\n例子：Skill(skill="superpowers:brainstorming") 编码前先做设计头脑风暴；斜杠形式写 /superpowers:test-driven-development，写 /tdd 无效
 ---
 [工具] ❓ AskUserQuestion 询问用户\n功能：在执行过程中向用户提问并获取选择；v2.1.200 起默认不再自动继续等待，可通过 /config 设置空闲超时后自动继续\n效果：需要用户决策时暂停并展示选项，避免因静默超时被意外跳过\n例子：AskUserQuestion 询问用户选择实现方案；/config 设置 idle timeout 后长时间无响应自动按默认项继续
 ---
@@ -174,31 +172,27 @@
 ---
 [工具] ⏱️ ScheduleWakeup 动态循环\n功能：在 /loop 动态模式下安排下次唤醒时间\n效果：根据任务状态智能调整轮询间隔\n例子：ScheduleWakeup(delaySeconds=300) 5分钟后再检查
 ---
-[Skill] 📖 Skills 使用指南\n功能：Skills 是预定义的专家级工作流程\n效果：确保复杂任务按最佳实践执行\n例子：通过斜杠命令（如 /tdd）或 Skill 工具调用，部分需完整名称如 Skill(skill="superpowers:brainstorming")
----
 [Skill·superpowers] 📝 writing-plans 编写计划\n功能：为多步骤任务编写详细实施计划\n效果：进入计划模式，编写结构化实施方案\n例子：大型重构前使用 writing-plans 制定详细计划
 ---
 [Skill·superpowers] ✅ executing-plans 执行计划\n功能：执行已批准的实施计划，带检查点\n效果：按计划逐步实施，每步完成后验证\n例子：executing-plans 执行重构计划，分步验证
 ---
-[Skill·superpowers] 🧪 test-driven-development TDD\n功能：测试驱动开发，先写测试再写实现\n效果：确保代码可测试性和质量\n例子：tdd 实现新功能前先编写测试用例
+[Skill·superpowers] 🧪 test-driven-development TDD\n功能：测试驱动开发，先写测试再写实现\n效果：确保代码可测试性和质量\n例子：/superpowers:test-driven-development 实现新功能前先编写测试用例
 ---
-[Skill·superpowers] 🐛 systematic-debugging 系统化调试\n功能：系统化调试流程，从症状到根因\n效果：科学定位 bug，避免盲目猜测\n例子：debugging 遇到 bug 时系统化排查原因
+[Skill·superpowers] 🐛 systematic-debugging 系统化调试\n功能：系统化调试流程，从症状到根因\n效果：科学定位 bug，避免盲目猜测\n例子：/superpowers:systematic-debugging 遇到 bug 时系统化排查原因
 ---
-[Skill·superpowers] 🔍 verification-before-completion 完成前验证\n功能：声称完成前强制验证和测试\n效果：防止"看起来对"但实际有问题的代码\n例子：verification 在说"完成"前必须运行测试
+[Skill·superpowers] 🔍 verification-before-completion 完成前验证\n功能：声称完成前强制验证和测试\n效果：防止"看起来对"但实际有问题的代码\n例子：/superpowers:verification-before-completion 在说"完成"前必须运行测试
 ---
 [Skill·superpowers] 📤 requesting-code-review 请求代码审查\n功能：完成任务后请求代码审查\n效果：提交前获取反馈，提高代码质量\n例子：requesting-code-review 功能完成后请求审查
 ---
 [Skill·superpowers] 📥 receiving-code-review 接收代码审查\n功能：接收并响应代码审查反馈\n效果：理解反馈意图，正确实施修改建议\n例子：receiving-code-review 收到审查意见时使用
 ---
-[Skill·superpowers] 🏁 finishing-a-development-branch 完成分支\n功能：完成开发分支，决定如何集成\n效果：指导合并、PR、清理的最佳实践\n例子：finishing-branch 功能完成后整合到主分支
+[Skill·superpowers] 🏁 finishing-a-development-branch 完成分支\n功能：完成开发分支，决定如何集成\n效果：指导合并、PR、清理的最佳实践\n例子：/superpowers:finishing-a-development-branch 功能完成后整合到主分支
 ---
-[Skill·superpowers] 🚀 dispatching-parallel-agents 并行派发\n功能：将独立任务派发给多个 agent 并行处理\n效果：加速开发，多任务同时进行\n例子：parallel-agents 前端后端同时开发
+[Skill·superpowers] 🚀 dispatching-parallel-agents 并行派发\n功能：将独立任务派发给多个 agent 并行处理\n效果：加速开发，多任务同时进行\n例子：/superpowers:dispatching-parallel-agents 前端后端同时开发
 ---
-[Skill·superpowers] 🤖 subagent-driven-development 子代理驱动\n功能：在当前会话中派生子 agent 协作\n效果：复杂任务分解，多 agent 协同工作\n例子：subagent-driven 大型功能拆分给多个子 agent
+[Skill·superpowers] 🤖 subagent-driven-development 子代理驱动\n功能：在当前会话中派生子 agent 协作\n效果：复杂任务分解，多 agent 协同工作\n例子：/superpowers:subagent-driven-development 大型功能拆分给多个子 agent
 ---
-[Skill·superpowers] 🌳 using-git-worktrees 使用工作树\n功能：使用 git worktree 隔离开发环境\n效果：多分支并行开发，互不干扰\n例子：git-worktrees 同时修 bug 和开发新功能
----
-[Skill·code-review] 👁️ code-review 代码审查\n功能：对 PR 进行全面代码审查\n效果：检查代码质量、安全性、最佳实践\n例子：code-review 审查团队成员的 PR
+[Skill·superpowers] 🌳 using-git-worktrees 使用工作树\n功能：使用 git worktree 隔离开发环境\n效果：多分支并行开发，互不干扰\n例子：/superpowers:using-git-worktrees 同时修 bug 和开发新功能
 ---
 [Skill·frontend-design] 🎨 frontend-design 前端设计\n功能：创建高质量、独特的前端界面\n效果：根据需求设计并实现生产级 UI\n例子：frontend-design 设计新的用户界面
 ---
@@ -210,7 +204,7 @@
 ---
 [Skill] ⌨️ keybindings-help 快捷键配置\n功能：自定义 Claude Code 快捷键绑定\n效果：配置个性化快捷键，提高效率\n例子：keybindings-help 修改默认快捷键
 ---
-[Skill] 🆕 init 初始化项目\n功能：为项目创建 CLAUDE.md 文档\n效果：初始化项目配置和指令\n例子：init 新项目初始化 Claude Code 配置
+[交互] 🆕 /init 生成 CLAUDE.md\n功能：/init 是内置命令（不是 skill），扫描代码库后生成一份起始版 CLAUDE.md，把构建命令、目录结构、代码风格等写进去\n效果：新项目接入 Claude Code 的第一步；注意生成的是起点而非终点——/doctor 会专门检查 CLAUDE.md 里是否堆了能从代码库直接推导出的冗余描述，那些内容只会白占每轮上下文\n例子：新仓库里跑一次 /init 生成起始 CLAUDE.md，再手工补上「只有人才知道」的约定（如禁用某库、发布流程）；之后用 /doctor 检查是否需要裁剪
 ---
 [Skill·code-review] 📋 /review 与 /code-review 合并\n功能：v2.1.223 起 /review 已改为 /code-review 的别名，统一走 /code-review 审查当前 diff 或 PR，语法 /code-review <level> <pr#>，level 支持 low/medium/high/xhigh/max 五档努力程度，用 /code-review ultra 触发云端深度审查；不带 level 直接输入 /code-review 会复用上一次使用的级别\n效果：不再需要区分"快速审查"和"深度审查"两个命令，只需切换 effort 级别即可覆盖日常检查到全面审计的全部场景\n例子：/review 1234 等价于 /code-review 1234；/code-review high 1234 用高强度多代理模式深度审查 PR#1234；/code-review ultra 发起云端深度审查
 ---
@@ -234,8 +228,6 @@
 ---
 [工具] 📂 MCP 资源的列出与读取\n功能：除工具（tools）之外，MCP 服务器还能暴露资源（resources）——Claude 用 ListMcpResourcesTool 列出某服务器提供的资源清单，再用 ReadMcpResourceTool 读取其中某一项的内容\n效果：资源是 MCP 里最容易被忽略的另一半能力：工具是「让它做事」，资源是「让它读数据」；某个 MCP 看起来没提供什么可用工具时，值得先让 Claude 把它的资源列一遍\n例子：说「列一下这个 MCP 有哪些资源可读」，再让它读取其中具体某一项
 ---
-[Skill] 📊 statusline-setup 状态栏配置\n功能：配置 Claude Code 状态栏显示\n效果：自定义状态栏命令和样式\n例子：statusline-setup 配置显示 git 分支和任务数
----
 [配置] 🔧 环境变量配置\n功能：通过环境变量控制 Claude Code 行为，包括 ANTHROPIC_BASE_URL（API端点）、BASH_DEFAULT_TIMEOUT_MS（命令超时）、MAX_MCP_OUTPUT_TOKENS（MCP输出限制）等\n效果：精细控制运行时行为和资源限制\n例子：CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 减少网络流量
 ---
 [交互] 🎯 /goal 目标驱动模式\n功能：设置完成条件，Claude 跨轮次持续工作直到目标达成；后台任务卡住会主动 check-in，v2.1.239 起改为退避节奏（30 分钟 → 1 小时 → 之后每 2 小时一次，而非固定每 30 分钟，可用 CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0 关闭）；遇到不可恢复错误（如登录失效、额度耗尽、上下文溢出）时自动清除目标并提示，而非继续空转；v2.1.239 起通过 claude --resume 选择器恢复会话时，会一并恢复该会话原来激活的目标\n效果：适合复杂多步骤任务，Claude 会自动判断目标是否完成，无需手动监控每一步；异常场景下不会无意义地保持目标待命状态；退避节奏减少长任务下不必要的频繁打断；恢复会话后无需重新设置目标即可继续追踪完成度\n例子：/goal "所有测试通过且代码覆盖率 > 80%" 让 Claude 自动完成并验证；CLAUDE_CODE_GOAL_CHECKIN_MINUTES=0 claude 关闭后台任务超时主动检查；claude --resume 选中一个曾设置过 /goal 的会话，目标状态自动恢复继续追踪
@@ -248,7 +240,7 @@
 ---
 [交互] 📋 /recap 会话回顾\n功能：手动触发当前会话的内容回顾摘要\n效果：在长对话中快速回顾已做的工作和关键决策，而不必滚动历史\n例子：/recap 长时间工作后快速了解当前进展
 ---
-[交互] ↩️ /undo / /rewind 撤销与恢复\n功能：/undo 是 /rewind 的别名，撤销上一次操作；/rewind 还支持恢复到 /clear 之前的对话内容（v2.1.191+）\n效果：回退最近文件改动；或在 /clear 清空上下文后反悔时，用 /rewind 找回清除前的对话历史\n例子：/undo 撤销上一步文件修改；/clear 后反悔用 /rewind 恢复清除前的完整对话
+[交互] ↩️ /rewind 撤销与恢复（别名 /undo、/checkpoint）\n功能：三个名字是同一个命令；撤销上一次操作，也能恢复到 /clear 之前的对话内容（v2.1.191+）；空提示符下连按两次 Esc 同样打开该菜单\n效果：回退最近的文件改动；或在 /clear 清空上下文后反悔时找回清除前的对话历史——这是少数能救回已清空会话的入口\n例子：/undo 撤销上一步文件修改；/clear 后反悔用 /rewind 恢复清除前的完整对话；空输入时按两次 Esc 直接打开菜单
 ---
 [交互] ⚡ /effort 努力程度调节\n功能：交互式滑块调节努力程度（标签 Faster/Smarter），档位 low/medium/high/xhigh/max，另有 auto 交由模型自行判断、以及 ultracode 触发多 agent 动态工作流；选择器里按 s 表示「仅本会话生效」（与 /model 的 s 一致）；默认档位按模型分别保存，切模型时各自记住自己的设置\n效果：high/xhigh/max 更深思熟虑但慢，low/medium 快；按模型记忆意味着可以给 Opus 设 xhigh、给 Haiku 设 low，来回切换不必重设；启动标志 --effort 只为当次会话解除新模型的默认档位锁定，不永久改写\n例子：/effort 选 xhigh 处理关键架构决策；/effort 后按 s 只对本会话临时提到 max；/effort auto 交给模型自行判断；claude --effort high 启动时单次拔高
 ---
@@ -322,7 +314,7 @@
 ---
 [配置] 📌 requiredMinimumVersion 版本锁定\n功能：settings.json 中配置 requiredMinimumVersion/requiredMaximumVersion，强制用户使用特定版本范围\n效果：团队或企业环境中统一 Claude Code 版本，防止因版本差异导致行为不一致\n例子：{"requiredMinimumVersion": "2.1.163"} 确保所有成员使用不低于该版本
 ---
-[交互] 🔌 /plugin 浏览、过滤与排查\n功能：/plugin 浏览 marketplace 时带搜索栏，可按关键词过滤而不必翻完整列表；/plugin list 支持 --enabled/--disabled 只看已启用或已禁用的插件；已安装标签页的 Skills 区域列出该插件提供的全部技能，并标出长期未使用的插件\n效果：排查「某个 skill 为什么没加载」有了两步定位法——先在 Skills 区域确认技能是否真由该插件提供，再用 --disabled 确认插件没被禁用；闲置插件提示便于定期清理\n例子：/plugin list --disabled 找出因被禁用而 skill 不可用的插件；/plugin 进入已安装标签页在 Skills 区域核对技能是否加载
+[交互] 🔌 /plugin 浏览、过滤与排查（别名 /plugins、/marketplace）\n功能：三个名字是同一个命令；浏览 marketplace 时带搜索栏，可按关键词过滤而不必翻完整列表；/plugin list 支持 --enabled/--disabled 只看已启用或已禁用的插件；已安装标签页的 Skills 区域列出该插件提供的全部技能，并标出长期未使用的插件\n效果：排查「某个 skill 为什么没加载」有了两步定位法——先在 Skills 区域确认技能是否真由该插件提供，再用 --disabled 确认插件没被禁用；闲置插件提示便于定期清理\n例子：/plugin list --disabled 找出因被禁用而 skill 不可用的插件；/plugin 进入已安装标签页在 Skills 区域核对技能是否加载
 ---
 [Hook] ➕ Stop Hook additionalContext\n功能：Stop/SubagentStop hook 现在可在返回值中附加 additionalContext，让当前 turn 在 hook 介入后继续运行\n效果：hook 可以向 Claude 补充信息（如检查结果、外部状态），而不是直接结束 turn\n例子：Stop hook 检测到测试未通过，返回 additionalContext 告知 Claude 错误详情，Claude 自动继续修复
 ---
