@@ -1,6 +1,6 @@
 # .NET 平台与运行时知识库
 
-> 版本：7.2.1
+> 版本：7.3.0
 
 > 面向 .NET Runtime、.NET Framework、SDK、目标框架、操作系统兼容性与产品生命周期的描述性知识库。
 
@@ -30,6 +30,7 @@
 | 场景 | 推荐内容 |
 |---|---|
 | 判断 Windows 与 .NET 版本是否兼容 | `reference/windows-dotnet-support-matrix.md` |
+| 判断 WPF 能否在 ARM64 / x86 / x64 上原生运行 | `reference/wpf-cpu-architecture-support.md` |
 | 选择项目目标框架和 SDK | 本文档 + `csharp` 领域的项目结构规范 |
 | 进行 .NET Framework 到现代 .NET 迁移 | 支持矩阵 reference + 迁移类 skill 的具体流程 |
 | 开发 C# 代码 | `knowledge-base/csharp/` |
