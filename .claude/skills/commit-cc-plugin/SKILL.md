@@ -2,7 +2,7 @@
 name: commit-cc-plugin
 description: 在 optimus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户明确表达提交或推送意图，如说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"、"推一下"、"存一下"。
 metadata:
-  version: "3.4.4"
+  version: "3.5.0"
   author: desktop client team
 compatibility: 需要 Git 仓库环境及远程推送权限；无 MCP 或第三方 CLI 依赖。
 allowed-tools: Bash Edit
@@ -28,7 +28,6 @@ allowed-tools: Bash Edit
 
 ```bash
 git status
-git diff HEAD --stat
 git log --oneline -5
 ```
 
@@ -41,15 +40,49 @@ git log --oneline -5
 | 与本次改动属于**同一逻辑任务** | 一并提交，提交消息中说明 |
 | 与本次改动**无关** | `git restore --staged <file>` 取消暂存，单独处理 |
 
-## 第二步 — 补齐 .kiro/skills 与 .agents/skills 符号链接
+## 第二步 — 版本号决策
 
-🔴 **GATE**：仅当本次改动包含 `.claude/skills/*/SKILL.md` 的**新增或删除**时才执行本步骤，否则跳过直接进入第三步：
+插件版本号决策遵循仓库的插件发布约定；Git tag 与发布流程遵循 [`knowledge-base/git/rules/04-versioning-release.md`](../../../knowledge-base/git/rules/04-versioning-release.md)。本步骤只处理本仓库插件目录与 marketplace 的版本联动：
+
+- **`.claude/` 下的文件** → 跳过，不升级
+- **`plugins/` 下的文件** → 按下表判断：
+
+| 变更类型 | 升级 |
+|---|---|
+| 新增 skill / command / hook / subagent / mcp / lsp，或新增插件目录 | **Minor** `x.X.x` |
+| 更新/修复已有内容（改进、修复、文档） | **Patch** `x.x.X` |
+| 删除或重命名用户可见功能；破坏性架构变更 | **Major** `X.x.x` |
+| 删除内部实现（hook 脚本调整、辅助文件）；配置微调 | **Patch** `x.x.X` |
+
+如需升级，编辑 `.claude-plugin/marketplace.json` 的 `"version"` 字段，随本次一并暂存。
+
+## 第三步 — 暂存与原子性核查
+
+**禁止 `git add -A`**，逐文件暂存：
+
+```bash
+git add .claude-plugin/marketplace.json
+git add plugins/<插件名>/skills/<skill名>/SKILL.md
+# ... 只添加本次任务的文件
+
+git diff --staged --stat   # 确认暂存内容
+```
+
+暂存后 🔴 **CHECKPOINT — 原子性自查三问**（任何一问答"否"先修正暂存区再继续）：
+
+1. staged 内容是否都属于**同一逻辑任务**？
+2. 同目录是否有同任务的关联文件**未暂存**（untracked 或 modified）？
+3. 是否混入了**无关**变更？
+
+## §A 条件小节 — 补齐 .kiro/skills 与 .agents/skills 符号链接
+
+🔴 **GATE**：仅当本次改动包含 `.claude/skills/*/SKILL.md` 的**新增或删除**时才执行本小节，否则跳过直接进入第四步：
 
 ```bash
 git status --porcelain | grep -E '^(A|D|\?\?).*\.claude/skills/[^/]+/SKILL\.md$'
 ```
 
-无输出（未新增/删除 skill，只是修改已有 skill 内容或改动 `plugins/` 等其他文件）→ 跳过本步骤。有输出才继续：
+无输出（未新增/删除 skill，只是修改已有 skill 内容或改动 `plugins/` 等其他文件）→ 跳过本小节。有输出才继续：
 
 检查 `.claude/skills/` 下每个 skill 目录，是否都有对应的 `.kiro/skills/<name>` 与 `.agents/skills/<name>` 符号链接：
 
@@ -78,43 +111,9 @@ ln -s ../../.claude/skills/<name> .agents/skills/<name>
 
 🔴 **CHECKPOINT**：`git config core.symlinks` 必须为 `true`（本仓库已设置），否则符号链接会被 git 存成普通文件而非 `120000` 模式的 symlink blob。创建后用 `git ls-files -s .kiro/skills/<name> .agents/skills/<name>` 确认 mode 为 `120000`，不是 `100644`。
 
-## 第三步 — 版本号决策
+## 第四步 — Unpushed 提交检测与 Amend 合并
 
-插件版本号决策遵循仓库的插件发布约定；Git tag 与发布流程遵循 [`knowledge-base/git/rules/04-versioning-release.md`](../../../knowledge-base/git/rules/04-versioning-release.md)。本步骤只处理本仓库插件目录与 marketplace 的版本联动：
-
-- **`.claude/` 下的文件** → 跳过，不升级
-- **`plugins/` 下的文件** → 按下表判断：
-
-| 变更类型 | 升级 |
-|---|---|
-| 新增 skill / command / hook / subagent / mcp / lsp，或新增插件目录 | **Minor** `x.X.x` |
-| 更新/修复已有内容（改进、修复、文档） | **Patch** `x.x.X` |
-| 删除或重命名用户可见功能；破坏性架构变更 | **Major** `X.x.x` |
-| 删除内部实现（hook 脚本调整、辅助文件）；配置微调 | **Patch** `x.x.X` |
-
-如需升级，编辑 `.claude-plugin/marketplace.json` 的 `"version"` 字段，随本次一并暂存。
-
-## 第四步 — 暂存与原子性核查
-
-**禁止 `git add -A`**，逐文件暂存：
-
-```bash
-git add .claude-plugin/marketplace.json
-git add plugins/<插件名>/skills/<skill名>/SKILL.md
-# ... 只添加本次任务的文件
-
-git diff --staged --stat   # 确认暂存内容
-```
-
-暂存后 🔴 **CHECKPOINT — 原子性自查三问**（任何一问答"否"先修正暂存区再继续）：
-
-1. staged 内容是否都属于**同一逻辑任务**？
-2. 同目录是否有同任务的关联文件**未暂存**（untracked 或 modified）？
-3. 是否混入了**无关**变更？
-
-## 第五步 — Unpushed 提交检测与 Amend 合并
-
-在写 commit message 前，按 [`knowledge-base/git/rules/01-branching.md`](../../../knowledge-base/git/rules/01-branching.md) 的分支同步约定，检测当前分支相对 `origin/master` 是否已有未推送的提交：
+在写 commit message 前，按 [`knowledge-base/git/rules/01-branching.md`](../../../knowledge-base/git/rules/01-branching.md) 的分支同步约定，检测当前分支相对 `origin/master` 是否已有未推送的提交。**本步 fetch 一次，第六步的同步推送复用其结果，不重复 fetch**：
 
 ```bash
 git fetch origin master --quiet 2>/dev/null || true
@@ -125,8 +124,10 @@ git log origin/master..HEAD --oneline
 
 | 检测结果 | 处理 |
 |---|---|
-| 无未推送提交 | 跳过本步骤，第六步正常新建 commit |
+| 无未推送提交 | 跳过 §B，第五步正常新建 commit |
 | 有未推送提交 | 展示列表，询问用户是否将本次改动 amend 合并到最近一次提交 |
+
+### §B 条件小节 — 合并到最近一次未推送提交（仅当第四步检测到未推送提交时执行）
 
 询问示例：
 
@@ -141,13 +142,13 @@ git log origin/master..HEAD --oneline
 
 1. `git diff HEAD~1 --name-status` 读取上一个提交的改动范围，与本次暂存内容合并分析
 2. 生成一条覆盖两次改动的汇总 commit message，不得遗漏任一次的变更点
-3. 第六步改用 `git commit --amend -m "{汇总 message}"` 而非新建 commit
+3. 第五步改用 `git commit --amend -m "{汇总 message}"` 而非新建 commit
 
 仅 amend 最近一个未推送提交，不做多提交 squash。
 
-## 第六步 — 提交
+## 第五步 — 提交
 
-若第五步选择了 amend，用 `git commit --amend` 替代下方的 `git commit`，其余流程不变。
+若 §B 选择了 amend，用 `git commit --amend` 替代下方的 `git commit`，其余流程不变。
 
 分析 `git diff --staged`（amend 时改为分析合并后的完整改动范围），按 [`knowledge-base/git/rules/02-commit-messages.md`](../../../knowledge-base/git/rules/02-commit-messages.md) 写 Conventional Commits message，并按其中要求标注 AI 协作者：
 
@@ -200,9 +201,9 @@ git show -s --format=%B HEAD | Select-String '\\n'
 
 第二条命令必须无输出；若出现 `\n`，说明提交信息格式错误。提交已推送后遵循 [`knowledge-base/git/rules/03-pull-requests.md`](../../../knowledge-base/git/rules/03-pull-requests.md) 的强制推送限制，不要擅自 amend 或 force push，应先报告并确认处理方式。
 
-## 第七步 — 同步推送
+## 第六步 — 同步推送
 
-按 [`knowledge-base/git/rules/01-branching.md`](../../../knowledge-base/git/rules/01-branching.md) 和 [`knowledge-base/git/rules/03-pull-requests.md`](../../../knowledge-base/git/rules/03-pull-requests.md) 的主干保护与同步约定，提交后先 rebase 同步远端，再推送：
+按 [`knowledge-base/git/rules/01-branching.md`](../../../knowledge-base/git/rules/01-branching.md) 和 [`knowledge-base/git/rules/03-pull-requests.md`](../../../knowledge-base/git/rules/03-pull-requests.md) 的主干保护与同步约定，提交后先 rebase 同步远端，再推送。**复用第四步已完成的 fetch**（若第四步已 fetch 且本地未落后，`git pull --rebase` 会静默返回）：
 
 ```bash
 git pull --rebase origin master
@@ -223,5 +224,5 @@ git push origin master
 | skill 内容改进就升级 Major | Major 仅用于破坏性变更 |
 | `git push --force` 或 `git push -f` | 遵循 `knowledge-base/git/rules/03-pull-requests.md` 的强制推送限制；push 失败先排查原因，最多重试一次 |
 | `git commit --no-verify` 绕过 hook | 遵循 `knowledge-base/git/rules/02-commit-messages.md`，禁止跳过 hook；hook 报错必须修复后重试 |
-| 新增 `.claude/skills/` 下的 skill 后忘记补 `.kiro/skills` 或 `.agents/skills` 符号链接 | 第二步已内置自动检测缺失并补齐，提交前务必确认 |
-| 有未推送提交不检测直接新建 commit | 第五步已内置检测，发现未推送提交时应询问用户是否 amend 合并 |
+| 新增 `.claude/skills/` 下的 skill 后忘记补 `.kiro/skills` 或 `.agents/skills` 符号链接 | §A 已内置自动检测缺失并补齐，提交前务必确认 |
+| 有未推送提交不检测直接新建 commit | 第四步已内置检测，发现未推送提交时应询问用户是否 amend 合并 |
