@@ -4,7 +4,7 @@
 ---
 [交互] 🌿 /worktree 隔离环境\n功能：在独立的 git worktree 中工作，不影响主工作区\n效果：可以同时处理多个功能分支，互不干扰\n例子：/worktree feature-x 创建隔离环境开发新功能
 ---
-[交互] 🔄 /loop 定期任务\n功能：设置定期执行的任务或命令；省略间隔则进入自定节奏动态模式（Claude 自行决定下次唤醒时间），不带 prompt 则进入自主循环默认模式；v2.1.243 起连续空转唤醒（Claude 无事可做）在终端折叠成单行而非逐条打印\n效果：按指定间隔自动运行，适合监控、轮询等场景；动态模式让轮询节奏随任务状态自适应，不必手动估算间隔；空转折叠让长时间静默守候不再刷屏\n例子：/loop 5m 检查部署状态 - 每5分钟检查一次；/loop 盯着 CI 跑完 省略间隔交由 Claude 自定节奏；/loop 不带 prompt 进入自主循环模式
+[交互] 🔄 /loop 定期任务\n功能：设置定期执行的任务或命令；省略间隔则进入自定节奏动态模式（Claude 自行决定下次唤醒时间），不带 prompt 则进入自主循环默认模式，Claude 会跑内置维护 prompt 或你仓库里的 loop.md；v2.1.243 起连续空转唤醒（Claude 无事可做）在终端折叠成单行而非逐条打印\n效果：按指定间隔自动运行，适合监控、轮询等场景；动态模式让轮询节奏随任务状态自适应，不必手动估算间隔；空转折叠让长时间静默守候不再刷屏\n例子：/loop 5m 检查部署状态 - 每5分钟检查一次；/loop 盯着 CI 跑完 省略间隔交由 Claude 自定节奏；/loop 不带 prompt 进入自主循环模式
 ---
 [交互] 🧹 /clear 清空会话\n功能：快速清空当前对话历史，开始一个干净的新上下文\n效果：避免旧上下文干扰当前问题，适合切换任务时使用\n例子：/clear 后重新描述当前问题，让 Claude 聚焦新任务
 ---
@@ -102,7 +102,7 @@
 ---
 [CLI] 🤖 claude agents 后台会话管理\n功能：查看所有 Claude Code 后台会话（运行中/等待/已完成），行内展示 done/total 扇出进度；--json 输出含 id、state、waitingFor 字段，加 --all 可查看全部历史\n效果：统一管理多个并行会话，了解各会话进度，适合多任务并行开发\n例子：claude agents 查看进度；claude agents --json --all 获取完整结构化列表；←← 在会话内直接进入视图
 ---
-[集成] 🎯 Skills 与命令的区别\n功能：Skill 是预定义的工作流程，让 Claude 按既定步骤做事，可由 Claude 自行判断调用，也可由你用斜杠触发；斜杠输入里混着三种东西——内置命令（/clear、/init、/security-review）、内置 skill（update-config、claude-api、debug 等 16 个）、以及插件提供的 command 与 skill（如 superpowers 系列）\n效果：分清三者才知道某个功能装了什么才有——内置的始终可用，插件的 command 与 skill 卸载插件即消失；/skills 列出全部可用 skill，/plugin 查插件归属\n例子：/skills 查看当前有哪些 skill 可用；某个斜杠命令用不了时先用 /plugin list --disabled 确认提供它的插件没被禁用
+[集成] 🎯 Skills 与命令的区别\n功能：Skill 是预定义的工作流程，让 Claude 按既定步骤做事，可由 Claude 自行判断调用，也可由你用斜杠触发；斜杠输入里混着三种东西——内置命令（/clear、/init、/security-review）、内置 skill 与 workflow（claude-api、code-review、dataviz、debug、design、design-sync、doctor、loop、simplify、fewer-permission-prompts、batch 等随附技能，以及 deep-research 随附工作流）、以及插件提供的 command 与 skill（如 superpowers 系列）\n效果：分清三者才知道某个功能装了什么才有——内置的始终可用，插件的 command 与 skill 卸载插件即消失；/skills 列出全部可用 skill，/plugin 查插件归属\n例子：/skills 查看当前有哪些 skill 可用；某个斜杠命令用不了时先用 /plugin list --disabled 确认提供它的插件没被禁用
 ---
 [集成] 🔌 Plugins 扩展系统\n功能：从市场安装插件扩展 Claude 的能力\n效果：获取社区贡献的技能、MCP 服务器和自定义命令\n例子：安装 superpowers 插件获取高级开发工作流
 ---
@@ -531,4 +531,22 @@
 [配置] 🔏 项目级 settings.json 的 env 收紧\n功能：v2.1.251 起项目级 .claude/settings.json 的 env 块不再允许设置 CLAUDE_CONFIG_DIR、CLAUDE_CODE_TMPDIR、TMPDIR/TMP/TEMP（需改在 shell、用户级或托管设置中配）；同版本起托管或项目设置中的 ANTHROPIC_CUSTOM_HEADERS 若设置了凭证、组织/租户、路由或改变 API 行为的请求头（如 Authorization、Host），必须经你审批才生效\n效果：克隆下来的仓库无法再通过自带 settings.json 悄悄改写配置目录、临时目录或往 API 请求里注入请求头——这类改动过去足以静默劫持凭证或把流量导向第三方\n例子：需要改配置目录时用 CLAUDE_CONFIG_DIR=/custom/path claude 在 shell 里设，而不是写进项目 .claude/settings.json；托管设置里配 ANTHROPIC_CUSTOM_HEADERS 时留意首次启用会弹审批对话框
 ---
 [配置] 🌐 CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY 网关模型发现\n功能：设 CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1 让 /model 选择器动态列出你所在网关实际提供的模型；v2.1.257 起支持网关为每个条目返回 description 一并显示（未提供的仍显示 "From gateway"），且该发现请求即使设了 CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC 也会照常执行（因为它只访问你自己的网关，不外发）\n效果：走企业网关的用户不再需要背 model ID，/model 里直接看到可用模型及其用途说明；禁用非必要外发流量的严格环境也不必因此丢掉模型发现能力\n例子：CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1 claude 启动后 /model 显示网关下发的模型列表；在 managed-settings.json 的 env 中配置该变量让全组织生效
+---
+[Skill] 🔨 /batch 并行批量改造\n功能：CLI 内置 skill（无需安装插件），接受一条指令，先在代码库调查研究、把工作分解成 5~30 个独立单元并给出计划；你批准后，每个单元在独立 git worktree 里派生一个后台子代理并行实施，各自跑测试并开 PR。需要 git 仓库\n效果：跨文件、跨模块的大规模改造（如把 src/ 从 JS 迁到 TS）不用自己拆任务、串行排期，Claude 自动并行推进；每个单元隔离在 worktree，互不污染\n例子：/batch migrate src/ from JavaScript to TypeScript 把 src/ 目录整体迁移到 TypeScript
+---
+[Skill] 🕵️ /code-review 审查当前改动\n功能：CLI 内置 skill，审查当前 diff，或你传入的 PR/分支/路径，找出正确性 bug 与可清理点；可加尽力档位与操作选项。别名 /review；参数：/code-review [low|medium|high|xhigh|max|ultra] [--fix] [--comment] [--post] [pr#|branch|path]；--fix 直接把发现应用到工作树，--comment 作为 GitHub 行内评论贴出，ultra 跑云端多代理深度审查，--post（配 ultra 且目标是 github.com PR）在启动对话框预选把结论发到 PR\n效果：提交前主动找正确性 bug 是【找 bug】的入口——它负责发现问题。与 /simplify 的分工：code-review 找 bug（带档位/--fix），simplify 只做清理不找 bug\n例子：/code-review 审查当前未提交改动；/code-review --fix 应用全部发现并改代码；/code-review ultra 1234 走云端多代理深度审查 PR#1234
+---
+[Skill] 📊 /dataviz 图表与可视化设计\n功能：CLI 内置 skill，为图表、图形、仪表盘提供设计指导：Claude 根据数据挑选合适的图表形式、按角色分配颜色、用随附脚本校验配色是否色盲安全与对比度达标，并应用标记、交互与无障碍规则。要求 Claude Code v2.1.198+；使用品牌中立占位配色，你随后替换成自己的\n效果：让 Claude 画图时不止「能画」，还画得符合可读性与无障碍规范——色盲安全、对比度、图表形式选择都由它把关\n例子：/dataviz 为这组季度销量数据设计一个仪表盘 指定可视化需求并拿到规范化设计
+---
+[Skill] 🐞 /debug 会话调试日志\n功能：CLI 内置 skill，开启当前会话的调试日志并读取会话 debug 日志来排查问题。日志默认关闭（除非你启动时带了 claude --debug），所以会话中途跑 /debug 会从那一刻开始捕获；可选附带问题描述来聚焦分析范围\n效果：排查工具调用失败、hook 异常、MCP 连接问题时不用重启会话——当场开启捕获并读日志；给出具体现象能让分析更精准\n例子：/debug 开启当前会话调试日志；/debug MCP server 连接失败 让 Claude 带着这个现象去读日志找原因
+---
+[Skill] 🎨 /design 界面设计草图\n功能：CLI 内置 skill，把 UI 线框图、界面流转、落地页或海报草成一块画布上的 artboard，发布为 artifact 并运行 Claude Design 编辑器的研究预览，如 /design 给移动银行应用设计一个设置界面；启用保存时可编辑 artboard 并保存发布新版本，否则查看并导出为 PNG/PDF。要求 v2.1.234+ 且有 artifact 的会话，Anthropic API 可用（Bedrock/Vertex/Foundry 不可用）\n效果：快速产出可视化设计原型，让 Claude 直接「画」出界面而不是只用文字描述\n例子：/design 一个移动银行应用的设置界面 让 Claude 画出 artboard 草图并导出
+---
+[Skill] 🔄 /design-sync 设计系统同步\n功能：CLI 内置 skill，把本仓库的 React 设计系统转换为 Claude Design 可用的形式并上传，此后 /design 产出的设计使用你的真实组件；可选命名设计系统（如 /design-sync Acme DS）；首次同步会校验每个组件，大仓库可能耗时数小时。Anthropic API 可用（Bedrock/Vertex/Foundry 不可用，底层无法访问 claude.ai）\n效果：让 Claude 设计图落到你已有的组件库上，而不是总是用占位样式\n例子：/design-sync Acme DS 上传并命名你的 React 设计系统
+---
+[Skill] 🩺 /doctor 配置体检\n功能：CLI 内置 skill，运行一次设置体检并诊断、修复问题：检查安装健康（重复/遗留安装、PATH 问题、无法解析的 settings 文件）、找出未被使用的 skill/MCP/插件及其上下文成本、标记慢 hook、检查 release channel 是否有新版本；去重本地 CLAUDE.md、裁剪已入库的 CLAUDE.md（v2.1.206+）、把常载指引迁入 skill 与嵌套 CLAUDE.md；还建议让 auto mode 成为默认、预批准常被拒的只读命令。先报告发现、经你确认才动手改。别名 /checkup；终端里 claude doctor 只打印只读安装诊断\n效果：定期体检发现配置瘤子——冗余 CLAUDE.md 会每轮白吃上下文，未被使用的 skill/MCP 也占着上下文预算\n例子：/doctor 运行完整体检并按建议修复；claude doctor 终端只读诊断；/doctor 提示 CLAUDE.md 可裁剪说明含能从代码库推导的冗余
+---
+[Skill] ✂️ /simplify 简化清理\n功能：CLI 内置 skill，审查改动并应用清理——四个审查 agent 并行运行：复用已有 helper、简化、效率、以及改动是否落在正确的抽象层级；然后把修复直接应用到工作树。v2.1.154 起不再找正确性 bug（找 bug 用 /code-review）；更早版本它等价于 /code-review --fix。可选目标：/simplify [path|PR参考]\n效果：与 code-review 分工——它只做清理不找 bug，适合「代码能跑但想让它更干净、更省、更贴正确抽象」的收尾\n例子：/simplify 清理当前未提交改动；/simplify src/auth 只清理指定路径；v2.1.154 前版本里 /simplify 相当于 /code-review --fix
+---
+[交互] ⚡ /powerup 交互式功能教学\n功能：CLI 内置命令，通过带动画演示的快速交互课带你发现 Claude Code 的功能\n效果：不熟悉某个内置能力时，用 /powerup 上手快的交互课了解它，比查长文档直观\n例子：/powerup 打开交互式课程发现 Claude Code 的功能
 ---
