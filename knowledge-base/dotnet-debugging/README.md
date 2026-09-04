@@ -64,6 +64,7 @@
 
 | 文件 | 主题 |
 |---|---|
+| `reference/clr-runtime-anatomy.md` | 托管堆分代、LOH/POH、同步块表、终结队列、线程池结构、GC 模式、句柄表 |
 
 ## 内容来源
 
