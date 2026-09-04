@@ -70,7 +70,7 @@ F-Reachable 队列由一个专门的**终结器线程（Finalizer Thread）**单
 
 **异常时的征象**：线程池饥饿（thread pool starvation）在 dump 中的典型形态是：全局队列中排队的工作项数量远超当前线程数，且线程数增长明显滞后于队列积压——因为受限于注入速率上限，线程池不能瞬间补足缺口。这在应用层表现为**请求延迟呈阶梯式上升**而非线性劣化：每隔一个注入周期线程数增加一点、处理能力才提升一点，与线性增长的负载曲线不同步，造成延迟曲线出现台阶状拐点，而不是随负载平滑上升。
 
-饥饿的**成因**（如何避免耗尽线程池：全链路异步、避免同步阻塞等待）见 `knowledge-base/csharp/rules/04-async-programming.md § 1. 全链路异步` 与 `§ 2. 反模式表`；本篇只负责饥饿发生后**如何从 dump 中识别**它。
+饥饿的**成因**（如何避免耗尽线程池：全链路异步、避免同步阻塞等待）见 `knowledge-base/csharp/rules/04-async-programming.md § 1. 全链路异步`；`knowledge-base/csharp/rules/04-async-programming.md § 2. 反模式表`；本篇只负责饥饿发生后**如何从 dump 中识别**它。
 
 ## 6. GC 模式
 
