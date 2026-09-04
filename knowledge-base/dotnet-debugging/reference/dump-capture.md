@@ -169,7 +169,7 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Windows Error Reporting
 | `DumpType` | `REG_DWORD` | `0`=Custom（配合 `CustomDumpFlags` 位掩码自定义）；`1`=Mini dump；`2`=Full dump | 默认 `1`（Mini），排查内存问题时会发现拿到的 dump 没有堆数据 |
 | `CustomDumpFlags` | `REG_DWORD` | `DumpType=0` 时生效的自定义位掩码（`MINIDUMP_TYPE` 枚举值的按位组合） | `DumpType` 非 0 时此值被忽略 |
 
-注意 WER LocalDumps 的 `DumpType` 只有 `Mini`/`Full` 两档（外加 `Custom`），**没有** `Heap`/`Triage` 选项——这与 `dotnet-dump collect --type` 及 `DOTNET_DbgMiniDumpType` 的四档枚举不是同一套取值空间，WER 场景下想要接近 `Heap` 的效果只能选 `2`（Full）。
+注意 WER LocalDumps 的 `DumpType` 只有 `Mini`/`Full` 两档（外加 `Custom`），**没有** `Heap`/`Triage` 选项——这与 `DOTNET_DbgMiniDumpType` 的四档枚举（`§ 5. DOTNET_DbgEnableMiniDump（.NET Core 3.0+，崩溃自动抓取）`）不是同一套取值空间，WER 场景下想要接近 `Heap` 的效果只能选 `2`（Full）。
 
 ### 输出与产物位置
 落在 `DumpFolder` 指定目录（默认 `%LOCALAPPDATA%\CrashDumps`），文件名由系统自动生成，包含进程名与时间戳。`DumpCount` 超限后自动轮转，最旧文件被静默删除——需要长期保留的 dump 应在轮转前转移出该目录。

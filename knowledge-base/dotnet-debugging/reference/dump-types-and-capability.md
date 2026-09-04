@@ -6,7 +6,7 @@
 
 ## 1. 四种类型的能力对照
 
-四种类型名（`Mini`、`Heap`、`Triage`、`Full`）与 `dotnet-dump collect --type` 的取值一致；`DOTNET_DbgMiniDumpType`（见 `reference/dump-capture.md § 5. DOTNET_DbgEnableMiniDump（.NET Core 3.0+，崩溃自动抓取）`）与 `createdump` 的开关命名不同但语义一一对应。
+四种类型名（`Mini`、`Heap`、`Triage`、`Full`）不是同一个命令的统一取值——`dotnet-dump collect --type` 只支持其中的 `Full`/`Heap`/`Mini` 三档，没有 `Triage`；`Triage` 仅能通过 `createdump -t` 或 `DOTNET_DbgMiniDumpType`（见 `reference/dump-capture.md § 5. DOTNET_DbgEnableMiniDump（.NET Core 3.0+，崩溃自动抓取）`）产出。四个类型名描述的是同一套抽象语义，只是各工具/接口暴露的取值范围不同（详见 `reference/dump-capture.md § 2. dotnet-dump collect（.NET Core 3.0+，跨平台）` 与 `§ 3. createdump（.NET Core 3.0+，Linux 优先）` 的开关表）。
 
 | 类型 | 保留 | 剥离 | 能答 | 不能答 | 体积量级 |
 |---|---|---|---|---|---|
