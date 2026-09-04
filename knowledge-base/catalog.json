@@ -109,6 +109,16 @@
       "consumers": [],
       "reviewed_at": "2026-08-30",
       "notes": "开发者使用视角的 MCP 协议知识（架构、server/client 概念、接入方式、构建实践）+ 授权安全规范条款；内容取自 modelcontextprotocol.io 官方文档 2026-07-28 版本，不收录完整 Specification/SEP/社区治理文档"
+    },
+    {
+      "domain": "dotnet-debugging",
+      "title": ".NET 高级调试与诊断",
+      "categories": ["rules", "reference"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": [],
+      "reviewed_at": "2026-09-05",
+      "notes": "事后诊断与定位：征象判据、CLR 可观测结构、dump 抓取与分析命令、SOS 输出解读。覆盖 .NET Framework 4.x / .NET 6+ / Linux 容器三运行时的共性层；预防性编码规范归 csharp 与 wpf，平台生命周期归 dotnet。一期不含活体监控工具（PerfView/ETW/dotnet-counters）与 WPF 专属归因"
     }
   ]
 }
