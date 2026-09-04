@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.3.0] - 2026-09-04
+
+### Changed
+- **存储格式从 `tips.txt` 迁移为 `tips.jsonl`**：每行一个 JSON 对象 `{id, category, title, body}`，`id` 为稳定主键（命令/参数/功能名），`body` 内用真实换行。原格式靠 `---` 分隔行 + 字面量 `\n` 拼接字段，判重需正则提取、计数需数分隔符，两者都易错；JSONL 下判重是查 `id` 集合、计数是数行数
+- 第二步判重从「grep 正则提取标识符」改为「读 JSONL 构建 `ids` 与 `aliases` 两个集合」，新增 `norm_alias()` 归一化：去斜杠前缀、`-`→`_`、统一小写，使 `/code-review`≡`code-review`≡`code_review`、`--flag`≡`flag` 能命中同一键
+- 第四步写入方式改为行级操作：新增=追加一行 JSON、修改=整行替换、删除=移除该行，不再需要处理 `---` 分隔符的成对增删
+- 第五步条目计数从「数 `^\[` 开头行」改为「数 JSON 行」（`grep -c '^{'` 与 `wc -l` 交叉验证）
+
+### Added
+- **新增 `scripts/` 目录**，把第二步的两个内联 Python 块抽为可测脚本，配 46 个 unittest（本机无 pytest，与仓库另两个维护型 skill 一致）：
+  - `build_alias_index.py` — 读 tips.jsonl 构建 `{ids, aliases}` 标识符集，输出 JSON
+  - `detect_residue.py` — 库内残影召回，输出待人工裁决的候选
+  - `test_build_alias_index.py` / `test_detect_residue.py` — 22 + 24 tests
+- 第二步新增「辅助：库内残影检测」小节：对已有条目做主标识符分组 + 功能描述重叠召回，捕捉历次 sync 累积产生的互相覆盖冗余——此前判重是单向的（新条目 vs 已有），库内互相覆盖永远检测不到
+- 第三步新增「环境可用性门」：条目须在本机 harness 下确实能跑，mac/Linux 专属、Enterprise 席位、需组织管理员权限、云厂商 SDK、claude.ai 账号会话类一律判 ⏭️ 跳过。判据是「有无硬性阻断」而非「听起来像不像企业向」——本机走自定义网关，网关类条目反而可用
+- 第三步完整性校验的「完整可执行形式」从只覆盖 CLI 命令扩展为三种形态：CLI 命令、斜杠命令、skill 名（须写触发形式），并显式禁止裸缩写（不得写 `/tdd`、`debugging`、`parallel-agents` 这类敲不出来的简称）
+- 第四步「修改」补充两条约束：覆盖旧语义而非在原句后追加版本沿革从句；长度自检不超过 body 中位数的 2 倍
+- 第五步格式校验从「验前 4 字段前缀顺序」改为「验 `{id,category,title,body}` 四字段齐全 + 统计 body 内 `功能：`/`效果：`/`例子：` 各前缀出现次数，任一 > 1 即报错」，捕捉同一条内字段语义重复
+- `known-issues.md` 新增「2026-09-04 JSONL 迁移后的实测复核」小节，用脚本复核数据层现状并与台账记录值对照
+
+### Fixed
+- **修复内联版残影检测形同不存在**：`items = []` 从未被填充，两层循环永不执行，候选恒为 0。脚本化后实测召回 5 个候选，其中 `/doctor` 那两条经人工确认是真残影（后者完整覆盖前者的别名、CLAUDE.md 裁剪、版本信息，还多出安装健康/未用 skill/慢 hook 等内容）
+- **修复 aliases 集被通用英文词污染**：加固版曾用 `\b[a-z][a-zA-Z]{3,}\b` 收录正文所有 4 字母以上小写词，集合膨胀到数千个通用词（`effect`、`when`、`with`…），任何 changelog 功能点都能"命中"→ 判重恒为已覆盖、新增恒为 0。改为只收带语法标记的标识符后 aliases 从 1622 收敛到 1475，通用词清零。这是不报错的静默失效，已被 `TestExtractRejectsNoise` 锁住
+- **修复文件路径被误当斜杠命令**：`.claude/settings.json` 的 `/settings`、`~/.claude` 的 `/claude`、`github.com/example/repo` 的 `/example` 均被收录为命令。斜杠命令模式加前置断言 `(?<![\w./~-])` 排除路径分量，真 flag（`--settings`）与真命令（`/cost`、`/superpowers:brainstorming`）全部保留
+- **修复中文按连续片段整取导致真残影召回率为 0**：`是完整的配置体检工具` 被当成单个 token，与另一条的 `设置体检` 永不重合。改为 bigram（2-gram）切分，`/doctor` 那两条的重叠率从 0 变为可测的 0.263
+- 残影检测阈值按实测分布定为 0.25 并明确「只召回不判定」定位：真残影（0.263）与非残影（`MCP-资源列出 ⊇ MCP-服务器`，0.333）在数值上交叠，纯词频无法可靠区分，最终取舍交由第四步 CHECKPOINT 由用户裁决
+- **第五步同步点从 4 处补全为 6 处**：扫描正则由 `条技巧`（要求两词紧邻）放宽为 `条[^，。|]*技巧`，随即发现 `.kiro/steering/structure.md` 与 `.kiro/steering/product.md` 两处措辞为「N **条使用技巧**」——中间插了「使用」二字，旧正则永不命中，两处数字从未被任何一轮 sync 更新过，长期停在 425（真实 276）。甄别表补两行 ✅、PowerShell 循环补两个路径、兜底表与第六步摘要口径同步改为 6 处
+- 甄别表 ❌ 不动项「默认每次显示 2 条技巧」更正为「6 条技巧」，与 show-tip.sh 本次的默认值变更对齐
+- `test-prompts.json` 的 id 1 expected 中「同步 5 处文档数字」校正为实际处数（SKILL.md 第五步已是 4 处，仅测试素材残留旧数字）。改的是对事实的描述而非期望的行为，不属于「重写既有测试条目」
+- `known-issues.md` 7 条「待处理」标记为「已修复」（1.3.0）。剩余 1 条（分类标签是未经验证的事实断言）规则未加固，如实保留待处理
+
+### Notes
+- 本次 SKILL.md 属 `.claude/` 下改动，不触发仓库 marketplace 版本升级
+- 同批次的 `plugins/optimus-devops-plugin/hooks/` 改动另按仓库规则升版：show-tip.sh 读 JSONL + 默认显示条数 2→6（Patch）、**删除 `install.ps1`**（删除用户可见功能 → Major）。install.sh 已完全覆盖其能力且内置 Windows 下的 BurntToast 检测，唯一差异是 ps1 曾提供交互式 `Install-Module`，现改为打印命令由用户自行执行——交互式安装不适合放在安装脚本里，跨 shell 传 stdin 也不可靠
+
 ## [1.2.3] - 2026-09-04
 
 ### Added

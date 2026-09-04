@@ -21,8 +21,8 @@
 
 - **智能轮播**: 确保所有技巧都展示完毕后才开始下一轮
 - **随机顺序**: 每轮技巧按随机顺序展示，避免单调
-- **可配置数量**: 默认每次显示 2 条技巧，可通过环境变量调整（1-3 条）
-- **进度追踪**: 显示当前轮次和展示进度（如：📚 第 1 轮 · 1-2/334）
+- **可配置数量**: 默认每次显示 6 条技巧，可通过环境变量调整（1-6 条）
+- **进度追踪**: 显示当前轮次和展示进度（如：📚 第 1 轮 · 1-6/276）
 - **状态持久化**: 使用 JSON 文件记录展示状态，跨会话保持
 - **智能检测**: 自动检测技巧数量变化，变化时重置展示状态
 
@@ -31,13 +31,13 @@
 ```
 sessionstart/
 ├── show-tip.sh          # 主脚本
-├── tips.txt             # 技巧内容文件
+├── tips.jsonl           # 技巧内容文件（每行一个 JSON 对象：{id, category, title, body}）
 └── .tip-state.json      # 状态文件（自动生成于 ~/.claude/.tip-state.json）
 ```
 
 ### 技巧分类
 
-tips.txt 包含 276 条技巧，涵盖以下分类：
+tips.jsonl 包含 276 条技巧，涵盖以下分类：
 
 - **[交互]** - 基本交互命令和快捷键
 - **[工具]** - Claude Code 内置工具使用
@@ -55,8 +55,8 @@ tips.txt 包含 276 条技巧，涵盖以下分类：
 ### 环境变量配置
 
 ```bash
-# 设置每次显示的技巧数量（1-3，默认 2）
-export CLAUDE_TIPS_COUNT=2
+# 设置每次显示的技巧数量（1-6，默认 6）
+export CLAUDE_TIPS_COUNT=6
 ```
 
 ---
@@ -161,21 +161,27 @@ export CLAUDE_NOTIFICATION="Claude 需要你的批准"
 
 #### 使用安装脚本：
 
-**Unix/Linux/Git Bash:**
+安装脚本只有 `install.sh` 一份（Bash）。Windows 下用 Git Bash 执行——它随 Git for Windows 一起装，且 SessionStart hook 本身就是 `bash ~/.claude/hooks/sessionstart/show-tip.sh`，能跑 hook 就能跑安装脚本。
+
+**Unix/Linux/macOS:**
 
 ```bash
 cd /path/to/optimus-plugins-official
 ./plugins/optimus-devops-plugin/hooks/install.sh
 ```
 
-**Windows PowerShell:**
+**Windows（Git Bash）:**
 
-```powershell
-cd C:\path\to\optimus-plugins-official
-.\plugins\optimus-devops-plugin\hooks\install.ps1
+```bash
+cd /e/path/to/optimus-plugins-official
+./plugins/optimus-devops-plugin/hooks/install.sh
 ```
 
-安装脚本会自动完成所有配置。
+安装脚本会自动完成文件复制，并在 Windows 下检测 BurntToast 模块是否就绪。若未安装，脚本会打印安装命令，需你在 PowerShell 中自行执行：
+
+```powershell
+Install-Module -Name BurntToast -Scope CurrentUser
+```
 
 #### 手动安装：
 
@@ -236,18 +242,17 @@ Copy-Item -Recurse -Force .\plugins\optimus-devops-plugin\hooks\notification $en
 
 ### 自定义技巧内容
 
-编辑 `~/.claude/hooks/sessionstart/tips.txt` 文件：
+编辑 `~/.claude/hooks/sessionstart/tips.jsonl` 文件：
 
-- 每条技巧使用 `---` 分隔
-- 支持 `\n` 表示换行（会在显示时转换为真实换行）
-- 格式建议：`[分类] 🔰 标题\n功能：...\n效果：...\n例子：...`
+- 每条技巧一行，一个 JSON 对象，字段 `{id, category, title, body}`
+- `body` 内用真实换行（JSON 里为 `\n`）表示换行，显示时直接还原
+- 格式建议：`{"id":"/xxx","category":"[分类]","title":"🔰 标题","body":"功能：...\n效果：...\n例子：..."}`
 
 示例：
 
 ```
-[自定义] 🎯 我的技巧\n功能：这是一个自定义技巧\n效果：帮助你更好地使用 Claude\n例子：在需要时使用这个功能
----
-[自定义] 🚀 另一个技巧\n功能：另一个有用的提示\n效果：提升工作效率\n例子：日常开发中的实用技巧
+{"id":"/my-tip","category":"[自定义]","title":"🎯 我的技巧","body":"功能：这是一个自定义技巧\n效果：帮助你更好地使用 Claude\n例子：在需要时使用这个功能"}
+{"id":"/another-tip","category":"[自定义]","title":"🚀 另一个技巧","body":"功能：另一个有用的提示\n效果：提升工作效率\n例子：日常开发中的实用技巧"}
 ```
 
 ### 调整技巧显示数量
@@ -257,7 +262,7 @@ Copy-Item -Recurse -Force .\plugins\optimus-devops-plugin\hooks\notification $en
 ```json
 {
   "env": {
-    "CLAUDE_TIPS_COUNT": "3"
+    "CLAUDE_TIPS_COUNT": "6"
   }
 }
 ```
@@ -272,7 +277,7 @@ Copy-Item -Recurse -Force .\plugins\optimus-devops-plugin\hooks\notification $en
 
 ### Q: SessionStart hook 显示错误 "提示文件不存在"
 
-**A**: 确保 `tips.txt` 文件在正确的位置：`~/.claude/hooks/sessionstart/tips.txt`
+**A**: 确保 `tips.jsonl` 文件在正确的位置：`~/.claude/hooks/sessionstart/tips.jsonl`
 
 ### Q: Notification hook 不工作
 
@@ -295,7 +300,7 @@ Copy-Item -Recurse -Force .\plugins\optimus-devops-plugin\hooks\notification $en
 
 如果你有更好的技巧或改进建议，欢迎：
 
-1. 编辑 `tips.txt` 添加新技巧
+1. 编辑 `tips.jsonl` 添加新技巧
 2. 改进 hook 脚本逻辑
 3. 提交 Pull Request
 

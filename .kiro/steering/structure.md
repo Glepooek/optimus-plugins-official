@@ -8,7 +8,7 @@ optimus-plugins-official/
 │   └── marketplace.json     # 版本号、插件注册表
 ├── .claude/skills/          # 项目级 Skills（不进 marketplace，仅本仓库开发用）
 │   ├── commit-cc-plugin/    # 提交发布专用 Skill
-│   └── sync-cc-tips/        # tips.txt 自动同步 Skill
+│   └── sync-cc-tips/        # tips.jsonl 自动同步 Skill
 ├── .kiro/                   # Kiro CLI 配置
 │   ├── steering/            # 项目指导文档
 │   └── skills/              # Kiro Skills（符号链接）
@@ -70,6 +70,6 @@ plugins/{plugin-name}/
 | `.claude/skills/commit-cc-plugin/SKILL.md` | 提交发布工作流（强制使用） |
 | `.claude/skills/sync-cc-tips/SKILL.md` | tips 文件同步 Skill |
 | `plugins/optimus-devops-plugin/hooks/hooks.json` | Hooks 配置入口 |
-| `plugins/optimus-devops-plugin/hooks/sessionstart/tips.txt` | 425 条使用技巧 |
+| `plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl` | 276 条使用技巧 |
 | `plugins/optimus-mcp-servers/.mcp.json` | MCP 服务器声明 |
 | `plugins/optimus-frontend-plugin/skills/optimus-fe-dev/ARCHITECTURE.md` | 复合 Skill 架构参考 |

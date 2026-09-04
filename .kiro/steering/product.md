@@ -15,11 +15,11 @@ Optimus 官方 Claude Code 插件仓库（optimus-plugins-official），为企�
 1. **标准化开发流程** — 通过 Skills 固化最佳实践，确保团队输出一致性
 2. **全生命周期覆盖** — 从需求(PRD)→开发(前后端)→测试(QA)→交付(CI/CD)
 3. **企业级集成** — 飞书文档、MCP服务、Jenkins流水线等企业工具深度整合
-4. **智能会话增强** — 425条使用技巧自动轮播，持续提升团队 Claude Code 使用水平
+4. **智能会话增强** — 276条使用技巧自动轮播，持续提升团队 Claude Code 使用水平
 
 ## 仓库版本
 
-当前版本：4.0.3（通过 `.claude-plugin/marketplace.json` 管理）
+当前版本：见 `.claude-plugin/marketplace.json` 的 `version` 字段（该文件是版本号唯一真源，此处不复制具体数字以免失准）
 
 ## 许可证
 

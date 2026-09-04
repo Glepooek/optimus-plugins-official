@@ -36,7 +36,7 @@ mkdir -p "$HOOKS_DIR/notification"
 # 复制 SessionStart hook
 echo -e "${BLUE}📋 安装 SessionStart hook...${NC}"
 cp -f "$SCRIPT_DIR/sessionstart/show-tip.sh" "$HOOKS_DIR/sessionstart/"
-cp -f "$SCRIPT_DIR/sessionstart/tips.txt" "$HOOKS_DIR/sessionstart/"
+cp -f "$SCRIPT_DIR/sessionstart/tips.jsonl" "$HOOKS_DIR/sessionstart/"
 chmod +x "$HOOKS_DIR/sessionstart/show-tip.sh"
 echo -e "${GREEN}✅ SessionStart hook 已安装${NC}"
 

@@ -80,7 +80,7 @@
 
 **关键文件:**
 - `hooks/hooks.json` — Hook 配置
-- `hooks/sessionstart/tips.txt` — 276条技巧库
+- `hooks/sessionstart/tips.jsonl` — 276条技巧库
 - `hooks/sessionstart/show-tip.sh` — 轮播脚本
 - `hooks/notification/permission-notify.ps1` — 通知脚本
 
@@ -101,4 +101,4 @@
 ## 项目级 Skills（.claude/skills/，不进 marketplace）
 
 - `commit-cc-plugin` — 提交发布工作流（强制使用，替代手动 git）
-- `sync-cc-tips` — tips.txt 自动同步（从 Claude Code changelog 同步技巧）
+- `sync-cc-tips` — tips.jsonl 自动同步（从 Claude Code changelog 同步技巧）

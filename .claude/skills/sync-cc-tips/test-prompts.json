@@ -2,7 +2,7 @@
   {
     "id": 1,
     "prompt": "/sync-cc-tips",
-    "expected": "完整执行六步：curl 直读 CHANGELOG.md（不经过 releases 页面/Playwright）→ 读 tips.txt 构建标识符集 → 逐条新增/修改/删除判定 → 展示变更预览（🔴 CHECKPOINT，明确列出 y/n 两种输入的后续行为）→ 用户确认后同步 5 处文档数字 + Patch 版本号 → 调用 commit-cc-plugin"
+    "expected": "完整执行六步：curl 直读 CHANGELOG.md（不经过 releases 页面/Playwright）→ 读 tips.jsonl 构建标识符集 → 逐条新增/修改/删除判定 → 展示变更预览（🔴 CHECKPOINT，明确列出 y/n 两种输入的后续行为）→ 用户确认后同步 6 处文档数字 + Patch 版本号 → 调用 commit-cc-plugin"
   },
   {
     "id": 2,
@@ -11,18 +11,18 @@
   },
   {
     "id": 3,
-    "prompt": "本次 changelog 的所有功能点在 tips.txt 中都已通过标识符命中覆盖，运行 /sync-cc-tips",
-    "expected": "识别为 0 新增/0 修改/0 删除，跳过 Step 4 的 CHECKPOINT 直接退出，不写入 tips.txt、不同步文档数字、不调用 commit-cc-plugin，只输出提示说明无变更"
+    "prompt": "本次 changelog 的所有功能点在 tips.jsonl 中都已通过标识符命中覆盖，运行 /sync-cc-tips",
+    "expected": "识别为 0 新增/0 修改/0 删除，跳过 Step 4 的 CHECKPOINT 直接退出，不写入 tips.jsonl、不同步文档数字、不调用 commit-cc-plugin，只输出提示说明无变更"
   },
   {
     "id": 4,
     "prompt": "识别出 2 条新增 + 1 条修改，展示变更预览后，用户回复 \"n\"，继续执行 /sync-cc-tips",
-    "expected": "命中第四步 CHECKPOINT 的拒绝分支：立即停止，输出「操作已取消，tips.txt 未修改」，不执行 Edit 写入、不进行第五步数字同步、不调用 commit-cc-plugin"
+    "expected": "命中第四步 CHECKPOINT 的拒绝分支：立即停止，输出「操作已取消，tips.jsonl 未修改」，不执行 Edit 写入、不进行第五步数字同步、不调用 commit-cc-plugin"
   },
   {
     "id": 5,
-    "prompt": "本次 changelog 中某功能被明确标注 Deprecated 且已彻底移除，tips.txt 中存在对应的旧条目，运行 /sync-cc-tips",
-    "expected": "命中🗑️删除条件：在第四步变更预览中列出该条目为待删项（含删除原因），等待用户确认后再从 tips.txt 移除条目及其 --- 分隔符，而不是跳过删除判定或未经预览直接删除"
+    "prompt": "本次 changelog 中某功能被明确标注 Deprecated 且已彻底移除，tips.jsonl 中存在对应的旧条目，运行 /sync-cc-tips",
+    "expected": "命中🗑️删除条件：在第四步变更预览中列出该条目为待删项（含删除原因），等待用户确认后再从 tips.jsonl 移除对应条目行，而不是跳过删除判定或未经预览直接删除"
   },
   {
     "id": 6,
@@ -36,17 +36,17 @@
   },
   {
     "id": 8,
-    "prompt": "本轮识别出的 changelog 条目中，部分是纯 bug fix（无用户可操作标识符），部分已被 tips.txt 现有条目覆盖，运行 /sync-cc-tips",
+    "prompt": "本轮识别出的 changelog 条目中，部分是纯 bug fix（无用户可操作标识符），部分已被 tips.jsonl 现有条目覆盖，运行 /sync-cc-tips",
     "expected": "第三步生成差异识别中间过程表，覆盖窗口内每一条 bullet；纯 bug fix 判定为「⏭️ 跳过（非用户可操作功能）」，已覆盖条目判定为「⏭️ 跳过（已覆盖）」，两者均计入摘要的「跳过 N 条」栏，而非被静默丢弃不体现在任何统计中"
   },
   {
     "id": 9,
     "prompt": "识别出 2 条新增 + 1 条修改，展示变更预览后，通过 AskUserQuestion 选择「取消，不做任何修改」，继续执行 /sync-cc-tips",
-    "expected": "命中第四步 CHECKPOINT 的取消分支：立即停止，输出「操作已取消，tips.txt 未修改」，不执行 Edit 写入、不进行第五步数字同步、不调用 commit-cc-plugin、不更新 .last-synced-version（而不是要求用户手打 y/n 自由文本）"
+    "expected": "命中第四步 CHECKPOINT 的取消分支：立即停止，输出「操作已取消，tips.jsonl 未修改」，不执行 Edit 写入、不进行第五步数字同步、不调用 commit-cc-plugin、不更新 .last-synced-version（而不是要求用户手打 y/n 自由文本）"
   },
   {
     "id": 10,
-    "prompt": "准备把 changelog 中某个新能力作为 [Skill] 条目写入 tips.txt，运行 /sync-cc-tips",
+    "prompt": "准备把 changelog 中某个新能力作为 [Skill] 条目写入 tips.jsonl，运行 /sync-cc-tips",
     "expected": "写入前先验证该名字的实际归属：内置 skill 看二进制 no({name:...}) 注册、subagent 看 agentType、内置命令看命令表、插件看其 skills//commands/ 目录。若实际是 subagent 或命令则不得用 [Skill] 标签（它断言「可用 skill 方式调用」），改用 [交互]/[配置]；归属判定不出来时同样不使用 [Skill]"
   },
   {
@@ -57,21 +57,21 @@
   {
     "id": 12,
     "prompt": "在一条已有条目末尾补充一句说明后，运行 /sync-cc-tips 的第五步格式校验",
-    "expected": "格式校验除验证前 4 字段前缀依次为 标题/功能/效果/例子 之外，还须统计每条内 功能：/效果：/例子： 各前缀的出现次数，任一 > 1 即报错。不得用「字段数 > 4」替代该检查——--add-dir 条目有意使用 5 段按平台分列例子"
+    "expected": "格式校验除验证 {id,category,title,body} 四字段齐全之外，还须统计每条 body 内 功能：/效果：/例子： 各前缀的出现次数，任一 > 1 即报错。不得用「字段数 > 4」替代该检查——--add-dir 条目有意使用 5 段按平台分列例子"
   },
   {
     "id": 13,
-    "prompt": "changelog 提到 /stats 的新能力，而 tips.txt 已有一条 /usage 条目（两者为同一命令的别名），运行 /sync-cc-tips",
+    "prompt": "changelog 提到 /stats 的新能力，而 tips.jsonl 已有一条 /usage 条目（两者为同一命令的别名），运行 /sync-cc-tips",
     "expected": "第二步构建「已覆盖标识符集」时把别名映射一并展开（usage←cost,stats 等 21 组），识别 /stats 命中已有 /usage 条目，判定为已覆盖或需修改，而不是新增重复条目；若需合并，标题中标全所有别名以便后续 sync 能靠字面命中"
   },
   {
     "id": 14,
-    "prompt": "tips.txt 中已存在三条都在讲 /code-review 的条目，运行 /sync-cc-tips",
+    "prompt": "tips.jsonl 中已存在三条都在讲 /code-review 的条目，运行 /sync-cc-tips",
     "expected": "除「新条目 vs 已有条目」的单向判重外，还须按主标识符对库内已有条目分组扫描，同组 ≥ 2 条时列出供人工判断能否合并，并在第四步变更预览中作为待合并项呈现——冗余是历次 sync 累积产生的，每次单看都不重复"
   },
   {
     "id": 15,
-    "prompt": "changelog 说某功能此前在特定平台受限、现已全面可用，而 tips.txt 中已有该功能的条目，运行 /sync-cc-tips",
+    "prompt": "changelog 说某功能此前在特定平台受限、现已全面可用，而 tips.jsonl 中已有该功能的条目，运行 /sync-cc-tips",
     "expected": "第四步按原地替换而非追加处理：把「vX 起某平台也可用（此前受限）」改写为现状陈述，不保留纯粹的能力扩大史。仅当用户可能仍在使用旧写法时（如某命令已成为另一命令的别名）才保留变更历史"
   },
   {

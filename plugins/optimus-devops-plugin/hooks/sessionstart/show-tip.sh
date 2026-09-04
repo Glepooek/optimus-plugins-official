@@ -11,12 +11,12 @@ else
     HOOKS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
-TIPS_FILE="$HOOKS_DIR/tips.txt"
+TIPS_FILE="$HOOKS_DIR/tips.jsonl"
 # 固定路径，避免随 plugin cache 版本哈希变化导致状态丢失
 STATE_FILE="$HOME/.claude/.tip-state.json"
 
-# 可配置：每次显示的技巧数量(默认2条,可通过环境变量修改)
-TIPS_COUNT=${CLAUDE_TIPS_COUNT:-2}
+# 可配置：每次显示的技巧数量(默认6条,可通过环境变量修改)
+TIPS_COUNT=${CLAUDE_TIPS_COUNT:-6}
 
 if [[ ! -f "$TIPS_FILE" ]]; then
     echo '{"systemMessage":"提示文件不存在"}'
@@ -44,10 +44,10 @@ if sys.platform != 'win32':
 TIPS_FILE = os.environ['TIPS_FILE']
 STATE_FILE = os.environ['STATE_FILE']
 LOCK_FILE = STATE_FILE + '.lock'
-TIPS_COUNT = int(os.environ.get('TIPS_COUNT', 2))
+TIPS_COUNT = int(os.environ.get('TIPS_COUNT', 6))
 
-# 限制显示数量在 1-3 之间
-TIPS_COUNT = max(1, min(3, TIPS_COUNT))
+# 限制显示数量在 1-6 之间
+TIPS_COUNT = max(1, min(6, TIPS_COUNT))
 
 def acquire_lock(lock_file, timeout=2):
     """获取文件锁，支持超时和跨平台"""
@@ -100,14 +100,26 @@ def release_lock(lock_fd, lock_file):
         pass
 
 try:
+
+    # 确保状态文件父目录存在（$HOME/.claude 可能尚未创建）
+    os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
     # 获取锁（防止并发冲突）
     lock_fd = acquire_lock(LOCK_FILE)
-
     try:
-        # 读取所有技巧
+        # 读取所有技巧（JSONL：每行一个 JSON 对象）
+        tips = []
         with open(TIPS_FILE, 'r', encoding='utf-8') as f:
-            content = f.read()
-            tips = [tip.strip() for tip in content.split('---\n') if tip.strip()]
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                obj = json.loads(line)
+                tips.append({
+                    'id': obj.get('id', ''),
+                    'category': obj.get('category', ''),
+                    'title': obj.get('title', ''),
+                    'body': obj.get('body', '')
+                })
 
         count = len(tips)
         if count == 0:
@@ -165,12 +177,21 @@ try:
         else:
             progress = f"📚 第 {round_num} 轮 · {shown_start}-{shown_end}/{count}"
 
-        # 转换字面 \n 为真实换行符
-        selected_tips = [tip.replace('\\n', '\n') for tip in selected_tips]
+        # 格式化每条技巧：分类 + 标题 \n 正文（正文含真实换行，无需转义）
+        def fmt(tip):
+            parts = []
+            head = f"[{tip['category']}] {tip['title']}"
+            if tip['body']:
+                parts.append(head + "\n\n" + tip['body'])
+            else:
+                parts.append(head)
+            return "\n".join(parts)
+
+        formatted = [fmt(t) for t in selected_tips]
 
         # 合并多条技巧，用美化的分隔线隔开
         separator = "\n\n" + "━" * 50 + "\n\n"
-        combined_tips = separator.join(selected_tips)
+        combined_tips = separator.join(formatted)
 
         # 输出（将进度信息添加到技巧前）
         tip_with_progress = f"{progress}\n\n{combined_tips}"
