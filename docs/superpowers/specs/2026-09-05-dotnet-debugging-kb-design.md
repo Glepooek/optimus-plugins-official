@@ -248,13 +248,13 @@ knowledge-base/dotnet-debugging/
 
 期次顺序于 2026-09-05 调换，理由见 `docs/superpowers/specs/2026-09-05-dotnet-debugging-kb-phase2-design.md § 1.2`
 
-**二期收窄依据**：WPF 诊断主题按「dump 快照能否回答」二分——
+**三期收窄依据**：WPF 诊断主题按「dump 快照能否回答」二分——
 
 | 主题 | 快照可答 | 归期 |
 |---|---|---|
-| Dispatcher 死锁 | ✅ `!clrstack` + `!syncblk`（一期已交付） | 二期 |
-| 四类 WPF 泄漏 | ✅ `!gcroot`（一期已交付） | 二期 |
-| UI 卡顿归因（渲染线程 vs UI 线程、GC 暂停占比、掉帧时间线） | ❌ 本质需要时间线采样，dump 只是一个时刻 | 三期 |
+| Dispatcher 死锁 | ✅ `!clrstack` + `!syncblk`（一期已交付） | 三期 |
+| 四类 WPF 泄漏 | ✅ `!gcroot`（一期已交付） | 三期 |
+| UI 卡顿归因（渲染线程 vs UI 线程、GC 暂停占比、掉帧时间线） | ❌ 本质需要时间线采样，dump 只是一个时刻 | 二期 |
 
 三期因此完全建立在一期已交付的 SOS 命令之上，无外部依赖；卡顿归因随活体诊断进二期，那里才有帧时间线数据。
 

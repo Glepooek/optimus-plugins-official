@@ -40,9 +40,15 @@ dotnet-trace collect -p <PID> --duration 00:00:30
 dotnet-trace collect -p <PID> --stopping-event-provider-name Microsoft-Windows-DotNETRuntime --stopping-event-event-name Exception
 ```
 
+由工具直接拉起目标进程并从第一行代码开始采集（覆盖启动阶段，此时进程尚不存在，无法用 `-p` 定位）：
+```
+dotnet-trace collect -- <可执行文件路径> <应用自身的参数>
+```
+
 | 开关 | 含义 | 不加的后果 |
 |---|---|---|
 | `-p, --process-id <PID>` / `-n, --name <进程名>` / `--diagnostic-port <路径>` | 进程定位方式，语义与 `dotnet-counters` 一致 | 三选一缺失则命令无法确定目标进程 |
+| `-- <command>` | 由工具启动目标进程，采集覆盖进程整个生命周期（含启动阶段） | 只能在进程已运行后附加，JIT 预热、程序集加载、静态构造函数等启动期事件全部错过，且这些问题无法靠重连补采 |
 | `--profile <名称>` | 使用内置 profile 展开为对应的 provider 组合 | 不指定时按官方默认 profile 采集，具体展开见 `§ 2. profile 选择` |
 | `--providers <过滤串>` | 显式指定 provider/keyword/level，可与 `--profile` 叠加 | 不指定则仅按 `--profile` 展开的 provider 采集，捕获不到应用自定义 `EventSource` 的事件 |
 | `--clrevents <类别>` | 按预定义类别名（`gc`、`exception` 等）简写常见 CLR keyword | 需要手写完整的十六进制 keyword，容易写窄导致静默少采（见 `reference/eventpipe-and-diagnostic-port.md § 3. Provider / Keyword / Level 三级过滤`的风险提示） |
@@ -65,7 +71,7 @@ dotnet-trace collect -p <PID> --stopping-event-provider-name Microsoft-Windows-D
 
 ### 用途与前置条件
 
-内置 profile 是对常用 provider/keyword/level 组合的命名封装，避免每次手写完整的过滤串。`--profile` 与 `--providers` 可同时指定，此时两者展开的 provider 集合取并集叠加，而非互斥覆盖。实际取值以官方文档为准，实际取值可用 `dotnet-trace list-profiles` 核对（本机未安装 `dotnet-trace`，本节数值未能现场核验，均取自官方文档已核验事实）。
+内置 profile 是对常用 provider/keyword/level 组合的命名封装，避免每次手写完整的过滤串。`--profile` 与 `--providers` 可同时指定，此时两者展开的 provider 集合取并集叠加，而非互斥覆盖。实际取值以官方文档为准，可用 `dotnet-trace list-profiles` 核对（本机未安装 `dotnet-trace`，本节数值未能现场核验，均取自官方文档已核验事实）。
 
 ### 语法与关键开关
 
@@ -74,10 +80,12 @@ dotnet-trace collect -p <PID> --stopping-event-provider-name Microsoft-Windows-D
 dotnet-trace list-profiles
 ```
 
-按 profile 采集（默认场景，采样式 CPU 用途）：
+按 profile 采集（`collect` 默认即启用 `dotnet-common` + `dotnet-sampled-thread-time`，无需显式指定）：
 ```
-dotnet-trace collect -p <PID> --profile cpu-sampling
+dotnet-trace collect -p <PID> --profile dotnet-sampled-thread-time,dotnet-common
 ```
+
+**✗ 不要写 `--profile cpu-sampling`**——该取值已从 `collect` 移除，照抄旧教程会直接报错，原因与替代写法见下。
 
 `collect` 下的 `cpu-sampling` **已被移除**——名称本身具有误导性：它实际采样的是**所有线程**，而非仅高 CPU 占用的线程，与名称暗示的语义不符，这是官方移除它的原因。当前 `collect` 默认启用的是 `dotnet-common` + `dotnet-sampled-thread-time` 两个 profile 的组合。
 

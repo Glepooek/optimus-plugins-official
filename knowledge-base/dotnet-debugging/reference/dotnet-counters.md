@@ -105,10 +105,10 @@ CSV 文件每行是一个采样时间点，列依次为：时间戳、provider �
 |---|---|---|---|---|---|
 | 堆大小 | `dotnet.gc.last_collection.heap.size (By)` | `GC Heap Size (MB)` | 随 GC 周期性回落，呈锯齿波形 | 包络线呈上升台阶，回收后不回落到原水位 | `reference/sos-heap-and-objects.md § 4. !gcroot` |
 | 提交量 | `dotnet.gc.last_collection.memory.committed_size (By)` | `GC Committed Bytes (MB)` | 与堆大小同步小幅波动，可能高于堆大小（含预留） | 持续增长且增幅明显超出堆大小同期增幅 | `reference/sos-heap-and-objects.md § 5. !eeheap` |
-| 碎片量 | `dotnet.gc.last_collection.heap.fragmentation.size (By)` | `GC Fragmentation (%)` | 占堆比例稳定在低位 | 占堆比例持续攀升 | `reference/sos-heap-and-objects.md § 5. !eeheap` |
-| GC 次数（分代） | `dotnet.gc.collections ({gc.heap.generation})` | `# Gen 0/1/2 GCs` | gen0 频繁、gen2 稀少，符合正常晋升比例 | gen2 次数占比异常升高，指向大量对象晋升到高代 | `reference/sos-heap-and-objects.md § 1. !dumpheap` |
-| GC 暂停时间 | `dotnet.gc.pause.time (s)` | `% Time in GC since last GC (%)` | 占比低且平稳 | 占比持续升高、单次暂停时长变长 | `reference/sos-heap-and-objects.md § 1. !dumpheap` |
-| 累计分配量 | `dotnet.gc.heap.total_allocated (By)` | `Allocation Rate (B / 1 sec)` | 分配速率随业务吞吐同步变化，无脱钩增长 | 分配速率相对吞吐脱钩陡升（振幅增大而非堆占用抬高） | `reference/sos-heap-and-objects.md § 1. !dumpheap` |
+| 碎片量 | `dotnet.gc.last_collection.heap.fragmentation.size (By)` | `GC Fragmentation (%)` | 占堆比例稳定在低位（.NET 9+ 须自行除以堆大小换算） | 占堆比例持续攀升 | `reference/sos-heap-and-objects.md § 5. !eeheap` |
+| GC 次数（分代） | `dotnet.gc.collections ({collection})` | `# Gen 0/1/2 GCs` | gen0 频繁、gen2 稀少，符合正常晋升比例 | gen2 次数占比异常升高，指向大量对象晋升到高代 | `reference/sos-heap-and-objects.md § 1. !dumpheap` |
+| GC 暂停时间 | `dotnet.gc.pause.time (s)` | `% Time in GC since last GC (%)` | 占比低且平稳（.NET 9+ 须取累计值的斜率） | 占比持续升高、单次暂停时长变长 | `reference/sos-heap-and-objects.md § 1. !dumpheap` |
+| 累计分配量 | `dotnet.gc.heap.total_allocated (By)` | `Allocation Rate (B / 1 sec)` | 分配速率随业务吞吐同步变化，无脱钩增长（.NET 9+ 须取累计值的斜率） | 分配速率相对吞吐脱钩陡升（振幅增大而非堆占用抬高） | `reference/sos-heap-and-objects.md § 1. !dumpheap` |
 | 线程池线程数 | `dotnet.thread_pool.thread.count ({thread})` | `ThreadPool Thread Count` | 随负载爬坡后企稳在某一水位 | 持续顶在上限附近且队列长度同时升高 | `reference/sos-locks-and-async.md § 3. !threadpool` |
 | 线程池队列长度 | `dotnet.thread_pool.queue.length ({work_item})` | `ThreadPool Queue Length` | 短暂出现后迅速清零 | 持续 > 0 且线程数达上限、CPU 不高 | `reference/sos-locks-and-async.md § 3. !threadpool` |
 | 工作项完成数 | `dotnet.thread_pool.work_item.count ({work_item})` | `ThreadPool Completed Work Item Count` | 完成速率与请求吞吐同步升降 | 完成速率骤降但队列长度同时升高 | `reference/sos-locks-and-async.md § 3. !threadpool` |
@@ -118,9 +118,10 @@ CSV 文件每行是一个采样时间点，列依次为：时间戳、provider �
 | 计时器数 | `dotnet.timer.count ({timer})` | `Number of Active Timers` | 与已注册的定时任务数量匹配，保持稳定 | 持续增长且不随定时任务结束而回落 | `reference/sos-heap-and-objects.md § 4. !gcroot` |
 | 程序集数 | `dotnet.assembly.count ({assembly})` | `Number of Assemblies Loaded` | 应用启动完成后趋于稳定，不再增长 | 持续增长（动态程序集反复加载未卸载） | `reference/sos-heap-and-objects.md § 5. !eeheap` |
 
-**三条语义陷阱（直接影响上表判据的正确用法）**：
+**四条语义陷阱（直接影响上表判据的正确用法）**：
 
-1. `dotnet.gc.heap.total_allocated` 是**自进程启动的累计量**，只增不减，不是当前堆占用——用它判断泄漏是错误用法，判泄漏须看「堆大小」行的 `dotnet.gc.last_collection.heap.size`。
-2. `dotnet.gc.last_collection.memory.committed_size`（「提交量」行）**可能大于堆大小**，因为其中含为未来分配预留的部分，不能把两者的差值直接当作碎片量；碎片量有独立计数器，即上表「碎片量」行的 `dotnet.gc.last_collection.heap.fragmentation.size`。
-3. `dotnet.exceptions`（「异常数」行）计的是 **first-chance** 异常，等价于 `AppDomain.FirstChanceException` 的触发次数，含已被 `catch` 捕获、未导致任何问题的异常，因此其基线**未必接近 0**——判据必须按应用自身的历史基线比较速率变化，而不是假设健康状态下该值应趋近于零。
+1. **双列并非处处语义等价，有三行需要换算后才可比**。`dotnet.gc.pause.time`、`dotnet.gc.heap.total_allocated` 在 .NET 9+ 侧是 **Counter（自进程启动的累计量，只增不减）**，而其 .NET 8- 对应项 `% Time in GC since last GC`、`Allocation Rate` 是**百分比与速率**；`fragmentation.size` 在 .NET 9+ 侧是**绝对字节数**，对应项 `GC Fragmentation` 是**百分比**。上表的形态判据按 .NET 8- 侧的语义书写，在 .NET 9+ 侧使用时：前两者须取累计值的**斜率**（单位时间增量），碎片量须**除以堆大小**换算为占比。直接照搬会得到一条永远上升的曲线，判据失效。
+2. `dotnet.gc.heap.total_allocated` 是**自进程启动的累计量**，只增不减，不是当前堆占用——用它判断泄漏是错误用法，判泄漏须看「堆大小」行的 `dotnet.gc.last_collection.heap.size`。
+3. `dotnet.gc.last_collection.memory.committed_size`（「提交量」行）**可能大于堆大小**，因为其中含为未来分配预留的部分，不能把两者的差值直接当作碎片量；碎片量有独立计数器，即上表「碎片量」行的 `dotnet.gc.last_collection.heap.fragmentation.size`。
+4. `dotnet.exceptions`（「异常数」行）计的是 **first-chance** 异常，等价于 `AppDomain.FirstChanceException` 的触发次数，含已被 `catch` 捕获、未导致任何问题的异常，因此其基线**未必接近 0**——判据必须按应用自身的历史基线比较速率变化，而不是假设健康状态下该值应趋近于零。
 
