@@ -69,6 +69,7 @@
 | `reference/dump-capture.md` | procdump / dotnet-dump collect / createdump / WER LocalDumps / DOTNET_DbgEnableMiniDump 的完整命令与开关 |
 | `reference/symbols-and-tool-matching.md` | PDB 类型、符号服务器配置、SOS 与运行时版本匹配、缺符号降级读法 |
 | `reference/sos-threads-and-stacks.md` | !threads / !clrstack / !dumpstack / !pe / !dso 的开关、输出逐列语义与判据 |
+| `reference/sos-heap-and-objects.md` | !dumpheap / !dumpobj / !objsize / !gcroot / !eeheap / !gchandles 的开关、输出语义与泄漏判据 |
 
 ## 内容来源
 
