@@ -81,6 +81,65 @@ WPF 处理绑定源变更通知的方式取决于源类型是否实现 `INotifyP
 
 ## 4. 弱事件泄漏
 
+### 堆上的可见特征
+
+`WeakEventManager` 派生类型（如处理绑定通知的那一类管理器）自身实例数正常，应用自身对象的实例数也正常——用 `!dumpheap -stat` 按应用类型名逐个筛查看不到任何异常。这是本节与其余三类的关键差异：泄漏体现在 `WeakEventManager` 内部的监听表结构上，不体现在应用对象上。能看到的征象是该管理器关联的内部结构（监听表）体积随应用运行时间增长，而非某个应用类型的实例数增长。
+
+### 根链形态
+
+**一级事实**，来源：dotnet/wpf 源码 `WindowsBase/System/Windows/WeakEventManager.cs`：`WeakEventManager` 自身不直接持有监听表，而是通过字段 `_table`（取自单例 `WeakEventTable.CurrentWeakEventTable`）按「管理器 + 源对象」为键做索引；每个源对象对应一个内部 `ListenerList`，其中的监听项是 `Listener` 结构体，对监听目标与处理器分别持有的是 `WeakReference`——弱的正是这一侧，监听者本身可以被正常回收。
+
+但 `Listener` 结构体不会在监听者被回收的瞬间从 `ListenerList` 中消失：清理动作由 `ScheduleCleanup` 触发一次 `Purge`，触发时机是「下一次有新监听者加入」或「一次事件分发过程中恰好发现了失效项」，源码注释明确说明这是有意为之的摊销策略——清理要足够频繁以避免大量堆积，但不能频繁到每次操作都扫描一遍付出明显的性能代价。因此根链末端会落在 `WeakEventManager`/`WeakEventTable` 内部的监听表结构上，而不是指向应用代码；短周期内大量订阅退订会让尚未被 `Purge` 扫到的失效项暂时堆积，这段堆积在 dump 中就体现为管理器内部结构的体积增长。
+
+### 判据与下一步
+
+- **证实**：连续两次采样间隔，`WeakEventManager` 及其内部监听表关联的内部结构体积单调增长且不回落 → 说明堆积速度超过了摊销清理的触发频率，需检查是否存在短周期内大量订阅又退订、或长期持有大量已失效监听项的代码路径；
+- **排除**：内部结构体积在两次采样间稳定或有涨有落 → 弱事件机制的摊销清理在正常工作，当前的实例数波动是正常现象，泄漏另有成因，转 § 5。
+
+**易被误判的反直觉点**：「用了 `WeakEventManager` 所以不会泄漏」是错误推论。`WeakEventManager` 弱的只是监听者一侧的引用，管理器内部监听表里的登记项本身仍然占用内存，且它的清理是摊销式的、不是即时的——短周期高频订阅退订依然可能造成可观测的堆积，只是形态与应用对象泄漏不同，落在 WPF 内部结构而非应用类型上。
+
 ## 5. DispatcherTimer 泄漏
 
+### 堆上的可见特征
+
+`System.Windows.Threading.DispatcherTimer` 实例数超出该应用预期的活动定时器数（判断依据见 § 1）；展开这些实例，其 `Tick` 事件委托的 `Target` 指向已经从可视化树移除、本应已销毁的界面元素或 ViewModel。
+
+### 根链形态
+
+**一级事实**，来源：dotnet/wpf 源码 `WindowsBase/System/Windows/Threading/DispatcherTimer.cs`：`DispatcherTimer` 持有一个私有字段 `_dispatcher`，是对所属 `Dispatcher` 的**普通强引用**（未包裹 `WeakReference`）；定时器启动时调用 `_dispatcher.AddTimer(this)` 把自身注册进 Dispatcher，`Stop()` 时调用 `_dispatcher.RemoveTimer(this)` 注销——但两者不对称：某些零间隔、同线程的重启路径会跳过 `AddTimer` 直接提升执行，只有 `Stop()` 才总是配对调用 `RemoveTimer`，也就是说只要不调用 `Stop()`，这次注册就不会被撤销。`Tick` 是字段式事件（`public event EventHandler Tick`），其编译器生成的委托字段由 `DispatcherTimer` 实例自身持有，因此任何订阅了 `Tick` 的处理器及其 `Target`（界面元素或 ViewModel）都被这个委托字段直接强引用。
+
+`Dispatcher` 一侧是否用强引用集合持有已注册的定时器，源码未能在时间盒内查证到具体字段声明与类型（`AddTimer`/`RemoveTimer`/`_timers` 字段的实现体在可获取的源码片段之外）；但从行为层面看——`Dispatcher` 需要在每次消息循环轮转时能提升到期的定时器执行 `Tick`，注册期间必须能随时枚举到该定时器，这一行为要求它对已注册且未 `Stop` 的定时器保持可达（**经验性知识**，标注为行为层面的推断，不假设具体字段名）。可查询的行为锚点与 Task 1 一致：定时器创建时关联的 `Dispatcher` 可通过 `CurrentDispatcher`/`FromThread` 查询到线程归属，不依赖某个具体命名的静态字典字段。
+
+按以上事实，机制链呈现为：
+
+```
+Dispatcher（应用级生命周期，GC 根可达）
+  → 未 Stop 的 DispatcherTimer（注册期间对 Dispatcher 保持可达，具体持有集合未查证，经验性推断）
+    → Tick 委托（字段式事件，由 DispatcherTimer 实例强引用）
+      → 委托 Target（界面元素 / ViewModel）
+        → 其整个对象图
+```
+
+链的前两段（`DispatcherTimer` → `_dispatcher` 强引用、`Tick` 委托字段）为一级事实；`Dispatcher` → `DispatcherTimer` 一段为经验性行为推断，未在源码中确认具体字段名。
+
+### 判据与下一步
+
+- **证实**：`reference/sos-heap-and-objects.md § 4. !gcroot` 显示根链起点落在 `Dispatcher`、中途经过一个未 `Stop` 的 `DispatcherTimer` 实例、末端是 `Tick` 委托的 `Target` → 确认为本节描述的 DispatcherTimer 泄漏，检查对应代码路径是否在界面卸载时遗漏了 `Stop()` 调用；
+- **排除**：`DispatcherTimer` 实例数在预期范围内、或 `!gcroot` 根链未经过 `Dispatcher`/`DispatcherTimer` → 不是本节描述的泄漏，转 § 6 反查表按实际根链形态重新分类。
+
+下一步（跨领域引用）：预防侧规范见 `knowledge-base/wpf/rules/09-threading.md § 7. 定时器与调度`。
+
 ## 6. 根链形态图鉴速查表
+
+本节是反查入口，不重复 § 2–5 的内容，只做映射：已经拿到一条 `!gcroot` 输出、但不确定属于哪一类泄漏时，按下表左列的标志物定位到对应小节。
+
+| `!gcroot` 输出中出现的标志物 | 泄漏类型 | 详见 |
+|---|---|---|
+| 根链末端为 `MS.Internal.Data` 命名空间下的事件管理器类型（`PropertyDescriptor` 订阅登记项） | Binding 泄漏 | `§ 2. Binding 泄漏` |
+| 静态字段 → `ResourceDictionary` → 元素 | 可视化树泄漏（静态资源） | `§ 3. 可视化树泄漏` |
+| 父元素（自身仍有根）→ 子元素集合 → 元素 | 可视化树泄漏（逻辑父级） | `§ 3. 可视化树泄漏` |
+| 事件源对象 → 委托 `_invocationList` → 元素（作为 `Target`） | 可视化树泄漏（未退订事件） | `§ 3. 可视化树泄漏` |
+| 根链末端落在 `WeakEventManager`/`WeakEventTable` 内部监听表结构上 | 弱事件泄漏 | `§ 4. 弱事件泄漏` |
+| `Dispatcher` → 未 `Stop` 的 `DispatcherTimer` → `Tick` 委托 → 委托 `Target` | DispatcherTimer 泄漏 | `§ 5. DispatcherTimer 泄漏` |
+
+根链末端不匹配上表任何一行时，不属于本篇覆盖的四类泄漏。可能是应用自身的静态集合持有，这是通用形态，见 `reference/debugging-decision-tree.md § 2. 内存持续增长`；也可能是非托管泄漏，判据见同节的 `!eeheap` 用法。
