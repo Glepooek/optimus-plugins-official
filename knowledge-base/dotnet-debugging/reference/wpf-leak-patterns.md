@@ -51,7 +51,7 @@ WPF 处理绑定源变更通知的方式取决于源类型是否实现 `INotifyP
 
 ### 判据与下一步
 
-- **证实**：`reference/sos-heap-and-objects.md § 4. !gcroot` 显示该绑定源对象的根链末端落在 WPF 内部命名空间 `MS.Internal.Data` 下的一个事件管理器类型上（**一级事实**，来源：dotnet/wpf 源码 `PresentationFramework/MS/Internal/Data/ValueChangedEventManager.cs`——该类型是每个线程一份的单例，通过静态方法 `GetCurrentManager`/`SetCurrentManager` 存取，内部按源对象建表，表项 `ValueChangedRecord` 对源对象持有的是强引用，注释明确说明"其作用域刻意与 `AddValueChanged`…`RemoveValueChanged` 的调用范围一致"）→ 该绑定源未实现 `INotifyPropertyChanged` 且没有人显式解绑这次订阅。修复方向（跨领域引用）见 `knowledge-base/wpf/rules/05-data-binding.md § 2. 变更通知：INotifyPropertyChanged / ObservableCollection`；
+- **证实**：`reference/sos-heap-and-objects.md § 4. !gcroot` 显示该绑定源对象的根链末端落在 WPF 内部命名空间 `MS.Internal.Data` 下的一个事件管理器类型上（**一级事实**，来源：dotnet/wpf 源码 `PresentationFramework/MS/Internal/Data/ValueChangedEventManager.cs`——该类型派生自 `WeakEventManager`，经基类的 `CurrentManager` 机制按线程存取单例，内部按源对象建表，表项 `ValueChangedRecord` 对源对象持有的是强引用，注释明确说明"其作用域刻意与 `AddValueChanged`…`RemoveValueChanged` 的调用范围一致"）→ 该绑定源未实现 `INotifyPropertyChanged` 且没有人显式解绑这次订阅。修复方向（跨领域引用）见 `knowledge-base/wpf/rules/05-data-binding.md § 2. 变更通知：INotifyPropertyChanged / ObservableCollection`；
 - **排除**：根链末端是应用自身的静态字段或事件（而非 `MS.Internal.Data` 命名空间下的类型）→ 不是本节描述的 Binding 泄漏，转 § 3 或 § 4 按根链末端形态重新比对。
 
 ## 3. 可视化树泄漏
