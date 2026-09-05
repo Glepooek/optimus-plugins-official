@@ -71,6 +71,7 @@
 | `reference/sos-threads-and-stacks.md` | !threads / !clrstack / !dumpstack / !pe / !dso 的开关、输出逐列语义与判据 |
 | `reference/sos-heap-and-objects.md` | !dumpheap / !dumpobj / !objsize / !gcroot / !eeheap / !gchandles 的开关、输出语义与泄漏判据 |
 | `reference/sos-locks-and-async.md` | !syncblk / !dumpasync / !threadpool 的开关、输出语义与死锁/饥饿判据 |
+| `reference/debugging-decision-tree.md` | 六类征象（挂起 / 内存增长 / CPU 打满 / 崩溃 / 间歇抖动 / 句柄耗尽）→ 候选根因 → 取证命令查表 |
 
 ## 内容来源
 
