@@ -35,7 +35,7 @@ Monitor 死锁、异步死锁（同步等待异步）、线程池饥饿、长时
 | `!dumpheap -stat`（`reference/sos-heap-and-objects.md § 1. !dumpheap`） | 间隔采样两次，某类型 `Count` 是否持续上涨 | 持续上涨 → 证实该类型是泄漏嫌疑，转 `!gcroot` |
 | `!gcroot`（`reference/sos-heap-and-objects.md § 4. !gcroot`） | 根路径末端形态（静态字段 / 事件 `_invocationList` / pinned handle / 无根） | 静态字段或事件订阅 → 证实托管泄漏；无根路径 → 排除托管泄漏 |
 | `!eeheap -gc`（`reference/sos-heap-and-objects.md § 5. !eeheap`） | `GC Heap Size` 总计是否接近进程实际内存占用；LOH 段数是否增长但对象计数未同比增长 | 差距悬殊 → 排除托管堆是主因；LOH 段增长但计数未涨 → 证实碎片化而非真实增长 |
-| `!gchandles`（`reference/sos-heap-and-objects.md § 6. !gchandles`） | `Strong Handles`/`Pinned Handles` 是否单调增长而对应托管对象计数稳定 | 是 → 证实句柄泄漏而非对象泄漏 |
+| `!gchandles`（`reference/sos-heap-and-objects.md § 6. !gchandles`，仅 Windows 平台支持） | `Strong Handles`/`Pinned Handles` 是否单调增长而对应托管对象计数稳定 | 是 → 证实句柄泄漏而非对象泄漏 |
 
 ### 常见误判
 `TotalSize` 高**不等于**泄漏——体积大可能是合法的大缓存或一次性大对象分配；泄漏的判据是 `Count` 持续上涨，而非单次快照的绝对值大小。`!eeheap -gc` 排除托管堆是主因后，若 `!gchandles` 也稳定，指向非托管代码自身分配（已超出 SOS 取证范围）。
@@ -100,7 +100,7 @@ GC 句柄泄漏（强句柄/固定句柄未释放）、未释放的文件句柄�
 
 | 命令 | 看什么 | 结论 |
 |---|---|---|
-| `!gchandles`（`reference/sos-heap-and-objects.md § 6. !gchandles`） | `Strong Handles`/`Pinned Handles`/`Ref Count Handles` 是否单调增长 | 是 → 证实 GC 句柄层面的泄漏，转 `!gcroot` 定位持有者 |
+| `!gchandles`（`reference/sos-heap-and-objects.md § 6. !gchandles`，仅 Windows 平台支持） | `Strong Handles`/`Pinned Handles`/`Ref Count Handles` 是否单调增长 | 是 → 证实 GC 句柄层面的泄漏，转 `!gcroot` 定位持有者 |
 | `!gcroot`（`reference/sos-heap-and-objects.md § 4. !gcroot`） | 根路径末端是否为 `(strong handle)`/`(pinned handle)` | 是 → 证实该对象仅靠未释放的句柄维持存活 |
 | `!finalizequeue`（`reference/clr-runtime-anatomy.md § 4. 终结队列`） | F-Reachable 队列条目数是否持续增长不回落 | 是 → 证实终结器线程执行速度跟不上，依赖终结器释放的非托管资源（文件句柄、套接字）迟迟不回收 |
 

@@ -32,8 +32,8 @@
 | `Exception` | 该线程上的待处理异常 | **非空即为崩溃第一现场候选** |
 
 ### 判据：能证实 / 排除什么
-- `Lock Count` 全为 0 → **排除** Monitor 死锁，转查异步死锁（转查 `!dumpasync` 命令）
-- 线程数远超预期（数百）且多数栈相同 → **证实**线程池饥饿，转查 `!threadpool` 命令
+- `Lock Count` 全为 0 → **排除** Monitor 死锁，转查异步死锁，见 `reference/sos-locks-and-async.md § 2. !dumpasync`。
+- 线程数远超预期（数百）且多数栈相同 → **证实**线程池饥饿，转查 `reference/sos-locks-and-async.md § 3. !threadpool`。
 - `Exception` 列非空 → **证实**该线程有待处理异常，转 `§ 4. !pe` 展开
 
 ## 2. !clrstack
@@ -62,7 +62,7 @@
 | `Call Site` | 解析出的方法名，或特殊帧标记（如 `[GCFrame]`、`[HelperMethodFrame_1OBJ]`） | 特殊帧标记本身即信息：`[HelperMethodFrame_1OBJ] System.Threading.Monitor.Enter` 表示该线程正在等待或进入一把 Monitor 锁 |
 
 ### 判据：能证实 / 排除什么
-- 大量线程的 `Call Site` 停在同一个 `System.Threading.Monitor.ReliableEnter`/`Monitor.Enter` 帧 → **证实**这些线程在等待同一把锁，转 `!syncblk` 找出持锁线程后对其执行 `setthread` + `!clrstack` 确认它是否也在等别的锁（循环等待即死锁）
+- 大量线程的 `Call Site` 停在同一个 `System.Threading.Monitor.ReliableEnter`/`Monitor.Enter` 帧 → **证实**这些线程在等待同一把锁，转 `reference/sos-locks-and-async.md § 1. !syncblk` 找出持锁线程后对其执行 `setthread` + `!clrstack` 确认它是否也在等别的锁（循环等待即死锁）。
 - 缺符号时 `Call Site` 仍能显示完整类名与方法名（原因见 `reference/symbols-and-tool-matching.md § 4. 缺符号时的降级读法`）→ 只需确认调用链经过了哪些方法时，**排除**补符号的必要性；一旦要看源码行号或非托管帧，判据不成立
 
 ## 3. !dumpstack

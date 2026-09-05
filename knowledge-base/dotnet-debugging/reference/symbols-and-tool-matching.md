@@ -25,7 +25,7 @@ PDB（Program Database）保存源码行号、局部变量名等调试信息，�
 set _NT_SYMBOL_PATH=srv*C:\Symbols*https://msdl.microsoft.com/download/symbols
 ```
 
-语法为 `srv*<本地缓存目录>*<符号服务器地址>`，中间用 `*` 分隔。首次加载某个符号文件时从服务器下载并缓存到本地目录，后续加载同一文件直接读本地缓存，不重复下载。WinDbg 内也可用快捷命令 `.symfix c:\MyCache` 等效设置该路径。多个符号源可用 `;` 串联，缓存目录只需在最左侧的元素中指定一次。
+语法为 `srv*<本地缓存目录>*<符号服务器地址>`，中间用 `*` 分隔。首次加载某个符号文件时从服务器下载并缓存到本地目录，后续加载同一文件直接读本地缓存，不重复下载。WinDbg 内也可用快捷命令 `.symfix c:\MyCache` 等效设置该路径。多个符号源可用 `;` 串联（如 `.sympath C:\MyRegularSymbols;srv*C:\MyServerSymbols*https://msdl.microsoft.com/download/symbols`）；缓存目录是 `srv*` 元素自身携带的参数，需要缓存的每个 `srv*` 元素各自在其内部指定，并非在整条路径最左侧统一写一次——那是 `cache*` 前缀的语义（`cache*` 出现时，其右侧全部元素下载的符号统一存入该目录），与 `srv*` 内嵌缓存目录是两种不同写法，不要混用。
 
 **Linux/macOS（dotnet-dump / lldb）**：没有 `_NT_SYMBOL_PATH` 这一机制，改用 `dotnet-symbol` 工具为 dump 补齐符号、DAC/DBI 与模块文件：
 
