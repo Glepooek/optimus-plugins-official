@@ -72,6 +72,7 @@
 | `reference/sos-heap-and-objects.md` | !dumpheap / !dumpobj / !objsize / !gcroot / !eeheap / !gchandles 的开关、输出语义与泄漏判据 |
 | `reference/sos-locks-and-async.md` | !syncblk / !dumpasync / !threadpool 的开关、输出语义与死锁/饥饿判据 |
 | `reference/debugging-decision-tree.md` | 六类征象（挂起 / 内存增长 / CPU 打满 / 崩溃 / 间歇抖动 / 句柄耗尽）→ 候选根因 → 取证命令查表 |
+| `rules/01-dump-handling.md` | dump 作为数据资产的处置：密级、版本库隔离、对外交付类型、留存销毁、自动抓取落盘 |
 
 ## 内容来源
 
