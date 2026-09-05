@@ -55,7 +55,7 @@ Monitor 死锁、异步死锁（同步等待异步）、线程池饥饿、长时
 | `!eeheap -gc`（`reference/sos-heap-and-objects.md § 5. !eeheap`） | 堆数量是否与预期的工作站/服务器 GC 模式一致 | 服务器进程只见 1 个堆 → 证实 GC 模式配置未生效，可能是 CPU 打满的间接成因（见 `reference/clr-runtime-anatomy.md § 6. GC 模式`） |
 
 ### 常见误判
-CPU 高**不等于**业务热点——服务器 GC 模式配置错误（应为多堆却只有 1 个堆）会导致 GC 本身成为 CPU 消耗大户，须先用 `!eeheap -gc` 核对堆数量再下结论。单次 dump 的 `!clrstack` 只能看到一个时点的栈顶，区分"真实计算"与"死循环"必须连抓多个 dump 对比栈顶是否变化。
+CPU 高**不等于**业务热点——服务器 GC 模式配置错误（应为多堆却只有 1 个堆）会导致 GC 本身成为 CPU 消耗大户，须先用 `!eeheap -gc` 核对堆数量再下结论。单次 dump 的 `!clrstack` 只能看到一个时点的栈顶，区分"真实计算"与"死循环"可以连抓多个 dump 对比栈顶是否变化；目标为 .NET 5+ 且可安装诊断工具时，采样式采集给出的统计分布比稀疏快照更可靠，见 `reference/live-monitoring-decision.md § 3. CPU 打满`。
 
 ## 4. 崩溃退出
 

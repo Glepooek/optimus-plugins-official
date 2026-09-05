@@ -176,6 +176,8 @@ WPF 桌面 dump 归因顺延为三期，范围不变（Dispatcher 死锁 + 四�
 | **异常形态** | 出问题时形态如何变化（趋势，非阈值） | 趋势是时间线特有的信息 |
 | **区分点** | 与相邻根因如何区分 | 「涨了 = 泄漏」不可操作，须说清「涨了但回落 = 压力大而非泄漏」 |
 
+**例外：判据对象不是时间序列时用简单 `### 判据`。** 三元组的适用前提是被判读对象为**随时间变化的指标**。若某条判据讲的是采集覆盖度、命令语义差异、格式转换的不可逆性一类**与时间序列无关**的事实，硬套三元组会写出空洞的「基线形态」。`dotnet-trace.md` 四节即属此列（采集覆盖度 / 同名不同义陷阱 / 排序语义 / 转换不可逆），一律用 `### 判据`；`dotnet-counters.md` 与 `live-monitoring-decision.md` 的判据对象是计数器时间序列，严格用三元组。判断标准：这条判据需要「和之前比」才能下结论吗？需要 → 三元组；不需要 → 简单判据。
+
 ### 4.3 范例（GC 堆大小）
 
 - **基线形态**：锯齿波动，每次 gen2 回收后回落到相近水位，包络线水平。
@@ -216,9 +218,9 @@ WPF 桌面 dump 归因顺延为三期，范围不变（Dispatcher 死锁 + 四�
 | 线程池队列长度 | `dotnet.thread_pool.queue.length` | `ThreadPool Queue Length` | 接近 0，尖峰后迅速回落 | 持续 > 0 且线程数达上限、CPU 不高 → 饥饿，转 `sos-locks-and-async.md § 3. !threadpool` |
 | 锁竞争次数 | `dotnet.monitor.lock_contentions` | `Monitor Lock Contention Count` | 低速率平稳 | 速率陡升伴随吞吐下降 → 锁竞争，转 `sos-locks-and-async.md § 1. !syncblk` |
 | GC 暂停时间 | `dotnet.gc.pause.time` | `% Time in GC since last GC` | 短暂尖峰，占比低 | 占比持续偏高 → GC 压力，查分配速率与 GC 模式 |
-| 异常速率 | `dotnet.exceptions`（**待核验**，见 8.4） | `Exception Count` | 接近 0 或稳定低速率 | 速率陡升 → 异常风暴，转 `sos-threads-and-stacks.md § 4. !pe` |
+| 异常速率 | `dotnet.exceptions` | `Exception Count` | 接近 0 或稳定低速率 | 速率陡升 → 异常风暴，转 `sos-threads-and-stacks.md § 4. !pe` |
 
-（上表为结构示范，实施时补齐全部纳入判据的计数器。标注「待核验」的名称未经官方样例确认，实施前须查证。）
+（上表为结构示范，实施时补齐全部纳入判据的计数器。）
 
 ### 5.3 被否决的方案
 
@@ -335,7 +337,8 @@ EventPipe 是 .NET Core+ 的运行时特性，**.NET Framework 4.x 完全不可�
 | 事实 | 出处与影响 |
 |---|---|
 | `dotnet-counters` 读取计数器要求应用运行 **.NET 5 或更高**（非 .NET Core 3.0） | 决定 `applies_to` 取值 |
-| `--buffersize` 默认 **256 MB**；溢出时事件被丢弃且不报错 | 写入 `eventpipe-and-diagnostic-port.md § 5`，属静默失败类风险 |
+| `--buffersize` 默认 **256 MB**（`dotnet-trace` 工具侧）；溢出时事件被丢弃且不报错 | 写入 `eventpipe-and-diagnostic-port.md § 5`，属静默失败类风险 |
+| `DOTNET_EventPipeCircularMB` 默认 **1024 MB**（`0x400`，运行时环境变量侧，仅在以 `DOTNET_EnableEventPipe` 启动会话时生效） | **与上一条是两个不同层级的缓冲区，正文须明确区分**，混为一谈会产生自相矛盾的默认值 |
 | `--format` 默认 `NetTrace`，可选 `Speedscope` / `Chromium`；**转换不可逆**，原 `.nettrace` 须保留 | 写入 `dotnet-trace.md § 4` |
 | `dotnet-counters` / `dotnet-trace` 须与目标进程**同用户或 root** 运行 | 各命令的「用途与前置条件」段 |
 | Linux/macOS 上 `-p` / `-n` 要求工具与目标进程共享同一 `TMPDIR`，否则命令超时 | 容器场景高频踩坑点 |
@@ -345,11 +348,69 @@ EventPipe 是 .NET Core+ 的运行时特性，**.NET Framework 4.x 完全不可�
 
 ### 8.4 需在实施时补充核验的项
 
-以下事实本次未核验，实施对应小节前须查证官方文档：
+以下事实本次未核验，实施对应小节前须查证：
 
-- 各 `--profile` 展开后的完整 provider 与 keyword 组合（`dotnet-trace list-profiles` 的实际输出）
-- `Microsoft.AspNetCore.Hosting` 等非运行时 provider 的计数器清单
-- `dotnet.exceptions` 在 .NET 9+ 下的确切名称与单位（5.2 表中该行为推定，未经官方样例确认）
+- 各 `--profile` 展开后的完整 provider 与 keyword 组合。官方文档只给出 `dotnet-common` 的等价写法（`Microsoft-Windows-DotNETRuntime:0x100003801D:4`），其余 profile 未列出。需运行 `dotnet-trace list-profiles` 取实际输出
+- `Microsoft.AspNetCore.Hosting` 等非运行时 provider 的计数器清单（见 `built-in-metrics-aspnetcore` 页面）
+
+### 8.5 .NET 9+ 运行时计数器完整清单（已核验）
+
+出处：`learn.microsoft.com/dotnet/core/diagnostics/built-in-metrics-runtime`。全部标注「Available starting in: .NET 9」，均由 `System.Runtime` Meter 发布。
+
+| 计数器名 | 类型 | 单位 | 含义 |
+|---|---|---|---|
+| `dotnet.process.cpu.time` | Counter | `s` | 进程 CPU 时间，带 `cpu.mode` 属性（`user` / `system`） |
+| `dotnet.process.memory.working_set` | UpDownCounter | `By` | 工作集字节数 |
+| `dotnet.gc.collections` | Counter | `{collection}` | GC 次数，带 `gc.heap.generation` 属性（`gen0`/`gen1`/`gen2`） |
+| `dotnet.gc.heap.total_allocated` | Counter | `By` | 进程启动至今在托管堆上分配的近似字节数，**不含非托管分配** |
+| `dotnet.gc.last_collection.memory.committed_size` | UpDownCounter | `By` | 最近一次 GC 时 GC 已提交的虚拟内存，**可大于堆大小** |
+| `dotnet.gc.last_collection.heap.size` | UpDownCounter | `By` | 最近一次 GC 时的堆大小（含碎片），带 `gc.heap.generation` 属性（含 `loh`/`poh`） |
+| `dotnet.gc.last_collection.heap.fragmentation.size` | UpDownCounter | `By` | 最近一次 GC 时的堆碎片量，带 `gc.heap.generation` 属性 |
+| `dotnet.gc.pause.time` | Counter | `s` | 进程启动至今 GC 暂停总时长 |
+| `dotnet.jit.compiled_il.size` | Counter | `By` | 已 JIT 编译的 IL 字节数 |
+| `dotnet.jit.compiled_methods` | Counter | `{method}` | 已 JIT 编译的方法数 |
+| `dotnet.jit.compilation.time` | Counter | `s` | JIT 编译耗时 |
+| `dotnet.thread_pool.thread.count` | UpDownCounter | `{thread}` | 当前线程池线程数 |
+| `dotnet.thread_pool.work_item.count` | Counter | `{work_item}` | 已完成的工作项数 |
+| `dotnet.thread_pool.queue.length` | UpDownCounter | `{work_item}` | 当前排队待处理的工作项数 |
+| `dotnet.monitor.lock_contentions` | Counter | `{contention}` | Monitor 锁竞争次数 |
+| `dotnet.timer.count` | UpDownCounter | `{timer}` | 当前活动的计时器实例数 |
+| `dotnet.assembly.count` | UpDownCounter | `{assembly}` | 当前已加载的程序集数 |
+| `dotnet.exceptions` | Counter | `{exception}` | 托管代码抛出的异常数，带 `error.type` 属性（异常类型名）。**统计的是 first-chance 异常**（等价于 `AppDomain.FirstChanceException` 的触发次数），含已被 catch 的 |
+
+三条对判据有直接影响的语义细节：
+
+- `dotnet.gc.heap.total_allocated` 是**累计量**（自进程启动），不是当前堆占用——判断泄漏须看 `last_collection.heap.size` 而非它
+- `last_collection.memory.committed_size` 可大于堆大小，因其含为未来分配预留的部分——不可将二者差值直接判为碎片
+- `dotnet.exceptions` 计的是 first-chance，正常业务中被 catch 的异常也会计入，故其基线**未必接近 0**，须按应用自身基线判读
+
+### 8.6 EventPipe 环境变量（已核验）
+
+出处：`learn.microsoft.com/dotnet/core/diagnostics/eventpipe`。适用于不便安装诊断工具、需由应用自身直接落盘 trace 的场景。
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `DOTNET_EnableEventPipe` | `0` | 置 `1` 启动直接写文件的 EventPipe 会话 |
+| `DOTNET_EventPipeOutputPath` | `trace.nettrace` | 输出路径；.NET 6 起字符串 `{pid}` 会被替换为进程 ID |
+| `DOTNET_EventPipeCircularMB` | `400`（十六进制，即 1024 MB） | 内部缓冲区大小，**十六进制取值**。仅在经 `DOTNET_EnableEventPipe` 启动时生效 |
+| `DOTNET_EventPipeProcNumbers` | `0` | 置 `1` 在事件头中记录处理器编号 |
+| `DOTNET_EventPipeThreadSamplingRate` | 10 ms（约 100 Hz） | .NET 11+ 可用。**进程全局，影响所有 EventPipe 会话**，含工具发起的按需采集 |
+| `DOTNET_EventPipeConfig` | 见下 | 语法 `<provider>:<keyword>:<level>`，多个以逗号分隔 |
+
+未设 `DOTNET_EventPipeConfig` 而启用了 EventPipe 时，默认启用三个 provider：`Microsoft-Windows-DotNETRuntime:4c14fccbd:5`、`Microsoft-Windows-DotNETRuntimePrivate:4002000b:5`、`Microsoft-DotNETCore-SampleProfiler:0:5`。
+
+### 8.7 EventPipe 与 ETW / perf_events 的能力对照（已核验）
+
+| 能力 | EventPipe | EventPipe (user_events) | ETW | perf_events |
+|---|---|---|---|---|
+| 跨平台 | 是 | 否（仅受支持的 Linux 发行版） | 否（仅 Windows） | 否（仅 Linux） |
+| 需 admin/root | **否** | 是 | 是 | 是 |
+| 可获取 OS/内核事件 | **否** | 是 | 是 | 是 |
+| 可解析原生调用栈 | **否** | 是 | 是 | 是 |
+
+该表是 `eventpipe-and-diagnostic-port.md § 1` 的核心内容，也解释了本期为何不含 PerfView/ETW：EventPipe 的作用域**限于托管代码与运行时自身**，栈信息只含托管帧。需要原生栈或内核事件时必须转向 OS 级工具。
+
+「无需 admin/root」是 EventPipe 相对 ETW 的关键实用优势——只要采集工具与目标进程以同一用户运行即可。
 
 ---
 

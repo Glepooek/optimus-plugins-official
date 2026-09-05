@@ -3,7 +3,7 @@
 ## [1.1.0] - 2026-09-05
 
 ### Added
-- 新增 4 篇 reference：EventPipe 与诊断端口机制、dotnet-counters、dotnet-trace、活体监控决策查表，索引新增 21 条（42 → 63）
+- 新增 4 篇 reference：EventPipe 与诊断端口机制、dotnet-counters、dotnet-trace、活体监控决策查表，索引新增 22 条（42 → 64）
 - 判据新增「基线形态 / 异常形态 / 区分点」三元组范式，用于时间序列数据——一期的单时点布尔判据不适用于趋势判读
 - 内置计数器给出 .NET 9+ Meter 与 .NET 8- EventCounter 双版本命名对照
 
