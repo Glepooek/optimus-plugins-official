@@ -242,9 +242,11 @@ knowledge-base/dotnet-debugging/
 
 | 期次 | 主题 | 范围 |
 |---|---|---|
-| **二期** | WPF 桌面 dump 归因 | Dispatcher 死锁（UI 线程等在哪、谁持锁）、四类 WPF 泄漏在堆里的形态（Binding / 可视化树 / 弱事件 / `DispatcherTimer`）。对接 `wpf/12-exceptions-crash.md` |
-| **三期** | 活体诊断与工具链分叉 | `dotnet-counters` / `dotnet-trace` / `dotnet-gcdump`；PerfView / ETW / WPR；**UI 卡顿时间线归因**；三运行时工具选择矩阵 |
+| **二期** | 活体诊断与工具链分叉 | `dotnet-counters` / `dotnet-trace` / EventPipe 机制；`dotnet-gcdump`、PerfView / ETW / WPR、三运行时工具选择矩阵**移出**，标注为后续期次 |
+| **三期** | WPF 桌面 dump 归因 | Dispatcher 死锁（UI 线程等在哪、谁持锁）、四类 WPF 泄漏在堆里的形态（Binding / 可视化树 / 弱事件 / `DispatcherTimer`）。对接 `wpf/12-exceptions-crash.md` |
 | **四期（可选）** | Linux 容器专属 | 缺符号降级、PID namespace 约束、容器内存限制与 GC 交互、SIGSEGV 排查 |
+
+期次顺序于 2026-09-05 调换，理由见 `docs/superpowers/specs/2026-09-05-dotnet-debugging-kb-phase2-design.md § 1.2`
 
 **二期收窄依据**：WPF 诊断主题按「dump 快照能否回答」二分——
 
@@ -254,7 +256,7 @@ knowledge-base/dotnet-debugging/
 | 四类 WPF 泄漏 | ✅ `!gcroot`（一期已交付） | 二期 |
 | UI 卡顿归因（渲染线程 vs UI 线程、GC 暂停占比、掉帧时间线） | ❌ 本质需要时间线采样，dump 只是一个时刻 | 三期 |
 
-二期因此完全建立在一期已交付的 SOS 命令之上，无外部依赖；卡顿归因随活体诊断进三期，那里才有帧时间线数据。
+三期因此完全建立在一期已交付的 SOS 命令之上，无外部依赖；卡顿归因随活体诊断进二期，那里才有帧时间线数据。
 
 后续期次在本 spec 只登记路标与范围，不写实现细节——各期到时各自走一遍 brainstorming。
 

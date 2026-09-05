@@ -1,5 +1,16 @@
 # Changelog — .NET 高级调试
 
+## [1.1.0] - 2026-09-05
+
+### Added
+- 新增 4 篇 reference：EventPipe 与诊断端口机制、dotnet-counters、dotnet-trace、活体监控决策查表，索引新增 21 条（42 → 63）
+- 判据新增「基线形态 / 异常形态 / 区分点」三元组范式，用于时间序列数据——一期的单时点布尔判据不适用于趋势判读
+- 内置计数器给出 .NET 9+ Meter 与 .NET 8- EventCounter 双版本命名对照
+
+### Changed
+- `debugging-decision-tree.md § 5. 间歇性抖动`：候选根因由「不适用」补齐为实际列表，结论由「留待后续期次」改为指向活体采集路径；连抓 dump 的做法保留为 .NET Framework 4.x 与受限环境下的可用手段
+- `dump-types-and-capability.md § 3`、`dump-capture.md § 1` 判据段：时间线能力的说明由「一期不含」改为指向新篇
+
 ## [1.0.1] - 2026-09-05
 
 ### Fixed

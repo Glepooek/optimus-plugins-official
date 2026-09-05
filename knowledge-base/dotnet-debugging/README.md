@@ -1,6 +1,6 @@
 # .NET 高级调试知识库
 
-> 版本：1.0.1
+> 版本：1.1.0
 
 > 面向 **.NET 应用事后诊断与定位**的知识库。覆盖 .NET Framework 4.x、.NET 6/8+ 与 Linux 容器三种运行时，收录从运行中进程或 dump 中取证的命令、输出解读与判据。
 
@@ -58,6 +58,8 @@
 | 进程挂起 / 查线程在等什么 | `reference/sos-threads-and-stacks.md` |
 | 内存持续增长 / 找泄漏持有者 | `reference/sos-heap-and-objects.md` |
 | 死锁 / 异步卡住 / 线程池饥饿 | `reference/sos-locks-and-async.md` |
+| 间歇性问题 / 需要时间线数据 | `reference/live-monitoring-decision.md` |
+| 采集机制与基线概念 | `reference/eventpipe-and-diagnostic-port.md` |
 | 处理生产 dump 文件（合规） | `rules/01-dump-handling.md` |
 
 ## 文件地图
@@ -72,6 +74,10 @@
 | `reference/sos-heap-and-objects.md` | !dumpheap / !dumpobj / !objsize / !gcroot / !eeheap / !gchandles 的开关、输出语义与泄漏判据 |
 | `reference/sos-locks-and-async.md` | !syncblk / !dumpasync / !threadpool 的开关、输出语义与死锁/饥饿判据 |
 | `reference/debugging-decision-tree.md` | 六类征象（挂起 / 内存增长 / CPU 打满 / 崩溃 / 间歇抖动 / 句柄耗尽）→ 候选根因 → 取证命令查表 |
+| `reference/eventpipe-and-diagnostic-port.md` | EventPipe 与 ETW 的能力边界、诊断端口、Provider 三级过滤、两套计数器体系、缓冲区、基线采集 |
+| `reference/dotnet-counters.md` | dotnet-counters monitor / collect 的开关与输出，内置计数器双版本命名与形态判据对照 |
+| `reference/dotnet-trace.md` | dotnet-trace collect / profile 选择 / report topN / 格式转换，含 cpu-sampling 移除的迁移写法 |
+| `reference/live-monitoring-decision.md` | 六类征象（延迟尖峰 / 内存增长 / CPU 打满 / 异常风暴 / 线程池饥饿 / 启动阶段）→ 采集方案查表 |
 | `rules/01-dump-handling.md` | dump 作为数据资产的处置：密级、版本库隔离、对外交付类型、留存销毁、自动抓取落盘 |
 
 ## 内容来源
