@@ -2,7 +2,7 @@
 
 **日期**：2026-09-05
 **领域**：`knowledge-base/dotnet-debugging/`
-**目标版本**：1.0.1 → 2.0.0
+**目标版本**：1.0.1 → 1.1.0
 **一期 spec**：`docs/superpowers/specs/2026-09-05-dotnet-debugging-kb-design.md`
 
 ## 目录
@@ -44,9 +44,15 @@
 
 WPF 桌面 dump 归因顺延为三期，范围不变（Dispatcher 死锁 + 四类 WPF 泄漏，完全建立在一期已交付的 SOS 命令之上）。
 
-### 1.3 为什么是 Major 而非 Minor
+### 1.3 为什么是 Minor 而非 Major
 
-`debugging-decision-tree.md § 5` 的结论从「dump 答不了，只能连抓碰运气」翻转为「用 dotnet-counters 采集」——这是**用户可见结论的反转**，不是内容新增。已按该结论行动过的读者，其决策依据发生了变化。按仓库版本规则中「破坏性变更」的语义归入 Major，定为 **2.0.0**。
+本期定为 **1.1.0**（Minor）。
+
+`debugging-decision-tree.md § 5` 的结论确实从「dump 答不了，只能连抓碰运气」变为「用 dotnet-counters 采集」，但这不构成破坏性变更：
+
+- **无删除、无重命名**。一期的全部条目 id、anchor、文件路径原样保留，既有引用不失效
+- **旧路径仍然有效**。连抓 dump 的做法保留不删（见 6.3），.NET Framework 4.x 下它仍是唯一可用路径。读者原有的操作方式不会失效，只是多了一条更好的路径
+- 按仓库版本规则，Major 保留给「删除或重命名用户可见功能、破坏性架构变更」。本期是**在既有结构上新增篇目并补全一个此前留白的分支**，符合 Minor 的「新增」语义
 
 本期不改动 `plugins/` 与 `.claude/`，因此**不升 `.claude-plugin/marketplace.json`**。
 
@@ -357,7 +363,7 @@ EventPipe 是 .NET Core+ 的运行时特性，**.NET Framework 4.x 完全不可�
 - [ ] `find_duplicates.py` 中本期条目与 `csharp.11.*`（可观测性）相似度低于 0.5；若超过，说明判据写成了埋点规范的复述，须改写
 - [ ] 三处欠条全部回填；全库检索「留待后续期次」类措辞仅剩 CHANGELOG 中 `AssemblyLoadContext` 一处
 - [ ] 全部本期条目的 `applies_to` 不含 `.NET Framework 4.x`（EventPipe 不支持该运行时）
-- [ ] 领域 README 文件地图 **13 行**（一期 9 + 本期 4），版本行 `2.0.0` 与 CHANGELOG 最新条目一致
+- [ ] 领域 README 文件地图 **13 行**（一期 9 + 本期 4），版本行 `1.1.0` 与 CHANGELOG 最新条目一致
 - [ ] `catalog.json` 的 `dotnet-debugging` 条目 `notes` 已更新（原文写有「一期不含活体监控工具（PerfView/ETW/dotnet-counters）」，本期须修订该表述）
 - [ ] 一期 spec 的分期路标表已更新，反映期次顺序变更
 - [ ] 全部改动已推送 master
