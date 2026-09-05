@@ -34,6 +34,7 @@ procdump -accepteula -e -w <进程名>
 | 开关 | 含义 | 不加的后果 |
 |---|---|---|
 | `-ma` | 写 Full dump（含全部内存：镜像/映射/私有） | 默认写 `-mm` Mini dump，无堆对象数据，查不了泄漏 |
+| `-mt` | 写 Triage dump（模块/线程/异常信息与全部栈，尝试脱敏但不保证完全，见 `reference/dump-types-and-capability.md § 1. 四种类型的能力对照`） | procdump 是 Windows 上唯一覆盖 .NET Framework 4.x 的抓取工具，该运行时下 `-mt` 是产出 Triage dump 的唯一途径 |
 | `-e [1]` | 未处理异常即抓（2nd chance）；加 `1` 则含已处理的 1st chance 异常 | 不设 `-e` 则不监控异常，仅覆盖 CPU/挂起/手动等其他触发条件 |
 | `-h` | 进程出现挂起窗口（无响应超 5 秒）时抓 | 挂起类问题（UI 卡死、非托管死锁）不会自动触发抓取 |
 | `-c <阈值> -s <秒数>` | CPU 使用率超过阈值且持续指定秒数才抓 | 不设 `-s` 时默认 10 秒；不设 `-c` 则不按 CPU 触发 |
@@ -75,11 +76,15 @@ dotnet-dump collect -n <进程名>
 
 | 开关 | 含义 | 不加的后果 |
 |---|---|---|
-| `--type <Full\|Heap\|Mini>` | 指定 dump 类型 | 不指定时默认 `Full`，体积最大；若目标运行在有内存上限的容器中，`Full`/`Heap` 抓取期间的内存翻页可能触发容器 OOM Kill——需评估容器内存上限是否留有余量 |
+| `--type <Full\|Heap\|Mini\|Triage>` | 指定 dump 类型 | 不指定时默认 `Full`，体积最大；若目标运行在有内存上限的容器中，`Full`/`Heap` 抓取期间的内存翻页可能触发容器 OOM Kill——需评估容器内存上限是否留有余量 |
 | `-o <路径>` | 指定输出文件完整路径 | 不指定时 Windows 落 `.\dump_YYYYMMDD_HHMMSS.dmp`，Linux/macOS 落 `./core_YYYYMMDD_HHMMSS` |
 | `--diag` | 开启抓取过程诊断日志 | 抓取失败（如连接超时）时缺少诊断信息，难以定位是权限问题还是 `TMPDIR` 不一致 |
 
-`dotnet-dump collect` 本身**没有** `Triage` 类型——`Triage` 只存在于 `DOTNET_DbgMiniDumpType` 环境变量（见 `§ 5. DOTNET_DbgEnableMiniDump（.NET Core 3.0+，崩溃自动抓取）`）与 `createdump` 的 `-t` 开关中，二者是同一枚举语义在不同接口下的暴露方式。
+`dotnet-dump collect --type Triage` 可产出 `Triage` dump——官方文档在 `--type` 选项签名处只写 `<Full|Heap|Mini>`、概述句也称"共三种类型"，但紧随其后的取值列表实际列出了第四项 `Triage`，这是文档自身签名与取值列表不一致导致的常见误读（详见 `reference/dump-types-and-capability.md § 1. 四种类型的能力对照`）。跨平台场景下需要脱敏对外交付时：
+```
+dotnet-dump collect -p <PID> --type Triage -o /data/dump/triage.dmp
+```
+与 `DOTNET_DbgMiniDumpType` 环境变量（见 `§ 5. DOTNET_DbgEnableMiniDump（.NET Core 3.0+，崩溃自动抓取）`）、`createdump` 的 `-t` 开关（见 `§ 3. createdump（.NET Core 3.0+，Linux 优先）`）是同一枚举语义在不同接口下的暴露方式。
 
 Linux/macOS 上，`dotnet-dump` 与目标进程必须共享同一个 `TMPDIR` 环境变量，否则连接会超时；容器内跨容器抓取需要 `--cap-add=SYS_PTRACE`（见 `§ 3. createdump（.NET Core 3.0+，Linux 优先）` 的容器约束，二者共用同一套 ptrace 权限要求）。
 

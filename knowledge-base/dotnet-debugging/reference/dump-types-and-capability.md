@@ -6,7 +6,9 @@
 
 ## 1. 四种类型的能力对照
 
-四种类型名（`Mini`、`Heap`、`Triage`、`Full`）不是同一个命令的统一取值——`dotnet-dump collect --type` 只支持其中的 `Full`/`Heap`/`Mini` 三档，没有 `Triage`；`Triage` 仅能通过 `createdump -t` 或 `DOTNET_DbgMiniDumpType`（见 `reference/dump-capture.md § 5. DOTNET_DbgEnableMiniDump（.NET Core 3.0+，崩溃自动抓取）`）产出。四个类型名描述的是同一套抽象语义，只是各工具/接口暴露的取值范围不同（详见 `reference/dump-capture.md § 2. dotnet-dump collect（.NET Core 3.0+，跨平台）` 与 `§ 3. createdump（.NET Core 3.0+，Linux 优先）` 的开关表）。
+四种类型名（`Mini`、`Heap`、`Triage`、`Full`）不是同一个命令的统一取值——四个产出接口各自暴露的取值范围不同，但 `Triage` 并非只有一两条产出途径：`dotnet-dump collect --type Triage`、`procdump -mt`、`createdump -t`、`DOTNET_DbgMiniDumpType=3` 四条路径均可产出（开关表分别见 `reference/dump-capture.md § 1. procdump（Windows，全运行时）`、`§ 2. dotnet-dump collect（.NET Core 3.0+，跨平台）`、`§ 3. createdump（.NET Core 3.0+，Linux 优先）`、`§ 5. DOTNET_DbgEnableMiniDump（.NET Core 3.0+，崩溃自动抓取）`）。
+
+**易错点**：微软官方 `dotnet-dump` 参考页在 `--type` 选项处存在文档自身的签名与正文不一致——选项签名写作 `<Full|Heap|Mini>`、概述句也称"共三种类型"，但紧随其后的取值列表实际逐项列出了第四项 `Triage`。照签名或概述句直接下结论会误以为该命令不支持 `Triage`；`dotnet-dump collect` 的源码（`Dumper.cs` 的 `DumpTypeOption` 枚举与 `Collect` 内两处 switch）也确认 `Triage` 是受支持且无平台门控的取值，需以取值列表逐项核对为准，不能只看签名。四个类型名描述的是同一套抽象语义，只是各工具/接口暴露的取值范围不同。
 
 | 类型 | 保留 | 剥离 | 能答 | 不能答 | 体积量级 |
 |---|---|---|---|---|---|
