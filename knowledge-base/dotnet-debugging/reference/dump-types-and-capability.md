@@ -33,6 +33,7 @@
 
 dump 记录的是抓取那一瞬间进程内存与线程状态的完整快照，不包含任何历史信息。因此它能回答"此刻堆里有多少个某类对象""此刻哪些线程在等待哪个锁"，但无法回答"这类对象是什么时候开始增长的""增长速率有多快""这个死锁是哪一步开始形成的"——这类问题本质上需要跨时间点的采样对比（如多次抓取后比较 `!dumpheap -stat` 的差值，或使用 trace 类工具持续采样），而非单份 dump 能提供的信息。
 
-一期知识库不含专门的时间线采样工具链（如 `dotnet-trace` 的计数器持续采集），仅在 `reference/dump-capture.md § 1. procdump（Windows，全运行时）` 中以连续抓取多份 dump 作为一期内可行的替代手段；完整的时间线分析方法留待二期路标。
+时间线采样工具链见 `reference/dotnet-counters.md` 与 `reference/dotnet-trace.md`，前者持续采集计数器定位异常时段，后者对该时段做调用栈采样；该能力仅覆盖 .NET 5+。
+.NET Framework 4.x 或无法安装诊断工具的环境，仍以 `reference/dump-capture.md § 1. procdump（Windows，全运行时）` 中连续抓取多份 dump 作为替代手段。
 
 遇到"间歇性抖动""偶发几秒钟的延迟尖峰"这类问题时，`reference/debugging-decision-tree.md` 的「间歇抖动」分支会先说明：dump 只能捕获抓取瞬间的状态，如果抖动窗口极短且抓取时机没能覆盖到发生瞬间，dump 里看到的会是正常状态，此时需要转向持续采样类工具而非单次抓取 dump。

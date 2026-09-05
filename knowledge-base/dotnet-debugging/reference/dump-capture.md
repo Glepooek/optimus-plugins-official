@@ -61,7 +61,7 @@ procdump -accepteula -e -w <进程名>
 默认落在当前工作目录，文件名形如 `<进程名>_<年月日>_<时分秒>.dmp`；异常触发时文件名会带上 `EXCEPTIONCODE` 替换符。`-n` 连抓时依时间戳自动区分，不覆盖前一个文件。
 
 ### 判据
-`-n 3` 连抓多个 dump 后对比各自的 `!dumpheap -stat` 输出，是**在没有时间线采样工具时**判断"哪类对象在涨"的替代手段——这是一期能给出的最接近趋势分析的做法（见 `reference/dump-types-and-capability.md § 3. dump 是单时点快照`）。若三次抓取中同一类型对象计数持续上升且不回落，指向该类型对象存在泄漏或持有链异常，需转 `reference/sos-heap-and-objects.md` 定位持有者。
+`-n 3` 连抓多个 dump 后对比各自的 `!dumpheap -stat` 输出，是**在没有时间线采样工具时**判断"哪类对象在涨"的替代手段——这是一期能给出的最接近趋势分析的做法（见 `reference/dump-types-and-capability.md § 3. dump 是单时点快照`）。目标为 .NET 5+ 且可安装诊断工具时，应优先用 `reference/dotnet-counters.md § 2. dotnet-counters collect` 采集时间线，连抓 dump 退化为受限环境下的备选。若三次抓取中同一类型对象计数持续上升且不回落，指向该类型对象存在泄漏或持有链异常，需转 `reference/sos-heap-and-objects.md` 定位持有者。
 
 `-p` 与 `-m` 把抓取时机绑定到征象本身的阈值上，解决的是**抓取时刻与问题窗口不重合**这一困难：定时抓或手动抓都可能落在进程状态正常的时段，而阈值触发保证 dump 一定抓在指标越界的那一刻。句柄耗尽用 `-p "\Process(<进程名>)\Handle Count" <阈值>`，内存增长用 `-m <MB>`，两者都能无人值守长时间挂起等待。阈值应取"明显高于正常基线但尚未到故障"的值——取太高会抓在进程已经不可用之后，取太低会在正常波动时误抓。
 

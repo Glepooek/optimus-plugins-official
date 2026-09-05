@@ -78,15 +78,15 @@ CPU 高**不等于**业务热点——服务器 GC 模式配置错误（应为�
 ## 5. 间歇性抖动
 
 ### 候选根因
-不适用——本节不给出候选根因列表，见下方局限说明。
+GC 暂停、线程池注入延迟、锁竞争、外部 I/O 抖动、JIT 首次编译。
 
-### 取证命令与判据：当前范围内的已知局限与近似替代
+### 取证命令与判据
 
 dump 是单时点快照（`reference/dump-types-and-capability.md § 3. dump 是单时点快照`），只能回答"此刻堆里有什么、此刻线程在等什么"，无法回答"延迟尖峰是何时开始、持续多久、期间发生了什么"——这类问题本质上需要跨时间点的持续采样（如 `dotnet-counters`、`dotnet-trace`、PerfView 一类时间线工具），而这些工具不在本领域一期收录范围内。
 
-一期可用的近似手段是连抓多个 dump 对比：`procdump -n`（`reference/dump-capture.md § 1. procdump（Windows，全运行时）` 的判据段）在抖动窗口内连续抓取多份 dump，逐份对比 `!threads`/`!clrstack`（`reference/sos-threads-and-stacks.md § 1. !threads`、`§ 2. !clrstack`）与 `!threadpool`（`reference/sos-locks-and-async.md § 3. !threadpool`）的输出差异。若抖动期间某次抓取恰好落在延迟窗口内，可能捕捉到线程池队列积压或某条线程栈异常，间接指向 `§ 1. 进程挂起 / 无响应` 或 `§ 3. CPU 打满` 中的某个根因；但抓取时机与抖动窗口不重合时，dump 里只会看到正常状态，此为方法本身的局限而非操作失误。
+近似手段是连抓多个 dump 对比：`procdump -n`（`reference/dump-capture.md § 1. procdump（Windows，全运行时）` 的判据段）在抖动窗口内连续抓取多份 dump，逐份对比 `!threads`/`!clrstack`（`reference/sos-threads-and-stacks.md § 1. !threads`、`§ 2. !clrstack`）与 `!threadpool`（`reference/sos-locks-and-async.md § 3. !threadpool`）的输出差异。若抖动期间某次抓取恰好落在延迟窗口内，可能捕捉到线程池队列积压或某条线程栈异常，间接指向 `§ 1. 进程挂起 / 无响应` 或 `§ 3. CPU 打满` 中的某个根因；但抓取时机与抖动窗口不重合时，dump 里只会看到正常状态，此为方法本身的局限而非操作失误。目标为 .NET 5+ 且可安装诊断工具时应优先走时间线路径；.NET Framework 4.x 或无法安装工具的环境，本段仍是唯一可用手段。
 
-完整的时间线采样方案（持续指标采集、火焰图、按时间轴定位延迟尖峰对应的调用）留待后续期次收录。
+完整的时间线采样方案见 `reference/live-monitoring-decision.md § 1. 延迟尖峰`：持续指标采集（`dotnet-counters`）定位异常时段，再用 `dotnet-trace` 采样定位该时段内的具体调用栈。此路径仅适用于 .NET 5+。
 
 ### 常见误判
 "抓了 dump 却什么都没看出来"**不等于**排查失败——若抓取时机未覆盖抖动发生的瞬间，这是方法的已知局限，而非取证步骤有误。不要因为单次 dump 无异常就得出"无问题"的结论，应先确认抓取时刻与抖动窗口是否重合。
