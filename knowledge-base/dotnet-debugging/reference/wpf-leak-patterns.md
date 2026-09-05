@@ -19,6 +19,7 @@
 | `System.Windows.Data.BindingExpression` | 无固定预期值，看是否与已销毁的界面数量同比增长 |
 | `System.Windows.Threading.DispatcherTimer` | 应用当前活动定时器数 |
 | 应用自身的 ViewModel 类型 | 按导航层级推算 |
+| `WeakEventManager` 派生类型 / `ListenerList` | 不看实例数，看内部结构体积是否随运行时长单调增长（见 § 4） |
 
 ### 预期实例数这个前提
 
@@ -30,8 +31,10 @@ WPF 场景下，单份 dump 也能判定，因为存在先验知识：「已关�
 
 ### 判据与下一步
 
-- **证实**：某 WPF 类型的实例数超出该应用预期的活动实例数 → 用 `§ 1. !dumpheap` 定位到具体实例，转 `reference/sos-heap-and-objects.md § 4. !gcroot` 追踪持有链，按本篇 § 2–5 对号入座分类；
-- **排除**：全部 WPF 类型实例数均在预期范围内 → 排除本篇覆盖的四类泄漏，转 `reference/debugging-decision-tree.md § 2. 内存持续增长` 排查非托管泄漏、LOH 碎片等通用成因。
+- **证实**：某 WPF 类型的实例数超出该应用预期的活动实例数 → 用 `reference/sos-heap-and-objects.md § 1. !dumpheap` 定位到具体实例，转 `reference/sos-heap-and-objects.md § 4. !gcroot` 追踪持有链，按本篇 § 2–5 对号入座分类；
+- **排除**：全部 WPF 类型实例数均在预期范围内 → 排除 § 2 Binding 泄漏、§ 3 可视化树泄漏、§ 5 DispatcherTimer 泄漏三类；**§ 4 弱事件泄漏不能由本条排除**——它的判据不体现在应用类型的实例数上，须另按 § 4 的内部监听表体积征象判断。三类均排除后转 `reference/debugging-decision-tree.md § 2. 内存持续增长` 排查非托管泄漏、LOH 碎片等通用成因。
+
+§ 4 因此也是本篇唯一需要间隔两次采样才能判定的节点，与本节「单份 dump 即可判定」的前提不同——该前提只对 § 2/§3/§5 的实例数判据成立，§ 4 的体积趋势判据仍需第二次采样对比。
 
 ## 2. Binding 泄漏
 
@@ -87,9 +90,9 @@ WPF 处理绑定源变更通知的方式取决于源类型是否实现 `INotifyP
 
 ### 根链形态
 
-**一级事实**，来源：dotnet/wpf 源码 `WindowsBase/System/Windows/WeakEventManager.cs`：`WeakEventManager` 自身不直接持有监听表，而是通过字段 `_table`（取自单例 `WeakEventTable.CurrentWeakEventTable`）按「管理器 + 源对象」为键做索引；每个源对象对应一个内部 `ListenerList`，其中的监听项是 `Listener` 结构体，对监听目标与处理器分别持有的是 `WeakReference`——弱的正是这一侧，监听者本身可以被正常回收。
+**一级事实**，来源：dotnet/wpf 源码 `WindowsBase/System/Windows/WeakEventManager.cs`：`WeakEventManager` 自身不直接持有监听表，而是通过字段 `_table`（取自按线程存取的单例 `WeakEventTable.CurrentWeakEventTable`）按「管理器 + 源对象」为键做索引；每个源对象对应一个内部 `ListenerList`，其中的监听项是 `Listener` 结构体，对监听目标与处理器分别持有的是 `WeakReference`——弱的正是这一侧，监听者本身可以被正常回收。
 
-但 `Listener` 结构体不会在监听者被回收的瞬间从 `ListenerList` 中消失：清理动作由 `ScheduleCleanup` 触发一次 `Purge`，触发时机是「下一次有新监听者加入」或「一次事件分发过程中恰好发现了失效项」，源码注释明确说明这是有意为之的摊销策略——清理要足够频繁以避免大量堆积，但不能频繁到每次操作都扫描一遍付出明显的性能代价。因此根链末端会落在 `WeakEventManager`/`WeakEventTable` 内部的监听表结构上，而不是指向应用代码；短周期内大量订阅退订会让尚未被 `Purge` 扫到的失效项暂时堆积，这段堆积在 dump 中就体现为管理器内部结构的体积增长。
+但 `Listener` 结构体不会在监听者被回收的瞬间从 `ListenerList` 中消失：清理动作由 `ScheduleCleanup` 触发一次 `Purge`，触发时机是「下一次有新监听者加入」或「一次事件分发过程中恰好发现了失效项」，源码注释明确说明这是有意为之的权衡——清理要足够频繁以避免大量堆积，但不能频繁到每次操作都扫描一遍付出明显的性能代价。因此根链末端会落在 `WeakEventManager`/`WeakEventTable` 内部的监听表结构上，而不是指向应用代码；短周期内大量订阅退订会让尚未被 `Purge` 扫到的失效项暂时堆积，这段堆积在 dump 中就体现为管理器内部结构的体积增长。
 
 ### 判据与下一步
 
@@ -135,11 +138,11 @@ Dispatcher（应用级生命周期，GC 根可达）
 
 | `!gcroot` 输出中出现的标志物 | 泄漏类型 | 详见 |
 |---|---|---|
-| 根链末端为 `MS.Internal.Data` 命名空间下的事件管理器类型（`PropertyDescriptor` 订阅登记项） | Binding 泄漏 | `§ 2. Binding 泄漏` |
+| 根链末端为 `MS.Internal.Data` 命名空间下的事件管理器类型（`ValueChangedEventManager`/`ValueChangedRecord`，`PropertyDescriptor` 订阅登记项） | Binding 泄漏 | `§ 2. Binding 泄漏` |
 | 静态字段 → `ResourceDictionary` → 元素 | 可视化树泄漏（静态资源） | `§ 3. 可视化树泄漏` |
 | 父元素（自身仍有根）→ 子元素集合 → 元素 | 可视化树泄漏（逻辑父级） | `§ 3. 可视化树泄漏` |
 | 事件源对象 → 委托 `_invocationList` → 元素（作为 `Target`） | 可视化树泄漏（未退订事件） | `§ 3. 可视化树泄漏` |
-| 根链末端落在 `WeakEventManager`/`WeakEventTable` 内部监听表结构上 | 弱事件泄漏 | `§ 4. 弱事件泄漏` |
+| 对应用对象 `!gcroot` 报无根或根链不经过任何管理器，但 `!dumpheap -stat` 显示相关内部结构体积随运行时长增长 | 弱事件泄漏 | `§ 4. 弱事件泄漏` |
 | `Dispatcher` → 未 `Stop` 的 `DispatcherTimer` → `Tick` 委托 → 委托 `Target` | DispatcherTimer 泄漏 | `§ 5. DispatcherTimer 泄漏` |
 
 根链末端不匹配上表任何一行时，不属于本篇覆盖的四类泄漏。可能是应用自身的静态集合持有，这是通用形态，见 `reference/debugging-decision-tree.md § 2. 内存持续增长`；也可能是非托管泄漏，判据见同节的 `!eeheap` 用法。

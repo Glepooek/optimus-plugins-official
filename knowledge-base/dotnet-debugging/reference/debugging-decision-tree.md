@@ -37,7 +37,7 @@ Monitor 死锁、异步死锁（同步等待异步）、线程池饥饿、长时
 | `!gcroot`（`reference/sos-heap-and-objects.md § 4. !gcroot`） | 根路径末端形态（静态字段 / 事件 `_invocationList` / pinned handle / 无根） | 静态字段或事件订阅 → 证实托管泄漏；无根路径 → 排除托管泄漏 |
 | `!eeheap -gc`（`reference/sos-heap-and-objects.md § 5. !eeheap`） | `GC Heap Size` 总计是否接近进程实际内存占用；LOH 段数是否增长但对象计数未同比增长 | 差距悬殊 → 排除托管堆是主因；LOH 段增长但计数未涨 → 证实碎片化而非真实增长 |
 | `!gchandles`（`reference/sos-heap-and-objects.md § 6. !gchandles`，仅 Windows 平台支持） | `Strong Handles`/`Pinned Handles` 是否单调增长而对应托管对象计数稳定 | 是 → 证实句柄泄漏而非对象泄漏 |
-| `!dumpheap -stat -type <WPF 类型>`（WPF 应用，`reference/wpf-leak-patterns.md § 1. WPF 泄漏的共同取证起点`） | Window/UserControl/BindingExpression/DispatcherTimer 实例数是否超出应用预期活动数 | 超出 → 证实 WPF 特有泄漏，按根链形态分类；均在预期内 → 排除 WPF 四类泄漏，回到本表前四行查通用成因 |
+| `!dumpheap -stat -type <WPF 类型>`（WPF 应用，`reference/wpf-leak-patterns.md § 1. WPF 泄漏的共同取证起点`） | Window/UserControl/BindingExpression/DispatcherTimer 实例数是否超出应用预期活动数 | 超出 → 证实 WPF 特有泄漏，按根链形态分类；均在预期内 → 排除 WPF 四类泄漏，回到本表前四行查通用成因（弱事件泄漏除外，见该篇 § 4） |
 
 ### 常见误判
 `TotalSize` 高**不等于**泄漏——体积大可能是合法的大缓存或一次性大对象分配；泄漏的判据是 `Count` 持续上涨，而非单次快照的绝对值大小。`!eeheap -gc` 排除托管堆是主因后，若 `!gchandles` 也稳定，指向非托管代码自身分配（已超出 SOS 取证范围）。
