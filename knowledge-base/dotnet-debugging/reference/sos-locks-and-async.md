@@ -96,6 +96,6 @@
 | `Completion Port Thread: Total` | 处理异步 I/O 完成通知的线程数 | 与 Worker Thread 是两套独立线程，队列积压若集中在这里指向 I/O 完成回调本身耗时过长，而非 CPU 绑定任务过多 |
 
 ### 判据：能证实 / 排除什么
-- `Work Request in Queue` 数值很大且 `Worker Thread: Total` 接近 `MaxLimit` 却仍不见增长（或按 500 毫秒量级的爬坡节奏缓慢增长）、同时 `CPU utilization` 明显低于 100% → **证实**线程池饥饿：任务在排队而非在跑，线程数受注入速率限制补不上来，根因多为 `!dumpasync` 或 `!dumpheap`（见 `reference/sos-heap-and-objects.md § 1. !dumpheap`）能找到的同步阻塞异步方法（`.Result`/`.Wait()`，见 `knowledge-base/csharp/rules/04-async-programming.md § 1. 全链路异步`、`knowledge-base/csharp/rules/04-async-programming.md § 2. 反模式表`）占满了线程池
+- `Work Request in Queue` 数值很大且 `Worker Thread: Total` 接近 `MaxLimit` 却仍不见增长（或按 500 毫秒量级的爬坡节奏缓慢增长）、同时 `CPU utilization` 明显低于 100% → **证实**线程池饥饿：任务在排队而非在跑，线程数受注入速率限制补不上来。根因多为 `!dumpasync` 或 `!dumpheap`（见 `reference/sos-heap-and-objects.md § 1. !dumpheap`）能找到的同步阻塞异步方法占满了线程池，成因侧规范见 `knowledge-base/csharp/rules/04-async-programming.md § 1. 全链路异步`、`knowledge-base/csharp/rules/04-async-programming.md § 2. 反模式表`
 - `Work Request in Queue` 为 0 或很小、`Worker Thread` 各项数值平稳 → **排除**线程池饥饿，卡顿应转查 `§ 1. !syncblk`（Monitor 死锁）或 `§ 2. !dumpasync`（异步挂起）
 - `CPU utilization` 接近 100% 且各线程 `!clrstack`（见 `reference/sos-threads-and-stacks.md § 2. !clrstack`）栈顶均为业务代码而非等待帧 → **排除**"卡住"这一前提，问题是真实的 CPU 密集型负载而非挂起，不属于本篇范围
