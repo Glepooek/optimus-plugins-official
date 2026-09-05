@@ -68,6 +68,7 @@
 | `reference/dump-types-and-capability.md` | 四种 dump 类型的取证能力边界、位数匹配、快照时点性 |
 | `reference/dump-capture.md` | procdump / dotnet-dump collect / createdump / WER LocalDumps / DOTNET_DbgEnableMiniDump 的完整命令与开关 |
 | `reference/symbols-and-tool-matching.md` | PDB 类型、符号服务器配置、SOS 与运行时版本匹配、缺符号降级读法 |
+| `reference/sos-threads-and-stacks.md` | !threads / !clrstack / !dumpstack / !pe / !dso 的开关、输出逐列语义与判据 |
 
 ## 内容来源
 
