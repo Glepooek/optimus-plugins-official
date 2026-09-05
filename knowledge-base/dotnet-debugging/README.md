@@ -67,6 +67,7 @@
 | `reference/clr-runtime-anatomy.md` | 托管堆分代、LOH/POH、同步块表、终结队列、线程池结构、GC 模式、句柄表 |
 | `reference/dump-types-and-capability.md` | 四种 dump 类型的取证能力边界、位数匹配、快照时点性 |
 | `reference/dump-capture.md` | procdump / dotnet-dump collect / createdump / WER LocalDumps / DOTNET_DbgEnableMiniDump 的完整命令与开关 |
+| `reference/symbols-and-tool-matching.md` | PDB 类型、符号服务器配置、SOS 与运行时版本匹配、缺符号降级读法 |
 
 ## 内容来源
 
