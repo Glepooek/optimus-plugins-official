@@ -70,6 +70,7 @@
 | `reference/symbols-and-tool-matching.md` | PDB 类型、符号服务器配置、SOS 与运行时版本匹配、缺符号降级读法 |
 | `reference/sos-threads-and-stacks.md` | !threads / !clrstack / !dumpstack / !pe / !dso 的开关、输出逐列语义与判据 |
 | `reference/sos-heap-and-objects.md` | !dumpheap / !dumpobj / !objsize / !gcroot / !eeheap / !gchandles 的开关、输出语义与泄漏判据 |
+| `reference/sos-locks-and-async.md` | !syncblk / !dumpasync / !threadpool 的开关、输出语义与死锁/饥饿判据 |
 
 ## 内容来源
 
