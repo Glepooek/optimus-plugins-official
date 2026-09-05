@@ -80,7 +80,7 @@ GC 暂停、线程池注入延迟（爬坡算法跟不上突增负载）、锁�
 
 用 `reference/dotnet-counters.md § 2. dotnet-counters collect` 采集异常计数器，与 `reference/eventpipe-and-diagnostic-port.md § 6. 基线采集：时间线判据的前置条件` 中的稳态基线比对速率变化。
 
-这一步是时间线特有的观测量：异常计数器计的是 **first-chance** 异常（`reference/dotnet-counters.md § 3. 内置计数器与判据对照` 三条语义陷阱之一），也就是异常抛出即计数，无论后续是否被 `catch` 捕获、是否造成任何可见影响。dump 只能看到抓取那一刻**当前未处理**的异常（`reference/debugging-decision-tree.md § 4. 崩溃退出` 里 `!threads` 的 `Exception` 列），对已经被 `catch` 吞掉的异常没有任何痕迹留存——如果异常风暴的成因恰好是"重试循环里异常被吞掉后继续重试"，dump 天生看不到，因为吞掉的异常在抓取时刻早已不存在于任何线程的当前异常状态里。异常速率必须按应用自身的历史基线比较，因为 first-chance 语义下基线未必接近零。
+这一步是时间线特有的观测量：异常计数器计的是 **first-chance** 异常（`reference/dotnet-counters.md § 3. 内置计数器与判据对照` 的语义陷阱之一），也就是异常抛出即计数，无论后续是否被 `catch` 捕获、是否造成任何可见影响。dump 只能看到抓取那一刻**当前未处理**的异常（`reference/debugging-decision-tree.md § 4. 崩溃退出` 里 `!threads` 的 `Exception` 列），对已经被 `catch` 吞掉的异常没有任何痕迹留存——如果异常风暴的成因恰好是"重试循环里异常被吞掉后继续重试"，dump 天生看不到，因为吞掉的异常在抓取时刻早已不存在于任何线程的当前异常状态里。异常速率必须按应用自身的历史基线比较，因为 first-chance 语义下基线未必接近零。
 
 区分点与下一步：
 
@@ -117,7 +117,7 @@ JIT 预热（启动初期大量方法首次触发即时编译，耗时集中在�
 
 ### 采集方案与判据
 
-用 `-- <command>` 让 `dotnet-trace`/`dotnet-counters` 启动目标进程本身并从第一行代码开始采集，或用 `--diagnostic-port` 指定反向连接端口，配合 `reference/eventpipe-and-diagnostic-port.md § 2. 诊断端口与连接建立` 中「反向（`,connect` 后缀）」的连接方向——采集工具先监听，进程启动时反过来连接到工具，从而覆盖进程尚未产生诊断端口监听能力之前的最早期阶段。
+用 `-- <command>` 让 `dotnet-trace` 启动目标进程本身并从第一行代码开始采集，或用 `--diagnostic-port` 指定反向连接端口，配合 `reference/eventpipe-and-diagnostic-port.md § 2. 诊断端口与连接建立` 中「反向（`,connect` 后缀）」的连接方向——采集工具先监听，进程启动时反过来连接到工具，从而覆盖进程尚未产生诊断端口监听能力之前的最早期阶段。
 
 **dump 在此场景下不可用**，这是本篇唯一一个一期完全无法覆盖的征象：问题发生时进程要么尚未存在（启动过程本身、JIT 预热与程序集加载都发生在进程刚创建、诊断端口尚未就绪的窗口内，此时无法对一个不存在或诊断能力未就绪的进程抓取 dump），要么已经退出（启动失败直接终止，抓取动作还没来得及发起，进程已经不在）。`reference/debugging-decision-tree.md` 全篇给出的取证命令均假设有一个正在运行、且诊断端口已可连接的目标进程，这一前提在启动阶段问题上从一开始就不成立。
 

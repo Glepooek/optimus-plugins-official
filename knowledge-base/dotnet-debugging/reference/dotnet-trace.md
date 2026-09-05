@@ -89,10 +89,7 @@ dotnet-trace collect -p <PID> --profile dotnet-sampled-thread-time,dotnet-common
 
 `collect` 下的 `cpu-sampling` **已被移除**——名称本身具有误导性：它实际采样的是**所有线程**，而非仅高 CPU 占用的线程，与名称暗示的语义不符，这是官方移除它的原因。当前 `collect` 默认启用的是 `dotnet-common` + `dotnet-sampled-thread-time` 两个 profile 的组合。
 
-官方给出的近似等价替代写法：
-```
-dotnet-trace collect -p <PID> --profile dotnet-sampled-thread-time,dotnet-common
-```
+上文按 profile 采集的写法即官方给出的近似等价替代。
 
 需要精确复刻旧版 `cpu-sampling` 行为时，改用显式 provider 写法：
 ```
