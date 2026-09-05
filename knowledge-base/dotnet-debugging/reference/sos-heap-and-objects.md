@@ -158,7 +158,7 @@ Found N unique roots.
 | 列/字段 | 含义 | 异常信号 |
 |---|---|---|
 | `generation 0/1/2 starts at` | 各代在托管堆中的起始地址 | —— |
-| 段表 `begin` / `allocated` / `size` | 每个堆段的起始地址、已分配到的位置、段总大小 | `allocated` 接近 `size` 且段数持续增多 → 该代持续扩张 |
+| 段表 `begin` / `allocated` / `size` | 每个堆段的起始地址、已分配到的位置、段总大小 | `allocated` 接近 `size` 且段数持续增多 → 该代持续扩张——**仅适用于 segment 布局**（.NET Framework 4.x、.NET 5/6，或 .NET 7+ 设置 `DOTNET_GCName=clrgc.dll` 回退后）；.NET 7+ 默认的 region 布局下，region 是按需分配的固定小块，region 数增长不直接等价于该代扩张，需结合 `!dumpheap -stat` 的对象计数交叉判断（版本判据见 `reference/clr-runtime-anatomy.md § 1. 托管堆分代结构`） |
 | `Large object heap` 段 / `Pinned object heap` 段 | LOH / POH 各自的段范围与大小，语义见 `reference/clr-runtime-anatomy.md § 2. 大对象堆（LOH）与固定对象堆（POH）` | LOH 段数增多但 `!dumpheap -stat` 中大对象计数未同比增长 → 碎片化而非真实增长 |
 | `GC Heap Size` 总计 | 全部堆段大小之和 | 可与 `!dumpheap -stat` 的 `TotalSize` 总和交叉核对，量级应接近 |
 
