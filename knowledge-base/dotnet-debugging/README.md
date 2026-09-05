@@ -1,8 +1,10 @@
 # .NET 高级调试知识库
 
-> 版本：1.1.0
+> 版本：1.2.0
 
 > 面向 **.NET 应用事后诊断与定位**的知识库。覆盖 .NET Framework 4.x、.NET 6/8+ 与 Linux 容器三种运行时，收录从运行中进程或 dump 中取证的命令、输出解读与判据。
+
+本领域以三运行时共性层为主干，**WPF 专属归因作为独立分支收录**（`reference/wpf-*.md` 两篇，仅 Windows）——WPF 是本仓库核心技术栈，其 Dispatcher 死锁与四类泄漏的根链形态无法由通用 SOS 读法直接得出。
 
 本领域负责「程序已经出问题之后，如何取证并定位根因」。预防性的编码规范不在本领域——那属于 `knowledge-base/csharp/` 与 `knowledge-base/wpf/`。
 
@@ -60,6 +62,8 @@
 | 死锁 / 异步卡住 / 线程池饥饿 | `reference/sos-locks-and-async.md` |
 | 间歇性问题 / 需要时间线数据 | `reference/live-monitoring-decision.md` |
 | 采集机制与基线概念 | `reference/eventpipe-and-diagnostic-port.md` |
+| WPF 界面无响应 / UI 线程卡死 | `reference/wpf-dispatcher-deadlock.md` |
+| WPF 内存泄漏 / 窗口关不掉还在堆上 | `reference/wpf-leak-patterns.md` |
 | 处理生产 dump 文件（合规） | `rules/01-dump-handling.md` |
 
 ## 文件地图
@@ -78,6 +82,8 @@
 | `reference/dotnet-counters.md` | dotnet-counters monitor / collect 的开关与输出，内置计数器双版本命名与形态判据对照 |
 | `reference/dotnet-trace.md` | dotnet-trace collect / profile 选择 / report topN / 格式转换，含 cpu-sampling 移除的迁移写法 |
 | `reference/live-monitoring-decision.md` | 六类征象（延迟尖峰 / 内存增长 / CPU 打满 / 异常风暴 / 线程池饥饿 / 启动阶段）→ 采集方案查表 |
+| `reference/wpf-dispatcher-deadlock.md` | 认出 UI 线程、三类等待形态、队列积压与真死锁的区分、持锁方定位闭环（仅 WPF/Windows） |
+| `reference/wpf-leak-patterns.md` | 四类 WPF 泄漏（Binding / 可视化树 / 弱事件 / DispatcherTimer）的堆上特征、根链形态与反查速查表（仅 WPF/Windows） |
 | `rules/01-dump-handling.md` | dump 作为数据资产的处置：密级、版本库隔离、对外交付类型、留存销毁、自动抓取落盘 |
 
 ## 内容来源

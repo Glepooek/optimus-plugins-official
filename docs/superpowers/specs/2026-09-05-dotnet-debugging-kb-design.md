@@ -242,8 +242,8 @@ knowledge-base/dotnet-debugging/
 
 | 期次 | 主题 | 范围 |
 |---|---|---|
-| **二期** | 活体诊断与工具链分叉 | `dotnet-counters` / `dotnet-trace` / EventPipe 机制；`dotnet-gcdump`、PerfView / ETW / WPR、三运行时工具选择矩阵**移出**，标注为后续期次 |
-| **三期** | WPF 桌面 dump 归因 | Dispatcher 死锁（UI 线程等在哪、谁持锁）、四类 WPF 泄漏在堆里的形态（Binding / 可视化树 / 弱事件 / `DispatcherTimer`）。对接 `wpf/12-exceptions-crash.md` |
+| **二期** | 活体诊断与工具链分叉 | `dotnet-counters` / `dotnet-trace` / EventPipe 机制；`dotnet-gcdump`、PerfView / ETW / WPR、三运行时工具选择矩阵**移出**，标注为后续期次（已于 2026-09-05 交付，实施 spec 见 `docs/superpowers/specs/2026-09-05-dotnet-debugging-kb-phase2-design.md`） |
+| **三期** | WPF 桌面 dump 归因 | Dispatcher 死锁（UI 线程等在哪、谁持锁）、四类 WPF 泄漏在堆里的形态（Binding / 可视化树 / 弱事件 / `DispatcherTimer`）。对接 `wpf/12-exceptions-crash.md`（已于 2026-09-05 交付，实施 spec 见 docs/superpowers/specs/2026-09-05-dotnet-debugging-kb-phase3-design.md） |
 | **四期（可选）** | Linux 容器专属 | 缺符号降级、PID namespace 约束、容器内存限制与 GC 交互、SIGSEGV 排查 |
 
 期次顺序于 2026-09-05 调换，理由见 `docs/superpowers/specs/2026-09-05-dotnet-debugging-kb-phase2-design.md § 1.2`
