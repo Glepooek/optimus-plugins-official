@@ -1,17 +1,26 @@
 ---
 name: sync-cc-tips
-description: 从 Claude Code 最新 changelog 自动同步 tips.jsonl：新增未覆盖条目、修正过时内容、删除已废弃功能，同步所有文档数字，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
+description: 从 Claude Code 最新 changelog 自动同步 tips.jsonl：按环境可用性与可感知性双重门禁新增条目、修正过时内容、删除已废弃功能，写入后做四重完整性校验并推进同步锚点，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 metadata:
-  version: "1.5.0"
+  version: "2.0.0"
   author: desktop client team
 compatibility: 需要网络访问 raw.githubusercontent.com 拉取 changelog；第二步调用 scripts/ 下两个 Python 脚本（标准库，无第三方依赖）；流程末尾调用 commit-cc-plugin skill 完成提交推送。
-allowed-tools: Bash WebFetch Read Edit Task
+allowed-tools: Bash WebFetch Read Edit Grep AskUserQuestion Skill
 disable-model-invocation: true
 ---
 
 # /sync-cc-tips
 
-从 Claude Code 最新 changelog 全自动同步 tips.jsonl，无需人工干预，完成后展示摘要并提交。
+从 Claude Code 最新 changelog 同步 tips.jsonl：**抓取、判定、写入、校验全自动，但写入前必须经一次人工确认**，确认后展示摘要并提交。
+
+⚠️ **本流程含 3 个阻塞式人工确认点，不得跳过**（含无人值守调度场景——无人应答时应超时终止，而非默认放行）：
+
+| 位置 | 触发条件 | 跳过的后果 |
+|---|---|---|
+| 第一步 | 锚点找不到且待处理版本 > 30 个 | 可能漏看历史区间或误处理过大范围 |
+| 第二步 | tips.jsonl 为空 | 把异常空文件当作全新初始化，静默丢失全库 |
+| 第四步 | 变更数 > 0，写入前 | 未经确认改写唯一真源 |
+
 
 ## 第一步 — 抓取 changelog
 
@@ -54,8 +63,8 @@ fi
 |---|---|---|
 | CHANGELOG.md 内容为空或找不到 `##` 版本标记 | 确认 URL 是否正确（分支名可能变更） | 停止流程，报告解析失败 |
 | 锚点版本在 changelog 中找不到（相隔太久，CHANGELOG.md 只保留近期版本，锚点已被滚出文件） | awk 跑到文件末尾都没 exit，等于输出了全部可见内容——检测输出的版本数（`grep -c '^## '`），若 > 30 | 通过 `AskUserQuestion` 询问「距离上次同步已超过 30 个版本，changelog 中未找到锚点版本 v{anchor}，是否继续处理全部可见的 {N} 个版本？」，选项：「继续处理全部可见版本」（推荐）／「取消，我需要先确认是否漏看了历史内容」；选后者立即停止整个流程 |
-| awk 截断后输出为空（锚点就是最新版本，无新版本可处理） | 直接判定为 0 新版本 | 等同于触发下方「🚦零变更总闸」，跳过后续所有步骤 |
-| 用户传入 `/sync-cc-tips N` 参数 | 忽略锚点截断逻辑，改为无条件抓取完整 CHANGELOG.md 后只取最新 N 个版本段落 | 本次运行结束时**不更新** `.last-synced-version`（范围受限的临时查看，不代表真实同步进度，详见第五步） |
+| awk 截断后输出为空（锚点就是最新版本，无新版本可处理） | 直接判定为 0 新版本 | 跳过 Step 3-6 的全部差异处理；**此场景下锚点已等于最新版，无需推进也无可提交**（区别于「🚦零变更总闸」——那是有新版本但均无实质变更，仍须推进锚点） |
+| 用户传入 `/sync-cc-tips N` 参数 | 忽略锚点截断逻辑，改为无条件抓取完整 CHANGELOG.md 后只取最新 N 个版本段落 | 本次运行结束时**不更新** `.last-synced-version`（范围受限的临时查看，不代表真实同步进度，见第五步「推进同步锚点」） |
 
 ## 第二步 — 读取现有 tips.jsonl
 
@@ -95,7 +104,7 @@ python .claude/skills/sync-cc-tips/scripts/detect_residue.py
 
 召回需同时满足两条：主标识符相同（只有讲同一个东西才谈得上覆盖）+ `功能：` 段落的中文 bigram 集合达到阈值包含关系。
 
-> ⚠️ **输出是待裁决候选，不是判定结果。** 实测 276 条库内的两两覆盖率分布显示，人工确认的真残影（`/doctor` 那两条互为详略版本）只有 **0.263**，而非残影的 `MCP-资源列出 ⊇ MCP-服务器` 却有 **0.333**——两类在数值上交叠，纯词频无法可靠区分。故阈值按召回定为 0.25，宁可多召回几个让人看，不可漏掉真残影。
+> ⚠️ **输出是待裁决候选，不是判定结果。** 2026-09-04 在当时 276 条库上实测两两覆盖率分布：人工确认的真残影（`/doctor` 那两条互为详略版本）只有 **0.263**，而非残影的 `MCP-资源列出 ⊇ MCP-服务器` 却有 **0.333**——两类在数值上交叠，纯词频无法可靠区分。故阈值按召回定为 0.25，宁可多召回几个让人看，不可漏掉真残影。（此处 276 是当次实测的样本量，属历史取证，**不随库存变化更新**。）
 
 发现残影候选在第四步变更预览中单独列出，建议合并/删除，交由用户在 CHECKPOINT 裁决。**不要让脚本或模型自行删除**。
 
@@ -116,7 +125,7 @@ python .claude/skills/sync-cc-tips/scripts/detect_residue.py
 **判定归类为四种：**
 - 🆕 新增（判定规则见下方「🆕 新增条件」）
 - ✏️ 修改（判定规则见下方「✏️ 修改条件」）
-- ⏭️ 跳过（已覆盖 / 非用户可操作功能，两种子原因均需在"命中情况"列写明）
+- ⏭️ 跳过（四种子原因：**已覆盖** / **非用户可操作功能** / **本机不可用** / **不可感知**，均需在"命中情况"列写明具体是哪一种）
 - 🗑️ 删除（判定规则见下方「🗑️ 删除条件」，针对已有 tips 条目而非 changelog bullet，不在本表中逐条列出，单独处理）
 
 跳过计数 = 本表中判定为「⏭️ 跳过」的行数，用于第六步摘要的完整性校验：changelog 窗口内共 M 条 bullet，新增 + 修改 + 跳过（不含针对已有条目的删除判定）应约等于 M，数量对不上说明本表本身有遗漏。
@@ -131,6 +140,37 @@ python .claude/skills/sync-cc-tips/scripts/detect_residue.py
 - 属于对用户操作有实质影响的功能（新 CLI flag、新子命令、新 Hook 事件、新 settings.json 设置项、新交互命令）
 - 在 tips.jsonl **全文**中，该功能点的所有主标识符（flag 名、设置项名、命令名、环境变量名）在 `ids`/`aliases` 中均未命中
 - **环境可用性门**：该功能在本机 harness 下确实能跑。mac/Linux-only、Enterprise 席位、cloud-SDK、claude.ai 账号等本机用不了的 → 标记 `⏭️ 跳过（本机不可用）`，不占坑
+- **可感知性门**：用户能亲眼看到该功能生效或未生效（判据与豁免见下节），否则 → 标记 `⏭️ 跳过（不可感知）`
+
+#### 👁️ 可感知性门（新增前必过）
+
+tips 的载体是 SessionStart 单条轮播——**读者读完既无法追问也无法查证**。因此条目描述的机制必须存在**用户侧可观测的验证闭环**，否则读者既确认不了它生效、也判断不了要不要配它，条目沦为纯知识陈列。
+
+对每个待新增功能点回答一个问题：**「用户改了这个配置/用了这个功能，怎么知道它起作用了？」**
+
+| 若答案是 | 判定 | 举例 |
+|---|---|---|
+| 界面/终端有可见变化（提示、徽章、面板、菜单、报错） | ✅ 通过 | 权限模式 footer 徽章、MCP 认证启动通知 |
+| 有专门命令能查（`/usage`、`/permissions`、`/doctor`、`claude xxx list`） | ✅ 通过 | 缓存命中率经 `/usage` 可见 |
+| 会改变用户日常会撞到的行为（原来能用现在报错、原来要确认现在不用） | ✅ 通过 | 项目级 env 收紧、权限规则语义变更 |
+| 只能在 OTel 后端 / 网关日志 / stream-json 里看到 | ❌ 跳过 | 遥测类环境变量、headless 专属输出字段 |
+| 默认值远超正常使用量，永远碰不到 | ❌ 跳过 | 上限类阈值（默认 200 次搜索、20 并发） |
+| 静默生效，开关前后用户观察不到差别 | ❌ 跳过 | 内存压力回收、空闲看门狗、沙箱静默阻断 |
+| 需要企业 managed 配置 / 自建网关 / 组织席位才有对象 | ❌ 跳过 | 组织白名单、企业 tips 投放 |
+| 描述的是「兼容多种写法」或「某限制已移除」，无行为差异 | ❌ 跳过 | frontmatter 命名/布尔值兼容、硬上限移除 |
+| 明确已失效的死配置 | ❌ 跳过 | changelog 自陈「不再有任何作用」的设置项 |
+
+**两条豁免**（命中即视为通过，不受上表 ❌ 约束）：
+
+1. **现象解释豁免** — 该条目解释的是用户会亲眼撞到的困惑现象，即使机制本身不可见。判据：能写出「你会遇到 X，原因是 Y」的句式。例：`CLAUDE_CODE_ENABLE_TODO_TOOLS` 机制不可见，但解释了「升级模型后任务清单消失」这个真实困惑。
+2. **安全收紧豁免** — 该条目描述的是权限或安全边界收紧，用户会以「原来能用现在被拦」的形式撞上。例：项目级 settings.json 的 env 收紧。
+
+> ⚠️ **不要用「高级/小众」当判据。** 判据只有一条——**有没有验证闭环**。`--restricted` 很小众但一眼可见（工具被移除、报错明确），该留；`CLAUDE_ENABLE_STREAM_WATCHDOG` 人人可设但完全静默，该跳。2026-09-07 一次性清理 17 条正是按此标准，误按「高级」筛会连带删掉 `--restricted`、`/batch` 这类真实用得上的条目。
+
+| 触发条件 | 一线处理 | 仍失败兜底 |
+|---|---|---|
+| 功能点部分可感知、部分不可感知（如一个设置项既改界面又调遥测上限） | 只写可感知的那部分，不可感知的部分从 `body` 中略去 | 若两部分无法拆分，按可感知处理并保留条目 |
+| 拿不准是否命中豁免 | 尝试写出「你会遇到 X，原因是 Y」句式——写得出即豁免 | 写不出则判 ❌ 跳过，宁缺毋滥（tips 是轮播位，占坑的成本是挤掉一条有用的） |
 
 **识别流程**：
 1. 提取该功能点的主标识符列表（如 `respondToBashCommands`、`!命令`）
@@ -192,7 +232,10 @@ changelog 的单行描述往往只覆盖核心功能，生成前需补充完整�
 以下情况将在第四步变更预览时列出待删条目：
 - changelog 明确标注 `Removed`、`Deprecated`、`no longer available`
 - 功能已被完全移除（不是"有了更好的替代"，而是彻底消失）
+- **可感知性回溯**：changelog 表明某已有条目描述的机制已退化为不可感知（如原本会弹提示的行为改为静默生效），按「👁️ 可感知性门」重判，判 ❌ 则列为待删
 - **不删除**：changelog 只是新增了替代功能，旧功能仍可用
+
+> 存量库中**未被本轮 changelog 触及**的不可感知条目不在本 skill 的自动删除范围内——本 skill 只处理 changelog 驱动的差异。批量清理属于人工发起的一次性维护（如 2026-09-07 那次 280→263），走「⏭️ 跳过」判据人工复核后由用户拍板，不由本 skill 自行扫库删除。
 
 ### 格式校验（每条写入前执行）
 - 必须是合法 JSON 单行，含 `id`/`category`/`title`/`body` 四字段
@@ -209,14 +252,14 @@ changelog 的单行描述往往只覆盖核心功能，生成前需补充完整�
 | 同一功能点同时命中🆕新增与✏️修改条件（如新 flag 替换了旧 flag 的部分行为） | 优先按✏️修改处理，原地更新旧条目，不重复新增 | 若归属仍有歧义，在变更预览中单独列出并说明歧义原因，交由用户在 CHECKPOINT 处裁决 |
 
 ### 🚦 零变更总闸（唯一判定点）
-若本轮识别结果为 **0 新增 + 0 修改 + 0 删除**（包括全部 bullet 均判定为 ⏭️ 跳过的情况）→ 跳过 tips.jsonl 写入、跳过第四步 CHECKPOINT、跳过第五步文档数字同步，但**仍需推进 `.last-synced-version`** 到本轮处理到的最新版本并单独提交（commit message 注明"仅推进同步锚点，无 tips.jsonl 变更"），避免下次运行重新扫描这段已确认无实质变更的区间。仅输出「本次 changelog 检查完成，所有功能点已在 tips.jsonl 覆盖或非用户可操作，已推进同步锚点至 v{最新版本}」后结束。第四步、第六步中对"0 变化"的提及均以本节为准，不重复判断。
+若本轮识别结果为 **0 新增 + 0 修改 + 0 删除**（包括全部 bullet 均判定为 ⏭️ 跳过的情况）→ 跳过 tips.jsonl 写入、跳过第四步 CHECKPOINT、跳过第五步的四重校验（无写入则无可校验），**但仍须执行第五步的「推进同步锚点」小节**，把 `.last-synced-version` 推进到本轮处理到的最新版本并单独提交（commit message 注明"仅推进同步锚点，无 tips.jsonl 变更"），避免下次运行重新扫描这段已确认无实质变更的区间。仅输出「本次 changelog 检查完成，所有功能点已在 tips.jsonl 覆盖或非用户可操作，已推进同步锚点至 v{最新版本}」后结束。第四步、第六步中对"0 变化"的提及均以本节为准，不重复判断。
 
 ## 第四步 — 写入 tips.jsonl
 
 > 🔴 **CHECKPOINT**（仅在变更数 > 0 时触发，0 变化场景见「🚦 零变更总闸」）：写入前展示变更预览——列出「📥 新增 N 条 / ✏️ 修改 N 条 / 🗑️ 删除 N 条 / ⏭️ 跳过 N 条」及每条标题，用 `AskUserQuestion` 发起确认：
 > - `question`: "以上是本次识别到的变更（N 新增 / N 修改 / N 删除 / N 跳过），是否写入 tips.jsonl 并继续后续提交流程？"
 > - `options`: 「确认写入并提交」（推荐）／「取消，不做任何修改」
-> - 选「确认写入并提交」→ 继续执行写入和第五步数字同步
+> - 选「确认写入并提交」→ 继续执行写入，随后进入第五步四重校验与锚点推进
 > - 选「取消，不做任何修改」或用户通过 Other 输入自定义文本（视为非明确同意） → **立即停止**，输出「操作已取消，tips.jsonl 未修改」，不执行任何写入或提交，`.last-synced-version` 也不更新
 
 ```
@@ -233,77 +276,72 @@ Edit: plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl
 | 写入后读回内容与预期不符 | 重新执行 Edit | 停止流程，提示用户手动检查文件状态 |
 | 删除条目后空行残留 | 再次定位并删除残留在行 | 在摘要中标注"空行可能残留，请人工确认" |
 
-## 第五步 — 同步文档数字
+## 第五步 — 写入后完整性校验
 
-统计写入后 tips.jsonl 的实际条目总数：**以 JSON 行数为准**（每条 tip 一行 JSON 对象，主计数方式），**不要在任何计数上加 1**。
+> 📌 **本步骤原为「同步文档数字」，2026-09-07 起废除。** 曾有 6 个展示性文件把 tips 条目总数冗余写进文案，每轮 sync 都需手工追平。该设计导致两次失准事故（同步点清单 2→4→6 处两轮漏项，其中两处数字从未被任何一轮 sync 更新过，长期停在 425 而真实值为 276）。**根治办法是移除派生值而非加固同步流程**：6 处数字已全部删除，改为不含数字的表述（如「SessionStart（技巧智能轮播）」）。同步点归零，本步骤保留格式校验与锚点推进。
 
-本文件为 JSONL 格式，**每条 tip 独占一行**，没有 `---` 分隔符（那是旧 `tips.txt` 的格式）。条目数 = 非空行数。
+**⛔ 不要重新往任何文件添加条目总数。** 读者从分类列表已能感知规模，具体数字对任何决策都无影响，而每多一处就多一个失准点。如需知道当前条目数，运行下方命令即时统计——**即时可算的值不该被写死在文档里**。
+
+统计条目总数：**以 JSON 行数为准**（每条 tip 一行 JSON 对象），**不要在任何计数上加 1**。本文件为 JSONL 格式，**每条 tip 独占一行**，没有 `---` 分隔符（那是旧 `tips.txt` 的格式）。条目数 = 非空行数。
 
 ```bash
 f=plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl
 grep -c '^{' "$f"      # 条目数（主计数，每行一个 JSON 对象）
 wc -l "$f"              # 行数（应与上面相等；文件末尾无空行时两者一致）
+python -c "
+import json,io,sys
+for i,l in enumerate(io.open('$f',encoding='utf-8'),1):
+    try: json.loads(l)
+    except Exception as e: sys.exit(f'第 {i} 行 JSON 非法: {e}')
+print('JSON 全部合法')
+"
 ```
 
-行数不一致或有空行说明格式有破损，回到第四步修复后重新计数。另可用「旧条目数 + 新增 − 删除」做第三重校验，三者应一致。
+**四重校验须全部通过。任一不过 → 先按下表回第四步修复并重跑校验；修复无效或原因不明 → 停止流程，不进入第六步，不推进锚点。**
 
-**共 6 处含条目总数**，逐一将旧数字替换为新总数。⚠️ **下表是已知同步点，不是权威清单——务必以下方全仓库扫描结果为准**（该清单曾两轮漏项，2→4→6 处；经过见 `known-issues.md`）。扫描发现表外命中时，先补表再改数字：
+| # | 校验 | 期望 | 不一致说明 |
+|---|---|---|---|
+| 1 | `grep -c '^{'` 与 `wc -l` | 相等 | 有空行或有行不以 `{` 开头，格式破损 |
+| 2 | JSON 逐行解析 | 全部合法 | 某行 JSON 语法错误（常见于手工编辑引号/逗号） |
+| 3 | 「旧条目数 + 新增 − 删除」 | 等于实测行数 | 写入过程有漏改或多改 |
+| 4 | 孤儿引用反查 | 无命中 | 被删条目的标识符仍被其他条目正文引用 |
 
-| 文件 | 位置 | 形式 |
-|---|---|---|
-| `.claude-plugin/marketplace.json` | `optimus-devops-plugin` 的 `description` | `SessionStart（N条技巧智能轮播）` |
-| `plugins/optimus-devops-plugin/hooks/README.md` | 「技巧分类」小节首行 | `tips.jsonl 包含 N 条技巧，涵盖以下分类：` |
-| `plugins/optimus-devops-plugin/.codex-plugin/plugin.json` | `interface.longDescription` | `SessionStart（N条技巧智能轮播）` |
-| `.kiro/steering/plugins.md` | devops 插件文件清单中的 tips.jsonl 行 | `` - `hooks/sessionstart/tips.jsonl` — N条技巧库 `` |
-| `.kiro/steering/structure.md` | 「关键文件」表中的 tips.jsonl 行 | `` \| `plugins/.../tips.jsonl` \| N 条使用技巧 \| `` |
-| `.kiro/steering/product.md` | 「智能会话增强」条 | `N条使用技巧自动轮播` |
-
-先用一条命令定位全部候选，再按下表甄别，避免误改：
+**第 4 项做法**：被删条目的标识符可能在其他条目正文中被提及（如 A 条目的「效果」里引用了 B 条目的 flag 名），B 删除后该引用悬空。用被删条目的主标识符全库反查，命中则修正引用方的措辞：
 
 ```bash
-# Bash — 全仓库扫，避免遗漏未收录的新同步点
-# 用 '条.*技巧' 而非 '条技巧'：structure.md 写的是「N 条使用技巧」，中间插了字
-grep -rnE '条[^，。|]*技巧' --include='*.json' --include='*.md' . | grep -vE 'sync-cc-tips/(SKILL|CHANGELOG)\.md'
+# 把本轮删除条目的主标识符用 | 连接后反查（示例）
+grep -nE '标识符A|标识符B|标识符C' plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl
 ```
 
-```powershell
-# PowerShell（本机默认 shell，无 grep）——分文件输出以区分两个同名 README.md
-foreach ($f in @('.claude-plugin/marketplace.json','README.md','plugins/optimus-devops-plugin/hooks/README.md','plugins/optimus-devops-plugin/.codex-plugin/plugin.json','.kiro/steering/plugins.md','.kiro/steering/structure.md','.kiro/steering/product.md')) {
-  Write-Output "=== $f ==="
-  Select-String -Path $f -Pattern '条[^，。|]*技巧' -Encoding utf8 | ForEach-Object { "  L{0}: {1}" -f $_.LineNumber, $_.Line.Trim() }
-}
+本轮无删除时跳过第 4 项。
+
+### 推进同步锚点
+
+四重校验全过后，把本轮处理到的**最新版本号**写入 `.last-synced-version`（不含 `v` 前缀）：
+
+```bash
+# 把 {最新版本} 换成本轮实际处理到的最新版本号，如 2.1.271
+echo "{最新版本}" > .claude/skills/sync-cc-tips/.last-synced-version
 ```
 
-> PowerShell 的 `Select-String` 在多文件模式下 `Filename` 只取 basename，`README.md` 与 `hooks/README.md` 会混淆，务必按上面的写法逐文件循环输出。
+⚠️ **写入时机必须在校验通过之后、提交之前**——提前写会导致校验失败中止时锚点已前移，下次运行跳过这段未处理区间，造成永久漏同步。
 
-| 命中位置 | 是否更新 | 原因 |
+| 场景 | 是否写入 | 说明 |
 |---|---|---|
-| `marketplace.json` devops `description` | ✅ 更新 | 条目总数 |
-| `hooks/README.md`「tips.jsonl 包含 N 条技巧」 | ✅ 更新 | 条目总数 |
-| `.codex-plugin/plugin.json`「longDescription」 | ✅ 更新 | 条目总数（Codex 侧描述，与 marketplace description 同文案） |
-| `.kiro/steering/plugins.md`「tips.jsonl — N条技巧库」 | ✅ 更新 | 条目总数 |
-| `.kiro/steering/structure.md`「tips.jsonl \| N 条使用技巧」 | ✅ 更新 | 条目总数（措辞是「条**使用**技巧」，旧窄正则命中不到） |
-| `.kiro/steering/product.md`「N条使用技巧自动轮播」 | ✅ 更新 | 条目总数（同上，措辞插了「使用」二字） |
-| `hooks/README.md`「默认每次显示 6 条技巧」 | ❌ 不动 | 单次展示条数，与总数无关 |
-| `hooks/README.md`「每条技巧一个 JSON 对象」 | ❌ 不动 | 格式说明，不含数字 |
-| `show-tip.sh`「每次选择 N 条技巧」「合并多条技巧」 | ❌ 不动 | 脚本注释，且脚本逻辑不在本 skill 职责范围 |
-| `README.md` 插件列表行「SessionStart（技巧轮播）」 | ❌ 不动 | 有意不含数字，避免多处同步失准 |
-| `marketplace.json` 顶层 `description` | ❌ 不动 | 仅工具链概述，从不含条目数 |
-
-> 若某一天 `README.md` 或顶层 `description` 被改成含具体数字的表述，需同步扩充上表——但**不要主动往这些位置添加数字**，同步点越少越不易失准。
+| 正常完成（有变更，四重校验通过） | ✅ 写入本轮最新版本 | 主路径 |
+| 零变更总闸触发 | ✅ 写入本轮最新版本 | 见第三步该节，单独提交并注明「仅推进同步锚点」 |
+| 用户在第四步 CHECKPOINT 取消 | ❌ 不写入 | 未做任何改动，锚点保持原值 |
+| 用户传入 `/sync-cc-tips N` 参数 | ❌ 不写入 | 范围受限的临时查看，不代表真实同步进度 |
+| 四重校验任一不过而中止 | ❌ 不写入 | 数据未落定，下次需重新处理该区间 |
 
 **版本号升级不在本 skill 定义**——由 `commit-cc-plugin` 第二步按 AGENTS.md 触发矩阵统一处理，本 skill 只交接事实：本次改动落在 `plugins/optimus-devops-plugin/hooks/` 内，届时应升该插件的两份 `plugin.json`（Patch）。
 
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
-| 某处文件不存在（如路径变更） | 跳过该处，继续更新其余文件 | 在摘要中列出"未同步"文件，不阻断提交 |
-| 数字 pattern 在六处应更新位置中找不到 | 用上面的全仓库 `grep -rnE '条[^，。\|]*技巧'` 确认格式是否变更 | 跳过并在摘要注明，不修改该文件 |
-| 六处数字更新后彼此不一致 | 以 tips.jsonl 实际 `^{` 行数为准 | 报告具体不一致位置 |
-
-> 🔴 **CHECKPOINT**：若命中上表"数字不一致"分支，报告具体差异位置后用 `AskUserQuestion` 发起确认：
-> - `question`: "同步文档数字时发现不一致：{具体差异位置}。是否以 tips.jsonl 实际 `^{` 行数（{X}）为准继续提交？"
-> - `options`: 「以 tips.jsonl 实际行数为准，继续提交」（推荐）／「取消本次提交，我要手动检查」
-> - 选「取消本次提交，我要手动检查」或 Other 自定义文本 → 停止本次提交，`.last-synced-version` 不更新——不得在未确认的情况下直接进入第六步。
+| `grep -c '^{'` 与 `wc -l` 不等 | 定位空行或非 `{` 开头行并删除 | 报告具体行号，停止流程不进入第六步 |
+| 某行 JSON 解析失败 | 按报错行号修正语法 | 若无法修正，回退该行到修改前内容并在摘要注明 |
+| 「旧 + 新增 − 删除」与实测不符 | 以实测 `^{` 行数为准，回查第四步哪一条漏改或多改 | 报告差值与可疑条目，停止流程 |
+| 发现孤儿引用 | 修正引用方措辞，去掉对已删条目的指向 | 在摘要中列出未能修正的引用位置 |
 
 ## 第六步 — 展示摘要并提交
 
@@ -324,11 +362,11 @@ foreach ($f in @('.claude-plugin/marketplace.json','README.md','plugins/optimus-
   · [分类] 条目标题（删除原因）
   · ...
 
-⏭️  跳过  N 条（已覆盖 / 非用户可操作功能）
+⏭️  跳过  N 条（已覆盖 / 非用户可操作 / 本机不可用 / 不可感知，按子原因分列条数）
 
-📊 条目总数：{旧数} → {新数}
-📄 已同步：marketplace.json · hooks/README.md · .codex-plugin/plugin.json · .kiro/steering/{plugins,structure,product}.md
-🔖 版本：两份 plugin.json {旧版本} → {新版本}（Patch）
+📊 条目总数：{旧数} → {新数}（即时统计，不写入任何文档）
+✅ 格式校验：行数一致 · JSON 合法 · 增删账平 · 孤儿引用{无命中／本轮无删除不适用}
+🔖 版本：待 commit-cc-plugin 按 AGENTS.md 触发矩阵判定（改动落在 hooks/ 内，预期 Patch）
 🔖 同步锚点：v{锚点版本} → v{最新版本}
 
 ---
@@ -347,12 +385,28 @@ foreach ($f in @('.claude-plugin/marketplace.json','README.md','plugins/optimus-
 | 反模式 | 原因 | 替代做法 |
 |---|---|---|
 | 把 changelog 里所有更新项都加入 tips.jsonl | tips 面向用户实用技巧，不是版本记录——内部重构、bug fix、依赖升级不应出现 | 只加对用户操作有实质影响的功能（新 flag、新命令、新设置项） |
+| 只要是新 flag / 新设置项就加进来 | 存在大量用户永远观察不到效果的开关（遥测、静默看门狗、企业专属、默认值碰不到的上限），加进来只是占轮播位——2026-09-07 因此一次性清掉 17 条 | 过「👁️ 可感知性门」：答不出「用户怎么知道它起作用了」就跳过 |
+| 用「高级 / 小众」筛掉条目 | 会误伤 `--restricted`、`/batch` 这类小众但一眼可见的真实能力 | 唯一判据是有无验证闭环，与功能是否高级无关 |
 | 只用条目标题判断是否已覆盖 | tips.jsonl 每条含完整正文，次级功能点只出现在功能/效果/例子字段而非标题 | 必须扫描 tips.jsonl **全文**，用主标识符（flag 名/设置项名/命令名）做精确匹配 |
-| 0变化时仍然提交 | 产生无意义 commit，污染 git 历史 | 触发「🚦 零变更总闸」直接终止，不进入 Step 4-6，不调用 commit-cc-plugin |
+| 0 变化时提交 tips.jsonl 改动 | 无实质变更却产生 commit，污染 git 历史 | 触发「🚦 零变更总闸」跳过 Step 4 与四重校验；**但仍须推进 `.last-synced-version` 并为该锚点单独提交**——这不是"无意义 commit"，不推进会导致下次重复扫描同一区间 |
 | 修改 show-tip.sh 脚本逻辑 | 脚本逻辑不在本 skill 职责范围内 | 只修改 tips.jsonl 数据文件 |
 | 删除旧功能条目，但该功能仍可用（只是有了替代方案） | 用户可能仍在用旧方式 | 仅在 changelog 明确标注 Removed/Deprecated 时删除 |
-| 用估算数字代替实际计数更新文档 | 估算不准会导致文档与实际不符 | 必须先统计实际 `^{` 行数再更新，且不加 1 |
+| 往任何文档写入 tips 条目总数 | 派生值写死在展示文案里必然失准——历史上 6 处同步点漏了两轮，两处长期停在 425（真实 276）。读者从分类列表已能感知规模，具体数字不影响任何决策 | 一律用不含数字的表述（「技巧智能轮播」）；需要数字时即时 `grep -c '^{'` |
 | 抓取失败后继续执行后续步骤 | 基于空数据的操作可能误删现有条目 | 第一步失败 → 立即停止，不执行任何写入操作 |
 | 在本 skill 内自行决定版本号怎么升 | 规则的唯一依据是 AGENTS.md 触发矩阵，写第二份必然与之分叉——曾长期误写为升 marketplace 顶层 version 且漏升 `.claude-plugin/plugin.json` | 交给 `commit-cc-plugin` 第二步统一处理，本 skill 只交接「改动落在 `plugins/optimus-devops-plugin/hooks/` 内」这一事实 |
 
 > `.claude/` 下的 skill 文件本身不触发版本号升级（遵循 CLAUDE.md 规范）
+
+## 📁 配套文件
+
+| 文件 | 用途 | 何时读写 |
+|---|---|---|
+| `scripts/build_alias_index.py` | 构建 `{ids, aliases}` 标识符集 | 第二步调用 |
+| `scripts/detect_residue.py` | 库内残影候选召回 | 第二步调用 |
+| `scripts/test_*.py` | 上述两脚本的单测（46 tests，本机无 pytest 用 `python -m unittest discover`） | 改动脚本后必跑 |
+| `.last-synced-version` | 同步锚点（纯版本号，无 `v` 前缀） | 第一步读、第五步写 |
+| `known-issues.md` | 真实使用中暴露的问题台账 | **本 skill 执行中发现自身缺陷时追加一行**；累积满 3 条「待处理」触发 darwin-skill 优化循环 |
+| `test-prompts.json` | 16 条验证 prompt 与期望行为 | darwin-skill 优化循环的验证素材；**改动 SKILL.md 流程后须复查相关 `expected` 是否失效** |
+
+⚠️ **改流程时不要只改 SKILL.md**：删除或重命名某个步骤后，`test-prompts.json` 中指向该步骤的 `expected` 会变成恒定失败的失效断言。2026-09-07 废除第五步「同步文档数字」时，id 1/3/4 三条即因此需要同步更新。
+
