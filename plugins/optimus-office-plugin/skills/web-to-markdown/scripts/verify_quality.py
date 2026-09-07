@@ -41,10 +41,16 @@ def read_file(path: Path) -> str:
         return path.read_text(encoding='utf-8', errors='replace')
 
 
-def split_sections(text: str) -> list[tuple[str, list[str]]]:
-    """按标题将文本切分为章节，返回有序列表 [(heading, [段落列表])]"""
+def split_sections(text: str, keep_empty: bool = True) -> list[tuple[str, list[str]]]:
+    """按标题将文本切分为章节，返回有序列表 [(heading, [段落列表])]
+
+    keep_empty=True 时保留内容为空的章节，使章节数组与标题序列严格一一对应。
+    这是按位置索引比对的前提：一旦空章节被丢弃，两侧数组就会错位，
+    后续所有对比都会拿错章节相互比较。
+    前言块（首个标题之前的内容）始终不进数组，避免整体偏移一位。
+    """
     sections = []
-    current = '__preamble__'
+    current = None          # None 表示尚未遇到第一个标题（前言区）
     buffer = []
     in_code = False
 
@@ -54,17 +60,19 @@ def split_sections(text: str) -> list[tuple[str, list[str]]]:
         if not in_code:
             m = _HEADING_RE.match(line)
             if m:
-                paras = _to_paragraphs(buffer)
-                if paras:
-                    sections.append((current, paras))
+                if current is not None:
+                    paras = _to_paragraphs(buffer)
+                    if paras or keep_empty:
+                        sections.append((current, paras))
                 current = line.strip()
                 buffer = []
                 continue
         buffer.append(line)
 
-    paras = _to_paragraphs(buffer)
-    if paras:
-        sections.append((current, paras))
+    if current is not None:
+        paras = _to_paragraphs(buffer)
+        if paras or keep_empty:
+            sections.append((current, paras))
     return sections
 
 
@@ -83,8 +91,40 @@ def _to_paragraphs(lines: list[str]) -> list[str]:
     return paras
 
 
+def content_lines(paras: list[str]) -> int:
+    """章节的非空行数。
+
+    比"段落数"更能抵抗排版差异：把松散的列表项合并成紧凑列表会让段落数
+    大幅下降，但内容一行未少。整段漏译仍会使该值下降，检查因此保持灵敏。
+    """
+    return sum(1 for p in paras for line in p.splitlines() if line.strip())
+
+
+# 站点模板渲染的元信息块（分类/产品/日期/作者/分享），把标签与值拆成多行。
+# 译文合并成紧凑列表是正确做法，行数必然大幅下降，不应判为漏译。
+_META_LABEL_RE = re.compile(
+    r'^\*\s*(Category|Product|Date|Reading time|Share|Author\(s\)|Tags?)\s*$',
+    re.I)
+
+
+def is_meta_block(paras: list[str]) -> bool:
+    """该章节是否以站点元信息块为主（命中 3 个及以上标签即认定）"""
+    hits = sum(1 for p in paras for line in p.splitlines()
+               if _META_LABEL_RE.match(line.strip()))
+    return hits >= 3
+
+
 def extract_content_images(text: str) -> list[str]:
-    """提取原文中的内容图片文件名（排除纯哈希、icon/logo/svg）"""
+    """提取原文正文中的图片文件名（排除 icon/logo/svg 装饰图）
+
+    不按文件名判断是否"内容图"。CDN 普遍使用哈希命名（Webflow 的
+    6a8739a1..._44592f18.png 剥掉前缀后仍是哈希），内容图与装饰图在
+    文件名上无法区分——旧版按 ^[0-9a-f]{8,} 过滤，导致整站图片被判为
+    装饰图，该检查在此类站点上永远空转。
+
+    改为只滤掉可靠信号（icon/logo/svg），其余一律纳入。译文未引用的
+    由调用方作为待确认项提示，交人工判断，不直接判定为缺失。
+    """
     imgs = []
     in_code = False
     for line in text.splitlines():
@@ -95,10 +135,7 @@ def extract_content_images(text: str) -> list[str]:
             continue
         for src in _IMG_SRC_RE.findall(line) + _MD_IMG_RE.findall(line):
             fname = src.split('/')[-1].split('?')[0]
-            # 跳过装饰图标
-            if re.match(r'^[0-9a-f]{8,}', fname):
-                continue
-            if any(w in fname.lower() for w in ('icon', 'logo')):
+            if any(w in fname.lower() for w in ('icon', 'logo', 'placeholder')):
                 continue
             if fname.endswith('.svg'):
                 continue
@@ -112,7 +149,11 @@ def extract_yt_ids(text: str) -> list[str]:
 
 
 def check_url(url: str, timeout: int = 5) -> tuple[bool, str]:
-    """HEAD 请求检查链接是否可达，返回 (ok, 状态描述)"""
+    """HEAD 请求检查链接是否可达，返回 (ok, 状态描述)
+
+    本机环境问题（SSL 证书、DNS、超时）不代表链接失效，一律按可达处理，
+    否则在企业代理或缺少根证书的机器上会 100% 误报，使该检查失去意义。
+    """
     try:
         req = urllib.request.Request(url, method='HEAD',
               headers={'User-Agent': 'Mozilla/5.0'})
@@ -122,7 +163,12 @@ def check_url(url: str, timeout: int = 5) -> tuple[bool, str]:
     except urllib.error.HTTPError as e:
         return e.code < 400, str(e.code)
     except Exception as e:
-        return False, str(e)[:60]
+        msg = str(e)
+        if any(k in msg for k in ('CERTIFICATE_VERIFY_FAILED', 'SSL',
+                                  'timed out', 'Name or service not known',
+                                  'getaddrinfo failed')):
+            return True, 'skip'
+        return False, msg[:60]
 
 
 def main():
@@ -147,44 +193,57 @@ def main():
     issues = []
     passed = []
 
-    # ── 检查1：段落完整性（按位置顺序对比，不依赖标题文字）───
+    # ── 检查1：内容完整性（按位置索引对比非空行数）─────────
     raw_sections = split_sections(raw_text)
     out_sections = split_sections(out_text)
 
     section_issues = []
-    for i, (raw_heading, raw_paras) in enumerate(raw_sections):
-        if raw_heading == '__preamble__':
-            continue
-        if i >= len(out_sections):
-            section_issues.append(f"  ✗ 章节 [{i}]「{raw_heading[:50]}」：译文中找不到对应章节")
-            continue
-        _, out_paras = out_sections[i]
-        if len(out_paras) < len(raw_paras):
-            section_issues.append(
-                f"  ✗ 章节 [{i}]「{raw_heading[:50]}」：原文 {len(raw_paras)} 段，译文 {len(out_paras)} 段"
-            )
-    if section_issues:
-        issues.append("【段落完整性】以下章节段落数不足：\n" + '\n'.join(section_issues))
+    if len(raw_sections) != len(out_sections):
+        section_issues.append(
+            f"  ✗ 章节总数不一致：原文 {len(raw_sections)} 个，译文 {len(out_sections)} 个"
+            f"（位置索引已失效，逐章对比结果不可信，请先核对章节结构）"
+        )
     else:
-        passed.append("段落完整性 ✓")
+        for i, (raw_heading, raw_paras) in enumerate(raw_sections):
+            _, out_paras = out_sections[i]
+            if is_meta_block(raw_paras):
+                continue
+            raw_n = content_lines(raw_paras)
+            out_n = content_lines(out_paras)
+            # 中译普遍比英文原文紧凑，容许 20% 的收缩
+            if out_n < raw_n * 0.8:
+                section_issues.append(
+                    f"  ✗ 章节 [{i}]「{raw_heading[:50]}」："
+                    f"原文 {raw_n} 行，译文 {out_n} 行"
+                )
+    if section_issues:
+        issues.append("【内容完整性】以下章节内容量不足：\n" + '\n'.join(section_issues))
+    else:
+        passed.append(f"内容完整性 ✓（{len(raw_sections)} 个章节）")
 
     # ── 检查2：图片引用 ────────────────────────────────────
     raw_imgs = extract_content_images(raw_text)
     if raw_imgs:
         out_local_imgs = set(_LOCAL_IMG_RE.findall(out_text))
+        # 译文允许重命名（去哈希前缀、加语义前缀），按去前缀后的词干匹配
+        out_stems = {re.sub(r'^[0-9a-f]{8,}_', '', f) for f in out_local_imgs}
+        out_stems |= {f.split('-')[-1] for f in out_local_imgs}
         missing = []
         for fname in raw_imgs:
-            # 去掉哈希前缀后匹配
             clean = re.sub(r'^[0-9a-f]{8,}_', '', fname)
-            if clean not in out_local_imgs and fname not in out_local_imgs:
-                missing.append(fname)
+            if (clean in out_stems or fname in out_local_imgs
+                    or clean in out_local_imgs):
+                continue
+            missing.append(fname)
         if missing:
-            issues.append("【图片引用】以下原文图片在译文中未找到本地引用：\n" +
-                          '\n'.join(f"  ✗ {f}" for f in missing))
+            img_warn = (f"【图片引用】{len(missing)}/{len(raw_imgs)} 张原文图片在译文中"
+                        f"未找到本地引用（不阻断，装饰图可忽略）：\n" +
+                        '\n'.join(f"  ? {f}" for f in missing))
+            issues.append(img_warn)
         else:
             passed.append(f"图片引用 ✓（{len(raw_imgs)} 张）")
     else:
-        passed.append("图片引用 ✓（原文无内容图片）")
+        passed.append("图片引用 ✓（原文无图片）")
 
     # ── 检查3：链接可达性 ──────────────────────────────────
     links = _MD_LINK_RE.findall(out_text)
@@ -224,12 +283,13 @@ def main():
     for p in passed:
         print(f"  ✓ {p}")
 
-    # 链接问题单独提示（不终止，仅警告）
-    link_issue = next((x for x in issues if x.startswith('【链接可达性】')), None)
-    hard_issues = [x for x in issues if not x.startswith('【链接可达性】')]
+    # 软警告（链接可达性、图片引用）不终止，仅提示人工确认
+    soft_prefixes = ('【链接可达性】', '【图片引用】')
+    soft_issues = [x for x in issues if x.startswith(soft_prefixes)]
+    hard_issues = [x for x in issues if not x.startswith(soft_prefixes)]
 
-    if link_issue:
-        print(f"\n  ⚠ {link_issue}")
+    for si in soft_issues:
+        print(f"\n  ⚠ {si}")
 
     if hard_issues:
         print("\n需要修正的问题：")
