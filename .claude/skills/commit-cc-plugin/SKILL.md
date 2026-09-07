@@ -215,11 +215,22 @@ git commit -m $message
 禁止在提交 message 字符串中使用字面量 `\n` 拼接换行。提交后必须验证 message：
 
 ```powershell
+# PowerShell
 git show -s --format=%B HEAD
-git show -s --format=%B HEAD | Select-String '\\n'
+git show -s --format=%B HEAD | Select-String -SimpleMatch '\n'
 ```
 
-第二条命令必须无输出；若出现 `\n`，说明提交信息格式错误。提交已推送后遵循 [`knowledge-base/git/rules/03-pull-requests.md`](../../../knowledge-base/git/rules/03-pull-requests.md) 的强制推送限制，不要擅自 amend 或 force push，应先报告并确认处理方式。
+```bash
+# Bash：必须用 -F 固定字符串匹配
+git show -s --format=%B HEAD
+git show -s --format=%B HEAD | grep -F '\n'
+```
+
+⚠️ **两处都要关闭正则解释**（PowerShell 用 `-SimpleMatch`，Bash 用 `-F`），这样匹配的就是「反斜杠 + 字母 n」这两个字符本身。
+
+不要把 PowerShell 的 `Select-String '\\n'` 照搬到 Bash：该写法在 .NET 正则下恰好等价于字面反斜杠加 n，结果正确；但 `grep '\\n'` 在 BRE 下会被解释成「反斜杠**或**字母 n」，凡含 `n` 的行全部命中，正确的 message 也会被误判为格式错误。
+
+第二条命令必须无输出；若出现 `\n`，说明提交信息格式错误。可再用 `git show -s --format=%B HEAD | wc -l`（PowerShell 用 `(git show -s --format=%B HEAD).Count`）确认行数与预期一致，佐证换行是真实的。提交已推送后遵循 [`knowledge-base/git/rules/03-pull-requests.md`](../../../knowledge-base/git/rules/03-pull-requests.md) 的强制推送限制，不要擅自 amend 或 force push，应先报告并确认处理方式。
 
 ## 第六步 — 同步推送
 
