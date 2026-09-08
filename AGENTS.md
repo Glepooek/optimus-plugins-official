@@ -21,7 +21,7 @@
 | `plugins/*/skills/` | 对外发布的插件产物 | `/plugin-name:skill-name` | 自然语言触发（按 description 匹配）或 `@plugin-name:skill-name` |
 | `.claude/skills/` | 仅本仓库维护自用，不发布 | `/skill-name`（无前缀，经 `.kiro/skills/` 镜像） | 同名触发（经 `.agents/skills/` 镜像） |
 
-`.claude/skills/` 下的 skill 需在 `.kiro/skills/`（Claude/Kiro 生态）与 `.agents/skills/`（Codex）**两处**保持同名符号链接镜像，`commit-cc-plugin` 会自动检测并补齐两处。
+`.claude/skills/` 下的 skill 需在 `.kiro/skills/`（Claude/Kiro 生态）与 `.agents/skills/`（Codex）**两处**保持同名符号链接镜像，`.githooks/pre-commit` 会在提交时检测缺失或悬空并阻断，报错中给出补齐命令。
 
 复合 skill 调用：`/plugin-name:skill-name:substep`（两个 harness 语法一致，仅前缀符号不同）。
 
@@ -50,6 +50,9 @@ Python 脚本单元测试（**本机无 `pytest`，只能用 `unittest`**）：
 python -m unittest discover -s .claude/skills/sync-cc-docs-to-youdaonote/scripts -p "test_*.py"  # 77 tests
 python -m unittest discover -s .claude/skills/knowledge-base-maintain/scripts -p "test_*.py"     # 141 tests
 python -m unittest discover -s .claude/skills/sync-cc-tips/scripts -p "test_*.py"                # 46 tests
+
+# 提交门禁脚本
+python -m unittest discover -s .githooks -p "test_*.py"                                          # 12 tests
 ```
 
 ---
@@ -120,7 +123,7 @@ python -m unittest discover -s .claude/skills/sync-cc-tips/scripts -p "test_*.py
 
 ⚠️ **marketplace 顶层的 Patch 位永久停在 `0`**：它只有「新增插件 → Minor」「删除插件 → Major」两种触发。这是刻意收窄的结果，**不要为了填满三档而编造 Patch 场景**。
 
-**功能变了版本号不变 = 不完整交付**——必须主动检查并升版，不等用户提醒。`commit-cc-plugin` 会在提交前校验两份 `plugin.json` 是否同值，不一致则阻断。
+**功能变了版本号不变 = 不完整交付**——必须主动检查并升版，不等用户提醒。`.githooks/pre-commit` 会在提交前校验两份 `plugin.json` 是否同值，不一致则阻断（该门禁对两个 harness 同等生效，Codex 走标准 git 时一样拦截）。
 
 ### darwin-skill 评分门禁
 
@@ -144,7 +147,11 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 
 ## 提交与推送
 
-**必须**使用 `commit-cc-plugin` skill，禁止手动执行 git 工作流。说"提交"或"推上去"即可触发。
+**必须**使用 `commit-cc-plugin` skill，禁止手动执行 git 工作流。说"提交"或"推上去"即可触发。该 skill 只负责这一次提交本身——暂存范围、原子性、message 格式、推送。
+
+仓库长期一致性由 `.githooks/pre-commit` 拦截，与 skill 分工明确：每插件两份 `plugin.json` 版本同值、`.kiro`/`.agents` 符号链接镜像完整且以 `120000` 模式入库。**新克隆的仓库需执行一次 `git config core.hooksPath .githooks` 启用**（该配置是本机的，不随仓库分发）。
+
+门禁挂在 hook 而非 skill 正文，是因为 Codex 侧走标准 git 流程读不到 skill——写在 skill 里的检查在 Codex 下完全不生效。禁止 `--no-verify` 绕过。
 
 ---
 
@@ -179,6 +186,7 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 | `.claude/rules/skill-conventions.md` | SKILL.md frontmatter 规范（按路径自动加载） | 两者共用 |
 | `.claude/rules/doc-conventions.md` | CHANGELOG / README 规范（按路径自动加载） | 两者共用 |
 | `.claude/rules/agent-conventions.md` | agent 规范（按路径自动加载） | 两者共用 |
+| `.githooks/pre-commit` | 提交门禁：插件版本同值 + skill 镜像完整（需 `git config core.hooksPath .githooks` 启用） | 两者共用 |
 
 **已被 gitignore 的目录（有意排除，非缺失）：** `.claude/skills/darwin-skill/`（评估产物）、`.remember/`、`.codegraph/`
 
@@ -189,7 +197,7 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 | 方面 | Claude Code | Codex |
 |---|---|---|
 | 安装入口 | `/plugin marketplace add` 或手动 clone 到 `~/.claude/plugins/marketplace/` | `codex plugin marketplace add <repo>` → `codex plugin add <plugin>@optimus-plugins-official`，读取 `.agents/plugins/marketplace.json` |
-| 提交流程 | 强制 `/commit-cc-plugin` skill | 标准 git + Conventional Commits，禁止 `--no-verify` |
+| 提交流程 | 强制 `/commit-cc-plugin` skill | 标准 git + Conventional Commits，禁止 `--no-verify`。`.githooks/pre-commit` 的一致性门禁两侧同等生效 |
 | Hooks | SessionStart（技巧轮播）、Notification（权限通知）生效 | 无对应机制，Claude 侧 hooks 在 Codex 中不生效 |
 | 维护型 skill 镜像目录 | `.kiro/skills/<name>` | `.agents/skills/<name>` |
 | 插件标识文件 | `.claude-plugin/marketplace.json`（含全部插件） | 额外的 `.agents/plugins/marketplace.json` + 每插件 `.codex-plugin/plugin.json` |

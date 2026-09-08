@@ -1,0 +1,4 @@
+# pre-commit hook 必须保持 LF：CRLF 会让 Linux/macOS 的 sh 把行尾 \r 当作
+# shebang 的一部分，报 "bad interpreter: /bin/sh^M" 而静默失效。
+# 仅约束此文件，其余文件沿用本机 core.autocrlf 设置。
+.githooks/pre-commit text eol=lf

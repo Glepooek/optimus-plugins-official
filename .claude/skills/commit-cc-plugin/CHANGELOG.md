@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.0.0] - 2026-09-08
+
+### Removed
+- **第二步「版本号决策」整节移出**（含落点判断、两份同步、阻断式校验、「白名单冲突」元流程共 48 行）：版本一致性失效损害的是仓库长期状态而非本次提交，且原实现要求 LLM 逐行读并自觉执行——Codex 侧走标准 git 时完全不生效。校验脚本迁至 `.githooks/`，由 `pre-commit` 强制执行
+- **§A「补齐符号链接」条件小节移出**（36 行）：同上，改由 `pre-commit` 检测。原实现的 GATE 使其仅在新增/删除 skill 时触发，执行频率极低，其中「未排除 gitignore 目录」的缺陷（会误报 `darwin-skill` 缺失）因此长期未暴露，迁移时一并修正
+- `allowed-tools` 去掉 `Edit`：不再需要在提交流程内改写 `plugin.json` 与校验脚本
+
+### Added
+- 开篇新增「职责边界」表，明确本 skill 与 `.githooks/pre-commit` 的分工判据：失效后坏的是「这一次提交」还是「仓库长期状态」
+- 第四步新增 CHECKPOINT：`pre-commit` 阻断时按报错分类处置，四类各有对应动作，明令禁止 `--no-verify`
+- 第五步补齐 rebase 撞上未暂存改动的处置（`git stash push <文件>` → push → `git stash pop`），解决 known-issues 2026-09-07 条：该失败与第一步「排除无关改动」的规范互为因果，越守规范越必然撞上
+- `metadata.category: workflow`（此前缺失）
+
+### Changed
+- 流程由「6 步 + 2 条件小节」收敛为「5 步 + 1 条件小节」，🔴 CHECKPOINT 由 4 个减至 3 个，SKILL.md 由 278 行降至 216 行
+- 常见错误表重写：删除 6 条版本号/符号链接相关（已随门禁移出），新增 3 条（禁止 `--no-verify` 的理由、rebase 阻塞的正确解法、版本决策发生在改动时而非提交时）
+- 正文不写职责边界说明：`description` 与 `allowed-tools: Bash`（无 `Edit`）已界定范围，散文式的分工表在流程正常时也要读、读完却不产生任何动作。设计决策的记录归 `.githooks/README.md` 与本文件
+
 ## [3.7.0] - 2026-09-08
 
 ### Added

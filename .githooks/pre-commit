@@ -1,0 +1,60 @@
+#!/bin/sh
+# 仓库一致性门禁。启用方式：git config core.hooksPath .githooks
+#
+# 这里放的是「失效了会损害仓库长期状态」的检查——版本号真源一致性、
+# 多 harness 镜像完整性。它们与某一次提交的内容无关，只是借提交这个
+# 必经关口拦截。提交行为本身的规范（原子性、message 格式）不在这里，
+# 由 commit-cc-plugin skill 承担。
+#
+# 挂在 hook 而非 skill 里，是因为 Codex 侧走标准 git 流程，读不到 skill 正文。
+
+set -u
+
+fail=0
+note() { echo "  - $1"; fail=1; }
+
+echo "[pre-commit] 仓库一致性检查"
+
+# --- 1. 每插件两份 plugin.json 版本同值 ---
+# 版本真源是「两份构成的一对」。不一致时不要拿一边覆盖另一边——错的可能恰好是
+# 「另一份」（该升 Minor 却升了 Patch），覆盖会把正确的一边也改错。
+# 正确处置：按 AGENTS.md 版本管理规则判断本次改动该升什么号，两份都写成该值。
+if ! python .githooks/check_plugin_versions.py . ; then
+  fail=1
+fi
+
+# --- 2. .claude/skills 的双 harness 符号链接镜像 ---
+# 每个纳入版本库的 skill 都要在 .kiro/skills（Claude/Kiro）与 .agents/skills（Codex）
+# 有同名符号链接。被 gitignore 的 skill 不分发，跳过。
+for d in .claude/skills/*/; do
+  name=$(basename "$d")
+  git check-ignore -q ".claude/skills/$name" && continue
+  for mirror in .kiro .agents; do
+    if [ ! -e "$mirror/skills/$name" ]; then
+      note "缺符号链接 $mirror/skills/$name（补齐：ln -s ../../.claude/skills/$name $mirror/skills/$name）"
+    fi
+  done
+done
+
+# 反向：镜像指向已删除的 skill
+for m in .kiro/skills/* .agents/skills/*; do
+  [ -e "$m" ] || [ -L "$m" ] || continue
+  name=$(basename "$m")
+  if [ ! -d ".claude/skills/$name" ]; then
+    note "$m 指向已不存在的 .claude/skills/$name（清理：git rm $m）"
+  fi
+done
+
+# 符号链接必须以 120000 模式入库。core.symlinks=false 时 git 会把它们
+# 存成内容为路径字符串的普通文件（100644），克隆到另一台机器就不是链接了。
+bad_mode=$(git ls-files -s .kiro/skills .agents/skills | grep -v '^120000 ' || true)
+if [ -n "$bad_mode" ]; then
+  note "以下镜像未以 symlink 模式入库（应为 120000）："
+  echo "$bad_mode" | sed 's/^/      /'
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo "[pre-commit] 未通过。修正后重新提交，不要用 --no-verify 绕过。"
+  exit 1
+fi
+echo "[pre-commit] 通过"
