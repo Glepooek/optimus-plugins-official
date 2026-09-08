@@ -2,7 +2,7 @@
 name: commit-cc-plugin
 description: 在 optimus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户明确表达提交或推送意图，如说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"、"推一下"、"存一下"。
 metadata:
-  version: "3.6.1"
+  version: "3.7.0"
   author: desktop client team
 compatibility: 需要 Git 仓库环境及远程推送权限；无 MCP 或第三方 CLI 依赖。
 allowed-tools: Bash Edit
@@ -71,9 +71,23 @@ plugins/<plugin>/.codex-plugin/plugin.json     ← version 升到同一个新值
 python .claude/skills/commit-cc-plugin/scripts/check_plugin_versions.py .
 ```
 
-🔴 **CHECKPOINT — 退出码非 0 则禁止继续提交**。按报错提示回头判断本次改动该升什么号，把两份都改成该值后重跑，直到通过。
+🔴 **CHECKPOINT — 退出码非 0 则禁止继续提交**。脚本报两类错，先看报错文本属于哪一类，再按对应处置：
+
+| 报错文本包含 | 性质 | 处置 |
+|---|---|---|
+| `版本不一致` / `缺 version 字段` / `缺 .claude-plugin` / `缺 .codex-plugin` | 本次改动没写对 | 回头判断本次改动该升什么号，把两份都改成该值后重跑 |
+| `有多余字段` | 本次改动与门禁白名单冲突 | 见下方「白名单冲突」 |
 
 **不要**因为报错提到某一份文件就直接拿另一份覆盖它——错的可能恰好是"另一份"（该升 Minor 却升了 Patch），覆盖会把正确的一边也改错。
+
+**白名单冲突**——报「有多余字段」时，先判断该字段在 Claude 侧**有没有独立消费方**（官方文档、`claude plugin validate` 的 warning、或 CLI 实测），再二选一：
+
+| 判断结果 | 处置 |
+|---|---|
+| 无消费方，纯属误加 | 删掉该字段，重跑 |
+| **有消费方**，删了会丢功能 | 门禁的白名单过时了：改 `scripts/check_plugin_versions.py` 的 `CLAUDE_ALLOWED_KEYS`，**同步改 `test_check_plugin_versions.py`**，跑通 `python -m unittest discover -s .claude/skills/commit-cc-plugin/scripts -p "test_*.py"`，并在 `known-issues.md` 记一行 |
+
+⚠️ 放宽白名单是**改门禁本身**，不是绕过它：三件事（改脚本、改测试、记 known-issues）缺一不可，只改脚本等于让门禁失效。若该字段的禁用理由写在某份 spec/plan 里，在原处**追加**勘误说明前提为何被推翻，不改写原文。
 
 ## 第三步 — 暂存与原子性核查
 
@@ -259,3 +273,5 @@ git push origin master
 | `git commit --no-verify` 绕过 hook | 遵循 `knowledge-base/git/rules/02-commit-messages.md`，禁止跳过 hook；hook 报错必须修复后重试 |
 | 新增 `.claude/skills/` 下的 skill 后忘记补 `.kiro/skills` 或 `.agents/skills` 符号链接 | §A 已内置自动检测缺失并补齐，提交前务必确认 |
 | 有未推送提交不检测直接新建 commit | 第四步已内置检测，发现未推送提交时应询问用户是否 amend 合并 |
+| 门禁报「有多余字段」就直接删字段 | 先判断该字段有无独立消费方；有消费方说明白名单过时，按第二步「白名单冲突」放宽门禁，而不是删掉功能 |
+| 放宽白名单只改脚本 | 改脚本、改测试、记 `known-issues.md` 三件事缺一不可，否则等于让门禁失效 |
