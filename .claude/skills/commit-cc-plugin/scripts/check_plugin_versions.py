@@ -12,7 +12,14 @@ import json
 import pathlib
 import sys
 
-CLAUDE_ALLOWED_KEYS = {"name", "version", "agents"}
+CLAUDE_ALLOWED_KEYS = {
+    "name", "version", "agents",
+    # 以下元数据 Claude 侧确有独立消费方，不是 marketplace 条目的重复：
+    # 已安装插件的描述渲染只读 manifest.description，不回退到 marketplace 条目；
+    # homepage / repository 驱动插件详情页的「Open homepage」「View repository」菜单项；
+    # author 缺失会被 `claude plugin validate` 报 warning。
+    "description", "homepage", "repository", "author", "license", "keywords",
+}
 
 
 def _load(path):

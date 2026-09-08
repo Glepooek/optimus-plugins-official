@@ -1,5 +1,13 @@
 {
   "name": "optimus-devops-plugin",
-  "version": "1.1.4",
+  "version": "1.1.5",
+  "description": "DevOps：Jenkins 构建、项目分析、周报转写、skill 链接同步、.NET 取证输出解读与根因定位。内置 Hooks：SessionStart（技巧智能轮播）、Notification（Windows权限通知）",
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT",
   "agents": ["./agents/dotnet-diagnose.md"]
 }

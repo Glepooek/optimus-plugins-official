@@ -1,4 +1,12 @@
 {
   "name": "optimus-frontend-plugin",
-  "version": "1.0.0"
+  "version": "1.0.1",
+  "description": "WPF 前端开发：MasterGo 设计稿转页面与组件库、SVG 转 XAML、XAML 代码审查。内置 PreToolUse Hook：git commit 前门禁校验 .xaml 改动是否已审查",
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT"
 }

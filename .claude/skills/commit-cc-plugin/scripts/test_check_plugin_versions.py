@@ -99,13 +99,26 @@ class TestCheckPluginVersions(unittest.TestCase):
         problems = check_all(self.root)
         self.assertEqual(len(problems), 2)
 
-    def test_claude_side_extra_fields_are_reported(self):
-        """.claude-plugin/plugin.json 只应有 name / version / agents。"""
+    def test_claude_side_unknown_fields_are_reported(self):
+        """白名单外的字段仍要拦截。"""
         make_plugin(self.root, "p-extra", "1.0.0", "1.0.0",
-                    claude_extra={"description": "不该写在这里"})
+                    claude_extra={"skills": "./skills/"})
         problems = check_all(self.root)
         self.assertEqual(len(problems), 1)
-        self.assertIn("description", problems[0])
+        self.assertIn("skills", problems[0])
+
+    def test_claude_side_metadata_fields_are_allowed(self):
+        """description 等字段 Claude 侧有独立消费方，不算重复真源。"""
+        make_plugin(self.root, "p-meta", "1.0.0", "1.0.0",
+                    claude_extra={
+                        "description": "插件描述",
+                        "homepage": "https://example.com",
+                        "repository": "https://example.com",
+                        "author": {"name": "x"},
+                        "license": "MIT",
+                        "keywords": ["a"],
+                    })
+        self.assertEqual(check_all(self.root), [])
 
     def test_agents_field_is_allowed(self):
         make_plugin(self.root, "p-agents", "1.0.0", "1.0.0",

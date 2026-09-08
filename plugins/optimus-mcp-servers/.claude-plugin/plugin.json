@@ -1,4 +1,13 @@
 {
   "name": "optimus-mcp-servers",
-  "version": "1.0.0"
+  "version": "1.0.1",
+  "description": "MCP 服务集成：GitHub、MasterGo 设计协作、飞书项目",
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT",
+  "keywords": ["mcp", "github", "mastergo", "feishu"]
 }

@@ -272,6 +272,8 @@ plugins/optimus-devops-plugin/
 
 **为什么不写 `description` 等字段**：这些已在 marketplace 条目声明，重复维护会产生第二真源。
 
+> ⚠️ **2026-09-08 勘误**：上述判断的前提「marketplace 条目的 `description` 能覆盖 Claude 侧显示需求」经实测不成立，已推翻。Claude Code 渲染**已安装**插件时读的是 `manifest.description`，该 manifest 只由 `.claude-plugin/plugin.json` 构造，**不回退**到 marketplace 条目——两者是不同代码路径读不同文件。marketplace 条目的 `description` 仅用于浏览**未安装**插件。因此不写会导致 `/plugin` 界面中插件名下方一片空白。`homepage` / `repository` 同理有独立消费方（详情页的「Open homepage」「View repository」菜单项），`author` 缺失则被 `claude plugin validate` 报 warning。现已在两处补齐，`check_plugin_versions.py` 的白名单同步放宽。
+
 ### 3.3 为什么版本号载体是 CHANGELOG 而非 frontmatter
 
 两条理由：

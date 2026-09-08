@@ -1,4 +1,12 @@
 {
   "name": "optimus-prd-plugin",
-  "version": "1.0.0"
+  "version": "1.0.1",
+  "description": "PRD 全流程：需求文档创建、优化与审查",
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT"
 }

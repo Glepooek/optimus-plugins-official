@@ -1,4 +1,12 @@
 {
   "name": "optimus-office-plugin",
-  "version": "1.0.1"
+  "version": "1.0.2",
+  "description": "文档处理：Word/Excel/PPT/PDF 生成，网页与本地文件转 Markdown",
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT"
 }

@@ -1,4 +1,12 @@
 {
   "name": "optimus-qa-plugin",
-  "version": "1.0.0"
+  "version": "1.0.1",
+  "description": "测试 QA：用例设计与报告、JMeter 与 UI 自动化、设计稿一致性校验、飞书项目同步",
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT"
 }
