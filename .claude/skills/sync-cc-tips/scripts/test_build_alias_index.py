@@ -176,5 +176,47 @@ class TestBuild(unittest.TestCase):
             build('no/such/file.jsonl')
 
 
+class TestCamelCaseSettingsKeys(unittest.TestCase):
+    """回归测试：2026-09-09 前 PATTERNS 无任何 camelCase 分支，全库 45 个
+    settings 键（defaultMode / statusLine / respondToBashCommands …）全部 MISS。
+    失效方向是最危险的一侧——漏收 → 判为新增 → 静默产出重复条目。
+
+    docstring 当时自陈收录「反引号内的 settings 键」，但实测全库 268 条里
+    settings 键一个都没加反引号，那是个不存在的能力。
+    """
+
+    def test_settings_keys_extracted(self):
+        for key in ('defaultMode', 'statusLine', 'respondToBashCommands',
+                    'alwaysThinkingEnabled', 'bashOutputMaxChars'):
+            self.assertIn(key, extract(f'设置 {key} 可以调整行为'), f'{key!r} 应被收录')
+
+    def test_product_names_not_extracted(self):
+        """macOS 尾部全大写、iTerm2 单字母头——两条形态约束正是为挡住它们。"""
+        for name in ('macOS', 'iTerm2', 'GitLab', 'GitHub', 'JavaScript'):
+            self.assertEqual(extract(name), set(), f'产品名 {name!r} 不应被收录')
+
+    def test_path_component_not_extracted(self):
+        """`hooks/monitors/headersHelper` 里的 headersHelper 是路径分量不是设置项。"""
+        self.assertNotIn('headersHelper', extract('plugin hooks/monitors/headersHelper 的 shell'))
+
+
+class TestEnvVarPrefixWhitelistRemoved(unittest.TestCase):
+    """回归测试：前缀白名单 (CLAUDE|OTEL|ANTHROPIC|AWS|GOOGLE|DISABLE|MAX)_
+    漏掉全库 36 个环境变量中的 3 个。改为「≥1 个下划线 + 全大写」通用模式。
+    """
+
+    def test_non_whitelisted_env_vars_extracted(self):
+        for var in ('BASH_DEFAULT_TIMEOUT_MS', 'FORCE_HYPERLINK', 'API_KEY'):
+            self.assertIn(var, extract(f'环境变量 {var} 控制该行为'), f'{var!r} 应被收录')
+
+    def test_whitelisted_ones_still_work(self):
+        self.assertIn('CLAUDE_CODE_SUBAGENT_MODEL', extract('CLAUDE_CODE_SUBAGENT_MODEL'))
+
+    def test_single_word_uppercase_not_extracted(self):
+        """无下划线的全大写词（MCP、JSON、CLI）是普通缩写，不是环境变量。"""
+        for word in ('MCP', 'JSON', 'CLI', 'API'):
+            self.assertEqual(extract(word), set(), f'缩写 {word!r} 不应被收录')
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

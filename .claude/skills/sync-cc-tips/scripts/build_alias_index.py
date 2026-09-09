@@ -4,9 +4,9 @@
 输出 JSON 到 stdout：{"ids": [...], "aliases": [...], "stats": {...}}
 
 判重基准：一个 changelog 功能点的任意主标识符命中 ids/aliases 即视为已覆盖。
-只收录**带语法标记**的标识符（斜杠命令、长短 flag、大写环境变量、反引号内的
-settings 键、skill 命名空间），不收裸英文单词——后者会让 aliases 膨胀到数千个
-通用词，导致任何功能点都能"命中"，判重恒为已覆盖、新增恒为 0。
+只收录**带语法标记**的标识符（斜杠命令、长短 flag、大写下划线环境变量、
+camelCase settings 键、skill 命名空间），不收裸英文单词——后者会让 aliases 膨胀到
+数千个通用词，导致任何功能点都能"命中"，判重恒为已覆盖、新增恒为 0。
 """
 
 import json
@@ -24,7 +24,15 @@ PATTERNS = (
     r'(?<![\w./~-])/[a-z][a-z0-9-]*(?::[a-z][a-z0-9-]*)*',
     r'--[a-z][a-z0-9-]*',                       # 长 flag
     r'(?<![\w-])-[a-zA-Z](?![\w-])',            # 短 flag，如 -p -c
-    r'\b(?:CLAUDE|CLAUDE_CODE|OTEL|ANTHROPIC|AWS|GOOGLE|DISABLE|MAX)_[A-Z0-9_]+\b',
+    # 大写下划线环境变量。前缀白名单已于 2026-09-09 移除：白名单漏掉了
+    # BASH_DEFAULT_TIMEOUT_MS / FORCE_HYPERLINK / API_KEY 三个真实变量，
+    # 而「至少一个下划线 + 全大写」本身已是足够强的语法标记，不会命中自然语言。
+    r'\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b',
+    # camelCase settings 键（settings.json / 工具参数）。要求首段 ≥2 个小写字母、
+    # 且大写后紧跟小写——这两条把 macOS（尾部全大写）、iTerm2（单字母头）这类
+    # 产品名挡在外面。不加反引号要求：全库 268 条里 settings 键**一个都没加**
+    # 反引号，docstring 曾据此声称支持，实为不存在的能力（2026-09-09 实测修正）。
+    r'(?<![\w./-])[a-z]{2,}[a-z0-9]*(?:[A-Z][a-z][a-zA-Z0-9]*)+(?![\w-])',
 )
 
 

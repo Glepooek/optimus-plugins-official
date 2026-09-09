@@ -16,6 +16,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from detect_residue import (
+    KNOWN_NON_RESIDUE,
     OVERLAP_THRESHOLD,
     detect,
     feature_terms,
@@ -213,6 +214,86 @@ class TestDetect(unittest.TestCase):
     def test_missing_file_raises_oserror(self):
         with self.assertRaises(OSError):
             detect('no/such/file.jsonl')
+
+
+class TestKnownNonResidue(unittest.TestCase):
+    """豁免清单必须是「标注」而非「过滤」——静默隐藏会让人误以为库里没有残影，
+    而裁决权属于用户不属于本脚本。
+    """
+
+    def setUp(self):
+        self.paths = []
+
+    def tearDown(self):
+        for p in self.paths:
+            try:
+                os.unlink(p)
+            except OSError:
+                pass
+
+    def make(self, entries):
+        fd, path = tempfile.mkstemp(suffix='.jsonl')
+        with io.open(fd, 'w', encoding='utf-8') as f:
+            for e in entries:
+                f.write(json.dumps(e, ensure_ascii=False) + '\n')
+        self.paths.append(path)
+        return path
+
+    def test_exempt_pair_still_listed(self):
+        """豁免项仍出现在 candidates 中，只是多带标记——不得被过滤掉。"""
+        covers, covered = next(iter(KNOWN_NON_RESIDUE))
+        p = self.make([
+            {'id': covers, 'category': 'c', 'title': 't',
+             'body': '功能：运行配置体检并诊断修复问题，检查安装健康与未使用插件'},
+            {'id': covered, 'category': 'c', 'title': 't',
+             'body': '功能：运行配置体检'},
+        ])
+        candidates, _, stats = detect(p)
+        ids = [(c['covers'], c['covered']) for c in candidates]
+        self.assertIn((covers, covered), ids, '豁免项被静默过滤，违反「标注而非过滤」')
+        hit = next(c for c in candidates if (c['covers'], c['covered']) == (covers, covered))
+        self.assertTrue(hit.get('known_non_residue'))
+        self.assertTrue(hit.get('exempt_reason'), '豁免必须带理由，否则无从判断能否沿用')
+
+    def test_pending_review_excludes_exempt(self):
+        """pending_review 扣除豁免项，candidates 总数不变。"""
+        covers, covered = next(iter(KNOWN_NON_RESIDUE))
+        p = self.make([
+            {'id': covers, 'category': 'c', 'title': 't',
+             'body': '功能：运行配置体检并诊断修复问题，检查安装健康与未使用插件'},
+            {'id': covered, 'category': 'c', 'title': 't',
+             'body': '功能：运行配置体检'},
+        ])
+        _, _, stats = detect(p)
+        self.assertEqual(stats['known_non_residue'], 1)
+        self.assertEqual(stats['pending_review'], stats['candidates'] - 1)
+
+    def test_non_exempt_pair_unmarked(self):
+        """未登记的组合不带豁免标记，照常计入 pending_review。"""
+        p = self.make([
+            {'id': '/doctor-详版', 'category': 'c', 'title': 't',
+             'body': '功能：运行配置体检并诊断修复问题，检查安装健康与未使用插件'},
+            {'id': '/doctor-简版', 'category': 'c', 'title': 't',
+             'body': '功能：运行配置体检'},
+        ])
+        candidates, _, stats = detect(p)
+        self.assertFalse(candidates[0].get('known_non_residue'))
+        self.assertNotIn('exempt_reason', candidates[0])
+        self.assertEqual(stats['pending_review'], stats['candidates'])
+
+    def test_exemption_is_directional(self):
+        """豁免按 (covers, covered) 有序对登记，反向不自动豁免——
+        A 覆盖 B 不是残影，不蕴含 B 覆盖 A 也不是。
+        """
+        covers, covered = next(iter(KNOWN_NON_RESIDUE))
+        self.assertNotIn((covered, covers), KNOWN_NON_RESIDUE,
+                         '反向对也被登记了，需确认这是有意为之而非误加')
+
+    def test_all_exemptions_have_reasons(self):
+        """清单里每条都必须写明为什么不是残影。"""
+        for pair, reason in KNOWN_NON_RESIDUE.items():
+            self.assertIsInstance(reason, str)
+            self.assertGreater(len(reason.strip()), 10, f'{pair} 的豁免理由过于简略')
 
 
 if __name__ == '__main__':

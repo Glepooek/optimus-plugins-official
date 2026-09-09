@@ -37,6 +37,23 @@ DEFAULT_TIPS = "plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl"
 # 输出一律是「待人工裁决的候选」而非「确认残影」——工具负责别漏，人负责别错杀。
 OVERLAP_THRESHOLD = 0.25
 
+# 已人工裁决为「不是残影」的组合，键为 (covers, covered) 的 id 二元组。
+#
+# 这些组合会被**标注**而非**过滤**——仍照常出现在 candidates 里，只是多带一个
+# known_non_residue: true。原因是裁决权属于用户而非本脚本：静默隐藏会让人误以为
+# 库里没有残影，而纯词频本就无法可靠区分两类（真残影 /doctor 那对只有 0.263，
+# 非残影的 MCP-资源列出 ⊇ MCP-服务器 反而有 0.333，数值上完全交叠）。
+#
+# 新增条目时写清「为什么不是残影」，否则下一个人无从判断该不该沿用这条豁免。
+KNOWN_NON_RESIDUE = {
+    # MCP-服务器 是「MCP 是什么」的总述，另两条各讲一个具体机制；
+    # 三者共享 MCP 主标识符且中文用词高度重合，但讲的不是同一件事。
+    ('MCP-资源的列出与读取', 'MCP-服务器'):
+        '前者讲资源列出/读取的具体操作，后者是 MCP 概念总述，非详略关系',
+    ('MCP-认证启动通知', 'MCP-服务器'):
+        '前者讲认证启动时的通知行为，后者是 MCP 概念总述，非详略关系',
+}
+
 # 实词提取时剔除的高频虚词，它们在任何两条之间都重叠，会抬高相似度
 STOPWORDS = frozenset("""
 的 了 在 是 与 和 或 把 从 到 对 为 用 可 会 不 也 都 就 只 而 等 时 后 前
@@ -127,11 +144,16 @@ def detect(path=DEFAULT_TIPS, threshold=OVERLAP_THRESHOLD):
             # a 覆盖 b 且 a 不比 b 更简短——更简短者不可能"完全覆盖"更详尽者
             if len(a['terms']) < len(b['terms']):
                 continue
-            candidates.append({
+            candidate = {
                 'covers': a['id'],
                 'covered': b['id'],
                 'overlap': round(ratio, 3),
-            })
+            }
+            exempt_reason = KNOWN_NON_RESIDUE.get((a['id'], b['id']))
+            if exempt_reason is not None:
+                candidate['known_non_residue'] = True
+                candidate['exempt_reason'] = exempt_reason
+            candidates.append(candidate)
 
     # 同一 main 分组统计，便于人工快速定位
     groups = {}
@@ -139,9 +161,13 @@ def detect(path=DEFAULT_TIPS, threshold=OVERLAP_THRESHOLD):
         groups.setdefault(it['main'], []).append(it['id'])
     multi = {k: v for k, v in groups.items() if len(v) > 1}
 
+    exempt = sum(1 for c in candidates if c.get('known_non_residue'))
     stats = {
         'entries': len(items),
         'candidates': len(candidates),
+        # 扣除已裁决豁免后真正待人工看的数量；豁免项仍在 candidates 里，未被删除
+        'pending_review': len(candidates) - exempt,
+        'known_non_residue': exempt,
         'shared_main_groups': len(multi),
         'threshold': threshold,
     }

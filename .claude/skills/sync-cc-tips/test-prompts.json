@@ -2,17 +2,17 @@
   {
     "id": 1,
     "prompt": "/sync-cc-tips",
-    "expected": "完整执行六步：curl 直读 CHANGELOG.md（不经过 releases 页面/Playwright）→ 读 tips.jsonl 构建标识符集 → 逐条新增/修改/删除判定（新增须过环境可用性门与可感知性门）→ 展示变更预览（🔴 CHECKPOINT，明确列出 y/n 两种输入的后续行为）→ 用户确认后跑第五步四重格式校验 → 调用 commit-cc-plugin（版本号由其决定，本 skill 不自行升版）"
+    "expected": "完整执行六步：调用 fetch_changelog.py 取 changelog（脚本内部完成两跳降级与锚点截断，不在 SKILL.md 手写取数命令）→ 并行跑 build_alias_index.py / detect_residue.py / validate_tips.py（分别产出判重集、残影候选、改动前基线）→ 逐条新增/修改/删除判定（新增须过环境可用性门与可感知性门，带斜杠形式的须过 check_slash_name.py 存在性校验）→ 展示变更预览（🔴 CHECKPOINT，用 AskUserQuestion 给出确认/合并残影/取消三类选项）→ 用户确认后跑 validate_tips.py --expect-entries 完整性校验，ok:true 才继续 → 推进 .last-synced-version 后调用 commit-cc-plugin（版本号由其决定，本 skill 不自行升版）"
   },
   {
     "id": 2,
-    "prompt": "假设 curl 请求 raw.githubusercontent.com 超时失败，继续执行 /sync-cc-tips",
-    "expected": "命中第一步降级条件：先按表格重试一次 curl，仍失败则改用 WebFetch 读取同一 CHANGELOG.md URL；若两者都失败则立即停止整个流程、不做任何写入，而不是静默跳过第一步继续后续步骤"
+    "prompt": "假设 fetch_changelog.py 的第一跳 raw.githubusercontent.com 超时失败（但 api.github.com 可达），继续执行 /sync-cc-tips",
+    "expected": "不得在 SKILL.md 里重写 curl/awk 命令——第一步只调用 scripts/fetch_changelog.py，降级链在脚本内部完成：第一跳失败后自动落到第二跳 api.github.com contents API（带 Accept: application/vnd.github.raw 头），输出 ok:true 与 hop:\"api\"、hops_failed:[\"raw\"]，流程照常继续。不得因第一跳失败就判定网络不可达而停止。仅当脚本返回 ok:false 时才按 next 字段走：next:\"webfetch\"（verdict:single_host_blocked，网络正常但两跳主机均不可达）→ 用 WebFetch 取 api.github.com 而非已证实不可达的 raw 域；next:\"stop\"（verdict:network_down，全部探测主机含对照组 example.com 均为 000）→ 停止且不做任何写入，不要再试 WebFetch。verdict:parse_failed（取到内容但无 ## 版本标记，head 字段给出前 200 字符）属解析失败而非取数失败，同样停止。不得建议把第二跳改成 github.com/anthropics/claude-code/raw/main/CHANGELOG.md（302 回落 raw 域，换了 URL 字符串但真实故障域未换），不得建议用 --max-redirs 0 或 -f 检测回落（对 302 仍返 exit 0），不得新增「等 N 秒重试同一条命令」这类故障域重合的伪降级跳。脚本在内存中处理，不产生临时文件，故不应出现 rm -f 或 /tmp 相关指令"
   },
   {
     "id": 3,
     "prompt": "本次 changelog 的所有功能点在 tips.jsonl 中都已通过标识符命中覆盖，运行 /sync-cc-tips",
-    "expected": "识别为 0 新增/0 修改/0 删除，跳过 Step 4 的 CHECKPOINT 直接退出，不写入 tips.jsonl、不跑第五步格式校验，但仍推进 .last-synced-version 并单独提交（commit message 注明仅推进锚点），只输出提示说明无变更"
+    "expected": "识别为 0 新增/0 修改/0 删除，跳过 Step 4 的 CHECKPOINT 直接退出，不写入 tips.jsonl、不跑 validate_tips.py 完整性校验（无写入则无可校验），但仍推进 .last-synced-version 并单独提交（commit message 注明仅推进锚点），只输出提示说明无变更"
   },
   {
     "id": 4,
@@ -27,12 +27,12 @@
   {
     "id": 6,
     "prompt": "已存在 .last-synced-version 内容为某个较早版本号，运行 /sync-cc-tips",
-    "expected": "第一步读取该文件作为锚点，用 awk 截断 changelog 到锚点为止（锚点版本本身不含在输出中），只处理锚点之后的新版本，而不是固定处理最近 10 个版本"
+    "expected": "第一步调用 fetch_changelog.py（不传 --limit），脚本自行读锚点并截断到锚点为止（锚点版本本身不含在 versions 里，上轮已处理过），只处理锚点之后的新版本而非固定最近 10 个。输出 anchor_found:true、advance_anchor:true。若截断后 version_count 超过 30，needs_confirm 为 true → 须发起 AskUserQuestion 确认后再继续——该判据只看版本数，与锚点是否命中无关（锚点在文件里存在但相隔 351 个版本同样危险）。version_count 为 0 表示锚点已是最新版，跳过 Step 3-6 且无需推进锚点"
   },
   {
     "id": 7,
     "prompt": ".last-synced-version 文件不存在，运行 /sync-cc-tips",
-    "expected": "回退到「最新 10 个版本」默认窗口抓取（原有行为兜底），本轮成功完成后应写入 .last-synced-version 记录本次处理到的最新版本号"
+    "expected": "fetch_changelog.py 读不到锚点时回退到「最新 10 个版本」默认窗口，输出 anchor:null、anchor_found:null、advance_anchor:true。本轮成功完成后第五步须写入 .last-synced-version 记录处理到的最新版本号。不得因锚点文件缺失而报错终止——首次运行时文件不存在是正常状态"
   },
   {
     "id": 8,
@@ -42,12 +42,12 @@
   {
     "id": 9,
     "prompt": "识别出 2 条新增 + 1 条修改，展示变更预览后，通过 AskUserQuestion 选择「取消，不做任何修改」，继续执行 /sync-cc-tips",
-    "expected": "命中第四步 CHECKPOINT 的取消分支：立即停止，输出「操作已取消，tips.jsonl 未修改」，不执行 Edit 写入、不进行第五步数字同步、不调用 commit-cc-plugin、不更新 .last-synced-version（而不是要求用户手打 y/n 自由文本）"
+    "expected": "命中第四步 CHECKPOINT 的取消分支：立即停止，输出「操作已取消，tips.jsonl 未修改」，不执行 Edit 写入、不跑 validate_tips.py 完整性校验、不调用 commit-cc-plugin、不更新 .last-synced-version（而不是要求用户手打 y/n 自由文本）"
   },
   {
     "id": 10,
-    "prompt": "准备把 changelog 中某个新能力作为 [Skill] 条目写入 tips.jsonl，运行 /sync-cc-tips",
-    "expected": "写入前先验证该名字的实际归属：内置 skill 看二进制 no({name:...}) 注册、subagent 看 agentType、内置命令看命令表、插件看其 skills//commands/ 目录。若实际是 subagent 或命令则不得用 [Skill] 标签（它断言「可用 skill 方式调用」），改用 [交互]/[配置]；归属判定不出来时同样不使用 [Skill]"
+    "prompt": "准备把 changelog 中某个带斜杠形式的新能力写入 tips.jsonl，运行 /sync-cc-tips",
+    "expected": "写入前调用 scripts/check_slash_name.py <斜杠名> 校验存在性，不得在 SKILL.md 里手写 grep 命令。按 verdict 处置：command → 斜杠名存在，但仍须看 evidence[].context 与 registry_markers 确认是注册体（脚本给 warning 时尤须复查——name:\"init\" 会命中 JS 解析器的无关字符串，「命令跑通且数字属实」≠「输出能支撑那个判断」）；subagent → 不写斜杠形式、改述为「内置 subagent」；not_found 且 changelog 提到它 → 可能来自插件，斜杠形式须带命名空间前缀；not_found 且非插件 → 不写斜杠形式并列入摘要交用户裁决；binary_missing → 按 hint 用 (Get-Command claude).Source 定位后传 --binary 重试。不得试图用二进制判定「是 skill 还是命令」——该区分在 v2.1.266 已不存在（斜杠命令与 skill 同一套注册），也不得回溯改动已有 [Skill]/[交互] 标签的历史划分。不得建议在脚本里写死混淆过的注册函数名（no( / po( 之类每版本会变），稳定锚点只有语义字段名 name: 与 agentType:"
   },
   {
     "id": 11,
@@ -56,18 +56,18 @@
   },
   {
     "id": 12,
-    "prompt": "在一条已有条目末尾补充一句说明后，运行 /sync-cc-tips 的第五步格式校验",
-    "expected": "格式校验除验证 {id,category,title,body} 四字段齐全之外，还须统计每条 body 内 功能：/效果：/例子： 各前缀的出现次数，任一 > 1 即报错。不得用「字段数 > 4」替代该检查——--add-dir 条目有意使用 5 段按平台分列例子"
+    "prompt": "在一条已有条目末尾补充一句说明后，运行 /sync-cc-tips 的第五步完整性校验",
+    "expected": "第五步调用 scripts/validate_tips.py --expect-entries N（本轮有删除时再加 --removed-ids=...），不得在 SKILL.md 里手写 grep -c '^{' / wc -l / python -c 三段命令。只有 ok:true 才可进第六步；ok:false 时按 failed 数组逐项修复。九项检查中 field_dup 须统计 body 内「功能」「效果」各自出现次数、任一 ≠ 1 即报错（同一条内重复这两段是语义重复），而「例子」不适用该计数规则——按行首匹配、允许多行分平台写法（例子（Windows）：／例子（Linux/Mac）：），这是 1.4.0 为修 --add-dir 被误判为缺字段所加的有意例外。不得用「字段数 > 4」替代该检查。length 项恒为 ok、不进 failed——它只报告超阈值清单，因为长度自检约束改动增量而非全库状态"
   },
   {
     "id": 13,
     "prompt": "changelog 提到 /stats 的新能力，而 tips.jsonl 已有一条 /usage 条目（两者为同一命令的别名），运行 /sync-cc-tips",
-    "expected": "第二步构建「已覆盖标识符集」时把别名映射一并展开（usage←cost,stats 等 21 组），识别 /stats 命中已有 /usage 条目，判定为已覆盖或需修改，而不是新增重复条目；若需合并，标题中标全所有别名以便后续 sync 能靠字面命中"
+    "expected": "第二步构建「已覆盖标识符集」时把 SEMANTIC_ALIASES 显式登记的等价组一并展开，识别 /stats 命中已有 /usage 条目，判定为已覆盖或需修改，而不是新增重复条目；若需合并，标题中标全所有别名以便后续 sync 能靠字面命中"
   },
   {
     "id": 14,
-    "prompt": "tips.jsonl 中已存在三条都在讲 /code-review 的条目，运行 /sync-cc-tips",
-    "expected": "除「新条目 vs 已有条目」的单向判重外，还须按主标识符对库内已有条目分组扫描，同组 ≥ 2 条时列出供人工判断能否合并，并在第四步变更预览中作为待合并项呈现——冗余是历次 sync 累积产生的，每次单看都不重复"
+    "prompt": "tips.jsonl 中已存在三条都在讲 agent 的条目（agent-配置 / agent-指定代理 / Agent-派生工作流），运行 /sync-cc-tips",
+    "expected": "须消费 detect_residue.py 的 shared_main 字段：在第四步变更预览中残影栏之后单列 📚 同主标识符聚集栏，列出同组 ≥ 2 条的分组供人工判断能否合并（shared_main_groups > 0 时列出，为 0 时整栏略去）。agent 组这三条重叠度未达 0.25 阈值、不进 candidates，只会出现在聚集栏，因此该栏不进 AskUserQuestion 的 options——它没有对应自动化动作。已在残影栏出现的组整组跳过，避免同一批 id 出现两次。冗余是历次 sync 累积产生的，每次单看都不重复，只有整库分组扫描才看得见。注意 main_identifier 按 id 的 ASCII 前缀分组，共同概念出现在后缀时不会聚到一起（/code-review-审查当前改动 / requesting-code-review / receiving-code-review 分属三个 main），这是已知边界不是 bug"
   },
   {
     "id": 15,
@@ -78,5 +78,30 @@
     "id": 16,
     "prompt": "changelog 新增了一个 macOS 专属设置项，以及一个需组织管理员写 managed-settings 才生效的托管设置，运行 /sync-cc-tips",
     "expected": "第三步新增判定须先过环境门：命中硬性阻断条件（平台不符 / 需特定席位 / 需组织管理员权限 / 需云厂商 SDK / 需 claude.ai 账号会话 / 本机无提供者）则跳过，并在摘要「⏭️ 跳过」中注明原因，而不是写入库中占位。判据是有无硬性阻断，不是功能听起来是否企业向——走自定义网关时网关类条目反而可用"
+  },
+  {
+    "id": 17,
+    "prompt": "detect_residue.py 召回 2 条候选，均已登记在 KNOWN_NON_RESIDUE 中，识别出 3 条新增，继续执行 /sync-cc-tips",
+    "expected": "第四步变更预览除四类计数外，必须单独列出 🔗 残影栏并展示这 2 条候选（标注「已知误报」与建议保留），不得因已登记豁免就静默隐藏——裁决权属于用户。stats.pending_review 为 0 但 candidates 仍为 2。因无待裁决候选，AskUserQuestion 的 options 不出现「写入并同时合并残影」项"
+  },
+  {
+    "id": 18,
+    "prompt": "detect_residue.py 召回 1 条未登记的候选（A ⊇ B，重叠 0.28），识别出 2 条新增，继续执行 /sync-cc-tips",
+    "expected": "第四步预览的 🔗 残影栏列出该候选并标为「待裁决」，AskUserQuestion 的 options 必须包含条件项「写入并同时合并残影」且写明会删哪条、并入哪条；若用户选择合并，B 独有的信息须并入 A 而非直接丢弃，且第五步必须给 validate_tips.py 传 --removed-ids 做孤儿引用反查（本轮有删除）"
+  },
+  {
+    "id": 19,
+    "prompt": "本轮修改 3 条已有条目，其中 1 条改动前 520 字符（已超中位数 2 倍）、改动后 560 字符，另有 18 条未被本轮触及的条目也超阈值，继续执行 /sync-cc-tips",
+    "expected": "长度自检只约束改动增量：对那条改前已超的，只压缩本轮新加的部分，不重写其原有内容（外科手术式改动）；18 条未被触及的存量完全不处理，不得因它们超阈值就阻断流程或顺手改写。若某条是本轮从阈值内被推超的，则必须压回阈值内。validate_tips.py 的 length 项恒为 ok（只报告 over 清单），不得因 over_count 非零就判校验失败"
+  },
+  {
+    "id": 20,
+    "prompt": "第二步跑 validate_tips.py 时发现 tips.jsonl 已有 1 条 body 缺「例子」段（改动前就存在的问题），继续执行 /sync-cc-tips",
+    "expected": "第二步的基线体检报出该 failed 项后，须报告并询问是否先修复存量问题再同步，而不是静默继续或直接停止整轮——这是改动前就存在的问题，不是本轮造成的。用户选择继续则记下基线状态，第五步比对时排除这些已知项，避免把存量缺陷误算成本轮写入错误。三个第二步脚本的失败处置刻意不同，不得照搬：build_alias_index.py 失败必须停（判重集不全会静默产出重复条目），detect_residue.py 失败不中止（只损失一次可选清理机会），validate_tips.py 失败交用户裁决"
+  },
+  {
+    "id": 21,
+    "prompt": "本轮删除了一条 id 为 --old-flag 的条目，运行 /sync-cc-tips 的第五步校验",
+    "expected": "调用 validate_tips.py 时须用等号形式传参：--removed-ids=--old-flag。因为值以 - 开头，空格分隔形式会被 argparse 当成另一个 flag 而解析失败。orphan_ref 项须反查该标识符是否仍被其他条目的 title/body 引用，命中则按 hits[].referrer 修正引用方措辞；被删条目自身提到自己的标识符不算悬空引用。同时须传 --expect-entries（旧数 + 新增 − 删除）核对增删账平"
   }
 ]
