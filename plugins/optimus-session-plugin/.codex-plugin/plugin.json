@@ -1,0 +1,27 @@
+{
+  "name": "optimus-session-plugin",
+  "version": "1.0.1",
+  "description": "跨会话交接：会话结束前分三层保存进度与决策，新会话恢复上下文接着干",
+  "skills": "./skills/",
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT",
+  "interface": {
+    "displayName": "Optimus Session",
+    "shortDescription": "跨会话交接工具",
+    "longDescription": "跨会话交接：会话结束前分三层保存进度与决策（进度与待办 / 关键决策 / 习得与核验），新会话恢复上下文接着干",
+    "developerName": "Optimus",
+    "category": "Productivity",
+    "capabilities": [
+      "Skills"
+    ],
+    "defaultPrompt": [
+      "交接一下当前工作",
+      "继续上次的工作"
+    ]
+  }
+}

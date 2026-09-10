@@ -1,0 +1,12 @@
+{
+  "name": "optimus-session-plugin",
+  "version": "1.0.1",
+  "description": "跨会话交接：会话结束前分三层保存进度与决策，新会话恢复上下文接着干",
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT"
+}
