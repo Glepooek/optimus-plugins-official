@@ -2,7 +2,7 @@
 name: sync-cc-tips
 description: 从 Claude Code 最新 changelog 自动同步 tips.jsonl：按环境可用性与可感知性双重门禁新增条目、修正过时内容、删除已废弃功能，写入后做四重完整性校验并推进同步锚点，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 metadata:
-  version: "2.2.1"
+  version: "2.2.2"
   author: desktop client team
 compatibility: 需要 Python 3（标准库，无第三方依赖）——第一步取 changelog 走 urllib 两跳（raw.githubusercontent.com → api.github.com），两跳均失败时降级为 WebFetch；第三步斜杠名取证需本机 claude 二进制（默认 npm 全局安装路径，可用 --binary 指定）。脚本经 Bash 调用 Windows 原生 Python，二者文件系统视图不同，临时文件一律用仓库内相对路径。流程末尾调用 commit-cc-plugin skill 完成提交推送。
 allowed-tools: Bash WebFetch Read Write Edit Grep AskUserQuestion Skill
@@ -145,7 +145,7 @@ python $S/validate_tips.py        # 基线体检：{ok, entries, failed, checks}
 满足以下**全部条件**才生成新条目：
 - 属于对用户操作有实质影响的功能（新 CLI flag、新子命令、新 Hook 事件、新 settings.json 设置项、新交互命令）
 - 在 tips.jsonl **全文**中，该功能点的所有主标识符（flag 名、设置项名、命令名、环境变量名）在 `ids`/`aliases` 中均未命中
-- **环境可用性门**：该功能在本机 harness 下确实能跑。mac/Linux-only、Enterprise 席位、cloud-SDK、claude.ai 账号等本机用不了的 → 标记 `⏭️ 跳过（本机不可用）`，不占坑
+- **环境可用性门**：该功能在本机 harness 下确实能跑。mac/Linux-only、Enterprise 席位、cloud-SDK、claude.ai 账号、**VS Code / JetBrains 扩展专属**（本机只在终端使用 Claude Code，2026-09-12 确认）等本机用不了的 → 标记 `⏭️ 跳过（本机不可用）`，不占坑。⚠️ 判据是「有无硬性阻断」：条目**主体**是扩展专属功能才跳过；主体本机可用而只在某句提到扩展（如 `/plugin` 安装即时生效顺带提 VS Code 对话框），是**删掉那半句、保留条目**
 - **可感知性门**：用户能亲眼看到该功能生效或未生效（判据与豁免见下节），否则 → 标记 `⏭️ 跳过（不可感知）`
 
 #### 👁️ 可感知性门（新增前必过）
@@ -160,7 +160,7 @@ tips 的载体是 SessionStart 单条轮播——**读者读完既无法追问�
 | 有专门命令能查（`/usage`、`/permissions`、`/doctor`、`claude xxx list`） | ✅ 通过 | 缓存命中率经 `/usage` 可见 |
 | 会改变用户日常会撞到的行为（原来能用现在报错、原来要确认现在不用） | ✅ 通过 | 项目级 env 收紧、权限规则语义变更 |
 | 只能在 OTel 后端 / 网关日志 / stream-json 里看到 | ❌ 跳过 | 遥测类环境变量、headless 专属输出字段 |
-| 默认值远超正常使用量，永远碰不到 | ❌ 跳过 | 上限类阈值（默认 200 次搜索、20 并发） |
+| 是上限、超时或配额阈值（**不看默认值有多大**） | ✅ 通过 | 并发子代理上限 20、单会话搜索上限 200、WebFetch 缓存 15 分钟 |
 | 静默生效，开关前后用户观察不到差别 | ❌ 跳过 | 内存压力回收、空闲看门狗、沙箱静默阻断 |
 | 需要企业 managed 配置 / 自建网关 / 组织席位才有对象 | ❌ 跳过 | 组织白名单、企业 tips 投放 |
 | 描述的是「兼容多种写法」或「某限制已移除」，无行为差异 | ❌ 跳过 | frontmatter 命名/布尔值兼容、硬上限移除 |
@@ -172,6 +172,8 @@ tips 的载体是 SessionStart 单条轮播——**读者读完既无法追问�
 2. **安全收紧豁免** — 该条目描述的是权限或安全边界收紧，用户会以「原来能用现在被拦」的形式撞上。例：项目级 settings.json 的 env 收紧。
 
 > ⚠️ **不要用「高级/小众」当判据**，判据只有一条——**有没有验证闭环**。`--restricted` 很小众但一眼可见，该留；`CLAUDE_ENABLE_STREAM_WATCHDOG` 人人可设但完全静默，该跳。2026-09-07 清理 17 条即按此标准，误按「高级」筛会连带删掉 `--restricted`、`/batch`。
+
+> 📌 **上限类是 2026-09-12 明确反转的一档，不要再按「碰不到就跳过」处理。** 该行此前是 ❌，举例正是「默认 200 次搜索、20 并发」；用户当轮复审时裁定这类条目**一律保留且后续必须新增**。理由是它们的价值不在「看到它生效」而在**知道天花板存在、撞上时知道去哪调**——这是速查表属性，与需要验证闭环的机制类条目不同。**残留风险已知**：这一档确实不满足本节的通用判据，属显式例外而非判据的自然推论，因此不要拿它去类推其他 ❌ 档（遥测、静默看门狗、企业专属仍照跳）。
 
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
@@ -352,6 +354,7 @@ python .claude/skills/sync-cc-tips/scripts/validate_tips.py
   · vscode  ── VSCode-会话分组 / VSCode-不活跃会话归档
 ```
 
+⚠️ **上面这段是 2026-09-09 的实跑快照，其中多个 id 已被后续清理删除**（`agent-配置`、`Memory-工作流` 早于本次，`VSCode-*` 两条于 2026-09-12 随 VS Code 专属条目一并删除）。它在此处的职能是**演示栏位格式**，不是当前库状态——不要照着它 grep id，也不要据此推断现在有几组。当前值一律现跑 `detect_residue.py` 读 `shared_main_groups`。
 **它与残影栏是两个不同的信号，不要合并成一栏**：残影栏是「功能描述重叠已过阈值」的**可执行**裁决项；聚集栏只说明「这几条讲的是同一个主标识符」，重叠度未达阈值，多数是正常的分主题拆分（如上表四组皆是）。**已在残影栏出现的组整组跳过**——上例即 2026-09-09 现网实跑结果：`shared_main_groups: 5`，其中 `mcp` 组已被残影栏覆盖，故此处只余 4 组。避免同一批 id 在预览里出现两次。
 
 聚集栏不进 `AskUserQuestion` 的 options——它没有对应的自动化动作，只是给用户一个「库里哪些主题在长期累积」的视野。冗余是历次 sync 逐次累积的，每次单看都不重复，只有整库分组扫描才看得见。
@@ -412,7 +415,7 @@ python .claude/skills/sync-cc-tips/scripts/validate_tips.py \
 
 ```bash
 MSYS_NO_PATHCONV=1 python .claude/skills/sync-cc-tips/scripts/validate_tips.py \
-  --expect-entries 247 --removed-ids=/design-界面设计草图,/dataviz-图表与可视化设计
+  --expect-entries <改动后应有的条数> --removed-ids=/design-界面设计草图,/dataviz-图表与可视化设计
 ```
 
 两个坑同时踩到时（既有 `-` 开头又有 `/` 开头的 id）等号形式与 `MSYS_NO_PATHCONV=1` 都要加，它们互不替代。
@@ -513,7 +516,7 @@ echo "{最新版本}" > .claude/skills/sync-cc-tips/.last-synced-version
 | 反模式 | 原因 | 替代做法 |
 |---|---|---|
 | 把 changelog 里所有更新项都加入 tips.jsonl | tips 面向用户实用技巧，不是版本记录——内部重构、bug fix、依赖升级不应出现 | 只加对用户操作有实质影响的功能（新 flag、新命令、新设置项） |
-| 只要是新 flag / 新设置项就加进来 | 存在大量用户永远观察不到效果的开关（遥测、静默看门狗、企业专属、默认值碰不到的上限），加进来只是占轮播位——2026-09-07 因此一次性清掉 17 条 | 过「👁️ 可感知性门」：答不出「用户怎么知道它起作用了」就跳过 |
+| 只要是新 flag / 新设置项就加进来 | 存在大量用户永远观察不到效果的开关（遥测、静默看门狗、企业专属），加进来只是占轮播位——2026-09-07 因此一次性清掉 17 条 | 过「👁️ 可感知性门」：答不出「用户怎么知道它起作用了」就跳过。**唯一例外是上限/超时/配额阈值**，该档 2026-09-12 已反转为一律新增 |
 | 用「高级 / 小众」筛掉条目 | 会误伤 `--restricted`、`/batch` 这类小众但一眼可见的真实能力 | 唯一判据是有无验证闭环，与功能是否高级无关 |
 | 只用条目标题判断是否已覆盖 | tips.jsonl 每条含完整正文，次级功能点只出现在功能/效果/例子字段而非标题 | 必须扫描 tips.jsonl **全文**，用主标识符（flag 名/设置项名/命令名）做精确匹配 |
 | 0 变化时提交 tips.jsonl 改动 | 无实质变更却产生 commit，污染 git 历史 | 触发「🚦 零变更总闸」跳过 Step 4 与完整性校验；**但仍须推进 `.last-synced-version` 并为该锚点单独提交**——这不是"无意义 commit"，不推进会导致下次重复扫描同一区间 |
