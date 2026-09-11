@@ -237,6 +237,42 @@ class TestOrphanRef(JsonlCase):
         self.assertTrue(payload["checks"]["orphan_ref"]["ok"])
 
 
+class TestMangledIds(JsonlCase):
+    """Git Bash 路径转换把 / 开头的 id 改写成本机路径时必须判失败。
+
+    真实事故：--removed-ids=/design-界面设计草图 被改写成
+    C:/Program Files/Git/design-界面设计草图，反查落空却仍报 ok，
+    被删条目的悬空引用漏检。
+    """
+
+    def test_drive_prefixed_id_fails_the_check(self):
+        rows = [entry("/keep", body="功能：做事\n效果：配合 /design 使用\n例子：a")]
+        payload, ok = vt.validate(
+            self.make(rows), removed_ids=["C:/Program Files/Git/design-界面设计草图"]
+        )
+        r = payload["checks"]["orphan_ref"]
+        self.assertFalse(r["ok"])
+        self.assertFalse(ok)
+        self.assertEqual(r["mangled"][0]["probable"], "/design-界面设计草图")
+        self.assertIn("MSYS_NO_PATHCONV=1", r["hint"])
+
+    def test_backslash_drive_prefix_also_detected(self):
+        self.assertEqual(
+            vt.detect_mangled_ids([r"D:\msys64\gone"]),
+            [{"given": r"D:\msys64\gone", "probable": "/D:\\msys64\\gone"}],
+        )
+
+    def test_normal_ids_are_not_flagged(self):
+        clean = ["/design-界面设计草图", "--gone", "w-/---worktree-工作树会话", "Memory-自动记忆"]
+        self.assertEqual(vt.detect_mangled_ids(clean), [])
+
+    def test_mangled_id_short_circuits_before_hit_scan(self):
+        """被改写时不再输出 hits——反查结果本身不可信，不该让调用方误读为「无悬空引用」。"""
+        rows = [entry("/keep", body="功能：做事\n效果：见 /gone\n例子：a")]
+        payload, _ = vt.validate(self.make(rows), removed_ids=["C:/Program Files/Git/gone"])
+        self.assertNotIn("hits", payload["checks"]["orphan_ref"])
+
+
 class TestCountMatch(JsonlCase):
     def test_skipped_when_not_provided(self):
         payload, _ = vt.validate(self.make([entry("/a")]))

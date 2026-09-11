@@ -323,3 +323,42 @@ grep -ao '{agentType:"<名字>"[^}]\{0,80\}' "$B"        # 命中 → 内置 sub
 2. **正则写窄会把「存在」误判成「不存在」**，方向恰好是最危险的一侧。首次提取用 `name:"x",menuDescription`（要求紧邻），漏掉中间插字段的 `name:"fewer-permission-prompts",requires:{workspace:!0},menuDescription:...`，该名字差点被当作不存在而删除。窗口取 200 字符正是为此。另外 `name:"init"` 这类短名会命中 JS 解析器里的无关字符串（`e.kind!=="init"`），**必须看上下文是不是注册体**，不能只看命中数。
 
 删除类改动收尾必查**悬挂引用**：被删标识符是否仍被其他条目正文提及。2026-09-04 删 29 条后，`/simplify`、`/code-review`、`/commit`、`Bedrock/Vertex/Foundry`、`Remote Control` 在 5 条保留条目里留下悬挂引用，其中包括那条专讲「skill 与命令区别」的条目——它举的两个例子恰好都被删掉了。
+
+### ⚠️ 2026-09-11：随附 skill 是惰性解包的内嵌资源，grep 不到 ≠ 不存在
+
+第四轮判据（只判存在性）仍不足以覆盖**随附 skill**。二进制里：
+
+```
+bundledSkillsRoot = Ie(rp(), "bundled-skills", {ISSUES_EXPLAINER: ...})
+```
+
+随附 skill 的正文是**内嵌资源，首次使用时才解包**到 `<临时目录>/bundled-skills/`。未触发过就不在磁盘上（本机 `AppData/Local/Temp/claude-1000/` 下当时没有该目录），名字也不以 `name:"x"` 字面量形式存在于可执行段。**于是 `grep 'name:"simplify"'` 返回 0，而 `/simplify` 实际可用。**
+
+当轮据此把 `/simplify`、`/dataviz` 判为「斜杠名本机不存在」并提请删除，被用户实跑推翻。同时暴露上文第 1 条坑的记载偏差：`code-review` 不只来自插件——CLI 自带的提示语写着「a fast, cheap code review, try `/code-review low`. **It runs the built-in skill** at its lightest effort level」，内置与插件同名并存。
+
+**判定顺序改为：**
+
+| 优先级 | 手段 | 结论强度 |
+|---|---|---|
+| 1 | 在真实会话里敲一次 | 决定性，直接采信 |
+| 2 | `ls <临时目录>/bundled-skills/` | 有 → 存在；**空或不存在 → 无结论**（惰性解包） |
+| 3 | 二进制 grep `name:"x"` | 命中 → 存在；**未命中 → 无结论** |
+
+**教训**：这是第三次同型错误了（前两次记在上文「两个仍然有效的坑」与「查不到 ≠ 不存在」）。三次的共同形状是**把「我的工具没看到」当成「它不存在」，并据此提议删除**——而删除是不可逆方向。涉及删除的存在性判定，**未命中一律降级为「无结论」并交回用户实跑确认**，不得写成「已取证不存在」。
+
+### ⚠️ 2026-09-11：Git Bash 路径转换让 `orphan_ref` 静默漏检（已在脚本里堵住）
+
+`--removed-ids` 的值以 `/` 开头时，MSYS 会把它当 POSIX 路径重写成 `<MSYS 安装根>/...`：
+
+```bash
+# 实际事故
+python scripts/validate_tips.py --removed-ids=/design-界面设计草图
+# → "checked": ["C:/Program Files/Git/design-界面设计草图"]   反查的是不存在的 id
+# → "ok": true                                              却报通过
+```
+
+**危害等级高于普通报错**：`ok: true` 会让人停止怀疑，而真实的悬挂引用一条都没查。这与上文「校验类步骤给错答案比给不出答案危害大得多」是同一条教训的第二次发作——上一次是召回类功能，这次是校验类功能。
+
+**已做的修复**（`validate_tips.py`）：`detect_mangled_ids()` 用盘符前缀 `^[A-Za-z]:[\\/]` 识破改写，命中则 `orphan_ref` 直接判 `ok: false`，输出 `mangled`（`given` 改写后 / `probable` 推测的原 id）与 `hint`，并**不再输出 `hits`**——反查结果本身不可信，输出一个空 `hits` 就等于重犯静默漏检。4 条单测覆盖（正斜杠、反斜杠、正常 id 不误报、短路不出 `hits`）。
+
+**仍需人工遵守的部分**：脚本只能识破、不能自动纠正（纠正后命令行看着对、实际不对，比失败更难查）。正确写法见 SKILL.md 第五步——前置 `MSYS_NO_PATHCONV=1`。`-` 开头要等号形式、`/` 开头要 `MSYS_NO_PATHCONV=1`，两者互不替代，同时踩到就都要加。

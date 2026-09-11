@@ -2,7 +2,7 @@
 name: sync-cc-tips
 description: 从 Claude Code 最新 changelog 自动同步 tips.jsonl：按环境可用性与可感知性双重门禁新增条目、修正过时内容、删除已废弃功能，写入后做四重完整性校验并推进同步锚点，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 metadata:
-  version: "2.2.0"
+  version: "2.2.1"
   author: desktop client team
 compatibility: 需要 Python 3（标准库，无第三方依赖）——第一步取 changelog 走 urllib 两跳（raw.githubusercontent.com → api.github.com），两跳均失败时降级为 WebFetch；第三步斜杠名取证需本机 claude 二进制（默认 npm 全局安装路径，可用 --binary 指定）。脚本经 Bash 调用 Windows 原生 Python，二者文件系统视图不同，临时文件一律用仓库内相对路径。流程末尾调用 commit-cc-plugin skill 完成提交推送。
 allowed-tools: Bash WebFetch Read Write Edit Grep AskUserQuestion Skill
@@ -241,18 +241,18 @@ python .claude/skills/sync-cc-tips/scripts/check_slash_name.py <斜杠名>
 |---|---|
 | `command` | 斜杠名存在，按功能性质选分类。**但须看 `evidence[].context` 确认是注册体**——`registry_markers` 为空时脚本会给 `warning`，那种命中可能是 JS 解析器的无关字符串 |
 | `subagent` | **不写斜杠形式**，改述为「内置 subagent」 |
-| `not_found` + changelog 明确提到它 | 可能来自插件（如 `code-review`/`commit`/`simplify`）——确认插件名后斜杠形式**须带命名空间前缀** |
-| `not_found` 且非插件 | **不写斜杠形式**，列入摘要交用户裁决 |
+| `not_found` + changelog 明确提到它 | 可能来自插件（如 `code-review`/`commit`）——确认插件名后斜杠形式**须带命名空间前缀** |
+| `not_found` 且非插件 | **无结论，不等于「不存在」**：随附 skill 是惰性解包的内嵌资源，名字不以字面量存在于二进制。新增条目时不写斜杠形式；**已有条目一律不动**，列入摘要交用户实跑确认 |
 | `binary_missing` | 按 `hint` 用 `(Get-Command claude).Source` 定位后传 `--binary` 重试 |
 
 ⚠️ **一手证据源是本机原生二进制，不是官方文档**（文档滞后于发布）。**脚本只取证不下结论**——`verdict` 是模式匹配结果，是否为注册体须由你看 `evidence` 判断。脚本另输出的 `action` 只是上表首列的中文回显，**不是独立信号**，以本表为准。四条取证教训（不按调用形态提取清单、不写死混淆名、常量表不算证据、正则写窄会把「存在」误判成「不存在」）已固化在 `check_slash_name.py` 的 docstring 与单测中，完整推翻记录见 `known-issues.md`「取证方法备注」。
 
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
-| 已知存在的名字（如 `doctor`）返 `not_found` | 混淆结构变了，用 `grep -ao '.\{60\}doctor.\{60\}' <二进制>` 宽窗口反查实际形态 | 在 `known-issues.md` 记一行说明模式失效 |
+| 已知存在的名字（如 `doctor`）返 `not_found` | 混淆结构变了，用 `grep -ao '.\{60\}doctor.\{60\}' <二进制>` 宽窗口反查实际形态 | 宽窗口也查不到**不代表不存在**（随附 skill 惰性解包，见下方⚠️）——交用户实跑确认，并在 `known-issues.md` 记一行说明模式失效 |
 | `verdict: command` 但带 `warning` | 加长窗口复查完整对象 | 列入摘要交用户裁决 |
 
-⚠️ 上表两种兜底与 `binary_missing`、`not_found` **共同的保守侧都是「不写斜杠形式」**——存在性无法确认时宁可只描述功能。
+⚠️ **保守侧随改动方向而变，不是恒定的「不写斜杠形式」。** 新增条目时存在性无法确认 → 只描述功能、不写斜杠形式。**已有条目则相反**：`not_found` 是无结论而非否证，把它当否证会去删一个真实可用的功能——2026-09-11 就据此错误提请删除 `/simplify` 与 `/dataviz`，被用户实跑推翻（详见 `known-issues.md`）。**未命中不构成删除依据**，只能列入摘要交用户确认。
 
 ### ✏️ 修改条件
 以下情况原地更新已有条目（不改变条目位置）：
@@ -407,6 +407,15 @@ python .claude/skills/sync-cc-tips/scripts/validate_tips.py \
 ```
 
 ⚠️ **`--removed-ids` 的值以 `-` 开头时（flag 类 id）必须用等号形式**，空格分隔会被 argparse 当成 flag。
+
+⚠️ **值以 `/` 开头时（斜杠命令类 id）在 Git Bash / MSYS 下必须前置 `MSYS_NO_PATHCONV=1`**，否则 shell 会把 `/design-界面设计草图` 重写成 `C:/Program Files/Git/design-界面设计草图`，反查的是不存在的 id。脚本已能识破（`orphan_ref` 判失败并在 `mangled` 里回报改写前后的形态），但**别指望靠它兜底**——正确写法是：
+
+```bash
+MSYS_NO_PATHCONV=1 python .claude/skills/sync-cc-tips/scripts/validate_tips.py \
+  --expect-entries 247 --removed-ids=/design-界面设计草图,/dataviz-图表与可视化设计
+```
+
+两个坑同时踩到时（既有 `-` 开头又有 `/` 开头的 id）等号形式与 `MSYS_NO_PATHCONV=1` 都要加，它们互不替代。
 
 **`ok: true` 才可进入第六步。** `ok: false` → 看 `failed` 数组定位，按下表修复并重跑；修复无效或原因不明 → 停止流程，不进入第六步，**不推进锚点**。
 

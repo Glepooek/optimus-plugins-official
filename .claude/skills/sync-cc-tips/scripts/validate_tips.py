@@ -33,6 +33,7 @@
 
 import argparse
 import json
+import re
 import statistics
 import sys
 
@@ -42,6 +43,9 @@ REQUIRED_FIELDS = ("id", "category", "title", "body")
 
 # 必须各恰好出现 1 次的 body 段落前缀
 UNIQUE_SECTIONS = ("功能", "效果")
+
+# 盘符前缀，用于识破 MSYS 路径转换（见 detect_mangled_ids）
+DRIVE_PREFIX = re.compile(r"^[A-Za-z]:[\\/]")
 
 # body 必须具备的三段。「例子」按行首匹配，容许「例子（Windows）：」这类变体。
 REQUIRED_SECTIONS = ("功能", "效果", "例子")
@@ -197,6 +201,22 @@ def check_length(entries):
     }
 
 
+def detect_mangled_ids(removed_ids):
+    """挑出被 Git Bash / MSYS 路径转换改写过的 id。
+
+    MSYS 会把 `/foo` 形式的实参重写成 `<MSYS 安装根>/foo`，于是
+    `--removed-ids=/design-界面设计草图` 传进来变成
+    `C:/Program Files/Git/design-界面设计草图`——反查的是一个根本不存在的 id，
+    却仍然报 ok，删除后的悬空引用就此漏检。tips 的 id 里不会出现盘符前缀，
+    据此识破并让 orphan_ref 直接判失败，而不是静默放过。
+    """
+    return [
+        {"given": rid, "probable": "/" + rid.rsplit("/", 1)[-1]}
+        for rid in sorted(removed_ids)
+        if DRIVE_PREFIX.match(rid)
+    ]
+
+
 def check_orphan_ref(entries, removed_ids):
     """被删条目的标识符是否仍被其他条目正文引用。
 
@@ -205,6 +225,18 @@ def check_orphan_ref(entries, removed_ids):
     """
     if not removed_ids:
         return {"ok": True, "skipped": "本轮无删除"}
+
+    mangled = detect_mangled_ids(removed_ids)
+    if mangled:
+        return {
+            "ok": False,
+            "mangled": mangled,
+            "checked": sorted(removed_ids),
+            "hint": (
+                "Git Bash / MSYS 把 / 开头的实参重写成了本机路径，反查的是不存在的 id。"
+                "重跑时前置 MSYS_NO_PATHCONV=1，或改用 PowerShell。"
+            ),
+        }
 
     hits = []
     for e in entries:
@@ -283,6 +315,9 @@ def main(argv):
             "本轮删除的条目 id，逗号分隔。提供后才做孤儿引用反查。"
             "⚠️ id 以 - 开头时（flag 类）须用 --removed-ids=--foo,--bar 等号形式，"
             "空格分隔会被解析成 flag。"
+            "⚠️ id 以 / 开头时，Git Bash 会把它重写成本机路径，"
+            "须前置 MSYS_NO_PATHCONV=1 或改用 PowerShell——"
+            "漏加时 orphan_ref 会判失败并回报被改写成了什么。"
         ),
     )
     p.add_argument(

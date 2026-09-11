@@ -143,7 +143,11 @@ def looks_like_registry(context):
 ACTIONS = {
     "command": "斜杠名存在，按功能性质选分类",
     "subagent": "是 subagent，不写斜杠形式，改述为「内置 subagent」",
-    "not_found": "不写斜杠形式；若 changelog 明确提到它，可能来自插件——确认插件名后须带命名空间前缀，否则列入摘要交用户裁决",
+    "not_found": (
+        "⚠️ 无结论，不等于「不存在」——随附 skill 是惰性解包的内嵌资源，名字不以字面量存在于二进制"
+        "（/simplify、/dataviz 曾被此误判为不存在）。**不得据此提议删除**，须由用户在真实会话里实跑确认；"
+        "若 changelog 指向插件，确认插件名后须带命名空间前缀，否则列入摘要交用户裁决"
+    ),
     "binary_missing": "二进制未找到，改述为功能描述并在摘要注明「斜杠名未验证」",
 }
 
