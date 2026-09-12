@@ -13,6 +13,7 @@
 | 条目名 | 方式 | 上游 | ref | sha | 接入日期 | 形态分支 | 状态 |
 |---|---|---|---|---|---|---|---|
 | `cangjie-skill` | 链接 | https://github.com/kangarooking/cangjie-skill | main | b633a4fad5a02f0fc6b2524d1ddf3ed50c753a40 | 2026-08-29 | 根目录裸 SKILL.md | 正常 |
+| `archify` | 链接 | https://github.com/tt-a1i/archify | main | 6db72a9aea3d0f67a6a034e41f8a5491476a11c1 | 2026-09-12 | skill 在子目录（`archify/`），无 plugin.json | 正常 |
 
 **`状态` 列取三值**，缺省 `正常`：
 

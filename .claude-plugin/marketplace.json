@@ -1,7 +1,7 @@
 {
   "name": "optimus-plugins-official",
   "description": "自定义 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强、权限通知等企业级开发工具链",
-  "version": "14.1.0",
+  "version": "14.2.0",
   "owner": {
     "name": "optimus",
     "url": "https://www.optimus.cn"
@@ -71,6 +71,21 @@
       "author": { "name": "kangarooking" },
       "homepage": "https://github.com/kangarooking/cangjie-skill",
       "category": "productivity"
+    },
+    {
+      "name": "archify",
+      "description": "把需求描述或 Mermaid 输入转成可校验的交互式独立 HTML 图表（架构图/流程图/时序图/数据流图/生命周期图）（外部引入：tt-a1i/archify，MIT License；skill 位于仓库 archify/ 子目录）",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/tt-a1i/archify.git",
+        "ref": "main",
+        "sha": "6db72a9aea3d0f67a6a034e41f8a5491476a11c1"
+      },
+      "strict": false,
+      "skills": ["./archify"],
+      "author": { "name": "tt-a1i" },
+      "homepage": "https://github.com/tt-a1i/archify",
+      "category": "development"
     }
   ]
 }
