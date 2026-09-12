@@ -11,4 +11,4 @@
 - 更新失败分四类（临时不可达 / 上游仓库已消失 / ref 已消失 / 安装验证失败），「上游失联」落成台账状态标记而非仅历史记录——否则每次更新都会把同一个已死的仓库重试一遍
 - `disable-model-invocation: true`：本 skill 只能由人显式调用，模型不按 description 自主拉起，`/loop` 等调度亦不执行
 - 拷贝模式的两条正当理由与落位规范（含 version 取值的两情形规则）
-- 配套台账 `registry.md`（已接入 / 已排除 / 更新历史三张表，已接入表带 `<!-- registry:active -->` 锚点与 `状态` 列）与传感器 `.githooks/check_external_entries.py`（8 项检查）
+- 配套台账 `registry.md`（已接入 / 已排除 / 更新历史三张表，已接入表带 `<!-- registry:active -->` 锚点与 `状态` 列）与传感器 `.githooks/check_external_entries.py`（检查项见 `.githooks/README.md`）

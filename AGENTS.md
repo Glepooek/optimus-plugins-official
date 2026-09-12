@@ -196,7 +196,7 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 | `.claude/rules/agent-conventions.md` | agent 规范（按路径自动加载） | 两者共用 |
 | `.claude/rules/hook-conventions.md` | hook 规范（按路径自动加载），规范依据指向 `knowledge-base/claude-code-hooks/` | 两者共用 |
 | `.githooks/check_hook_configs.py` | hook 配置机械自检（7 项），`pre-commit` 第 2 项检查 | 两者共用 |
-| `.githooks/check_external_entries.py` | marketplace 外部引用条目机械自检（7 项），`pre-commit` 第 3 项检查 | 两者共用 |
+| `.githooks/check_external_entries.py` | marketplace 外部引用条目机械自检（检查项见 `.githooks/README.md`），`pre-commit` 第 3 项检查 | 两者共用 |
 | `.githooks/pre-commit` | 提交门禁：插件版本同值 + hook 配置合规 + 外部条目合规 + skill 镜像完整（需 `git config core.hooksPath .githooks` 启用） | 两者共用 |
 
 **已被 gitignore 的目录（有意排除，非缺失）：** `.claude/skills/darwin-skill/`（评估产物）、`.remember/`、`.codegraph/`

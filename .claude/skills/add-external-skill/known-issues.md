@@ -3,6 +3,8 @@
 用于记录真实使用中暴露的问题，累积满 3 条"待处理"状态即触发一次 darwin-skill 优化循环。
 格式与流程见 `knowledge-base/skill-authoring/rules/06-continuous-improvement.md`。
 
+> 注：下表 archify、ppt-master 两行记录的是**待人工完成的安装验证动作**，不是本 skill 的行为缺陷——按控制器/用户决策，写入 marketplace 会执行任意代码的插件安装步骤不由自动化代为决定。这两行计入「待处理」计数是如实反映当前状态，但复核 3 条阈值触发 darwin-skill 优化循环时，不应把它们误读为「skill 该改」的信号。
+
 | 日期 | 问题描述 | 触发场景/prompt | 状态 | 优化后版本 |
 |---|---|---|---|---|
 | 2026-09-12 | 拷贝模式分支自 1.0.0 起从未被真实用例执行过——首批两个目标（archify、ppt-master）都走链接，`external_plugins/` 不会被创建 | — | 待处理 | — |

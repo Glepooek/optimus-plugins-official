@@ -179,7 +179,7 @@ Codex 没有与 `disable-model-invocation` 等价的 SKILL.md frontmatter 字段
 3. 确认新接入的 skill 能在 skill 列表中列出。
 4. `python .githooks/check_external_entries.py .`，确认退出码为 0。
 
-第 4 步不是可选项——它是本 skill 与 Task 1 传感器之间的唯一接口：条目写歪（漏 sha、误写 version、`strict:false` 却没有 `skills` 数组等）本 skill 不会自己发现，必须靠传感器机械校验。
+第 4 步不是可选项——它是本 skill 与 `.githooks/check_external_entries.py` 之间的唯一接口：条目写歪（漏 sha、误写 version、`strict:false` 却没有 `skills` 数组等）本 skill 不会自己发现，必须靠传感器机械校验。
 
 任一步失败按「失败处理」一节的对应格处置，不在这里临场发挥。
 
@@ -326,6 +326,5 @@ external_plugins/<name>/
 ## 参考
 
 - 设计 spec：`docs/superpowers/specs/2026-09-12-add-external-skill-design.md`
-- 配对传感器：`.githooks/check_external_entries.py`（8 项机械检查，`pre-commit` 第 3 项）
+- 配对传感器：`.githooks/check_external_entries.py`（机械检查项见 `.githooks/README.md`，`pre-commit` 第 3 项）
 - 台账：`.claude/skills/add-external-skill/registry.md`
-
