@@ -127,3 +127,19 @@ skill 处理用户请求的**第一步**，必须先对比"该 skill 需要哪�
 **适用范围**：本约定自 2026-08-30 生效起，适用于此后**新建**的 skill。已有 skill 的回填按"先试点、验证后推广"分阶段进行——当前处于试点阶段（见下），试点结果确认可行后再推广至全仓库其余插件；本次生效**不代表**尚未回填 `known-issues.md` 的其他现有 skill 立即被判定为不合规。
 
 **当前试点范围**：`plugins/optimus-decision-plugin/` 的 8 个 skill；`.claude/skills/`（除自身不受仓库版本管辖的 `darwin-skill/` 外）的 `commit-cc-plugin`、`knowledge-base-maintain`、`record-tools`、`sync-cc-docs-to-youdaonote`、`sync-cc-tips`、`test-locally` 共 6 个 skill。
+
+### 优化轮的成本约束（本仓落地）
+
+规则本体见 `06-continuous-improvement.md` 的 §5-§10。它们约束的是**怎么优化**，不改变 `AGENTS.md` 规定的**何时必须评分**（Minor/Major 升级前）。本仓的落地形式：
+
+| 规则 | 本仓怎么执行 |
+|---|---|
+| §5 入场条件 | 发起优化轮前，该 skill 自上次改动以来须有一次**真实执行**。本仓可核验的形式是该 skill 的产物有对应变更（如 `sync-cc-tips` 有一次真实同步的提交）。**只靠阅读产出的缺陷清单不构成入场理由** |
+| §6 双向实跑 | 新增判据后把两侧命令与实跑结果记进该轮 CHANGELOG 的 Fixed 段；命令类动作须写明作用域与归还路径 |
+| §7 机械检查 | 跑 `python .claude/skills/sync-cc-tips/scripts/selfcheck.py`，读 `ok`。它查六项：正文行数上限、`known-issues.md` 封顶、声明的确认点数 vs 实际落地点数（含中文数字复述）、悬空引用与无人引用的死 reference、JSON 模板与真实数据的形态一致、`known-issues.md` 里的 `N/500` 声明 vs 实测。**`--skill-dir` 可指向任意 skill**，不限本 skill。⚠️ 它只查机械可判定项，判据是否写宽到形同虚设仍需人工评审——但那份评审不该再花在这六项上 |
+| §8 评审范围 | 评分与缺陷发现分开派发；缺陷发现只给本轮 diff 及其影响半径；**不与判官就分数往复论证**（论证改变数字不改变产物）；一轮只改一个主题 |
+| §9 台账封顶 | `known-issues.md` 正文 **≤150 行**，逐轮叙事移入同目录 `known-issues-archive.md`；派发评审时明确写「不读 `known-issues-archive.md`」 |
+| §10 一手规范 | 写「某字段/写法是否合规」前先读一手文档；先判定是**运行时拒绝**还是**移植时拒绝**，后者是取舍，**不登记例外**（本仓 `disable-model-invocation` 即此例，见前文 frontmatter 一节） |
+
+⚠️ **归档不是删除**。`06-continuous-improvement.md` §3 的「已解决条目不删除」仍然有效，可追溯性由 `known-issues-archive.md` 承载。归档时把反复发作的教训**去叙事化**留在正文——同一病灶第二次出现说明它是规则缺口，而当时的取证过程对下一次执行没有用。
+

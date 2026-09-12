@@ -2,7 +2,7 @@
 name: sync-cc-tips
 description: 从 Claude Code 最新 changelog 自动同步 tips.jsonl：按环境可用性与可感知性双重门禁新增条目、修正过时内容、删除已废弃功能，写入后做九项完整性校验并推进同步锚点，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 metadata:
-  version: "2.3.0"
+  version: "2.3.1"
   author: desktop client team
 compatibility: 需要 Python 3（标准库，无第三方依赖）——第一步取 changelog 走 urllib 两跳（raw.githubusercontent.com → api.github.com），两跳均失败时降级为 WebFetch；第三步斜杠名取证需本机 claude 二进制（默认 npm 全局安装路径，可用 --binary 指定）。脚本经 Bash 调用 Windows 原生 Python，二者文件系统视图不同，临时文件一律用仓库内相对路径。流程末尾调用 commit-cc-plugin skill 完成提交推送。
 allowed-tools: Bash WebFetch Read Write Edit Grep AskUserQuestion Skill
@@ -467,7 +467,7 @@ echo "{最新版本}" > .claude/skills/sync-cc-tips/.last-synced-version
 | `cp tips.jsonl /tmp/xxx.bak` 做备份 | Bash 工具是 Git Bash、Python 是 Windows 原生解释器，`/tmp` 对后者不可见——`cp` 报成功而实际读不到，备份形同虚设且无任何警示 | tips.jsonl 已入库，git 本身就是回滚基线：`git status --short` 确认干净、出错时 `git restore`、对比用 `git show HEAD:<path>` |
 | 在 SKILL.md 里重写取数命令，或按上述思路改 `fetch_changelog.py` 的降级链 | 三类写法都已实测证伪（管道吞退出码、302 回落同域当第二跳、等 N 秒重试同一命令），共同病根是**故障域与首跳重合**。逐条实测见 `references/measurements.md` | 调用 `fetch_changelog.py`，正确写法已被 `test_fetch_changelog.py::TestHopsAreIndependent` 锁住。**新增跳必须换主机名**，不是换工具、不是换 URL 字符串 |
 | 判重时退回手工 grep 扫全文 | 收录裸英文词会让别名集合膨胀到通用词量级，任何功能点都能「命中」→ 判重恒为已覆盖、新增恒为 0，属不报错的静默失效（实测见 `references/measurements.md`） | 只用 `build_alias_index.py`；脚本不可用时停止流程，不要用手工方案顶替 |
-| 把规则写成「某日确认」「某日反转」 | 规则的效力来自它是规则，不来自决策日期。给判据盖上日期会让它读起来像一次临时决定，且日期逐轮累积就成了版本考古——正文该讲「现在按什么办」，不该讲「哪天决定的」 | 判据、约束、警示一律写成**无日期的规范条款**。**实测数值、实跑快照、某次清理的规模一律不进正文**——它们回答「结论怎么来的」，执行时用不到，落 `references/measurements.md` 并在那里标注观测日期与当时样本量；正文只留判据本身加一句指针。缺陷时间线归 `known-issues.md`，版本时间线归 `CHANGELOG.md` |
+| 把规则写成「某日确认」「某日反转」 | 规则的效力来自它是规则，不来自决策日期。给判据盖上日期会让它读起来像一次临时决定，且日期逐轮累积就成了版本考古——正文该讲「现在按什么办」，不该讲「哪天决定的」 | 判据、约束、警示一律写成**无日期的规范条款**。**实测数值、实跑快照、某次清理的规模一律不进正文**——它们回答「结论怎么来的」，执行时用不到，落 `references/measurements.md` 并在那里标注观测日期与当时样本量；正文只留判据本身加一句指针。缺陷时间线归 `known-issues.md`（逐轮叙事进 `known-issues-archive.md`），版本时间线归 `CHANGELOG.md` |
 | 让 `check_slash_name.py` 直接下结论、或据 `verdict` 就写斜杠形式而不看 `evidence` | `name:"init"` 这类短名会命中 JS 解析器的无关字符串。脚本给 `warning` 时尤须复查——**「命令跑通且数字属实」≠「输出能支撑那个判断」** | `verdict` 只是模式匹配结果，看 `evidence[].context` 与 `registry_markers` 自行确认是注册体 |
 
 > `.claude/` 下的 skill 文件本身不触发版本号升级（遵循 CLAUDE.md 规范）
@@ -487,7 +487,8 @@ echo "{最新版本}" > .claude/skills/sync-cc-tips/.last-synced-version
 | `references/preview-format.md` | CHECKPOINT 残影栏与聚集栏的格式示例、标注映射、召回边界 | 第四步 `candidates > 0` 或 `shared_main_groups > 0` 时加载 |
 | `references/write-mechanics.md` | 回滚基线、批量写法、写入失败处理 | 第四步 CHECKPOINT 已确认、即将写入时加载；零变更总闸触发时不加载 |
 | `references/measurements.md` | 各判据与阈值背后的实测数值、实跑快照、清理规模、证伪实验 | **正常执行不加载**；质疑或改动某个阈值/禁令时加载 |
-| `known-issues.md` | 真实使用中暴露的问题台账 | **本 skill 执行中发现自身缺陷时追加一行**；累积满 3 条「待处理」触发 darwin-skill 优化循环 |
+| `known-issues.md` | 待处理项 + 反复发作的教训 + 取证方法备注（封顶 150 行） | **本 skill 执行中发现自身缺陷时追加一行**；满 3 条「待处理」在**下一次真实同步之后**触发优化循环 |
+| `known-issues-archive.md` | 已解决条目的逐轮叙事与历史修复记要 | **正常执行与派发评审时均不加载**；查某条历史缺陷的来龙去脉时才打开 |
 | `test-prompts.json` | 验证 prompt 与期望行为 | darwin-skill 优化循环的验证素材；**改动 SKILL.md 流程后须复查相关 `expected` 是否失效** |
 
 ⚠️ **临时脚本不进本表。** 第四步的 `_apply_sync.py` 是一次性产物，用后即删（下划线前缀即为此标记）。本表只列长期存在的正式脚本。
