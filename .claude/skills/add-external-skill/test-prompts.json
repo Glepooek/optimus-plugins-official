@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "prompt": "把 https://github.com/tt-a1i/archify 这个 skill 加进本库",
+    "expected": "识别为接入模式；探测出 SKILL.md 在 archify/ 子目录且全仓无 plugin.json，判定为 url + strict:false + skills:[\"./archify\"]；用 git ls-remote 取 40 位 sha；在写入前给出 CHECKPOINT 展示形态、sha、License 与该 skill 会带进来什么"
+  },
+  {
+    "id": 2,
+    "prompt": "加个外部 skill 进来",
+    "expected": "识别为接入模式但信息不全，一次性问齐缺失项（上游仓库地址、条目名），不逐步卡顿式追问；不询问依赖是否就绪"
+  },
+  {
+    "id": 3,
+    "prompt": "把 https://github.com/Graphify-Labs/graphify 接进来，用 v8 分支",
+    "expected": "探测出仓库无 SKILL.md、无 plugin.json，skill 正文是 graphify/skill.md 小写且按 harness 分版、靠 graphify install 落地；判定为形态不适用，终止接入并写入 registry.md 的已排除表（子类：形态不适用），不改为拷贝模式"
+  },
+  {
+    "id": 4,
+    "prompt": "更新一下 cangjie-skill",
+    "expected": "识别为更新模式；从 registry.md 读当前 sha，用 git ls-remote 取上游最新 sha；两者相同则报告「已是最新」并结束，不做任何写入"
+  },
+  {
+    "id": 5,
+    "prompt": "刚才更新 archify 的时候拉取失败了，要不要设个定时任务每小时重试一次？",
+    "expected": "明确拒绝：旧 sha 是已验证的可用状态、原样保留；失败原因与时间写进 registry.md 更新历史；不重试、不排定时任务、不自动改 sha。并说明锁 sha + 不写 version 已使 harness 层面的 update 直接 skip，重试机制本身不必要"
+  },
+  {
+    "id": 6,
+    "prompt": "这个外部 skill 我想直接把文件拷进来，不用链接",
+    "expected": "指出默认是链接，拷贝只有两条正当理由（需要 Codex 侧生效／必须改内容且拒绝 fork）；先问清属于哪一条，不满足则仍走链接。若确认走拷贝，说明落位在 external_plugins/<name>/ 且需两份 plugin.json 同值、UPSTREAM.md 记账、version 按上游版本取值"
+  },
+  {
+    "id": 7,
+    "prompt": "archify 的 sha 我已经改成新的了，但装的时候 skill 列不出来",
+    "expected": "识别为更新的写入后失败；把 sha（必要时含 ref）回滚到旧值，拷贝模式一并撤回目录与 version；回滚后再跑一次验证确认已恢复可用；在 registry.md 更新历史记「已回滚」并写明失败原因与回滚到的 sha。不重试、不尝试换个 sha 再试"
+  },
+  {
+    "id": 8,
+    "prompt": "更新 ppt-master 的时候提示仓库 404，上游好像被删了",
+    "expected": "判定为「上游仓库已消失」而非临时不可达；不重试；在 registry.md 已接入行把状态标记为「上游失联」，并说明理由——只记一行历史下次还会把同一个已死的仓库重试一遍，那是把轮询周期换成了人的记忆。同时说明现有条目仍锁在旧 sha、已装好的插件不受影响"
+  },
+  {
+    "id": 9,
+    "prompt": "帮我把台账里所有外部 skill 都查一遍看有没有新版",
+    "expected": "拒绝批量巡检：本 skill 不提供「顺便检查有没有新版」的入口，更新一次只处理一个明确指名的条目。可以说明为什么——批量巡检等价于人工轮询，与「更新失败不重试」的设计相抵。请用户指名要更新哪一条"
+  },
+  {
+    "id": 10,
+    "prompt": "台账里 cangjie-skill 写的 sha 和 marketplace.json 里的不一样，帮我改一致",
+    "expected": "不直接对齐两边。指出这是上一次更新只做了一半的证据（改了条目没记台账，或回滚了条目没回滚台账），先判明哪一个对应实际验证过的状态，再改另一个。可提示 .githooks/check_external_entries.py 第 7 项就是拦这个"
+  }
+]
