@@ -20,7 +20,7 @@ paths:
 
 用了原生字段时两条硬要求：**必须在正文写明该字段解决什么问题**（否则后人会当违规字段"顺手清理"，静默丢掉它带来的约束）；`skills-ref validate` 必然报 `Unexpected key(s) in SKILL.md frontmatter`，**该报错是预期结果**，只需确认它仅涉及有意声明的字段、其余校验项全通过，不要为让校验变绿而删字段。
 
-⚠️ **未实测**：`.claude/skills/` 经 `.agents/skills/` 镜像给 Codex，Codex 对未知顶层字段是忽略还是硬报错**尚未验证**。若硬报错，后果不是告警而是该 skill 在 Codex 侧整体加载失败。要验证就在 Codex 侧实际触发一次带原生字段的维护型 skill，看它能否正常载入；在验证之前，不要把"Codex 侧只是告警"当既定事实写进任何文档。
+Codex 侧（经 `.agents/skills/` 镜像）**忽略未知顶层字段、skill 正常加载**（2026-09-12 实测，codex-cli 0.154.0；方法与证据见 `.claude/skills/add-external-skill/known-issues.md` 第 2 条），但**字段语义在 Codex 侧不生效**——它不进入模型可见上下文，模型无从遵守，那一侧只能靠 `description` 措辞作软约束。
 
 ### metadata.version
 
@@ -79,6 +79,18 @@ compatibility: 需要 Node.js 环境及已配置的 XXX MCP server。
 allowed-tools: Read Write Bash Task
 ---
 ```
+
+## 正文只讲「现在按什么办」
+
+通用要求见 `knowledge-base/skill-authoring/rules/01-skill-format.md`：详细参考材料拆到 `references/`，**禁止在正文堆砌只在少数场景才需要的完整参考**。本仓把它落成一条可机械判定的判据：
+
+**实测数值、实跑快照、某次清理或事故的规模一律不进 SKILL.md 正文。** 它们回答的是「这个结论怎么来的」，执行时用不到。正文只留判据本身加一句指针，观测日期与当时样本量随数据一起外移到 `references/measurements.md`（或该 skill 的同类文件、`known-issues.md` 台账）。判据留下、取证移走：「Codex 忽略未知顶层字段」留正文，「用什么命令测的、输出长什么样、退出码几」移走。
+
+三条边界，防止外移本身变成新的失准源：
+
+- **证据强度标注不是取证过程**——「这条是推断、未实测」属于判据的一部分，留在正文。删掉它会让推论与实测结论被当作同等确凿读走
+- **历史观测值不可跟改**——外移后须在目标文件标注观测日期与当时样本量，否则会被误读成当前值，而跟改它就是伪造记录
+- **不要为腾行数压缩措辞**——外移对象按「该块在什么条件下不需要」挑，行数是副产品不是目的
 
 ## 执行前置校验
 

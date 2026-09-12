@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.2] - 2026-09-12
+
+### Changed
+- **`disable-model-invocation` 的两段说明压缩为一句。** 判定其冗余：该字段在 Claude Code 侧的作用本就明确，在 Codex 侧不生效也只需一句——原文分两段讲了「不是规范例外」「不需登记豁免」「`skills-ref validate` 必报错」「Codex 实测结论」四件事，而这些判据的正本都在 `.claude/rules/skill-conventions.md`，正文复述一遍即制造第二个真源。只留规范硬要求的那部分：该字段解决什么问题、为什么不要顺手删、Codex 侧不生效
+  - 同一轮里「Codex 侧未实测」也已改为实测结论（codex-cli 0.154.0；取证由 `add-external-skill` 1.0.1 那轮完成，方法与证据见该 skill 的 `known-issues.md` 第 2 条）。`2.2.0` 曾写下「在实测之前不要把『只是告警』当既定事实写进任何文档」，**该指令现已被满足**；历史记述保留在 `known-issues-archive.md` 不改写。`.claude/rules/skill-conventions.md` 同步收敛为一句，取证过程不进规则正文——与本 skill 黑名单「实测数值、实跑快照一律不进正文」同一判据
+- 正文 **499 → 497 行，余量回到 3 行**。⚠️ 这不违反黑名单「不要压缩措辞换行数」——行数是**内容被判定为冗余**后的副产品，不是目的。`selfcheck.py` 的 `line_claims` 当场抓出 `known-issues.md` 第 6 条仍声明 `499/500`，已同步
+- 版本判定为 **Patch**：只改正文对该字段的表述，执行流程、脚本、确认点数量均未变
+
 ## [2.3.1] - 2026-09-12
 
 台账封顶与归档，落地 `06-continuous-improvement.md` 新增的 §9。**动机是成本而非整洁**：`known-issues.md` 已达 491 行、`CHANGELOG.md` 427 行，合计 918 行**超过它们所描述的正文（499 行）**，而每轮评审都会完整重读——台账每轮增长、每轮重读，轮数越多每轮越贵，是正反馈。

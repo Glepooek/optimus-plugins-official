@@ -2,7 +2,7 @@
 name: sync-cc-tips
 description: 从 Claude Code 最新 changelog 自动同步 tips.jsonl：按环境可用性与可感知性双重门禁新增条目、修正过时内容、删除已废弃功能，写入后做九项完整性校验并推进同步锚点，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 metadata:
-  version: "2.3.1"
+  version: "2.3.2"
   author: desktop client team
 compatibility: 需要 Python 3（标准库，无第三方依赖）——第一步取 changelog 走 urllib 两跳（raw.githubusercontent.com → api.github.com），两跳均失败时降级为 WebFetch；第三步斜杠名取证需本机 claude 二进制（默认 npm 全局安装路径，可用 --binary 指定）。脚本经 Bash 调用 Windows 原生 Python，二者文件系统视图不同，临时文件一律用仓库内相对路径。流程末尾调用 commit-cc-plugin skill 完成提交推送。
 allowed-tools: Bash WebFetch Read Write Edit Grep AskUserQuestion Skill
@@ -23,9 +23,7 @@ disable-model-invocation: true
 | 第二步 | `validate_tips.py` 报出存量 `failed` 项 | 把改动前就有的缺陷算成本轮写入错误，或反过来静默继续 |
 | 第四步 | 变更数 > 0，写入前 | 未经确认改写唯一真源 |
 
-📌 **本 skill 只能由人显式触发，不支持无人值守调度**——frontmatter 的 `disable-model-invocation: true` 是有意为之：它既阻止模型自主调用，也意味着 `/loop` 等计划触发会把本 skill 当作纯文本而不执行（官方行为，v2.1.196 起）。五个确认点因此始终有人应答，不存在「无人响应该怎么办」的分支。
-
-⚠️ 该字段是 **Claude Code 原生字段、合法可用**，不是规范例外，也不需要登记豁免（判据见 `.claude/rules/skill-conventions.md`：本 skill 属 `.claude/skills/` 层，维护自用、不对外分发）。唯一代价是可移植性——`skills-ref validate` 必然报 `Unexpected key(s) in SKILL.md frontmatter`，那是预期结果；Codex 侧是忽略该字段还是拒绝加载**未实测**。**不要顺手删掉它来"修规范"**：删了本 skill 就会既能被模型自主拉起、也能被计划任务拉起。
+📌 `disable-model-invocation: true` **有意保留，不要顺手删掉它来「修规范」**——它是 Claude Code 原生字段（合法可用，判据见 `.claude/rules/skill-conventions.md`），作用是本 skill **只能由人显式触发、不支持无人值守调度**：模型不自主拉起，`/loop` 等计划触发也只当纯文本，故五个确认点始终有人应答，不存在「无人应答怎么办」的分支。Codex 侧该字段不生效，那一侧仍可能被自主拉起。
 
 
 ## 执行前置校验（进入第一步前必过）

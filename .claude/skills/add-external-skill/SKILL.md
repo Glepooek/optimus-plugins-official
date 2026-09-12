@@ -2,7 +2,7 @@
 name: add-external-skill
 description: 把外部仓库的 Agent Skill 接入本仓库，或更新已接入条目的版本锁定。探测上游仓库形态、判定落位方式（默认链接：marketplace 条目锁 40 位 sha；例外才拷贝到 external_plugins/）、取 sha、人在回路确认、写入并验证、记台账。更新失败一次即停，不重试、不轮询。只能由人显式调用 /add-external-skill 触发。
 metadata:
-  version: "1.0.1"
+  version: "1.0.2"
   author: desktop client team
   category: tool
 compatibility: 需要 git（用 git ls-remote 取上游 sha）与可达上游仓库的网络；写入后的验证步骤需要 claude CLI 的 plugin 子命令；传感器 .githooks/check_external_entries.py 需要 Python 3 标准库。
@@ -36,9 +36,7 @@ disable-model-invocation: true
 
 ### Codex 兼容性
 
-Codex 没有与 `disable-model-invocation` 等价的 SKILL.md frontmatter 字段。**已实测确认 Codex 忽略该未知顶层键、不拒绝加载**（codex-cli 0.154.0，2026-09-12）：把本仓 `.agents/skills` 作为 project skill root 扫描时，本 skill 以 `name: description` 的形式正常列入模型可见的 skill 清单，与其他 skill 无差别，全程无告警、退出码 0，且该字段本身不出现在模型可见文本里。取证方法与观察证据见 `known-issues.md` 第 2 条。
-
-因此该字段与 Codex 镜像**可以兼得**，不需要在两者之间取舍。代价是「禁止模型自主拉起」这条约束**在 Codex 侧不生效**——该字段既然不进入模型可见上下文，模型就无从遵守它。⚠️ 但**「Codex 会按 `description` 自主拉起本 skill」是推断，本次未实测**：它依据的是 `AGENTS.md` 已记录的 Codex 通用触发机制（按 description 匹配），而本次实测只验证了「加载不失败」，没有观察一次真实的自主拉起。这一层在 Codex 侧只能靠 `description` 末句（「只能由人显式调用 `/add-external-skill` 触发」）作为软约束承担；Codex 若要硬约束，需用它自己的 `agents/openai.yaml`（`policy.allow_implicit_invocation: false`），该路径本仓未采用也未实测。
+Codex 没有与 `disable-model-invocation` 等价的 SKILL.md frontmatter 字段，但**已实测确认它忽略该未知顶层键、skill 仍正常加载**（codex-cli 0.154.0，2026-09-12；取证方法与观察证据见 `known-issues.md` 第 2 条）——该字段与 Codex 镜像**可以兼得，不需要在两者之间取舍**。代价是「禁止模型自主拉起」这条约束**在 Codex 侧不生效**：字段不进入模型可见上下文，模型无从遵守，那一侧只能靠 `description` 末句（「只能由人显式调用 `/add-external-skill` 触发」）作软约束。⚠️ 其中「Codex 会按 `description` 自主拉起本 skill」**是按 Codex 通用触发机制作出的推断，本次未实测**——实测只覆盖「加载不失败」这一层。Codex 若要硬约束，需用它自己的 `agents/openai.yaml`（`policy.allow_implicit_invocation: false`），该路径本仓未采用也未实测。
 
 ## 两个模式
 
