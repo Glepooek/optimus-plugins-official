@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2026-09-12",
+  "updated_at": "2026-09-13",
   "description": "知识库领域目录册。登记每个领域的内容分类、维护责任、状态与主要消费者，供审计命令与影响分析使用。领域内容真源仍是各领域 index.jsonl 与 Markdown 正文，本文件只承载领域级导航元数据。",
   "categories": {
     "rules": "可用于合规判断的规范正文，带 MUST/SHOULD/MAY 语气",
@@ -145,6 +145,21 @@
       ],
       "reviewed_at": "2026-09-12",
       "notes": "Claude Code hook 的编写与审查判据：事件选型、配置与作用域、输入输出契约、决策控制、异步执行边界、安全与成本，覆盖官方 Hooks reference 记载的 34 个事件。消费者是 .githooks/check_hook_configs.py（提交门禁，报错携带索引条目 ID）；plugins/*/hooks/ 三处配置是**被约束的对象**而非消费者，不检索本领域。⚠️ 仅约束 Claude Code，Claude 侧 hooks 在 Codex 中不生效，故全部条目 applies_to 不含 Codex。与两类同名概念严格区分：git 原生钩子归 git 领域（git.02.commit-hooks），API Hook 注入手法归 host-diagnostics。有意不收录各事件的 input 字段表——它是查阅型资料而非判断依据，且随版本增删频繁，抄录即制造过期风险"
+    },
+    {
+      "domain": "claude-code-plugin-system",
+      "title": "Claude Code 插件系统",
+      "categories": [
+        "rules",
+        "reference"
+      ],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": [
+        ".githooks/check_external_entries.py"
+      ],
+      "reviewed_at": "2026-09-13",
+      "notes": "插件这一产物形态本身的机制：plugin.json 清单与组件装配契约、目录硬约束与路径解析、marketplace.json 与七种插件源、版本解析与缓存语义、插件间依赖的版本约束、两套安装推荐协议（CLI hint 与 marketplace relevance）、企业托管治理设置。内容取自官方 plugins / plugins-reference / plugin-marketplaces / plugin-dependencies / plugin-hints / plugin-relevance 六篇 2026-09-12 版本。⚠️ 仅约束 Claude Code；Codex 有自己的 codex plugin 体系与 .codex-plugin/plugin.json，字段与语义均不同，全部条目 applies_to 不含 Codex。四条边界：hook 事件表与输出契约归 claude-code-hooks（本领域只收插件 hook 的声明位置与合并规则）、${CLAUDE_PLUGIN_ROOT} 语义归 claude-code-hooks/rules/02（本领域只收逐组件的字段替换范围）、SKILL.md frontmatter 归 skill-authoring（本领域只收插件内 skill 的命名空间与发现规则）、MCP 协议与安全归 mcp（本领域只收插件捆绑 server 的作用域名形式）。本仓 plugins/*/ 八个插件与根 .claude-plugin/marketplace.json 是**被约束的对象**而非消费者；本仓专属版本约定在 AGENTS.md，与本领域是约定与判据的分层关系。有意不收录 claude plugin * 子命令的完整选项表与 LSP 字段明细——查阅型资料，只收其中构成判断依据的语义"
     }
   ]
 }

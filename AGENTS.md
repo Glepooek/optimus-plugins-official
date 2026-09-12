@@ -149,6 +149,8 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 
 **hook 开发的规范依据是 `knowledge-base/claude-code-hooks/`**——该领域已对官方 hooks reference 做全量规范化，事件选型、exit code 语义、`async` 语义、静默失效排查一律以它为准，禁止凭记忆或类比推导 hook 行为。
 
+**插件与 marketplace 本身的规范依据是 `knowledge-base/claude-code-plugin-system/`**——`plugin.json` 与 `marketplace.json` 的字段语义、目录硬约束、七种插件源、版本解析与缓存、插件间依赖、`relevance` 与 CLI hint、企业托管设置一律以它为准。本文件「版本管理规则」是本仓在其之上的**落地约定**（如「条目内永不写 `version`」），两者是约定与判据的分层关系：改动约定前先读判据。可机械判定的部分已接进 `.githooks/check_external_entries.py`。
+
 前三份规范**同时约束两个 harness**——frontmatter 字段是 Codex 也会原样读取缓存的内容，不存在"仅 Claude 遵守"的特例。第四份的情况不同：**Claude 侧 hook 在 Codex 中不生效**，但其中的版本升级、门禁落位（仓库级门禁必须放 `.githooks/`）两条约定对两侧编辑者同等有效。
 
 ---

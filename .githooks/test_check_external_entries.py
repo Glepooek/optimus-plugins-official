@@ -36,6 +36,21 @@ def write_marketplace(root, plugins):
                    ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def write_raw_marketplace(root, data):
+    """按给定 dict 原样写 marketplace.json，用于覆盖顶层 name 与 metadata。"""
+    d = root / ".claude-plugin"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "marketplace.json").write_text(
+        json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def local_entry(name="first-party", source="./plugins/first-party", **over):
+    """一条合法的本地相对路径条目。"""
+    e = {"name": name, "source": source, "description": "d"}
+    e.update(over)
+    return e
+
+
 def write_registry(root, names, sha=GOOD_SHA, marker=True, history=()):
     """造台账。names 进「已接入」表；history 里的名字只进「更新历史」表。
 
@@ -105,7 +120,8 @@ class TestCheckExternalEntries(unittest.TestCase):
         self.assertEqual(check_all(self.root), [])
 
     def test_local_path_string_source_is_skipped(self):
-        """source 为本地相对路径字符串的条目不适用本检查，且不要求台账登记。"""
+        """本地相对路径条目不适用 sha 与台账检查，路径形态仍照查。"""
+        (self.root / "plugins" / "first-party").mkdir(parents=True)
         write_marketplace(self.root, [{"name": "first-party",
                                        "source": "./plugins/first-party",
                                        "description": "d"}])
@@ -277,6 +293,149 @@ class TestCheckExternalEntries(unittest.TestCase):
         write_marketplace(self.root, [e1, e2])
         write_registry(self.root, ["ext-a", "ext-b"])
         self.assertEqual(len(check_all(self.root)), 2)
+
+    # ---------- 名字：保留名与下游字符集 ----------
+
+    def test_reserved_marketplace_name_blocked(self):
+        """保留名每次加载都重新检查，用了它某个版本起会直接停止加载。"""
+        write_raw_marketplace(self.root, {"name": "claude-code-plugins",
+                                          "owner": {"name": "x"}, "plugins": []})
+        problems = check_all(self.root)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("03.reserved-names", problems[0])
+
+    def test_desktop_reserved_marketplace_name_blocked(self):
+        """Claude Desktop 的三个保留名不分大小写，Claude Code 自己是接受的。"""
+        write_raw_marketplace(self.root, {"name": "Org-Provisioned",
+                                          "owner": {"name": "x"}, "plugins": []})
+        problems = check_all(self.root)
+        self.assertTrue(any("downstream-sync" in p for p in problems))
+
+    def test_non_kebab_marketplace_name_blocked(self):
+        write_raw_marketplace(self.root, {"name": "My_Marketplace",
+                                          "owner": {"name": "x"}, "plugins": []})
+        problems = check_all(self.root)
+        self.assertTrue(any("kebab" in p for p in problems))
+
+    def test_entry_name_violating_desktop_charset_blocked(self):
+        """条目名不合规不会报错，而是被 Claude Desktop 静默删除——只能提交时拦。"""
+        (self.root / "plugins" / "a b").mkdir(parents=True)
+        write_marketplace(self.root, [local_entry(name="a b", source="./plugins/a b")])
+        problems = check_all(self.root)
+        self.assertTrue(any("downstream-sync" in p for p in problems))
+
+    def test_missing_top_level_name_blocked(self):
+        write_raw_marketplace(self.root, {"owner": {"name": "x"}, "plugins": []})
+        problems = check_all(self.root)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("03.required-fields", problems[0])
+
+    # ---------- 本地路径源 ----------
+
+    def test_local_source_without_dot_slash_blocked(self):
+        """裸名只在设了 metadata.pluginRoot 时成立。"""
+        (self.root / "plugins").mkdir()
+        write_marketplace(self.root, [local_entry(source="plugins/first-party")])
+        problems = check_all(self.root)
+        self.assertTrue(any("必须以 ./ 开头" in p for p in problems))
+
+    def test_bare_name_with_plugin_root_passes(self):
+        write_raw_marketplace(self.root, {
+            "name": "m", "owner": {"name": "x"},
+            "metadata": {"pluginRoot": "./plugins"},
+            "plugins": [local_entry(source="first-party")]})
+        self.assertEqual(check_all(self.root), [])
+
+    def test_local_source_with_parent_traversal_blocked(self):
+        write_marketplace(self.root, [local_entry(source="./../shared/plugin")])
+        problems = check_all(self.root)
+        self.assertTrue(any("02.path-escape" in p for p in problems))
+
+    def test_local_source_with_backslash_blocked(self):
+        """反斜杠路径只在 Windows 上加载，macOS 与 Linux 直接拒绝该条目。"""
+        write_marketplace(self.root, [local_entry(source=".\\plugins\\first-party")])
+        problems = check_all(self.root)
+        self.assertTrue(any("反斜杠" in p for p in problems))
+
+    def test_local_source_pointing_to_missing_dir_blocked(self):
+        write_marketplace(self.root, [local_entry()])
+        problems = check_all(self.root)
+        self.assertTrue(any("不存在" in p for p in problems))
+
+    # ---------- relevance ----------
+
+    def test_valid_relevance_passes(self):
+        (self.root / "plugins" / "first-party").mkdir(parents=True)
+        write_marketplace(self.root, [local_entry(relevance={
+            "topic": "Terraform",
+            "signals": {"cli": ["terraform"], "filesRead": ["**/*.tf"],
+                        "hosts": ["api.example.com"],
+                        "manifestDeps": [{"file": r"[/\\]package\.json$",
+                                          "pattern": r"\"stripe\"\s*:"}]}})])
+        self.assertEqual(check_all(self.root), [])
+
+    def test_relevance_topic_too_long_blocked(self):
+        (self.root / "plugins" / "first-party").mkdir(parents=True)
+        write_marketplace(self.root, [local_entry(relevance={
+            "topic": "T" * 65, "signals": {"cli": ["t"]}})])
+        problems = check_all(self.root)
+        self.assertTrue(any("topic" in p for p in problems))
+
+    def test_unknown_signal_name_blocked(self):
+        """拼错的信号名不报错、只静默不匹配，所以必须在提交时拦。"""
+        (self.root / "plugins" / "first-party").mkdir(parents=True)
+        write_marketplace(self.root, [local_entry(relevance={
+            "signals": {"filesRed": ["**/*.tf"]}})])
+        problems = check_all(self.root)
+        self.assertTrue(any("未知信号名" in p for p in problems))
+
+    def test_too_many_cli_signals_blocked(self):
+        (self.root / "plugins" / "first-party").mkdir(parents=True)
+        write_marketplace(self.root, [local_entry(relevance={
+            "signals": {"cli": [f"c{i}" for i in range(11)]}})])
+        problems = check_all(self.root)
+        self.assertTrue(any("上限 10" in p for p in problems))
+
+    def test_hosts_with_scheme_or_port_blocked(self):
+        (self.root / "plugins" / "first-party").mkdir(parents=True)
+        write_marketplace(self.root, [local_entry(relevance={
+            "signals": {"hosts": ["https://api.example.com", "api.example.com:443"]}})])
+        problems = check_all(self.root)
+        self.assertEqual(len([p for p in problems if "裸小写主机名" in p]), 2)
+
+    def test_manifest_deps_without_end_anchor_blocked(self):
+        """起始锚定的 file 模式永远不会匹配绝对路径。"""
+        (self.root / "plugins" / "first-party").mkdir(parents=True)
+        write_marketplace(self.root, [local_entry(relevance={
+            "signals": {"manifestDeps": [{"file": r"^package\.json",
+                                          "pattern": "stripe"}]}})])
+        problems = check_all(self.root)
+        self.assertTrue(any("末尾锚定" in p for p in problems))
+
+    def test_relevance_without_signals_blocked(self):
+        (self.root / "plugins" / "first-party").mkdir(parents=True)
+        write_marketplace(self.root, [local_entry(relevance={"topic": "X"})])
+        problems = check_all(self.root)
+        self.assertTrue(any("signals" in p for p in problems))
+
+    # ---------- .claude-plugin/ 目录 ----------
+
+    def test_component_dir_inside_claude_plugin_blocked(self):
+        """组件放进 .claude-plugin/ 后插件仍正常加载，组件全部不出现。"""
+        (self.root / "plugins" / "p1" / ".claude-plugin" / "skills").mkdir(parents=True)
+        (self.root / "plugins" / "p1" / ".claude-plugin" / "plugin.json").write_text(
+            "{}", encoding="utf-8")
+        write_marketplace(self.root, [])
+        problems = check_all(self.root)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("02.claude-plugin-dir-only-manifest", problems[0])
+
+    def test_claude_plugin_dir_with_only_manifest_passes(self):
+        (self.root / "plugins" / "p1" / ".claude-plugin").mkdir(parents=True)
+        (self.root / "plugins" / "p1" / ".claude-plugin" / "plugin.json").write_text(
+            "{}", encoding="utf-8")
+        write_marketplace(self.root, [])
+        self.assertEqual(check_all(self.root), [])
 
     # ---------- 健壮性与文案 ----------
 
