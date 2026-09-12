@@ -1,8 +1,8 @@
 ---
 name: sync-cc-tips
-description: 从 Claude Code 最新 changelog 自动同步 tips.jsonl：按环境可用性与可感知性双重门禁新增条目、修正过时内容、删除已废弃功能，写入后做四重完整性校验并推进同步锚点，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
+description: 从 Claude Code 最新 changelog 自动同步 tips.jsonl：按环境可用性与可感知性双重门禁新增条目、修正过时内容、删除已废弃功能，写入后做九项完整性校验并推进同步锚点，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 metadata:
-  version: "2.2.5"
+  version: "2.3.0"
   author: desktop client team
 compatibility: 需要 Python 3（标准库，无第三方依赖）——第一步取 changelog 走 urllib 两跳（raw.githubusercontent.com → api.github.com），两跳均失败时降级为 WebFetch；第三步斜杠名取证需本机 claude 二进制（默认 npm 全局安装路径，可用 --binary 指定）。脚本经 Bash 调用 Windows 原生 Python，二者文件系统视图不同，临时文件一律用仓库内相对路径。流程末尾调用 commit-cc-plugin skill 完成提交推送。
 allowed-tools: Bash WebFetch Read Write Edit Grep AskUserQuestion Skill
@@ -13,18 +13,53 @@ disable-model-invocation: true
 
 从 Claude Code 最新 changelog 同步 tips.jsonl：**抓取、判定、写入、校验全自动，但写入前必须经一次人工确认**，确认后展示摘要并提交。
 
-⚠️ **本流程含 3 个阻塞式人工确认点，不得跳过：**
+⚠️ **本流程含 5 个阻塞式人工确认点，不得跳过：**
 
 | 位置 | 触发条件 | 跳过的后果 |
 |---|---|---|
+| 执行前置校验 | tips.jsonl 有未提交改动 | 回滚基线被污染，出错时 `git restore` 会连带丢弃用户的那些改动 |
 | 第一步 | 待处理版本 > 30 个（无论锚点是否命中） | 可能误处理过大范围 |
 | 第二步 | tips.jsonl 为空 | 把异常空文件当作全新初始化，静默丢失全库 |
+| 第二步 | `validate_tips.py` 报出存量 `failed` 项 | 把改动前就有的缺陷算成本轮写入错误，或反过来静默继续 |
 | 第四步 | 变更数 > 0，写入前 | 未经确认改写唯一真源 |
 
-📌 **本 skill 只能由人显式触发，不支持无人值守调度**——frontmatter 的 `disable-model-invocation: true` 是有意为之：它既阻止模型自主调用，也意味着 `/loop` 等计划触发会把本 skill 当作纯文本而不执行（官方行为，v2.1.196 起）。三个确认点因此始终有人应答，不存在「无人响应该怎么办」的分支。
+📌 **本 skill 只能由人显式触发，不支持无人值守调度**——frontmatter 的 `disable-model-invocation: true` 是有意为之：它既阻止模型自主调用，也意味着 `/loop` 等计划触发会把本 skill 当作纯文本而不执行（官方行为，v2.1.196 起）。五个确认点因此始终有人应答，不存在「无人响应该怎么办」的分支。
 
-⚠️ 该字段是六字段规范的**唯一具名例外**，已登记在 `.claude/rules/skill-conventions.md`（本 skill 是唯一使用者）。Codex 侧严格校验器可能报 `Unexpected fields in frontmatter`，属已知且已接受的代价。**不要顺手删掉它来"修规范"**——规范那侧已经放行，删了本 skill 就会变成可被模型自主拉起。
+⚠️ 该字段是 **Claude Code 原生字段、合法可用**，不是规范例外，也不需要登记豁免（判据见 `.claude/rules/skill-conventions.md`：本 skill 属 `.claude/skills/` 层，维护自用、不对外分发）。唯一代价是可移植性——`skills-ref validate` 必然报 `Unexpected key(s) in SKILL.md frontmatter`，那是预期结果；Codex 侧是忽略该字段还是拒绝加载**未实测**。**不要顺手删掉它来"修规范"**：删了本 skill 就会既能被模型自主拉起、也能被计划任务拉起。
 
+
+## 执行前置校验（进入第一步前必过）
+
+四类检查一次跑完，**不要边执行边发现**。用户可提供的信息只有可选的版本数量参数 `N`，不存在"信息不全需先追问"的情形——缺 `N` 就是默认全量，不问。
+
+```bash
+git rev-parse --show-toplevel >/dev/null 2>&1 && test -z "$(git rev-parse --show-prefix)" && test -f AGENTS.md  # 4 运行条件：**先跑这条**，cwd 错会让下面各条给出错误诊断
+python -V || python3 -V                              # 1 依赖：两者皆无才算缺失
+python .claude/skills/sync-cc-tips/scripts/check_slash_name.py init   # 1 依赖：verdict 非 binary_missing 即可
+python .claude/skills/sync-cc-tips/scripts/validate_tips.py           # 2 输入：只读 checks.json_valid
+test -w plugins/optimus-devops-plugin/hooks/sessionstart && test -w .claude/skills/sync-cc-tips  # 3 输出：两个输出文件分属不同目录
+ls .claude/skills/sync-cc-tips/.last-synced-version  # 2 输入：锚点文件
+git status --short plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl  # 4 运行条件：回滚基线是否干净
+```
+
+| # | 类别 | 检查项 | 不满足时 |
+|---|---|---|---|
+| 1 | 依赖 | Python 解释器可用 | ❌ 仅当 `python` **与** `python3` 都不可用才报错终止。只是缺 `python` 别名（常见于 Linux/WSL）不终止——各步失败表已写明改用 `python3` 重试，那是既有降级路径 |
+| 1 | 依赖 | `claude` 二进制存在 | ⚠️ **不终止**，标记降级：本轮新增条目一律省略斜杠形式，摘要注明「取证不可用」（等同第三步 `binary_missing`）。**探测方式是跑脚本本身读 `verdict`，不要在正文抄写二进制路径**——路径是 `check_slash_name.py` 的常量，抄一份必然分叉；非默认路径用 `--binary` 指定 |
+| 2 | 输入 | tips.jsonl 可解析 —— **判据只有 `checks.json_valid.ok`** | ❌ 该项为 false 才报错终止（在损坏文件上做增删会把损坏固化进 git）。⚠️ **不要拿整体 `ok` 或退出码当判据**：`ok` 聚合九项，库里任一存量 `schema`/`field_dup`/`body_shape` 缺陷都会让它为 false，据此终止就抢走了第二步「存量问题交用户裁决」那一支 |
+| 2 | 输入 | `.last-synced-version` 存在且为纯版本号（无 `v` 前缀） | ⚠️ 缺失按首次初始化处理，只在摘要说明；扫描范围过大由第一步「待处理版本 > 30」CHECKPOINT 兜住，此处不重复设卡 |
+| 2 | 输入 | 用户给了 `N` 时须为正整数 | ❌ 报错终止——不猜用户意图，不静默退回全量。这项是静态判断，无对应探测命令 |
+| 3 | 输出 | 两个输出文件所在目录**各自**可写 | ❌ 报错终止。⚠️ 二者**不同目录**：tips.jsonl 在 `plugins/optimus-devops-plugin/hooks/sessionstart/`，`.last-synced-version` 在 `.claude/skills/sync-cc-tips/`。漏查后者的后果是写完 tips.jsonl 才在第五步锚点写入时炸，落进人工善后分支 |
+| 4 | 运行条件 | **cwd 必须等于仓库根**，不是"在仓库内" | ❌ **硬约束**，报错终止。⚠️ 两个坑：`git rev-parse --show-toplevel` 成功**不**构成通过（它在任意子目录都退出 0，而本 skill 的脚本路径全是**相对仓库根**的）；而拿 `--show-toplevel` 与 `pwd` 直接比字符串在本机**必然假阴性**——前者给 `E:/...`、后者给 `/e/...`。故判据用 `--show-prefix` 为空（与路径形式无关），加一条 `--show-toplevel` 成功以排除非仓库目录，再加一条 `test -f AGENTS.md` 以排除**别的**仓库的根目录（前两条对任何 git 仓库根都通过）。三条缺一不可。Bash 工具的 cwd 跨调用保持，上一条命令 `cd` 过就会踩到 |
+| 4 | 运行条件 | tips.jsonl 在 git 中无未提交改动 | 🔴 **可协商风险 → CHECKPOINT**，见下 |
+
+**为什么 git 干净度是可协商风险而非硬约束**：技术上完全可以在有改动的文件上继续写，用户也可能正清楚自己为什么改了它。真实代价是**回滚基线被污染**——出错时 `git restore` 会连带丢弃那些改动。用 `AskUserQuestion` 发起，不要用自由文本问 y/n：
+
+- `question`：「tips.jsonl 已有未提交改动（贴出 `git status --short` 输出）。继续同步会让本轮改动与这些混在一起，出错时 `git restore` 会把它们一并丢弃。是否继续？」
+- options：①「先 stash 这一个文件的改动，再继续同步」（推荐——**消除**风险且不放弃本轮）②「保留改动继续同步，我清楚它们」③「取消本轮，我自己处理」
+- 选①→ 执行 `git stash push -- plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl` 后按干净基线执行。⚠️ **必须带 pathspec**：裸 `git stash` 是仓库级操作，会把工作区全部在途改动一起收走，而本 skill 的问题域只有这一个文件。⚠️ stash 了就**必须归还**——记下本轮曾 stash，第六步摘要按模板提示用户 `git stash pop`，否则用户的改动停在 stash 里无人告知；选②即继续且**不算任务失败**，同时**记下「脏基线已获同意」**——第四步写入前的复检见到同样的非空输出据此直接放行，**不得二次询问**（那等于作废刚给出的同意），只有输出与此刻所见**不同**（中途又被改过）才重新确认；选③或用户走 **Other 输入自由文本（视为非明确同意）→ 立即停止**
+
+⚠️ 前置校验只做**执行前的主动探测**。执行中才暴露的报错（抓取失败、Edit 报错、脚本崩溃）归各步自己的失败处理表，两者不合并——把执行中错误塞进本节会让它变成一份永远不完整的错误清单。
 
 ## 第一步 — 抓取 changelog
 
@@ -107,7 +142,7 @@ python $S/validate_tips.py        # 基线体检：{ok, entries, failed, checks}
 |---|---|---|
 | 文件不存在 / 脚本报路径错 | 确认路径 `plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl` 是否正确 | 停止整个流程，报告路径错误，不做任何修改 |
 | `validate_tips.py` 报 `entries: 0` | 🔴 CHECKPOINT：停下询问用户是否为全新初始化场景 | 若用户确认，继续（视为无旧条目）；否则停止 |
-| `validate_tips.py` 有 `failed` 项 | 报告失败项，询问是否先修复存量问题再同步 | 用户选择继续则**原样留存这份基线 JSON**，第五步按「基线豁免」判读（见第五步） |
+| `validate_tips.py` 有 `failed` 项 | 🔴 **CHECKPOINT**：用 `AskUserQuestion` 报告失败项，问「先修复存量问题再同步」还是「记下基线继续」 | 用户选择继续则**原样留存这份基线 JSON**，第五步按「基线豁免」判读（见第五步） |
 | 任一脚本非零退出 / traceback / 输出非 JSON | 跑 `python -m unittest discover -s .claude/skills/sync-cc-tips/scripts -p "test_*.py"` 定位是脚本坏了还是数据触发边界；单测过说明问题在数据 | 按上表「失败处置」列分别处理，不要一律停或一律继续 |
 | `python` 命令不存在或版本过低 | 改用 `python3` 重试一次 | 停止流程，报告解释器不可用；**不要退回手工 grep 判重**（失效原理见文末黑名单） |
 
@@ -181,21 +216,21 @@ tips 的载体是 SessionStart 单条轮播——**读者读完既无法追问�
 
 #### 📝 条目生成（两道门都过后执行）
 
-**信息补全与条目信息完整性清单**：changelog 的单行描述往往只覆盖核心功能，直接照抄会产出信息不全的条目。**判定有新增条目后、生成 `body` 前，加载 `references/entry-authoring.md`** 执行其中的生成前补全（交叉关联已有 tips、提取完整参数集、补全用法示例）与生成后的**条目信息完整性清单**（键名/环境变量/版本号/多种用法/关联功能/限制说明六项）。只做判重或只改已有条目时不必加载。⚠️ 该清单与第五步的「完整性校验」是两回事：前者查一条条目的信息齐不齐，后者查整个文件的格式与账目，不要混称。
+**信息补全与条目信息完整性清单**：changelog 的单行描述往往只覆盖核心功能，直接照抄会产出信息不全的条目。**判定有新增条目后、生成 `body` 前，加载 `references/entry-authoring.md`** 执行其中的生成前补全（交叉关联已有 tips、提取完整参数集、补全用法示例）与生成后的**条目信息完整性清单**（键名/环境变量/版本号/多种用法/关联功能/限制说明六项）。**改已有条目而要重写 `body` 时同样加载**——六项清单里的「限制说明」等项对改写后的 body 一样适用；只做判重、或只改标题/分类不必加载。⚠️ 该清单与第五步的「完整性校验」是两回事：前者查一条条目的信息齐不齐，后者查整个文件的格式与账目，不要混称。
 
 生成格式（每条一行 JSON，写入 tips.jsonl）：
 ```json
-{"id":"/xxx","category":"[分类]","title":"🔰 标题","body":"功能：一句话说明\n效果：使用场景和收益\n例子：claude --完整命令 具体说明"}
+{"id":"/xxx","category":"分类","title":"🔰 标题","body":"功能：一句话说明\n效果：使用场景和收益\n例子：claude --完整命令 具体说明"}
 ```
 - `id` 取主标识符（命令名 / flag / 功能名），无主标识符用标题 slug，全库唯一
 - `body` 内用真实换行（JSON 里为 `\n`）而非字面 `\n`
-- 分类从现有分类中选最匹配：`[交互]`、`[工具]`、`[Hook]`、`[配置]`、`[CLI]`、`[集成]`、`[工作流与自动化]`、`[排障]`、`[Skill]`、`[MCP]`、`[高级]`、`[Skill·superpowers]`
+- 分类从现有分类中选最匹配：`交互`、`工具`、`Hook`、`配置`、`CLI`、`集成`、`工作流与自动化`、`排障`、`Skill`、`MCP`、`高级`、`Skill·superpowers`。⚠️ **`category` 字段值不带方括号**——方括号是 `show-tip.sh` 展示时拼上的（`head = f"[{tip['category']}] …"`），写进数据会展示成 `[[交互]]`，而 `validate_tips.py` 只查四字段存在性、不校验取值，**没有任何机制拦得住**
 
 #### 🏷️ 斜杠名存在性校验（写入前必过）
 
 **危害不在分类标签错，在斜杠名不存在。** tips 的载体是 SessionStart 单条轮播，读者照着敲一个不存在的 `/xxx` 时既无法追问也无法查证。真实误标形态只有一种：把**内置 subagent** 写成可斜杠调用——`statusline-setup` 即此例（`agentType` 命中、`name` 不命中，只能由 Claude 以 `subagent_type` 派生，没有斜杠命令）。⚠️ 曾与它并列记载的 `init`、`security-review` **均已实测为活注册体**，那两条记载是错的，不要照抄。
 
-⚠️ **不要试图用二进制判定「是 skill 还是命令」——该区分在 v2.1.266 已不存在**（`--help` 明写 "Skills still resolve via `/skill-name`"、`--disable-slash-commands` 的说明是 "Disable all skills"，二者是同一套注册）。为此迭代四轮判据全部被推翻，记录见 `known-issues.md`。**已有 `[Skill]` / `[交互]` 标签的历史划分不要回溯改动**，新条目按功能性质选分类。
+⚠️ **不要试图用二进制判定「是 skill 还是命令」——该区分在 v2.1.266 已不存在**（`--help` 明写 "Skills still resolve via `/skill-name`"、`--disable-slash-commands` 的说明是 "Disable all skills"，二者是同一套注册）。为此迭代四轮判据全部被推翻，记录见 `known-issues.md`。**已有 `Skill` / `交互` 分类的历史划分不要回溯改动**，新条目按功能性质选分类。
 
 要校验的只有一件事：**这个斜杠名在本机二进制里真实存在吗。**
 
@@ -291,51 +326,17 @@ python .claude/skills/sync-cc-tips/scripts/validate_tips.py
 > - 选「写入并同时合并残影」→ 写入时一并执行合并（**被删条目独有的信息必须并入保留方**，不可直接丢弃），第五步调用 `validate_tips.py` 时须把被合并掉的 id 一并传入 `--removed-ids=`，以触发 `orphan_ref` 反查
 > - 选「取消，不做任何修改」或用户通过 Other 输入自定义文本（视为非明确同意） → **立即停止**，输出「操作已取消，tips.jsonl 未修改」，不执行任何写入或提交，`.last-synced-version` 也不更新
 
-**两栏的完整格式示例、末列标注映射与召回边界见 `references/preview-format.md`——`candidates > 0` 或 `shared_main_groups > 0` 时加载。** ⚠️ 触发条件是 `candidates` 而非 `pending_review`：候选全部已登记豁免时 `pending_review` 为 0，但残影栏**仍须照常列出**（见下条），而末列那两种标注的映射只在该文件里。三条不可违反的约束在此重述：
+**两栏的完整格式示例、末列标注映射与召回边界见 `references/preview-format.md`——`candidates > 0` 或 `shared_main_groups > 0` 时加载。** ⚠️ 触发条件是 `candidates` 而非 `pending_review`：候选全部已登记豁免时 `pending_review` 为 0，但残影栏**仍须照常列出**（见下条），而末列那两种标注的映射只在该文件里。⚠️ 反过来，两者**都为 0** 时该栏**整栏略去，不写「无」占位**——这条规则本身留在此处常驻，因为那种情形恰好落在上述加载条件之外，写进该 reference 就等于永不生效。三条不可违反的约束在此重述：
 
 - **末列标注绑死 `detect_residue.py` 字段，模型不参与判断**——不要凭判断写「← 建议合并」。合并与否是用户在 CHECKPOINT 的决定，预先宣告结论会诱导确认，与检查点存在的意义相抵触
 - **已登记豁免的组合仍照常列出**，静默隐藏会让人误以为库里没有残影，裁决权始终在用户
 - **残影栏与聚集栏不合并**——前者是过阈值的可执行裁决项，后者只是主题聚集视野，无对应自动化动作，不进 `AskUserQuestion` 的 options
 
-### 回滚基线（写入前确认，不额外备份）
+### 写入机制（回滚基线 + 批量写法 + 写入失败处理）
 
-tips.jsonl 是已入库文件，**git 本身就是回滚基线**，无需另存副本：
+**CHECKPOINT 已确认、即将实际写入时加载 `references/write-mechanics.md`**——它含三块内容：回滚基线的复检命令与三条分支处置（**含「脏基线已在前置校验获同意」时直接放行、不得二次询问**）、条目多于两三条时改用一次性 Python 脚本按 `id` 增删改（JSONL 转义会让字面 `Edit` 失效）、以及 Edit 报错与 `/tmp` 不可见两类写入失败的处理。🚦 零变更总闸触发时第四步整体跳过，不必加载。
 
-```bash
-git status --short plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl   # 应为空（干净）
-```
-
-- 输出为空 → 直接改，出错时 `git restore <path>` 即可回到本轮起点
-- 输出非空 → 该文件已有未提交改动，先弄清来源再动手；此时 `git restore` 会连带丢弃那些改动
-- 需要与改动前对比时用 `git show HEAD:plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl`
-
-⚠️ **不要 `cp` 到 `/tmp` 做备份**——`cp` 会报成功而 Python 读不到，备份形同虚设且无任何警示（失效原理见文末黑名单）。凡需跨 Bash 与 Python 传递的临时文件，一律放仓库内相对路径。
-
-### 写入方式
-
-条目多于两三条时，不要逐条 `Edit` 字面匹配——JSONL 单行内含大量转义（`\n`、中文引号、`\"`），字面匹配极易失败。改为写一个一次性 Python 脚本按 `id` 增删改：
-
-```
-Write: .claude/skills/sync-cc-tips/scripts/_apply_sync.py   （下划线前缀标记临时脚本）
-```
-
-脚本要点：`json.loads` 逐行读入 → 按 `id` 匹配处理 → `json.dumps(ensure_ascii=False)` 写回，`io.open(..., newline="\n")` 固定换行符；结尾自校验「旧数 − 删除 + 新增 == 实得」并在不符时 `sys.exit` 报错。**用后必须删除该脚本**，不要留在 `scripts/` 里污染正式脚本目录。
-
-```
-Edit: plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl   （改动 ≤ 2 条时直接用）
-```
-
-- **新增**：追加到文件末尾，每条为一行合法 JSON 对象
-- **修改**：原地替换对应条目所在行，保持位置不变
-- **删除**：移除对应条目所在行
-
-| 触发条件 | 一线处理 | 仍失败兜底 |
-|---|---|---|
-| Edit 工具报错（文件锁 / 权限不足） | 等待 2 秒后重试一次 | 停止流程，报告错误路径，不继续第五步 |
-| Edit 报 `String to replace not found`，但内容肉眼看着一致 | JSONL 行内转义（`\n`、`\"`）导致字面匹配失效，改用上方「写入方式」的 Python 脚本按 `id` 操作 | 停止流程，报告哪几条无法定位 |
-| 写入后读回内容与预期不符 | 重新执行 Edit | 停止流程，提示用户手动检查文件状态 |
-| 删除条目后空行残留 | 再次定位并删除残留在行 | 在摘要中标注"空行可能残留，请人工确认" |
-| Python 报 `FileNotFoundError` 读某个 Bash 刚创建的文件 | 该文件在 `/tmp` 等 Git Bash 专有路径下，Windows 原生 Python 看不到；改用仓库内相对路径重新生成 | 用 `git show HEAD:<path>` 取基线替代临时文件 |
+⚠️ 回滚基线的 git 干净度探测在「执行前置校验」已做过一次，写入前**仍须复检**——两次之间隔着抓取、判定、生成三个阶段，工作区状态可能已被别的操作改变。
 
 ## 第五步 — 写入后完整性校验
 
@@ -431,9 +432,10 @@ echo "{最新版本}" > .claude/skills/sync-cc-tips/.last-synced-version
 ⏭️  跳过  N 条（已覆盖 / 非用户可操作 / 本机不可用 / 不可感知，按子原因分列条数）
 
 📊 条目总数：{旧数} → {新数}（即时统计，不写入任何文档）
-✅ 完整性校验：validate_tips.py 九项全过（含增删账平、孤儿引用{无命中／本轮无删除不适用}）
+✅ 完整性校验：validate_tips.py {九项全过／除已获用户裁决放行的存量项 `<项名>` 外全过}（含增删账平、孤儿引用{无命中／本轮无删除不适用}）
 🔖 版本：待 commit-cc-plugin 按 AGENTS.md 触发矩阵判定（改动落在 hooks/ 内，预期 Patch）
 🔖 同步锚点：v{锚点版本} → v{最新版本}
+🧺 stash 归还：本轮曾 stash tips.jsonl 改动，请执行 `git stash pop` 取回（**前置校验未 stash 时整行略去，不写「无」占位**）
 
 ---
 进入提交流程...
@@ -483,6 +485,7 @@ echo "{最新版本}" > .claude/skills/sync-cc-tips/.last-synced-version
 | `.last-synced-version` | 同步锚点（纯版本号，无 `v` 前缀） | 第一步读、第五步写 |
 | `references/entry-authoring.md` | 新增条目的信息补全与「条目信息完整性清单」 | 第三步判定有新增、生成 `body` 前加载 |
 | `references/preview-format.md` | CHECKPOINT 残影栏与聚集栏的格式示例、标注映射、召回边界 | 第四步 `candidates > 0` 或 `shared_main_groups > 0` 时加载 |
+| `references/write-mechanics.md` | 回滚基线、批量写法、写入失败处理 | 第四步 CHECKPOINT 已确认、即将写入时加载；零变更总闸触发时不加载 |
 | `references/measurements.md` | 各判据与阈值背后的实测数值、实跑快照、清理规模、证伪实验 | **正常执行不加载**；质疑或改动某个阈值/禁令时加载 |
 | `known-issues.md` | 真实使用中暴露的问题台账 | **本 skill 执行中发现自身缺陷时追加一行**；累积满 3 条「待处理」触发 darwin-skill 优化循环 |
 | `test-prompts.json` | 验证 prompt 与期望行为 | darwin-skill 优化循环的验证素材；**改动 SKILL.md 流程后须复查相关 `expected` 是否失效** |

@@ -1,5 +1,49 @@
 # Changelog
 
+## [2.3.0] - 2026-09-12
+
+补上规范要求的独立「执行前置校验」Step，并按官方文档纠正 `disable-model-invocation` 的定性——它是 **Claude Code 原生合法字段**，不是六字段规范的例外，2.2.5 登记的「唯一具名例外」是基于错误前提的处置，本轮撤销。
+
+### Added
+- **新增「执行前置校验」Step（进入第一步前必过）**，履行 `.claude/rules/skill-conventions.md` 的四类检查要求：依赖（`python` 与 `python3` 皆不可用才终止；`claude` 二进制缺失**只降级不终止**）、输入（tips.jsonl 的 `checks.json_valid.ok`、锚点文件、`N` 须正整数）、输出（tips.jsonl 与 `.last-synced-version` **分属两个目录，各自**可写）、运行条件（**cwd 须等于仓库根**属硬约束报错终止；tips.jsonl git 干净度属**可协商风险** → CHECKPOINT，含 `AskUserQuestion` 逐字选项与同意的向后传递）
+  - `claude` 二进制的探测方式定为**跑 `check_slash_name.py` 读 `verdict`**，明确禁止在正文抄写二进制路径——路径是脚本常量，抄一份必然分叉
+  - 显式声明本节只做执行前主动探测，执行中才暴露的报错归各步失败处理表，两者不合并
+  - `test-prompts.json` 补 2 条覆盖该 Step 的非显然分支（git 脏 → 可协商风险；`binary_missing` → 降级不终止），21 → 23 条
+- **确认点由 3 个增至 5 个**：新增前置校验的 git 干净度确认，并补登此前漏记的第二步「存量 `failed` 交用户裁决」（它一直阻塞，只是没进那张表）。开篇计数表与 `disable-model-invocation` 说明段同步
+- 新增 `references/write-mechanics.md`：回滚基线、批量写法、写入失败处理
+
+### Changed
+- **第四步的「回滚基线」与「写入方式」两节外移**至 `references/write-mechanics.md`，正文留 5 行指针。选它而非「格式校验」的理由：🚦 零变更总闸触发时第四步**整体跳过**，这两节是真正的分支条件；「格式校验」每条写入前都要用，外移只减行数不减上下文，属把 500 行上限当指标刷
+- 正文 495 → 498 行：外移「回滚基线 + 写入方式」腾出约 35 行，下述 11 条缺陷修复用掉 37 行、复核判官那批又用掉 1 行，**净增 3 行，余量由 5 行降到 2 行**。500 行上限仍未解除，externalize 对象的挑选判据记在 `known-issues.md`
+- **撤销 2.2.5 的「唯一具名例外」登记**。`.claude/rules/skill-conventions.md` 改为按 skill 所在层分叉的正面规则（`plugins/*/skills/` 只用六字段因需可移植；`.claude/skills/` 可用原生字段因不对外分发），SKILL.md 那段警示改为「原生字段、合法可用、不需登记豁免」
+- **Codex 侧行为改标为「未实测」**。此前写「可能报 `Unexpected fields in frontmatter`」是推测；且若真是硬报错，后果不是告警而是该 skill 在 Codex 侧整体加载失败——性质不同，不能当既定事实
+
+### Fixed（darwin 门禁三裁判查出，11 条确认缺陷，高危三条全在本轮新增的 Step 里）
+- **第 3 类输出检查对第二个输出路径零覆盖，且括注是事实错误。** 原写「tips.jsonl 所在目录可写（`.last-synced-version` 同目录）」——两者根本不同目录：tips.jsonl 在 `plugins/optimus-devops-plugin/hooks/sessionstart/`，锚点文件在 `.claude/skills/sync-cc-tips/`。后果是锚点目录不可写时前置校验全过、tips.jsonl 写完才在第五步炸，落进人工善后分支。已改为两目录**各自**可写并补 `test -w` 探测
+- **前置校验拿整体 `ok` 当「JSON 可解析」判据，抢走了第二步的存量裁决支。** `ok` 聚合九项，库里任一存量 `schema`/`field_dup`/`body_shape` 缺陷都会让它为 false → 按「报错终止」拒跑，而正文第二步写的是「存量问题询问用户是否先修」，test-prompt id 20 更明确要求「不得直接停止整轮」。判据已收窄为 `checks.json_valid.ok`
+- **cwd 硬约束形同虚设，且会把病因归错。** 原判据「`git rev-parse` 成功」在任意子目录都退出 0，而脚本路径全是相对仓库根的。**修的时候先踩了第二个坑**：拿 `--show-toplevel` 与 `pwd` 比字符串在本机必然假阴性（前者 `E:/…`、后者 `/e:/…` 形式不同），等于每轮都拒跑。最终判据用 `--show-prefix` 为空（与路径形式无关）+ `--show-toplevel` 成功（排除非仓库目录），四种情形（仓库根/子目录/非仓库/家目录）实跑逐一验证。同时把 cwd 检查提到探测块**第一条**——它排在 `validate_tips.py` 之后时，cwd 错会先炸 validate 并被误诊为「tips.jsonl 损坏」
+- **「Python 无降级路径」与正文两处「改用 `python3` 重试」自相矛盾**，会在只有 `python3` 别名的环境（Linux/WSL 常见）下假阴性拒跑。已改为仅当两者皆不可用才终止
+- **写入前复检没有「用户已同意带脏基线」的出口**，会作废用户刚在前置校验给出的同意，或凭空多出第 6 个确认点。已在 `write-mechanics.md` 补三分支（与前次相同 → 直接放行不得二次询问；不同 → 回前置校验重新确认），并在 CHECKPOINT 处写明须记录该同意
+- **`preview-format.md` 的加载条件仍窄一格**：其中「无候选时整栏略去，不要写「无」占位」只在两个触发字段皆为 0 时才用得上，恰好落在不加载的那一格。这与 2.2.5 修的是同一病灶的另一半，已把该规则移到正文常驻
+- **摘要模板硬编码「九项全过」**，而基线豁免路径自陈 `ok` 必定仍为 false → 会向用户断言一个与脚本输出直接矛盾的结论。已条件化（同类事故 2.2.5 已修过孤儿引用那半句，这半句漏了）
+- **确认点声明 4 个、实际 5 个**：第二步「存量 `failed` 交用户裁决」同样阻塞且 test-prompt id 20 要求必须问。已补表格行并同步开篇计数与 `disable-model-invocation` 说明段
+- **`description` 写「四重完整性校验」而实际九项**（2.2.5 修过一次「八项→九项」，`description` 这处漏了）
+- **`category` 模板与分类清单带方括号，真实数据不带。** 243 条数据带方括号的为 0 条，方括号由 `show-tip.sh:183` 的 `head = f"[{tip['category']}] …"` 展示时拼上，照模板字面写会展示成 `[[交互]]`，而 `validate_tips.py` 只查四字段存在性、**无任何机制拦得住**。根因取证到底：`116d0cb` 那次 `tips.txt → JSONL` 破坏性迁移把方括号从字面量改成展示时拼接，生成模板没跟着改；`4f0d74d` 又把带括号形态复制进分类清单，固化了第二遍
+- **`entry-authoring.md` 加载条件窄于其规则适用范围**：六项清单的「限制说明」等项对**改写 body** 同样适用（test-prompt id 15 正落在该项上），而原条件明文排除「只改已有条目」。已放宽，并保留「只做判重、只改标题/分类」的排除
+
+### Fixed（复核判官二轮，4 条，其中 2 条落在本轮新写的「推荐支」上）
+- **推荐支的 `git stash` 是仓库级操作，会波及无关的在途改动。** 问题域只有 tips.jsonl 一个文件，而裸 `git stash` 收走工作区全部未提交改动（本轮工作区就有 13 个改动文件）。已改为 `git stash push -- plugins/optimus-devops-plugin/hooks/sessionstart/tips.jsonl` 并写明为什么必须带 pathspec。**这条尤其该记**：新增的分支只验了"用户选①之后流程能继续"，没验"执行那条命令的副作用范围"——与本轮另外三条高危缺陷同源，都是判据/命令写完只验了想验的那一侧
+- **stash 了没有归还指令。** 全流程再无 `git stash pop` 提示，用户的改动会停在 stash 里无人告知。已在 CHECKPOINT 处要求记下并在第六步摘要模板加一行（未 stash 时整行略去，与残影栏同一处置）
+- **cwd 判据的表行说明少一条。** 探测块已是三条（`--show-prefix` 空 + `--show-toplevel` 成功 + `test -f AGENTS.md`），表行只解释前两条——`AGENTS.md` 那条是用来排除**别的**仓库根的，漏解释即「文档与实现分叉」的雏形
+- **方括号形态在同一文件里六行之后又种回去一次。** `:227` 刚警示「`category` 值不带方括号」，`:233` 的「已有 `[Skill]` / `[交互]` 标签的历史划分不要回溯改动」与 test-prompt id 10 又用了带括号形态。语义无错（指展示标签），但形态会被下一个人当模板抄——同理修掉 `scripts/test_validate_tips.py:20` 夹具的 `category="[CLI]"` 默认值（取值不参与任何断言，改动零风险，158 tests 仍 OK）
+
+- `test-prompts.json`：id 1 补入前置校验（原断言「完整执行六步」已不完整）；id 12 的 `--add-dir` 活例改为「预留能力，原始用例已改写，勿再据此查证」
+
+### 依据
+- 官方文档 <https://code.claude.com/docs/en/skills>：六字段是**可移植性边界**（脱离 Claude Code 才硬报错），Claude Code 自身正式支持约 20 个原生 frontmatter 字段。完整判据与该字段的五层作用已收入 `knowledge-base/skill-authoring/rules/01-skill-format.md` 的 `2.1`/`2.2`（领域版本 7.3.0 → 7.4.0）
+
+
+
 ## [2.2.5] - 2026-09-11
 
 darwin-skill 三裁判盲评（A/B 结构盲评 + C 渐进披露实测）查出 3 处缺陷，其中 2 处是 2.2.4 重构自身引入的回归。**dim8 实测确认渐进披露有效**：两个 reference 各被正文的一句指示精确「叫」出来，`measurements.md` 正确未加载，会致错删或诱导确认的规则全留在正文——漏加载的代价被压在格式层而非正确性层。

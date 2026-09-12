@@ -2,7 +2,7 @@
   {
     "id": 1,
     "prompt": "/sync-cc-tips",
-    "expected": "完整执行六步：调用 fetch_changelog.py 取 changelog（脚本内部完成两跳降级与锚点截断，不在 SKILL.md 手写取数命令）→ 并行跑 build_alias_index.py / detect_residue.py / validate_tips.py（分别产出判重集、残影候选、改动前基线）→ 逐条新增/修改/删除判定（新增须过环境可用性门与可感知性门，带斜杠形式的须过 check_slash_name.py 存在性校验）→ 展示变更预览（🔴 CHECKPOINT，用 AskUserQuestion 给出确认/合并残影/取消三类选项）→ 用户确认后跑 validate_tips.py --expect-entries 完整性校验，ok:true 才继续 → 推进 .last-synced-version 后调用 commit-cc-plugin（版本号由其决定，本 skill 不自行升版）"
+    "expected": "先过「执行前置校验」（四类检查一次跑完：cwd 须等于仓库根、解释器、claude 二进制、tips.jsonl 的 checks.json_valid、两个输出目录各自可写、锚点文件、tips.jsonl git 干净度），再完整执行六步：调用 fetch_changelog.py 取 changelog（脚本内部完成两跳降级与锚点截断，不在 SKILL.md 手写取数命令）→ 并行跑 build_alias_index.py / detect_residue.py / validate_tips.py（分别产出判重集、残影候选、改动前基线）→ 逐条新增/修改/删除判定（新增须过环境可用性门与可感知性门，带斜杠形式的须过 check_slash_name.py 存在性校验）→ 展示变更预览（🔴 CHECKPOINT，用 AskUserQuestion 给出确认/合并残影/取消三类选项）→ 用户确认后跑 validate_tips.py --expect-entries 完整性校验，ok:true 才继续 → 推进 .last-synced-version 后调用 commit-cc-plugin（版本号由其决定，本 skill 不自行升版）"
   },
   {
     "id": 2,
@@ -47,7 +47,7 @@
   {
     "id": 10,
     "prompt": "准备把 changelog 中某个带斜杠形式的新能力写入 tips.jsonl，运行 /sync-cc-tips",
-    "expected": "写入前调用 scripts/check_slash_name.py <斜杠名> 校验存在性，不得在 SKILL.md 里手写 grep 命令。按 verdict 处置：command → 斜杠名存在，但仍须看 evidence[].context 与 registry_markers 确认是注册体（脚本给 warning 时尤须复查——name:\"init\" 会命中 JS 解析器的无关字符串，「命令跑通且数字属实」≠「输出能支撑那个判断」）；subagent → 不写斜杠形式、改述为「内置 subagent」；not_found 且 changelog 提到它 → 可能来自插件，斜杠形式须带命名空间前缀；not_found 且非插件 → 不写斜杠形式并列入摘要交用户裁决；binary_missing → 按 hint 用 (Get-Command claude).Source 定位后传 --binary 重试。不得试图用二进制判定「是 skill 还是命令」——该区分在 v2.1.266 已不存在（斜杠命令与 skill 同一套注册），也不得回溯改动已有 [Skill]/[交互] 标签的历史划分。不得建议在脚本里写死混淆过的注册函数名（no( / po( 之类每版本会变），稳定锚点只有语义字段名 name: 与 agentType:"
+    "expected": "写入前调用 scripts/check_slash_name.py <斜杠名> 校验存在性，不得在 SKILL.md 里手写 grep 命令。按 verdict 处置：command → 斜杠名存在，但仍须看 evidence[].context 与 registry_markers 确认是注册体（脚本给 warning 时尤须复查——name:\"init\" 会命中 JS 解析器的无关字符串，「命令跑通且数字属实」≠「输出能支撑那个判断」）；subagent → 不写斜杠形式、改述为「内置 subagent」；not_found 且 changelog 提到它 → 可能来自插件，斜杠形式须带命名空间前缀；not_found 且非插件 → 不写斜杠形式并列入摘要交用户裁决；binary_missing → 按 hint 用 (Get-Command claude).Source 定位后传 --binary 重试。不得试图用二进制判定「是 skill 还是命令」——该区分在 v2.1.266 已不存在（斜杠命令与 skill 同一套注册），也不得回溯改动已有 Skill／交互 分类的历史划分。不得建议在脚本里写死混淆过的注册函数名（no( / po( 之类每版本会变），稳定锚点只有语义字段名 name: 与 agentType:"
   },
   {
     "id": 11,
@@ -57,7 +57,7 @@
   {
     "id": 12,
     "prompt": "在一条已有条目末尾补充一句说明后，运行 /sync-cc-tips 的第五步完整性校验",
-    "expected": "第五步调用 scripts/validate_tips.py --expect-entries N（本轮有删除时再加 --removed-ids=...），不得在 SKILL.md 里手写 grep -c '^{' / wc -l / python -c 三段命令。只有 ok:true 才可进第六步；ok:false 时按 failed 数组逐项修复。九项检查中 field_dup 须统计 body 内「功能」「效果」各自出现次数、任一 ≠ 1 即报错（同一条内重复这两段是语义重复），而「例子」不适用该计数规则——按行首匹配、允许多行分平台写法（例子（Windows）：／例子（Linux/Mac）：），这是 1.4.0 为修 --add-dir 被误判为缺字段所加的有意例外。不得用「字段数 > 4」替代该检查。length 项恒为 ok、不进 failed——它只报告超阈值清单，因为长度自检约束改动增量而非全库状态"
+    "expected": "第五步调用 scripts/validate_tips.py --expect-entries N（本轮有删除时再加 --removed-ids=...），不得在 SKILL.md 里手写 grep -c '^{' / wc -l / python -c 三段命令。只有 ok:true 才可进第六步；ok:false 时按 failed 数组逐项修复。九项检查中 field_dup 须统计 body 内「功能」「效果」各自出现次数、任一 ≠ 1 即报错（同一条内重复这两段是语义重复），而「例子」不适用该计数规则——按行首匹配、允许多行分平台写法（例子（Windows）：／例子（Linux/Mac）：），该多行写法是**预留能力**，其原始用例 --add-dir 已被改写为单行分号并列，因此不要再拿 --add-dir 去查证它；保留理由是分平台命令差异确实存在。不得用「字段数 > 4」替代该检查。length 项恒为 ok、不进 failed——它只报告超阈值清单，因为长度自检约束改动增量而非全库状态"
   },
   {
     "id": 13,
@@ -103,5 +103,15 @@
     "id": 21,
     "prompt": "本轮删除了一条 id 为 --old-flag 的条目，运行 /sync-cc-tips 的第五步校验",
     "expected": "调用 validate_tips.py 时须用等号形式传参：--removed-ids=--old-flag。因为值以 - 开头，空格分隔形式会被 argparse 当成另一个 flag 而解析失败。orphan_ref 项须反查该标识符是否仍被其他条目的 title/body 引用，命中则按 hits[].referrer 修正引用方措辞；被删条目自身提到自己的标识符不算悬空引用。同时须传 --expect-entries（旧数 + 新增 − 删除）核对增删账平"
+  },
+  {
+    "id": 22,
+    "prompt": "tips.jsonl 当前有未提交改动（git status --short 输出非空），运行 /sync-cc-tips",
+    "expected": "执行前置校验的第4类运行条件检查命中，按「可协商风险」处理而非报错终止：🔴 CHECKPOINT 列出该文件的改动来源，说明真实代价是回滚基线被污染（出错时 git restore 会连带丢弃用户那些改动），由用户决定继续还是先处理；用户同意即继续执行且不算任务失败。选「先 stash」这一支时命令必须带 pathspec 限定到 tips.jsonl（裸 git stash 会收走工作区全部在途改动），且须记下本轮曾 stash、在第六步摘要提示 git stash pop 归还。不得静默继续，也不得当作硬约束直接拒绝执行"
+  },
+  {
+    "id": 23,
+    "prompt": "本机 claude 二进制不在默认路径（check_slash_name.py 返回 binary_missing），运行 /sync-cc-tips 且识别出 2 条新增",
+    "expected": "执行前置校验的第1类依赖检查探测到取证不可用后**不终止整轮**（与 Python 3 缺失不同）：标记降级，本轮新增条目一律只描述功能、不写斜杠形式，并在摘要注明「取证不可用，斜杠形式已省略」交用户补确认。探测方式是跑 check_slash_name.py 读 verdict，不在 SKILL.md 正文抄写二进制路径——路径是脚本常量，抄一份必然分叉"
   }
 ]

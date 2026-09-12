@@ -9,9 +9,18 @@ paths:
 
 **通用规范见 `knowledge-base/skill-authoring/`**——SKILL.md 格式（六字段约束、目录结构、progressive disclosure、文件引用）见 `rules/01-skill-format.md`；描述优化见 `rules/02-description-optimization.md`；质量评估见 `rules/03-skill-evaluation.md`；脚本使用见 `rules/04-script-usage.md`；最佳实践见 `rules/05-best-practices.md`。本篇只承载**本仓库专属约定**。
 
-每个 skill 维护**独立的语义版本**，与仓库 marketplace 版本号分开管理。frontmatter 遵循开放 Agent Skills 规范（agentskills.io），只允许 `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools` 六个顶层字段（各字段约束见 `knowledge-base/skill-authoring/rules/01-skill-format.md`），出现其他顶层字段会导致跨 runtime 严格校验器报"Unexpected fields in frontmatter"错误。这六个字段是**允许清单，不是必填集**——省略可选字段（如 `license`）合法，且省略它并不换来增加别名字段的额度。
+每个 skill 维护**独立的语义版本**，与仓库 marketplace 版本号分开管理。frontmatter 遵循开放 Agent Skills 规范（agentskills.io），六个顶层字段 `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools` 是**可移植性全集**（各字段约束见 `knowledge-base/skill-authoring/rules/01-skill-format.md`）。这六个字段是**允许清单，不是必填集**——省略可选字段（如 `license`）合法，且省略它并不换来增加别名字段的额度。
 
-**唯一具名例外：`disable-model-invocation`。** 仅 `.claude/skills/sync-cc-tips/` 使用，Claude 侧靠它阻止模型自主拉起该 skill（该 skill 会改写 tips.jsonl 这一唯一真源，且含三个阻塞式人工确认点，必须由人显式触发）。**取舍是清楚的**：删掉它就恢复了被自主调用的风险，而保留它的代价仅是 Codex 侧严格校验器可能报一次 `Unexpected fields in frontmatter` 告警——该 skill 是本仓维护自用、不对外分发，Codex 侧也不需要它的自动触发。**新增 skill 不得沿用本例外**；确有同类需求时先在此处登记，不要直接加字段。
+**Claude Code 原生字段（`disable-model-invocation` 等约 20 个）在 Claude Code 内合法可用，不是规范例外，不需要登记豁免**——完整字段清单、五层作用与适用判据见 `knowledge-base/skill-authoring/rules/01-skill-format.md` 的 `2.1`/`2.2` 两节。本仓按 skill 所在层分叉：
+
+| 位置 | 能否用原生字段 | 理由 |
+|---|---|---|
+| `plugins/*/skills/` | ❌ 只用六字段 | 对外分发、双 harness 共用，必须可移植 |
+| `.claude/skills/` | ✅ 可用 | 仅本仓维护自用、不对外分发，可移植性本就不是它的目标 |
+
+用了原生字段时两条硬要求：**必须在正文写明该字段解决什么问题**（否则后人会当违规字段"顺手清理"，静默丢掉它带来的约束）；`skills-ref validate` 必然报 `Unexpected key(s) in SKILL.md frontmatter`，**该报错是预期结果**，只需确认它仅涉及有意声明的字段、其余校验项全通过，不要为让校验变绿而删字段。
+
+⚠️ **未实测**：`.claude/skills/` 经 `.agents/skills/` 镜像给 Codex，Codex 对未知顶层字段是忽略还是硬报错**尚未验证**。若硬报错，后果不是告警而是该 skill 在 Codex 侧整体加载失败。要验证就在 Codex 侧实际触发一次带原生字段的维护型 skill，看它能否正常载入；在验证之前，不要把"Codex 侧只是告警"当既定事实写进任何文档。
 
 ### metadata.version
 

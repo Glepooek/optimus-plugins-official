@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import validate_tips as vt  # noqa: E402
 
 
-def entry(id_="/x", category="[CLI]", title="标题", body="功能：做事\n效果：有用\n例子：claude --x"):
+def entry(id_="/x", category="CLI", title="标题", body="功能：做事\n效果：有用\n例子：claude --x"):
     return {"id": id_, "category": category, "title": title, "body": body}
 
 
