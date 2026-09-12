@@ -202,6 +202,8 @@ try:
         release_lock(lock_fd, LOCK_FILE)
 
 except Exception as e:
-    print(json.dumps({"systemMessage": f"错误: {str(e)}"}), file=sys.stderr)
-    sys.exit(1)
+    # JSON 只从 stdout 读，stderr 上的 JSON 永不被解析；SessionStart 不可拦截，
+    # exit 非 0 会退化成 transcript 上的非阻断 hook 错误通知，用户看不到本消息。
+    print(json.dumps({"systemMessage": f"错误: {str(e)}"}, ensure_ascii=False))
+    sys.exit(0)
 PYTHON_SCRIPT

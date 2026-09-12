@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse/review-gate.sh\""
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/pretooluse/review-gate.sh\"",
+            "timeout": 10
           }
         ]
       }

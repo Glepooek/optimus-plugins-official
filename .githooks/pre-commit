@@ -23,7 +23,16 @@ if ! python .githooks/check_plugin_versions.py . ; then
   fail=1
 fi
 
-# --- 2. .claude/skills 的双 harness 符号链接镜像 ---
+# --- 2. hook 配置与 Claude Code 契约相符 ---
+# 只查机械可判定项：async 与展示类输出的错配、handler 类型与事件不符、
+# 非工具事件上的 if、永不匹配的 mcp__ matcher、拼错的事件名、PowerShell 裸占位符。
+# 这些错误全都不报错也不中断，只是静默失效——正是需要借提交关口拦的形态。
+# 完整判据见 knowledge-base/claude-code-hooks/。
+if ! python .githooks/check_hook_configs.py . ; then
+  fail=1
+fi
+
+# --- 3. .claude/skills 的双 harness 符号链接镜像 ---
 # 每个纳入版本库的 skill 都要在 .kiro/skills（Claude/Kiro）与 .agents/skills（Codex）
 # 有同名符号链接。被 gitignore 的 skill 不分发，跳过。
 for d in .claude/skills/*/; do

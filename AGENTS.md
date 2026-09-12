@@ -133,15 +133,18 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 
 ---
 
-## 产物规范（三份规则文件，按编辑路径自动加载）
+## 产物规范（四份规则文件，按编辑路径自动加载）
 
 | 规则文件 | 承载什么 | 编辑什么时自动加载 |
 |---|---|---|
 | `.claude/rules/skill-conventions.md` | SKILL.md 的六字段 frontmatter、执行前置校验、需求预告、持续优化约定 | `**/SKILL.md` |
 | `.claude/rules/doc-conventions.md` | 编辑铁律、CHANGELOG.md 格式、README.md 六章节（含 skill/agent 两栏差异） | `**/CHANGELOG.md`、`plugins/*/skills/**/README.md`、`plugins/*/agent-docs/**/*.md` |
 | `.claude/rules/agent-conventions.md` | agent 选型判据、`agents/` 目录硬约束、四字段 frontmatter、配套文档与独立版本化 | `plugins/*/agents/*.md`、`plugins/*/agents/**/*.md` |
+| `.claude/rules/hook-conventions.md` | hook 规范依据映射（指向 `knowledge-base/claude-code-hooks/`）、机械自检、双 harness 定位、已登记配置清单 | `plugins/*/hooks/**` |
 
-三份规范**同时约束两个 harness**——frontmatter 字段是 Codex 也会原样读取缓存的内容，不存在"仅 Claude 遵守"的特例。
+**hook 开发的规范依据是 `knowledge-base/claude-code-hooks/`**——该领域已对官方 hooks reference 做全量规范化，事件选型、exit code 语义、`async` 语义、静默失效排查一律以它为准，禁止凭记忆或类比推导 hook 行为。
+
+前三份规范**同时约束两个 harness**——frontmatter 字段是 Codex 也会原样读取缓存的内容，不存在"仅 Claude 遵守"的特例。第四份的情况不同：**Claude 侧 hook 在 Codex 中不生效**，但其中的版本升级、门禁落位（仓库级门禁必须放 `.githooks/`）两条约定对两侧编辑者同等有效。
 
 ---
 
@@ -149,7 +152,7 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 
 **必须**使用 `commit-cc-plugin` skill，禁止手动执行 git 工作流。说"提交"或"推上去"即可触发。该 skill 只负责这一次提交本身——暂存范围、原子性、message 格式、推送。
 
-仓库长期一致性由 `.githooks/pre-commit` 拦截，与 skill 分工明确：每插件两份 `plugin.json` 版本同值、`.kiro`/`.agents` 符号链接镜像完整且以 `120000` 模式入库。**新克隆的仓库需执行一次 `git config core.hooksPath .githooks` 启用**（该配置是本机的，不随仓库分发）。
+仓库长期一致性由 `.githooks/pre-commit` 拦截，与 skill 分工明确：每插件两份 `plugin.json` 版本同值、`plugins/*/hooks/hooks.json` 与 Claude Code 契约相符、`.kiro`/`.agents` 符号链接镜像完整且以 `120000` 模式入库。**新克隆的仓库需执行一次 `git config core.hooksPath .githooks` 启用**（该配置是本机的，不随仓库分发）。
 
 门禁挂在 hook 而非 skill 正文，是因为 Codex 侧走标准 git 流程读不到 skill——写在 skill 里的检查在 Codex 下完全不生效。禁止 `--no-verify` 绕过。
 
@@ -186,7 +189,9 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 | `.claude/rules/skill-conventions.md` | SKILL.md frontmatter 规范（按路径自动加载） | 两者共用 |
 | `.claude/rules/doc-conventions.md` | CHANGELOG / README 规范（按路径自动加载） | 两者共用 |
 | `.claude/rules/agent-conventions.md` | agent 规范（按路径自动加载） | 两者共用 |
-| `.githooks/pre-commit` | 提交门禁：插件版本同值 + skill 镜像完整（需 `git config core.hooksPath .githooks` 启用） | 两者共用 |
+| `.claude/rules/hook-conventions.md` | hook 规范（按路径自动加载），规范依据指向 `knowledge-base/claude-code-hooks/` | 两者共用 |
+| `.githooks/check_hook_configs.py` | hook 配置机械自检（7 项），`pre-commit` 第 2 项检查 | 两者共用 |
+| `.githooks/pre-commit` | 提交门禁：插件版本同值 + hook 配置合规 + skill 镜像完整（需 `git config core.hooksPath .githooks` 启用） | 两者共用 |
 
 **已被 gitignore 的目录（有意排除，非缺失）：** `.claude/skills/darwin-skill/`（评估产物）、`.remember/`、`.codegraph/`
 

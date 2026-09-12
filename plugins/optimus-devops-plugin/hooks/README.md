@@ -8,6 +8,7 @@
 - [Notification Hook - 智能权限通知](#notification-hook---智能权限通知)
 - [安装指南](#安装指南)
 - [自定义配置](#自定义配置)
+- [规范依据](#规范依据)
 
 ---
 
@@ -211,7 +212,8 @@ Copy-Item -Recurse -Force .\plugins\optimus-devops-plugin\hooks\notification $en
           {
             "type": "command",
             "command": "bash ~/.claude/hooks/sessionstart/show-tip.sh",
-            "async": true
+            "async": false,
+            "timeout": 15
           }
         ]
       }
@@ -293,6 +295,31 @@ Copy-Item -Recurse -Force .\plugins\optimus-devops-plugin\hooks\notification $en
 ### Q: 技巧展示顺序可以固定吗？
 
 **A**: 当前设计是随机展示以保持新鲜感。如果需要固定顺序，可以修改 `show-tip.sh` 中的 Python 代码，移除 `random.shuffle(remaining)` 这行。
+
+---
+
+## 规范依据
+
+本目录两个 hook 的开发与修改遵从 **`knowledge-base/claude-code-hooks/`**（对 Claude Code 官方 hooks reference 的全量规范化，43 条索引条目）。与本目录直接相关的条款：
+
+| 条款 | 约束了什么 |
+|---|---|
+| `rules/03-output-contract.md § 4` | `systemMessage` 的逐事件交付去向——`SessionStart` 交付给用户，`Notification` 直接丢弃 |
+| `rules/05-async-execution.md § 2` | **`async: true` 把 `systemMessage` 与 `additionalContext` 改道给 Claude，用户看不见** |
+| `rules/05-async-execution.md § 4` | `async` 适用判据：纯副作用可用，人类可读文本不可用 |
+| `rules/05-async-execution.md § 5` | 禁止用 `async` 掩盖同步成本 |
+| `rules/02-configuration.md § 5` | 插件状态不能存在 `${CLAUDE_PLUGIN_ROOT}` 下（每次插件升级即丢失） |
+| `rules/06-security-and-cost.md § 3` | 耗时按进程数估算，本机 Git Bash 单次 fork+exec 约 78ms，`bash` + `python` 两进程约 0.44s |
+| `rules/06-security-and-cost.md § 4` | Windows PowerShell 占位符三种写法，其中 `$CLAUDE_PROJECT_DIR` 裸形式解析为 `$null` |
+
+两条已被这些条款判定过的设计：
+
+- **SessionStart 技巧轮播必须 `async: false`。** 它的全部产出就是一个 `systemMessage`，改成 `async: true` 会让轮播对用户彻底不可见——2026-09-12 曾因此静默失效。同步成本（约 0.44s）只能靠减少进程数降低，不能靠 `async` 掩盖。
+- **Notification 通知刻意保留 `async: true`。** 它的产出是 PowerShell toast 这个副作用，且 `Notification` 事件本就丢弃 `systemMessage`，两点叠加使 `async` 在此完全无损。
+- 技巧展示状态存 `$HOME/.claude/.tip-state.json` 而非插件目录内，正是为了不随 plugin cache 版本哈希丢失。
+- **SessionStart 设了 `"timeout": 15`，Notification 刻意不设。** `async: true` 会禁用 timeout 强制（`rules/05 § 3`），在 Notification 上写 timeout 是不生效的死配置。
+
+改动 hook 配置或脚本后，提交前跑 `python .githooks/check_hook_configs.py .`（`pre-commit` 已含该检查），并按 `AGENTS.md` 触发矩阵升本插件两份 `plugin.json`。仓库内的完整约定见 `.claude/rules/hook-conventions.md`（编辑 `plugins/*/hooks/**` 时自动载入）。
 
 ---
 

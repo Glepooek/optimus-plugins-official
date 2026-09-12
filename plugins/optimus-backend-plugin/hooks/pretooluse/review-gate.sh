@@ -6,7 +6,19 @@
 
 set -euo pipefail
 
-MARK_DIR="$(git rev-parse --git-dir 2>/dev/null)/optimus-review-marks"
+GIT_DIR="$(git rev-parse --git-dir 2>/dev/null || true)"
+if [[ -z "$GIT_DIR" ]]; then
+    # 不在 git 仓库内：没有可门禁的对象。必须干净 exit 0——`set -e` 下让
+    # git rev-parse 失败会以 128 退出，被当成非阻断 hook 错误，虽然同样放行，
+    # 但每次 Bash 调用都在 transcript 留一条错误通知。
+    if [[ "${1:-}" == "mark" ]]; then
+        echo "当前目录不在 git 仓库内，无法标记。" >&2
+        exit 1
+    fi
+    exit 0
+fi
+
+MARK_DIR="$GIT_DIR/optimus-review-marks"
 MARK_FILE="$MARK_DIR/csharp.hash"
 SKILL_NAME="csharp-code-review"
 PATTERN='*.cs'
@@ -29,8 +41,11 @@ if [[ -z "$staged_files" ]]; then
 fi
 
 input="$(cat)"
-command_text="$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("tool_input", {}).get("command", ""))' 2>/dev/null || true)"
-if [[ "$command_text" != *"git commit"* ]]; then
+# 只在 tool_input.command 的值内匹配，避免命中 description 等其他字段。
+# 刻意不起解释器解析 JSON：Git Bash 自带环境没有 python3，解析失败会让门禁
+# 静默放行；且每次 Bash 调用都要多付一个解释器的启动开销。
+GIT_COMMIT_RE='"command"[[:space:]]*:[[:space:]]*"[^"]*git[[:space:]]+commit'
+if [[ ! "$input" =~ $GIT_COMMIT_RE ]]; then
     exit 0
 fi
 

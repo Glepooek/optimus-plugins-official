@@ -1,6 +1,6 @@
 # 知识库（knowledge-base）
 
-跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`、`architecture`、`design-patterns`、`data-structures-algorithms`、`mcp`、`dotnet-debugging`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
+跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`、`architecture`、`design-patterns`、`data-structures-algorithms`、`mcp`、`dotnet-debugging`、`host-diagnostics`、`claude-code-hooks`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
 
 ## 目录结构
 
@@ -8,7 +8,8 @@
 
 ```
 <domain>/
-├── README.md            # 领域说明、阅读路径、分类说明
+├── README.md            # 领域说明、阅读路径、分类说明；顶部须有 `> 版本：x.y.z` 版本行
+├── CHANGELOG.md         # 该领域的变更历史，最新条目版本号须与 README 版本行一致
 ├── index.jsonl          # 索引：rule + reference 统一编目
 ├── rules/               # 规范条款（MUST/SHOULD/MAY 语气）
 │   ├── 01-*.md ... 17-*.md
@@ -18,7 +19,7 @@
 
 目录约束：
 
-- `README.md`、`index.jsonl` 是领域导航元数据，始终位于领域根目录，不下沉到分类目录。
+- `README.md`、`CHANGELOG.md`、`index.jsonl` 是领域导航元数据，始终位于领域根目录，不下沉到分类目录。三者**都是必备文件**——`check_index.py` 会校验 `CHANGELOG.md` 存在，以及 README 版本行与 CHANGELOG 最新条目同值。
 - `rules/` 只放可用于合规判断的规范正文；文件编号在 `rules/` 内保持既有顺序。
 - `reference/` 与 `rules/` 是**同级并列**关系，不是从属关系；reference 只解释概念、机制、工具和用法。
 - 索引的 `file` 始终是相对领域根目录的路径（`rules/05-error-handling.md`、`reference/video-codecs.md`）；正文内交叉引用同样采用该形式，与索引保持一致。
@@ -26,7 +27,25 @@
 
 根目录另有 `catalog.json` 领域目录册，登记每个领域的内容分类、维护者、状态、主要消费者与最近审阅日期。新增或删除领域时必须同步维护——`check_index.py` 会校验 `catalog.json` 与实际领域目录双向一致（登记了不存在的领域、或存在未登记的领域都会报错）。
 
-领域职责边界：`dotnet` 负责 Runtime、.NET Framework、SDK、目标框架、操作系统兼容性与生命周期；`csharp` 负责 C# 语言和通用工程实践；`wpf` 负责 WPF/XAML 桌面 UI 技术栈；`git` 负责版本控制协作；`media` 负责媒体处理概念；`skill-authoring` 负责 Skill 创建与维护规范；`architecture` 负责语言无关的架构风格、分层契约与设计原则；`design-patterns` 负责设计模式的选用判据与误用识别；`data-structures-algorithms` 负责数据结构与算法的选型判据与复杂度判断；`dotnet-debugging` 负责程序出问题后的取证与定位（征象判据、CLR 可观测结构、dump 与 SOS 命令解读），与 `csharp`/`wpf` 的预防性规范互补而不重叠。领域可以相互引用，但不得复制同一事实或规则。
+### 领域职责边界
+
+**领域可以相互引用，但不得复制同一事实或规则。** 新增内容前先按本表确认它归哪个领域。
+
+| 领域 | 负责什么 | 与谁易混，怎么分 |
+|---|---|---|
+| `dotnet` | Runtime、.NET Framework、SDK、目标框架、操作系统兼容性与生命周期 | 平台层；语言层归 `csharp` |
+| `csharp` | C# 语言和通用工程实践 | 桌面 UI 归 `wpf`，平台判断归 `dotnet` |
+| `wpf` | WPF / XAML 桌面 UI 技术栈 | 语言层归 `csharp` |
+| `git` | 版本控制协作：分支、提交、PR、发布与所有权 | 其 pre-commit 条款讲 **git 原生钩子**，与 `claude-code-hooks` 同名不同义 |
+| `media` | 媒体处理概念 | 纯描述性领域，无规范条款 |
+| `skill-authoring` | Skill 创建与维护规范 | 仓库专属约定在 `.claude/rules/skill-conventions.md` |
+| `architecture` | 语言无关的架构风格、分层契约与设计原则 | 具体模式的选用归 `design-patterns` |
+| `design-patterns` | 设计模式的选用判据与误用识别 | 分层与风格归 `architecture` |
+| `data-structures-algorithms` | 数据结构与算法的选型判据与复杂度判断 | `reference/` 提取自《Hello 算法》，CC BY-NC-SA 许可证目录级隔离 |
+| `mcp` | MCP 服务端与客户端的授权、安全与协议约束 | — |
+| `dotnet-debugging` | 程序出问题后的**进程内部**取证与定位（征象判据、CLR 可观测结构、dump 与 SOS 命令解读） | 与 `csharp`/`wpf` 的预防性规范互补；进程外部环境归 `host-diagnostics` |
+| `host-diagnostics` | 宿主进程**外部**的环境故障取证（模块注入、安全软件拦截、网络不通、硬件资源不足、系统环境劫持） | 与 `dotnet-debugging` 的进程内部取证互补；其 API Hook 条款讲**注入手法**，与 `claude-code-hooks` 同名不同义 |
+| `claude-code-hooks` | Claude Code hook 机制的编写与审查判据（事件选型、输出契约、决策控制、异步边界） | **仅约束 Claude Code，不适用 Codex**；与 `git` 的原生钩子、`host-diagnostics` 的 API Hook 注入手法三者同名而不同义 |
 
 ## 消费方式
 
@@ -146,8 +165,25 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
 
 ## 与仓库已有资产的关系
 
-- `plugins/optimus-backend-plugin/skills/csharp-code-review`：审查规则以 `knowledge-base/csharp/` 为准，见该 skill 的"权威参考"章节。
-- `plugins/optimus-frontend-plugin/skills/wpf-code-review`、`wpf-project-conventions`：代码审查与项目结构判断依据见 `knowledge-base/wpf/`。
+### 消费本知识库的资产
+
+| 消费者 | 消费哪个领域 | 消费方式 |
+|---|---|---|
+| `plugins/optimus-media-plugin/skills/`（11 个 media-* skill） | `media` | 最大消费方；`media-ffmpeg-common` 不引用 |
+| `plugins/optimus-backend-plugin/skills/csharp-code-review` | `csharp` | 固定映射，见该 skill 的"权威参考"章节 |
+| `plugins/optimus-frontend-plugin/skills/wpf-code-review` | `wpf` | 固定映射 |
+| `plugins/optimus-devops-plugin/skills/project-analyze` | `wpf` | 动态检索 |
+| `plugins/optimus-devops-plugin/skills/dotnet-diagnose-triage` | `dotnet-debugging`、`wpf` | 动态检索 |
+| `.githooks/check_hook_configs.py` | `claude-code-hooks` | **唯一的脚本型消费者**；报错携带索引条目 ID。注意 `plugins/*/hooks/` 三处配置是**被约束的对象**，不是消费者 |
+
+### 目前无消费者的领域
+
+`architecture`、`design-patterns`、`data-structures-algorithms`、`mcp`、`host-diagnostics` 尚无 skill 或脚本引用。这是**已知状态而非缺陷**——知识库是跨插件共享资产，供人类查阅与 agent 临时检索本身即成立。但新建领域前应按 `AGENTS.md` 的「引导器/传感器」自检问一句：这份内容有没有配对的消费方，还是只造轮子不造刹车。
+
+⚠️ 一处易误认的目录：`plugins/optimus-frontend-plugin/skills/wpf-project-conventions` 虽在 `skills/` 下，**按设计不是 skill** ——它无 `SKILL.md`，只有 `CONVENTIONS.md`（项目工程约定的事实来源，由用户填写）与 `SAMPLE.md`，被 `mastergo-to-wpf-components` 与 `mastergo-to-wpf-page` 在生成前强制读取，缺失或关键项为空则拒绝生成。设计依据见 `docs/superpowers/plans/2026-08-19-wpf-visual-skills.md`。它**不检索本知识库**，曾被 `catalog.json` 误登记为 `wpf` 领域的 consumer，2026-09-12 已移出。
+
+### 承载仓库专属约定的资产（不属于本知识库）
+
 - `.claude/rules/skill-conventions.md`：SKILL.md 的仓库专属约定（版本号、author、category、compatibility、allowed-tools、前置校验、需求预告、持续优化）；通用规范引用 `knowledge-base/skill-authoring/`。
 - `.claude/rules/doc-conventions.md`：CHANGELOG.md 与 README.md 的格式规范（含 skill / agent 两栏差异）、编辑铁律。
 - `.claude/rules/agent-conventions.md`：agent 的仓库专属约定（选型判据、`agents/` 目录硬约束、frontmatter、配套文档位置、独立版本化）。

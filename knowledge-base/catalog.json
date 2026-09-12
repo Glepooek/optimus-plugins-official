@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2026-08-27",
+  "updated_at": "2026-09-12",
   "description": "知识库领域目录册。登记每个领域的内容分类、维护责任、状态与主要消费者，供审计命令与影响分析使用。领域内容真源仍是各领域 index.jsonl 与 Markdown 正文，本文件只承载领域级导航元数据。",
   "categories": {
     "rules": "可用于合规判断的规范正文，带 MUST/SHOULD/MAY 语气",
@@ -35,10 +35,11 @@
       "status": "active",
       "consumers": [
         "plugins/optimus-frontend-plugin/skills/wpf-code-review",
-        "plugins/optimus-frontend-plugin/skills/wpf-project-conventions"
+        "plugins/optimus-devops-plugin/skills/project-analyze",
+        "plugins/optimus-devops-plugin/skills/dotnet-diagnose-triage"
       ],
-      "reviewed_at": "2026-08-27",
-      "notes": "WPF 技术栈专属规范；语言层规范引用 csharp，运行环境引用 dotnet"
+      "reviewed_at": "2026-09-12",
+      "notes": "WPF 技术栈专属规范；语言层规范引用 csharp，运行环境引用 dotnet。⚠️ plugins/optimus-frontend-plugin/skills/wpf-project-conventions 曾被登记为 consumer，实为设计上的共享约定文档（无 SKILL.md，被 mastergo-to-wpf-components 与 mastergo-to-wpf-page 读取），不检索本领域，2026-09-12 已移出"
     },
     {
       "domain": "git",
@@ -129,6 +130,21 @@
       "consumers": [],
       "reviewed_at": "2026-09-06",
       "notes": "诊断宿主进程外部故障源：第三方模块注入、安全软件拦截、网络不通、硬件资源不足、系统环境劫持。与 dotnet-debugging 互补——后者负责进程内部（托管堆/线程/锁）取证，本领域负责进程外部环境。目标工具为 .NET 8+ / .NET Framework 4.6.2+ 的 Windows 桌面程序。核心约束「知识库给方法，不给名单」：不内置具体产品黑名单，只收判断框架与冲突形态。⚠️ reference/aha-doctor-teardown.md 为第三方商业软件（字节跳动 AHA 电脑医生）的只读静态分析，基于 2026-09-06 本机快照；仅含公开可读配置与文件元数据层面的观察，未反编译二进制、未解密受保护规则包。其中【推断】标记内容不得作为判据依据引用"
+    },
+    {
+      "domain": "claude-code-hooks",
+      "title": "Claude Code Hook 机制",
+      "categories": [
+        "rules",
+        "reference"
+      ],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": [
+        ".githooks/check_hook_configs.py"
+      ],
+      "reviewed_at": "2026-09-12",
+      "notes": "Claude Code hook 的编写与审查判据：事件选型、配置与作用域、输入输出契约、决策控制、异步执行边界、安全与成本，覆盖官方 Hooks reference 记载的 34 个事件。消费者是 .githooks/check_hook_configs.py（提交门禁，报错携带索引条目 ID）；plugins/*/hooks/ 三处配置是**被约束的对象**而非消费者，不检索本领域。⚠️ 仅约束 Claude Code，Claude 侧 hooks 在 Codex 中不生效，故全部条目 applies_to 不含 Codex。与两类同名概念严格区分：git 原生钩子归 git 领域（git.02.commit-hooks），API Hook 注入手法归 host-diagnostics。有意不收录各事件的 input 字段表——它是查阅型资料而非判断依据，且随版本增删频繁，抄录即制造过期风险"
     }
   ]
 }

@@ -1,5 +1,24 @@
 # WPF 代码审查门禁 Hook
 
+## 规范依据
+
+⚠️ **改动本目录任何脚本或配置前，先读这一节。**
+
+本 hook 的开发与修改遵从 **`knowledge-base/claude-code-hooks/`**（对 Claude Code 官方 hooks reference 的全量规范化，43 条索引条目）。与本门禁直接相关的条款：
+
+| 条款 | 约束了什么 |
+|---|---|
+| `rules/01-event-selection.md § 3` | `PreToolUse` 可拦截，拦截以 `exit 2` 的效果为准 |
+| `rules/03-output-contract.md § 1` | **策略型 hook 必须 `exit 2`**；`exit 1` 及其他非零码被当成非阻断错误直接放行 |
+| `rules/03-output-contract.md § 1 超时` | `PreToolUse` 超时**不阻断**，工具调用继续——卡住的 hook 不能当闸门 |
+| `rules/04-decision-control.md § 4` | hook 不是安全边界，故本门禁定位为"诚实门禁"（见下文局限性） |
+| `rules/06-security-and-cost.md § 3` | 耗时按进程数估算（本机 Git Bash 单次 fork+exec 约 78ms），本 hook 触发频率为每次 Bash 调用 |
+| `rules/06-security-and-cost.md § 5` | Claude 侧 hook 在 Codex 不生效，仓库级门禁应落 `.githooks/` |
+
+排查「hook 没报错但没效果」查 `rules/03 § 8 静默失效清单`。
+
+改动 hook 配置或脚本后，提交前跑 `python .githooks/check_hook_configs.py .`（`pre-commit` 已含该检查），并按 `AGENTS.md` 触发矩阵升本插件两份 `plugin.json`。仓库内的完整约定见 `.claude/rules/hook-conventions.md`（编辑 `plugins/*/hooks/**` 时自动载入）。
+
 ## 功能说明
 
 拦截 `git commit`（含 `--amend`），当 staged 改动包含 `.xaml` 文件且尚未经过 `wpf-code-review` skill 审查时阻止提交，提示先调用该 skill 完成审查。
@@ -30,6 +49,7 @@
 
 - Git（`git diff --cached`）
 - `sha256sum`（Git for Windows 自带的 Git Bash 环境已包含）
-- Python 3（解析 hook stdin 的 JSON，仅用于判断当前命令是否为 `git commit`）
+
+判断当前命令是否为 `git commit` 用纯 bash 正则在 hook 输入上匹配，**不起解释器**——Git Bash 自带环境没有 `python3`，解析失败会让门禁静默放行；且这里每次 Bash 调用都要付一次进程开销。
 
 Codex CLI 无 `PreToolUse` 机制，本门禁仅对 Claude Code 生效。

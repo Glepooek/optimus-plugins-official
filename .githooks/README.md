@@ -19,11 +19,14 @@ git config core.hooksPath .githooks
 | # | 检查 | 失效后果 |
 |---|---|---|
 | 1 | 每插件两份 `plugin.json` 的 `version` 同值 | 两个 harness 读到不同版本号 |
-| 2 | `.claude/skills/` 每个 skill 在 `.kiro`/`.agents` 都有符号链接 | Kiro 或 Codex 侧看不到该 skill |
-| 3 | 镜像不指向已删除的 skill | 悬空链接 |
-| 4 | 镜像以 `120000` 模式入库 | `core.symlinks=false` 时会存成普通文件，克隆到别的机器就不是链接 |
+| 2 | hook 配置与 Claude Code 契约相符 | hook 静默失效——不报错、不中断、无痕迹 |
+| 3 | `.claude/skills/` 每个 skill 在 `.kiro`/`.agents` 都有符号链接 | Kiro 或 Codex 侧看不到该 skill |
+| 4 | 镜像不指向已删除的 skill | 悬空链接 |
+| 5 | 镜像以 `120000` 模式入库 | `core.symlinks=false` 时会存成普通文件，克隆到别的机器就不是链接 |
 
-第 1 项由 `check_plugin_versions.py` 实现（12 个单元测试）：
+第 1 项由 `check_plugin_versions.py` 实现（12 个单元测试）。
+
+第 2 项由 `check_hook_configs.py` 实现（18 个单元测试），扫 `plugins/*/hooks/hooks.json` 与 `.claude/settings*.json`，查七项机械可判定的错配：`async` 与展示类输出的错配、`async`/`asyncRewake` 用在非 command handler、handler 类型与事件不符、非工具事件上的 `if`、不支持 matcher 的事件上写了 matcher、永不匹配的 `mcp__<server>` matcher、PowerShell 裸占位符，另加拼错的事件名。判据真源是 `knowledge-base/claude-code-hooks/`，每条报错都带对应索引条目 ID。脚本定位不到被引用的脚本文件时不报——宁可漏报也不误报。
 
 ```bash
 python -m unittest discover -s .githooks -p "test_*.py"
