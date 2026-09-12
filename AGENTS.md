@@ -93,7 +93,10 @@ python -m unittest discover -s .githooks -p "test_*.py"
 | `plugins/*/hooks/` 内脚本或配置 | ✅ | — | — | ❌ |
 | `plugins/*/scripts/`、`.mcp.json`、`mcp.config.json` 等插件级资源 | ✅ | — | — | ❌ |
 | `plugins/*/README.md`（插件根） | ✅ | — | — | ❌ |
+| `external_plugins/*/` 内任一文件（拷贝模式引入的外部 skill） | ✅ | — | — | ❌ |
 | **新增或删除整个插件** | ✅ 新插件起 `1.0.0` | — | — | ✅ |
+| **新增链接模式的外部引用条目**（marketplace 里 source 为 url/github/git-subdir） | — 无该文件 | — | — | ✅ |
+| **新增拷贝模式引入的外部插件**（`external_plugins/<name>/`） | ✅ 起始值取**上游版本号**，非 `1.0.0` | — | — | ✅ |
 | marketplace 的插件 `description` / `displayName` 等展示元数据 | ❌ | — | — | ❌ |
 | **只改 `plugin.json` 自身的 `version`** | ❌ | — | — | ❌ |
 | 外部 url 源条目（`cangjie-skill`）的 `sha` / `ref` | — 无该文件 | — | — | ❌ |
@@ -107,6 +110,8 @@ python -m unittest discover -s .githooks -p "test_*.py"
 3. ⚠️ **「只改 `version` 本身」不构成再升一次**——补上某一侧的漏升、或新建 `plugin.json` 时写入起始号，都属于版本号自身的维护。否则会陷入递归：升版本要改 `plugin.json`，改 `plugin.json` 又要升版本
 4. **`.claude/` 与 `docs/` 一律不升任何版本号**——它们不随插件分发，harness 读不到
 5. **外部 url 源引用不参与任何一层**——`cangjie-skill` 的版本由上游 commit SHA 决定（`source.sha` 已固定），我们既无处写也不该代写
+6. **「新插件起 `1.0.0`」只适用于本仓自建插件**——链接模式的外部条目没有 `plugin.json`，无从起版本号（顶层仍升 Minor，先例 `4d741b8`：12.1.9 → 12.2.0）；拷贝模式的起始值取上游版本号，因为上游版本是读者判断「这份副本是哪一代内容」的唯一线索，归零会把它丢掉
+7. **拷贝模式有本地改动时，version 为「上游版本 + `-optimus.N`」**——插件缓存按 version 分目录，改了 `external_plugins/` 里的内容却保持 version 逐字不变，已安装的人拿到的仍是旧缓存、改动装不上。后缀同时兼作「这不是纯上游内容」的显式标记
 
 ### 升级幅度
 
@@ -152,7 +157,7 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 
 **必须**使用 `commit-cc-plugin` skill，禁止手动执行 git 工作流。说"提交"或"推上去"即可触发。该 skill 只负责这一次提交本身——暂存范围、原子性、message 格式、推送。
 
-仓库长期一致性由 `.githooks/pre-commit` 拦截，与 skill 分工明确：每插件两份 `plugin.json` 版本同值、`plugins/*/hooks/hooks.json` 与 Claude Code 契约相符、`.kiro`/`.agents` 符号链接镜像完整且以 `120000` 模式入库。**新克隆的仓库需执行一次 `git config core.hooksPath .githooks` 启用**（该配置是本机的，不随仓库分发）。
+仓库长期一致性由 `.githooks/pre-commit` 拦截，与 skill 分工明确：每插件两份 `plugin.json` 版本同值、`plugins/*/hooks/hooks.json` 与 Claude Code 契约相符、marketplace 外部引用条目锁 40 位 `sha`、不写 `version`、已登记台账「已接入」表且台账 sha 与条目一致、`.kiro`/`.agents` 符号链接镜像完整且以 `120000` 模式入库。**新克隆的仓库需执行一次 `git config core.hooksPath .githooks` 启用**（该配置是本机的，不随仓库分发）。
 
 门禁挂在 hook 而非 skill 正文，是因为 Codex 侧走标准 git 流程读不到 skill——写在 skill 里的检查在 Codex 下完全不生效。禁止 `--no-verify` 绕过。
 
@@ -191,7 +196,8 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 | `.claude/rules/agent-conventions.md` | agent 规范（按路径自动加载） | 两者共用 |
 | `.claude/rules/hook-conventions.md` | hook 规范（按路径自动加载），规范依据指向 `knowledge-base/claude-code-hooks/` | 两者共用 |
 | `.githooks/check_hook_configs.py` | hook 配置机械自检（7 项），`pre-commit` 第 2 项检查 | 两者共用 |
-| `.githooks/pre-commit` | 提交门禁：插件版本同值 + hook 配置合规 + skill 镜像完整（需 `git config core.hooksPath .githooks` 启用） | 两者共用 |
+| `.githooks/check_external_entries.py` | marketplace 外部引用条目机械自检（7 项），`pre-commit` 第 3 项检查 | 两者共用 |
+| `.githooks/pre-commit` | 提交门禁：插件版本同值 + hook 配置合规 + 外部条目合规 + skill 镜像完整（需 `git config core.hooksPath .githooks` 启用） | 两者共用 |
 
 **已被 gitignore 的目录（有意排除，非缺失）：** `.claude/skills/darwin-skill/`（评估产物）、`.remember/`、`.codegraph/`
 
