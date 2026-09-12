@@ -85,17 +85,30 @@ def check_plugin(plugin_dir):
     return problems
 
 
+SCAN_DIRS = ("plugins", "external_plugins")
+
+
 def check_all(repo_root):
-    """遍历 plugins/ 下所有目录，返回全部问题描述列表。"""
+    """遍历 SCAN_DIRS 下所有插件目录，返回全部问题描述列表。
+
+    external_plugins/ 是拷贝模式引入的外部 skill 的落点（见
+    docs/superpowers/specs/2026-09-12-add-external-skill-design.md § 3.3）。
+    它与 plugins/ 同样是双 harness 分发单元，因此同受两份同值规则约束；
+    该目录不存在时跳过——拷贝模式尚未使用是正常状态。
+    """
     repo_root = pathlib.Path(repo_root)
     plugins_dir = repo_root / "plugins"
     if not plugins_dir.is_dir():
         return [f"plugins/ 目录不存在：{plugins_dir}"]
 
     problems = []
-    for d in sorted(plugins_dir.iterdir()):
-        if d.is_dir():
-            problems.extend(check_plugin(d))
+    for rel in SCAN_DIRS:
+        base = repo_root / rel
+        if not base.is_dir():
+            continue
+        for d in sorted(base.iterdir()):
+            if d.is_dir():
+                problems.extend(check_plugin(d))
     return problems
 
 

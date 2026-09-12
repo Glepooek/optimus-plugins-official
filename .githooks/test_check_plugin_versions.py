@@ -7,9 +7,9 @@ import unittest
 from check_plugin_versions import check_all
 
 
-def make_plugin(root, name, claude_ver, codex_ver, claude_extra=None):
+def make_plugin(root, name, claude_ver, codex_ver, claude_extra=None, base_dir="plugins"):
     """在临时仓库里造一个插件。ver 传 None 表示不建该文件。"""
-    base = root / "plugins" / name
+    base = root / base_dir / name
     if claude_ver is not None:
         d = base / ".claude-plugin"
         d.mkdir(parents=True, exist_ok=True)
@@ -129,6 +129,39 @@ class TestCheckPluginVersions(unittest.TestCase):
         """plugins/ 下可能有非插件目录（如临时文件夹），不报错。"""
         (self.root / "plugins" / "not-a-plugin").mkdir()
         self.assertEqual(check_all(self.root), [])
+
+    def test_external_plugins_dir_absent_passes(self):
+        """拷贝模式尚未使用时该目录不存在，视为通过（保持幂等）。"""
+        make_plugin(self.root, "p-ok", "1.0.0", "1.0.0")
+        self.assertFalse((self.root / "external_plugins").exists())
+        self.assertEqual(check_all(self.root), [])
+
+    def test_vendored_plugin_same_version_passes(self):
+        make_plugin(self.root, "v-ok", "2.0.0", "2.0.0", base_dir="external_plugins")
+        self.assertEqual(check_all(self.root), [])
+
+    def test_vendored_plugin_version_mismatch_is_reported(self):
+        make_plugin(self.root, "v-bad", "2.0.0", "2.0.1", base_dir="external_plugins")
+        problems = check_all(self.root)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("v-bad", problems[0])
+
+    def test_vendored_plugin_missing_codex_side_is_reported(self):
+        make_plugin(self.root, "v-no-codex", "2.0.0", None, base_dir="external_plugins")
+        problems = check_all(self.root)
+        self.assertEqual(len(problems), 1)
+        self.assertIn(".codex-plugin/plugin.json", problems[0])
+
+    def test_vendored_prerelease_version_pair_passes(self):
+        """有本地改动时版本形如 <上游版本>-optimus.N，两份同值即通过。"""
+        make_plugin(self.root, "v-patched", "2.0.0-optimus.1", "2.0.0-optimus.1",
+                    base_dir="external_plugins")
+        self.assertEqual(check_all(self.root), [])
+
+    def test_both_dirs_scanned_in_one_run(self):
+        make_plugin(self.root, "p-bad", "1.0.0", "1.0.1")
+        make_plugin(self.root, "v-bad", "2.0.0", "2.0.1", base_dir="external_plugins")
+        self.assertEqual(len(check_all(self.root)), 2)
 
 
 if __name__ == "__main__":
