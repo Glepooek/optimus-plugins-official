@@ -1,7 +1,7 @@
 {
   "name": "optimus-plugins-official",
   "description": "自定义 Claude Code 插件集合，提供前端/后端开发、测试 QA、文档处理、CI/CD、会话增强、权限通知等企业级开发工具链",
-  "version": "14.2.0",
+  "version": "14.3.0",
   "owner": {
     "name": "optimus",
     "url": "https://www.optimus.cn"
@@ -86,6 +86,20 @@
       "author": { "name": "tt-a1i" },
       "homepage": "https://github.com/tt-a1i/archify",
       "category": "development"
+    },
+    {
+      "name": "ppt-master",
+      "description": "从 PDF/DOCX/URL/Markdown 生成原生可编辑的 PPTX（真实 DrawingML 形状、文本框、图表与动画）（外部引入：hugohe3/ppt-master，MIT License；skill 位于仓库 skills/ 子目录，须在安装后的插件目录内运行 `pip install -r requirements.txt` 才能使用 Python 后处理脚本）",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/hugohe3/ppt-master.git",
+        "path": "skills",
+        "ref": "main",
+        "sha": "c1b25b82a69b6daa38cebda6ba1f63cd441c79ef"
+      },
+      "author": { "name": "Hugo He" },
+      "homepage": "https://github.com/hugohe3/ppt-master",
+      "category": "productivity"
     }
   ]
 }
