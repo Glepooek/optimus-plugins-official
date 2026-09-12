@@ -171,6 +171,8 @@ git show -s --format=%B HEAD | grep -F '\n'
 | `缺符号链接` / `指向已不存在的` | 按报错括号里给出的命令补齐或清理，产生的文件纳入本次暂存后重新提交 |
 | `有多余字段` | 门禁白名单与本次改动冲突，见 `.githooks/pre-commit` 与 `check_plugin_versions.py` 的注释；放宽白名单需同时改脚本、改测试、记 `known-issues.md`，三件事缺一不可 |
 | 检查本身的 bug（如误报） | 修 `.githooks/` 下的脚本并跑通 `python -m unittest discover -s .githooks -p "test_*.py"`，不要改用 `--no-verify` 跳过 |
+| `不是 40 位小写十六进制` / `条目内不得写 version` / `未登记在 … 的「已接入」表` / `缺锚点 <!-- registry:active -->` | marketplace 外部引用条目写歪，触发 `check_external_entries.py`。按 `/add-external-skill` 的写入规则修正条目或台账 |
+| `台账 sha … 不一致` | 先判明哪一个对应实际验证过的状态，不要随手对齐——先看是条目还是台账反映的是「更新做了一半」，修那个偏离实际状态的一边 |
 
 ## 第五步 — 同步推送
 

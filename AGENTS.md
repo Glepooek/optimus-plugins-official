@@ -79,7 +79,7 @@ python -m unittest discover -s .githooks -p "test_*.py"
 
 ⚠️ **marketplace 的插件条目内永不填写 `version`。** 两个原因：① 官方明确「同时写 `plugin.json` 与 marketplace 条目时，Claude Code **总是用 `plugin.json` 的值且不给警告**」——条目里的值只会被静默忽略；② 本仓条目的 `source` 均为本地相对路径，官方对这类条目会额外校验并在两值不一致时报警告。不填则无从冲突。
 
-⚠️ **外部 url 源引用（`cangjie-skill`）不参与本机制**——它不在 `plugins/` 下，我们无处写它的 `plugin.json`；其版本按官方回退链落到已固定的 `source.sha`，精确且无需维护。
+⚠️ **外部引用条目（`source` 为 `url`/`github`/`git-subdir`，如 `cangjie-skill`/`archify`/`ppt-master`）不参与本机制**——它不在 `plugins/` 下，我们无处写它的 `plugin.json`；其版本按官方回退链落到已固定的 `source.sha`，精确且无需维护。
 
 ### 触发矩阵：什么改动升哪一层
 
@@ -99,7 +99,7 @@ python -m unittest discover -s .githooks -p "test_*.py"
 | **新增拷贝模式引入的外部插件**（`external_plugins/<name>/`） | ✅ 起始值取**上游版本号**，非 `1.0.0` | — | — | ✅ |
 | marketplace 的插件 `description` / `displayName` 等展示元数据 | ❌ | — | — | ❌ |
 | **只改 `plugin.json` 自身的 `version`** | ❌ | — | — | ❌ |
-| 外部 url 源条目（`cangjie-skill`）的 `sha` / `ref` | — 无该文件 | — | — | ❌ |
+| 外部引用条目（`source` 为 `url`/`github`/`git-subdir`，如 `cangjie-skill`/`archify`/`ppt-master`）的 `sha` / `ref` | — 无该文件 | — | — | ❌ |
 | `.claude/` 下任何文件 | ❌ | — | — | ❌ |
 | `docs/`、`knowledge-base/`、`AGENTS.md`、`CLAUDE.md` | ❌ | — | — | ❌ |
 
@@ -109,7 +109,7 @@ python -m unittest discover -s .githooks -p "test_*.py"
 2. **marketplace 顶层只在「集合里的插件数变了」时升**——新增或删除插件。**改插件内部内容、改插件 `description` 都不升它**
 3. ⚠️ **「只改 `version` 本身」不构成再升一次**——补上某一侧的漏升、或新建 `plugin.json` 时写入起始号，都属于版本号自身的维护。否则会陷入递归：升版本要改 `plugin.json`，改 `plugin.json` 又要升版本
 4. **`.claude/` 与 `docs/` 一律不升任何版本号**——它们不随插件分发，harness 读不到
-5. **外部 url 源引用不参与任何一层**——`cangjie-skill` 的版本由上游 commit SHA 决定（`source.sha` 已固定），我们既无处写也不该代写
+5. **外部引用条目（`url`/`github`/`git-subdir`）不参与任何一层**——如 `cangjie-skill`/`archify`/`ppt-master`，版本由上游 commit SHA 决定（`source.sha` 已固定），我们既无处写也不该代写
 6. **「新插件起 `1.0.0`」只适用于本仓自建插件**——链接模式的外部条目没有 `plugin.json`，无从起版本号（顶层仍升 Minor，先例 `4d741b8`：12.1.9 → 12.2.0）；拷贝模式的起始值取上游版本号，因为上游版本是读者判断「这份副本是哪一代内容」的唯一线索，归零会把它丢掉
 7. **拷贝模式有本地改动时，version 为「上游版本 + `-optimus.N`」**——插件缓存按 version 分目录，改了 `external_plugins/` 里的内容却保持 version 逐字不变，已安装的人拿到的仍是旧缓存、改动装不上。后缀同时兼作「这不是纯上游内容」的显式标记
 
