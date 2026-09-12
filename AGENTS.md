@@ -103,7 +103,7 @@ python -m unittest discover -s .githooks -p "test_*.py"
 | `.claude/` 下任何文件 | ❌ | — | — | ❌ |
 | `docs/`、`knowledge-base/`、`AGENTS.md`、`CLAUDE.md` | ❌ | — | — | ❌ |
 
-**五条判读要点：**
+**七条判读要点：**
 
 1. **同一次改动可能同时升两层**——改 SKILL.md 要同时升该 skill 的 `metadata.version` 与所属插件的两份 `plugin.json`。这不是重复，是两类版本号记录不同的事
 2. **marketplace 顶层只在「集合里的插件数变了」时升**——新增或删除插件。**改插件内部内容、改插件 `description` 都不升它**

@@ -2,7 +2,7 @@
 name: add-external-skill
 description: 把外部仓库的 Agent Skill 接入本仓库，或更新已接入条目的版本锁定。探测上游仓库形态、判定落位方式（默认链接：marketplace 条目锁 40 位 sha；例外才拷贝到 external_plugins/）、取 sha、人在回路确认、写入并验证、记台账。更新失败一次即停，不重试、不轮询。只能由人显式调用 /add-external-skill 触发。
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
   category: tool
 compatibility: 需要 git（用 git ls-remote 取上游 sha）与可达上游仓库的网络；写入后的验证步骤需要 claude CLI 的 plugin 子命令；传感器 .githooks/check_external_entries.py 需要 Python 3 标准库。
@@ -12,7 +12,7 @@ disable-model-invocation: true
 
 # add-external-skill
 
-把「引入外部 skill」固化为可反复执行的判断流程，取代此前散落在提交信息里的一次性推导（先例：`4d741b8` 引入 `cangjie-skill`）。设计依据：`docs/superpowers/specs/2026-09-12-add-external-skill-design.md`。
+把「引入外部 skill」固化为可反复执行的判断流程，取代此前散落在提交信息里的一次性推导（先例：`4d741b8` 引入 `cangjie-skill`）。全流程含 2 个阻塞式人工确认点——接入的 Step 4 与更新模式的 U5，两者都落在任何写入动作之前。设计依据：`docs/superpowers/specs/2026-09-12-add-external-skill-design.md`。
 
 ## 适用范围与边界
 
@@ -36,7 +36,9 @@ disable-model-invocation: true
 
 ### Codex 兼容性
 
-Codex 没有与 `disable-model-invocation` 等价的 SKILL.md frontmatter 字段；Codex 用一份独立的 `agents/openai.yaml` 承载同类策略（`policy.allow_implicit_invocation: false`）。**该结论目前只经文档调研得出，未在真实 Codex 会话中实测**——第三方使用者的报告一致描述的现象是「该字段不生效、skill 仍正常加载进上下文」，即降级为静默忽略而非硬报错，未见任何关于 Codex 严格校验 frontmatter 并拒绝未知顶层键的记载。据此**推断**本 skill 在 Codex 侧仍可被同名触发，只是「禁止模型自主拉起」这条约束在 Codex 侧不生效。这是推断而非确认结论，完整取证来源与状态见 `known-issues.md` 第 2 条（状态：待验证（非实测））。
+Codex 没有与 `disable-model-invocation` 等价的 SKILL.md frontmatter 字段。**已实测确认 Codex 忽略该未知顶层键、不拒绝加载**（codex-cli 0.154.0，2026-09-12）：把本仓 `.agents/skills` 作为 project skill root 扫描时，本 skill 以 `name: description` 的形式正常列入模型可见的 skill 清单，与其他 skill 无差别，全程无告警、退出码 0，且该字段本身不出现在模型可见文本里。取证方法与观察证据见 `known-issues.md` 第 2 条。
+
+因此该字段与 Codex 镜像**可以兼得**，不需要在两者之间取舍。代价是「禁止模型自主拉起」这条约束**在 Codex 侧不生效**——该字段既然不进入模型可见上下文，模型就无从遵守它。⚠️ 但**「Codex 会按 `description` 自主拉起本 skill」是推断，本次未实测**：它依据的是 `AGENTS.md` 已记录的 Codex 通用触发机制（按 description 匹配），而本次实测只验证了「加载不失败」，没有观察一次真实的自主拉起。这一层在 Codex 侧只能靠 `description` 末句（「只能由人显式调用 `/add-external-skill` 触发」）作为软约束承担；Codex 若要硬约束，需用它自己的 `agents/openai.yaml`（`policy.allow_implicit_invocation: false`），该路径本仓未采用也未实测。
 
 ## 两个模式
 
@@ -104,9 +106,9 @@ Codex 没有与 `disable-model-invocation` 等价的 SKILL.md frontmatter 字段
 
 **为什么不用 GitHub API**：`ls-remote` 对任意 git 主机都成立，不绑定 GitHub，不需要处理 API 速率限制与鉴权问题——本仓上游不保证都在 GitHub 上。
 
-**`ref` 不得假定为 `main`**，必须实测取值。已知反例：`alchaincyf/darwin-skill` 默认分支是 `master`，`Graphify-Labs/graphify` 是 `v8`。取到的 `sha` 必须是 40 位全长十六进制，缩写形式不满足传感器 `check_external_entries.py` 的校验，也会退回「跟随分支最新」的风险。
+**`ref` 不得假定为 `main`**，必须实测取值。已知反例：`alchaincyf/darwin-skill` 默认分支是 `master`，`Graphify-Labs/graphify` 是 `v8`。取到的 `sha` 必须是 40 位全长十六进制，缩写形式不满足传感器 `.githooks/check_external_entries.py` 的校验，也会退回「跟随分支最新」的风险。
 
-## Step 4：🔴 CHECKPOINT
+## Step 4：🔴 CHECKPOINT：写入前的人工确认
 
 写入前必须向用户展示以下五项，等待确认后才能进入 Step 5：
 
@@ -201,7 +203,7 @@ Codex 没有与 `disable-model-invocation` 等价的 SKILL.md frontmatter 字段
 | U3 | **确认 `ref` 本身仍存在。** 上游删除或重命名分支时 sha 无从取起，这不是网络故障，处置见下方「`ref` 变更的处置」 | 判定 |
 | U4 | **取上游变更摘要**（取法见下）。取不到时不跳过，改为在 U5 的 CHECKPOINT 里如实声明「无法取得变更摘要，本次确认是在看不到改了什么的前提下做的」 | 取值 |
 | U5 | 🔴 **CHECKPOINT**：旧 sha → 新 sha、变更摘要（或其缺失声明）、上游是否新增了 `scripts` / `hooks` / `.mcp.json` / 依赖、License 是否变化 | 人在回路 |
-| U6 | **写入**：改 `sha`（必要时同改 `ref`）；拷贝模式则重新拷贝内容 + 更新 `UPSTREAM.md` + 按「拷贝模式」一节的 version 规则调整版本号。**写入前先记下旧值**——回滚要用 | 产出 |
+| U6 | **写入**：改 `sha`（必要时同改 `ref`）；拷贝模式则重新拷贝内容 + 更新 `external_plugins/<name>/UPSTREAM.md` + 按「拷贝模式」一节的 version 规则调整版本号。**写入前先记下旧值**——回滚要用 | 产出 |
 | U7 | **验证**（同 Step 6 的四步）。不通过则按「失败处理」的「更新写入后失败」一格**回滚到旧 sha** | 验收 |
 | U8 | 记台账更新历史（`成功` / `失败（写入前）` / `已回滚` 三种结果都必须留行，`已是最新` 按需留）；同步「已接入」行的 sha（不同步会被传感器第 7 项拦住）；核实自动更新实际状态仍是关闭的（见下）；调用 `/commit-cc-plugin` 提交 | 收尾 |
 
@@ -306,7 +308,7 @@ external_plugins/<name>/
 └── LICENSE                         上游 License 原样带入
 ```
 
-`UPSTREAM.md` 是拷贝模式**唯一**的防漂移手段，四项必填：上游 repo URL、拷贝自的 40 位 commit SHA、拷贝日期、**本地改动逐条清单**（无改动则写「无」）。缺了它就等于「仓内一份、上游一份，谁都不知道差多少」——`.githooks/check_external_entries.py` 第 8 项会校验它存在且含一枚 40 位 SHA。
+`external_plugins/<name>/UPSTREAM.md` 是拷贝模式**唯一**的防漂移手段，四项必填：上游 repo URL、拷贝自的 40 位 commit SHA、拷贝日期、**本地改动逐条清单**（无改动则写「无」）。缺了它就等于「仓内一份、上游一份，谁都不知道差多少」——`.githooks/check_external_entries.py` 第 8 项会校验它存在且含一枚 40 位 SHA。
 
 ### version 规则
 
@@ -319,7 +321,7 @@ external_plugins/<name>/
 
 上游版本非 semver 时回落 `1.0.0`。⚠️ 起始值取上游版本，与 `AGENTS.md`「新插件起 `1.0.0`」的一般规则冲突——这是刻意例外：上游版本号是读者判断「这份副本是哪一代上游内容」的唯一线索，归零会把这条线索丢掉。
 
-**为什么必须有后缀这一档：** 插件缓存按 version 分目录，若解析出的版本与用户已安装的版本相同，`/plugin update` 与 auto-update 会直接跳过该插件。改了 `external_plugins/<name>/` 的内容但 version 逐字不变，已安装过的人拿到的仍是旧缓存——**改动装不上**，这是功能缺陷，不是记账偏好。而拷贝模式的理由②本来就是「必须改内容」，所以这不是边缘情形，是拷贝模式一半的用途。后缀同时兼作「这不是纯上游内容」的显式标记，比只在 `UPSTREAM.md` 里埋一行更难被忽略。
+**为什么必须有后缀这一档：** 插件缓存按 version 分目录，若解析出的版本与用户已安装的版本相同，`/plugin update` 与 auto-update 会直接跳过该插件。改了 `external_plugins/<name>/` 的内容但 version 逐字不变，已安装过的人拿到的仍是旧缓存——**改动装不上**，这是功能缺陷，不是记账偏好。而拷贝模式的理由②本来就是「必须改内容」，所以这不是边缘情形，是拷贝模式一半的用途。后缀同时兼作「这不是纯上游内容」的显式标记，比只在 `external_plugins/<name>/UPSTREAM.md` 里埋一行更难被忽略。
 
 ⚠️ **该分支截至 1.0.0 未被任何真实用例验证。** 首批两个目标（archify、ppt-master）都命中形态判定表的链接分支，`external_plugins/` 不会被创建。首次真正使用拷贝模式时，须按本节展开实际步骤，并在该次提交内补齐 `test-prompts.json` 对应用例——不要假装这个分支已经跑通过。
 

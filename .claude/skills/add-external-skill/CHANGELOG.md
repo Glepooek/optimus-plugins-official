@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.1] - 2026-09-12
+
+### Changed
+- 「Codex 兼容性」一节由文档调研推断改为**实测结论**：codex-cli 0.154.0 下用 `codex debug prompt-input`（隔离 `CODEX_HOME`，不发起 API 调用）确认 Codex 忽略 `disable-model-invocation` 这一未知顶层键、skill 仍正常列入模型可见清单，无告警。该字段与 Codex 镜像可以兼得，无需重新裁决。残留的非对称已写明，并**分层标注证据强度**：「该字段在 Codex 侧不生效」由「字段未进入模型可见上下文」直接推出；「Codex 会按 `description` 自主拉起本 skill」则标注为推断、本次未实测——避免推论与实测结论被当作同等确凿读走。取证证据见 `known-issues.md` 第 2 条
+
+### Fixed
+- 正文四处裸文件名引用改为路径限定形式（`.githooks/check_external_entries.py`、`external_plugins/<name>/UPSTREAM.md`）。这两个文件都不在本 skill 目录内，裸名会被 `selfcheck.py` 解析为同目录引用并报悬空
+- Step 4 标题改为 `🔴 CHECKPOINT：写入前的人工确认`，并在开篇补「含 2 个阻塞式人工确认点」声明句。此前该确认点不被 `selfcheck.py` 的落地点判据识别（要求 🔴 后 30 字符内出现 `**CHECKPOINT**` 或 `CHECKPOINT：`），声明句亦缺失，`checkpoint_count` 一项恒失败
+
 ## [1.0.0] - 2026-09-12
 
 ### Added
