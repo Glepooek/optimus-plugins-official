@@ -67,7 +67,10 @@
         "sha": "b633a4fad5a02f0fc6b2524d1ddf3ed50c753a40"
       },
       "strict": false,
-      "skills": ["./"]
+      "skills": ["./"],
+      "author": { "name": "kangarooking" },
+      "homepage": "https://github.com/kangarooking/cangjie-skill",
+      "category": "productivity"
     }
   ]
 }

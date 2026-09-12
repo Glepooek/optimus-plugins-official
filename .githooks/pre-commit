@@ -32,7 +32,18 @@ if ! python .githooks/check_hook_configs.py . ; then
   fail=1
 fi
 
-# --- 3. .claude/skills 的双 harness 符号链接镜像 ---
+# --- 3. marketplace 外部引用条目的结构合规 ---
+# 只查机械可判定项：sha 是否 40 位全长、条目是否误写 version、strict:false 是否配了
+# 非空 skills 数组、source 类型与 git-subdir 的 path、展示元数据是否齐备、是否登记进
+# 台账「已接入」表，以及台账 sha 与条目 sha 是否一致（不一致 = 上次更新做了一半）。
+# 这些错误都不报错：漏 sha 只是静默退回「跟随分支最新」，缺 skills 数组则整条加载失败。
+# 刻意不联网——不校验 sha 是否真存在于上游、上游有没有新 commit（后者正是要避免的）。
+# 完整判据见 docs/superpowers/specs/2026-09-12-add-external-skill-design.md § 5。
+if ! python .githooks/check_external_entries.py . ; then
+  fail=1
+fi
+
+# --- 4. .claude/skills 的双 harness 符号链接镜像 ---
 # 每个纳入版本库的 skill 都要在 .kiro/skills（Claude/Kiro）与 .agents/skills（Codex）
 # 有同名符号链接。被 gitignore 的 skill 不分发，跳过。
 for d in .claude/skills/*/; do
