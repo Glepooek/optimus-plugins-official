@@ -9,7 +9,9 @@ paths:
 
 **通用规范见 `knowledge-base/skill-authoring/`**——SKILL.md 格式（六字段约束、目录结构、progressive disclosure、文件引用）见 `rules/01-skill-format.md`；描述优化见 `rules/02-description-optimization.md`；质量评估见 `rules/03-skill-evaluation.md`；脚本使用见 `rules/04-script-usage.md`；最佳实践见 `rules/05-best-practices.md`。本篇只承载**本仓库专属约定**。
 
-每个 skill 维护**独立的语义版本**，与仓库 marketplace 版本号分开管理。frontmatter 遵循开放 Agent Skills 规范（agentskills.io），只允许 `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools` 六个顶层字段（各字段约束见 `knowledge-base/skill-authoring/rules/01-skill-format.md`），出现其他顶层字段会导致跨 runtime 严格校验器报"Unexpected fields in frontmatter"错误。
+每个 skill 维护**独立的语义版本**，与仓库 marketplace 版本号分开管理。frontmatter 遵循开放 Agent Skills 规范（agentskills.io），只允许 `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools` 六个顶层字段（各字段约束见 `knowledge-base/skill-authoring/rules/01-skill-format.md`），出现其他顶层字段会导致跨 runtime 严格校验器报"Unexpected fields in frontmatter"错误。这六个字段是**允许清单，不是必填集**——省略可选字段（如 `license`）合法，且省略它并不换来增加别名字段的额度。
+
+**唯一具名例外：`disable-model-invocation`。** 仅 `.claude/skills/sync-cc-tips/` 使用，Claude 侧靠它阻止模型自主拉起该 skill（该 skill 会改写 tips.jsonl 这一唯一真源，且含三个阻塞式人工确认点，必须由人显式触发）。**取舍是清楚的**：删掉它就恢复了被自主调用的风险，而保留它的代价仅是 Codex 侧严格校验器可能报一次 `Unexpected fields in frontmatter` 告警——该 skill 是本仓维护自用、不对外分发，Codex 侧也不需要它的自动触发。**新增 skill 不得沿用本例外**；确有同类需求时先在此处登记，不要直接加字段。
 
 ### metadata.version
 

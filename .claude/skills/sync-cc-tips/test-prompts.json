@@ -62,17 +62,17 @@
   {
     "id": 13,
     "prompt": "changelog 提到 /stats 的新能力，而 tips.jsonl 已有一条 /usage 条目（两者为同一命令的别名），运行 /sync-cc-tips",
-    "expected": "第二步构建「已覆盖标识符集」时把 SEMANTIC_ALIASES 显式登记的等价组一并展开，识别 /stats 命中已有 /usage 条目，判定为已覆盖或需修改，而不是新增重复条目；若需合并，标题中标全所有别名以便后续 sync 能靠字面命中"
+    "expected": "第二步构建「已覆盖标识符集」时把 SEMANTIC_ALIASES 显式登记的等价组一并展开，识别 /stats 命中已有 /usage 条目，判定为已覆盖或需修改，而不是新增重复条目；后续判重靠 SEMANTIC_ALIASES 登记等价组来命中，不要求把别名堆进标题——字面归一化覆盖不到语义等价名，正是该常量存在的原因"
   },
   {
     "id": 14,
-    "prompt": "tips.jsonl 中已存在三条都在讲 agent 的条目（agent-配置 / agent-指定代理 / Agent-派生工作流），运行 /sync-cc-tips",
-    "expected": "须消费 detect_residue.py 的 shared_main 字段：在第四步变更预览中残影栏之后单列 📚 同主标识符聚集栏，列出同组 ≥ 2 条的分组供人工判断能否合并（shared_main_groups > 0 时列出，为 0 时整栏略去）。agent 组这三条重叠度未达 0.25 阈值、不进 candidates，只会出现在聚集栏，因此该栏不进 AskUserQuestion 的 options——它没有对应自动化动作。已在残影栏出现的组整组跳过，避免同一批 id 出现两次。冗余是历次 sync 累积产生的，每次单看都不重复，只有整库分组扫描才看得见。注意 main_identifier 按 id 的 ASCII 前缀分组，共同概念出现在后缀时不会聚到一起（/code-review-审查当前改动 / requesting-code-review / receiving-code-review 分属三个 main），这是已知边界不是 bug"
+    "prompt": "tips.jsonl 中已存在两条都在讲 agent 的条目（agent-指定代理 / Agent-派生工作流），运行 /sync-cc-tips",
+    "expected": "须消费 detect_residue.py 的 shared_main 字段：在第四步变更预览中残影栏之后单列 📚 同主标识符聚集栏，列出同组 ≥ 2 条的分组供人工判断能否合并（shared_main_groups > 0 时列出，为 0 时整栏略去）。agent 组这两条重叠度未达 0.25 阈值、不进 candidates，只会出现在聚集栏，因此该栏不进 AskUserQuestion 的 options——它没有对应自动化动作。已在残影栏出现的组整组跳过，避免同一批 id 出现两次。冗余是历次 sync 累积产生的，每次单看都不重复，只有整库分组扫描才看得见。注意 main_identifier 按 id 的 ASCII 前缀分组，共同概念出现在后缀时不会聚到一起（/code-review-审查当前改动 / requesting-code-review / receiving-code-review 分属三个 main），这是已知边界不是 bug"
   },
   {
     "id": 15,
     "prompt": "changelog 说某功能此前在特定平台受限、现已全面可用，而 tips.jsonl 中已有该功能的条目，运行 /sync-cc-tips",
-    "expected": "第四步按原地替换而非追加处理：把「vX 起某平台也可用（此前受限）」改写为现状陈述，不保留纯粹的能力扩大史。仅当用户可能仍在使用旧写法时（如某命令已成为另一命令的别名）才保留变更历史"
+    "expected": "第四步按原地替换而非追加处理：把「vX 起某平台也可用（此前受限）」改写为现状陈述，不保留纯粹的能力扩大史。该规则无例外——同一条目只保留最新语义，不在 body 里逐版本累积沿革；旧写法仍可用的情形靠 SEMANTIC_ALIASES 登记等价名来保证后续判重能命中，不靠在正文里留历史"
   },
   {
     "id": 16,

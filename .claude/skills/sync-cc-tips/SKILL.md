@@ -2,7 +2,7 @@
 name: sync-cc-tips
 description: 从 Claude Code 最新 changelog 自动同步 tips.jsonl：按环境可用性与可感知性双重门禁新增条目、修正过时内容、删除已废弃功能，写入后做四重完整性校验并推进同步锚点，最后调用 commit-cc-plugin 提交。触发场景：用户说 "/sync-cc-tips"、"更新tips"、"同步tips"、"tips需要更新"、"从changelog更新tips"、"sync tips"。可附带版本数量参数，如 "/sync-cc-tips 5" 表示只看最近5个版本。
 metadata:
-  version: "2.2.4"
+  version: "2.2.5"
   author: desktop client team
 compatibility: 需要 Python 3（标准库，无第三方依赖）——第一步取 changelog 走 urllib 两跳（raw.githubusercontent.com → api.github.com），两跳均失败时降级为 WebFetch；第三步斜杠名取证需本机 claude 二进制（默认 npm 全局安装路径，可用 --binary 指定）。脚本经 Bash 调用 Windows 原生 Python，二者文件系统视图不同，临时文件一律用仓库内相对路径。流程末尾调用 commit-cc-plugin skill 完成提交推送。
 allowed-tools: Bash WebFetch Read Write Edit Grep AskUserQuestion Skill
@@ -23,7 +23,7 @@ disable-model-invocation: true
 
 📌 **本 skill 只能由人显式触发，不支持无人值守调度**——frontmatter 的 `disable-model-invocation: true` 是有意为之：它既阻止模型自主调用，也意味着 `/loop` 等计划触发会把本 skill 当作纯文本而不执行（官方行为，v2.1.196 起）。三个确认点因此始终有人应答，不存在「无人响应该怎么办」的分支。
 
-⚠️ 该字段是本仓**唯一**超出六字段规范的顶层字段（见 `.claude/rules/skill-conventions.md`），已知偏离、有意保留，Codex 侧严格校验器可能报 `Unexpected fields in frontmatter`。**不要顺手删掉它来"修规范"**——删了本 skill 就会变成可被模型自主拉起。
+⚠️ 该字段是六字段规范的**唯一具名例外**，已登记在 `.claude/rules/skill-conventions.md`（本 skill 是唯一使用者）。Codex 侧严格校验器可能报 `Unexpected fields in frontmatter`，属已知且已接受的代价。**不要顺手删掉它来"修规范"**——规范那侧已经放行，删了本 skill 就会变成可被模型自主拉起。
 
 
 ## 第一步 — 抓取 changelog
@@ -124,7 +124,7 @@ python $S/validate_tips.py        # 基线体检：{ok, entries, failed, checks}
 | Added CLAUDE_CODE_PROJECT_DIR_NAME env var... | `CLAUDE_CODE_PROJECT_DIR_NAME` | 未命中 | 🆕 新增 |
 | Fixed auto mode in very long sessions... | （无用户可操作标识符，纯 bug fix） | — | ⏭️ 跳过（非用户可操作功能） |
 | Changed /doctor to also report plugin health... | `/doctor` | 命中 `ids`，对应「/doctor-配置体检」 | ✏️ 修改 |
-| Added GitLab merge request badge to footer... | （无带语法标记的标识符——`GitLab`/`footer` 是裸英文词，索引有意不收） | 索引查不到，按语义人工核对已有「GitLab 支持扩展」条目 | ⏭️ 跳过（已覆盖） |
+| Added a badge showing the current permission mode in the footer... | （无带语法标记的标识符——`badge`/`footer` 是裸英文词，索引有意不收） | 索引查不到，按语义人工核对已有「权限模式-footer-徽章」条目 | ⏭️ 跳过（已覆盖） |
 
 ⚠️ **末行演示的是索引的能力边界，不是可自动化的命中。** `build_alias_index.py` 只收带语法标记的标识符，纯功能描述型 bullet（无斜杠命令、无 flag、无环境变量、无 settings 键）在索引里必然查不到——此时**不要**因为「未命中」就判新增，改为按语义人工核对。收裸英文词是已被证伪的方案（见文末黑名单），不能为了让这类 bullet 自动命中而放宽索引。
 
@@ -145,8 +145,8 @@ python $S/validate_tips.py        # 基线体检：{ok, entries, failed, checks}
 满足以下**全部条件**才生成新条目：
 - 属于对用户操作有实质影响的功能（新 CLI flag、新子命令、新 Hook 事件、新 settings.json 设置项、新交互命令）
 - **判重**：提取该功能点的所有主标识符（flag 名、设置项名、命令名、环境变量名，如 `respondToBashCommands`、`!命令`），在 `build_alias_index.py` 产出的 `ids`/`aliases` 中逐一查找——**任一命中 → 跳过，不新增**；全部未命中才算新增
-- **环境可用性门**：该功能在本机 harness 下确实能跑。mac/Linux-only、Enterprise 席位、cloud-SDK、claude.ai 账号、**VS Code / JetBrains 扩展专属**（本机只在终端使用 Claude Code）等本机用不了的 → 标记 `⏭️ 跳过（本机不可用）`，不占坑。⚠️ 判据是「有无硬性阻断」：条目**主体**是扩展专属功能才跳过；主体本机可用而只在某句提到扩展（如 `/plugin` 安装即时生效顺带提 VS Code 对话框），是**删掉那半句、保留条目**
-- **可感知性门**：用户能亲眼看到该功能生效或未生效（判据与豁免见下节），否则 → 标记 `⏭️ 跳过（不可感知）`
+- **环境可用性门**：该功能在本机 harness 下确实能跑。mac/Linux-only、Enterprise 席位或组织席位、**企业 managed 配置**、**自建网关**、cloud-SDK、claude.ai 账号、**VS Code / JetBrains 扩展专属**（本机只在终端使用 Claude Code）等本机用不了的 → 标记 `⏭️ 跳过（本机不可用）`，不占坑。⚠️ 判据是「有无硬性阻断」：条目**主体**是扩展专属功能才跳过；主体本机可用而只在某句提到扩展（如 `/plugin` 安装即时生效顺带提 VS Code 对话框），是**删掉那半句、保留条目**。反向同样成立——本机确实自建了网关，网关类条目就没有阻断，照常新增
+- **可感知性门**：用户能亲眼看到该功能生效或未生效（判据与豁免见下节），否则 → 标记 `⏭️ 跳过（不可感知）`。⚠️ **四条件按上列顺序判定，先失败的那道门即定子原因**：已被环境可用性门判「本机不可用」的功能点**不再过本门**，因此也用不到本门的两条豁免——环境门是无豁免的硬闸，可用性问题一律在那里终结
 
 #### 👁️ 可感知性门（新增前必过）
 
@@ -162,7 +162,6 @@ tips 的载体是 SessionStart 单条轮播——**读者读完既无法追问�
 | 只能在 OTel 后端 / 网关日志 / stream-json 里看到 | ❌ 跳过 | 遥测类环境变量、headless 专属输出字段 |
 | 是上限、超时或配额阈值（**不看默认值有多大**） | ✅ 通过 | 并发子代理上限 20、单会话搜索上限 200、WebFetch 缓存 15 分钟 |
 | 静默生效，开关前后用户观察不到差别 | ❌ 跳过 | 内存压力回收、空闲看门狗、沙箱静默阻断 |
-| 需要企业 managed 配置 / 自建网关 / 组织席位才有对象 | ❌ 跳过 | 组织白名单、企业 tips 投放 |
 | 描述的是「兼容多种写法」或「某限制已移除」，无行为差异 | ❌ 跳过 | frontmatter 命名/布尔值兼容、硬上限移除 |
 | 明确已失效的死配置 | ❌ 跳过 | changelog 自陈「不再有任何作用」的设置项 |
 
@@ -173,7 +172,7 @@ tips 的载体是 SessionStart 单条轮播——**读者读完既无法追问�
 
 > ⚠️ **不要用「高级/小众」当判据**，判据只有一条——**有没有验证闭环**。`--restricted` 很小众但一眼可见，该留；`CLAUDE_ENABLE_STREAM_WATCHDOG` 人人可设但完全静默，该跳。误按「高级」筛会连带删掉 `--restricted`、`/batch` 这类小众但真实可用的能力。
 
-> 📌 **上限类是本节的显式例外，不要按「碰不到就跳过」处理。** 上限、超时、配额阈值**一律通过**，不看默认值有多大——这类条目的价值不在「看到它生效」而在**知道天花板存在、撞上时知道去哪调**，属速查表属性，与需要验证闭环的机制类条目不同。**残留风险已知**：它确实不满足本节的通用判据，是显式例外而非判据的自然推论，因此**不要拿它去类推其他 ❌ 档**（遥测、静默看门狗、企业专属仍照跳）。
+> 📌 **上限类是本节的显式例外，不要按「碰不到就跳过」处理。** 上限、超时、配额阈值**一律通过**，不看默认值有多大——这类条目的价值不在「看到它生效」而在**知道天花板存在、撞上时知道去哪调**，属速查表属性，与需要验证闭环的机制类条目不同。**残留风险已知**：它确实不满足本节的通用判据，是显式例外而非判据的自然推论，因此**不要拿它去类推其他 ❌ 档**（遥测、静默看门狗、无行为差异仍照跳）。
 
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
@@ -182,7 +181,7 @@ tips 的载体是 SessionStart 单条轮播——**读者读完既无法追问�
 
 #### 📝 条目生成（两道门都过后执行）
 
-**信息补全与完整性校验**：changelog 的单行描述往往只覆盖核心功能，直接照抄会产出信息不全的条目。**判定有新增条目后、生成 `body` 前，加载 `references/entry-authoring.md`** 执行其中的生成前补全（交叉关联已有 tips、提取完整参数集、补全用法示例）与生成后完整性校验（键名/环境变量/版本号/多种用法/关联功能/限制说明六项）。只做判重或只改已有条目时不必加载。
+**信息补全与条目信息完整性清单**：changelog 的单行描述往往只覆盖核心功能，直接照抄会产出信息不全的条目。**判定有新增条目后、生成 `body` 前，加载 `references/entry-authoring.md`** 执行其中的生成前补全（交叉关联已有 tips、提取完整参数集、补全用法示例）与生成后的**条目信息完整性清单**（键名/环境变量/版本号/多种用法/关联功能/限制说明六项）。只做判重或只改已有条目时不必加载。⚠️ 该清单与第五步的「完整性校验」是两回事：前者查一条条目的信息齐不齐，后者查整个文件的格式与账目，不要混称。
 
 生成格式（每条一行 JSON，写入 tips.jsonl）：
 ```json
@@ -218,6 +217,7 @@ python .claude/skills/sync-cc-tips/scripts/check_slash_name.py <斜杠名>
 |---|---|---|
 | 已知存在的名字（如 `doctor`）返 `not_found` | 混淆结构变了，用 `grep -ao '.\{60\}doctor.\{60\}' <二进制>` 宽窗口反查实际形态 | 宽窗口也查不到**不代表不存在**（随附 skill 惰性解包，见下方⚠️）——交用户实跑确认，并在 `known-issues.md` 记一行说明模式失效 |
 | `verdict: command` 但带 `warning` | 加长窗口复查完整对象 | 列入摘要交用户裁决 |
+| **脚本自身崩溃 / traceback / 输出非 JSON** | 跑一次 `python -m unittest discover -s .claude/skills/sync-cc-tips/scripts -p "test_check_slash_name.py"` 区分是脚本坏了还是该名字触发了边界 | **不要因此停掉整轮**（取证失败只损失一次确认机会，与判重集不全不同）：该条按「存在性无法确认」处理——只描述功能、不写斜杠形式，并在摘要里注明「取证脚本不可用，斜杠形式已省略」交用户补确认 |
 
 ⚠️ **保守侧随改动方向而变，不是恒定的「不写斜杠形式」。** 新增条目时存在性无法确认 → 只描述功能、不写斜杠形式。**已有条目则相反**：`not_found` 是无结论而非否证，把它当否证会去删一个真实可用的功能。根因是**随附 skill 为惰性解包的内嵌资源**，名字不以 `name:"x"` 字面量存在于可执行段——`/simplify`、`/dataviz`、`/deep-research` 均实测可用而脚本一律报 `not_found`（三次误判经过见 `known-issues.md`）。**未命中既不构成删除依据，也不构成写入任何否定陈述的依据**，只能列入摘要交用户确认。
 
@@ -273,7 +273,7 @@ python .claude/skills/sync-cc-tips/scripts/validate_tips.py
 
 | 触发条件 | 一线处理 | 仍失败兜底 |
 |---|---|---|
-| "完整性校验"清单某项在 changelog 原文中确实找不到对应信息（如未提供 settings.json 键名） | 交叉检索该功能关联的已有 tips 条目或同版本其他条目上下文推断 | 若仍无法确认，跳过该项校验并在摘要中注明"信息不全，需人工补充"，不编造数值 |
+| 「条目信息完整性清单」（见 `references/entry-authoring.md`）某项在 changelog 原文中确实找不到对应信息（如未提供 settings.json 键名） | 交叉检索该功能关联的已有 tips 条目或同版本其他条目上下文推断 | 若仍无法确认，跳过该项校验并在摘要中注明"信息不全，需人工补充"，不编造数值 |
 | 同一功能点同时命中🆕新增与✏️修改条件（如新 flag 替换了旧 flag 的部分行为） | 优先按✏️修改处理，原地更新旧条目，不重复新增 | 若归属仍有歧义，在变更预览中单独列出并说明歧义原因，交由用户在 CHECKPOINT 处裁决 |
 
 ### 🚦 零变更总闸（唯一判定点）
@@ -291,7 +291,7 @@ python .claude/skills/sync-cc-tips/scripts/validate_tips.py
 > - 选「写入并同时合并残影」→ 写入时一并执行合并（**被删条目独有的信息必须并入保留方**，不可直接丢弃），第五步调用 `validate_tips.py` 时须把被合并掉的 id 一并传入 `--removed-ids=`，以触发 `orphan_ref` 反查
 > - 选「取消，不做任何修改」或用户通过 Other 输入自定义文本（视为非明确同意） → **立即停止**，输出「操作已取消，tips.jsonl 未修改」，不执行任何写入或提交，`.last-synced-version` 也不更新
 
-**两栏的完整格式示例、末列标注映射与召回边界见 `references/preview-format.md`——`pending_review > 0` 或 `shared_main_groups > 0` 时加载。** 三条不可违反的约束在此重述：
+**两栏的完整格式示例、末列标注映射与召回边界见 `references/preview-format.md`——`candidates > 0` 或 `shared_main_groups > 0` 时加载。** ⚠️ 触发条件是 `candidates` 而非 `pending_review`：候选全部已登记豁免时 `pending_review` 为 0，但残影栏**仍须照常列出**（见下条），而末列那两种标注的映射只在该文件里。三条不可违反的约束在此重述：
 
 - **末列标注绑死 `detect_residue.py` 字段，模型不参与判断**——不要凭判断写「← 建议合并」。合并与否是用户在 CHECKPOINT 的决定，预先宣告结论会诱导确认，与检查点存在的意义相抵触
 - **已登记豁免的组合仍照常列出**，静默隐藏会让人误以为库里没有残影，裁决权始终在用户
@@ -403,6 +403,7 @@ echo "{最新版本}" > .claude/skills/sync-cc-tips/.last-synced-version
 | 零变更总闸触发 | ✅ 写入本轮最新版本 | 见第三步该节，单独提交并注明「仅推进同步锚点」 |
 | 用户在第四步 CHECKPOINT 取消 | ❌ 不写入 | 未做任何改动，锚点保持原值 |
 | 第一步输出 `advance_anchor: false`（`--limit` 模式） | ❌ 不写入 | 范围受限的临时查看，不代表真实同步进度 |
+| **写入命令失败**（磁盘只读、路径不存在、重定向报错） | ❌ 视为未写入 | **不要继续提交**——tips.jsonl 已改而锚点没动，下轮会重扫同一区间并把本轮条目全部判为已覆盖，表面无害但掩盖了锚点损坏。立即报告「锚点写入失败，本轮改动未提交」，`cat` 该文件确认实际内容后由用户决定是手工写入还是回滚本轮改动 |
 | 校验 `ok: false` 而中止 | ❌ 不写入 | 数据未落定，下次需重新处理该区间 |
 
 **版本号升级不在本 skill 定义**——由 `commit-cc-plugin` 第二步按 AGENTS.md 触发矩阵统一处理，本 skill 只交接事实：本次改动落在 `plugins/optimus-devops-plugin/hooks/` 内，届时应升该插件的两份 `plugin.json`（Patch）。
@@ -452,7 +453,7 @@ echo "{最新版本}" > .claude/skills/sync-cc-tips/.last-synced-version
 | 反模式 | 原因 | 替代做法 |
 |---|---|---|
 | 把 changelog 里所有更新项都加入 tips.jsonl | tips 面向用户实用技巧，不是版本记录——内部重构、bug fix、依赖升级不应出现 | 只加对用户操作有实质影响的功能（新 flag、新命令、新设置项） |
-| 只要是新 flag / 新设置项就加进来 | 存在大量用户永远观察不到效果的开关（遥测、静默看门狗、企业专属），加进来只是占轮播位 | 过「👁️ 可感知性门」：答不出「用户怎么知道它起作用了」就跳过。**唯一例外是上限/超时/配额阈值**，该档一律新增 |
+| 只要是新 flag / 新设置项就加进来 | 存在大量用户永远观察不到效果的开关（遥测、静默看门狗），以及本机根本没有对象的开关（企业席位、managed 配置、自建网关），加进来只是占轮播位 | 按顺序过「环境可用性门」再过「👁️ 可感知性门」：本机没有对象的归前者，答不出「用户怎么知道它起作用了」的归后者。**唯一例外是上限/超时/配额阈值**，该档一律新增 |
 | 用「高级 / 小众」筛掉条目 | 会误伤 `--restricted`、`/batch` 这类小众但一眼可见的真实能力 | 唯一判据是有无验证闭环，与功能是否高级无关 |
 | 只用条目标题判断是否已覆盖 | tips.jsonl 每条含完整正文，次级功能点只出现在功能/效果/例子字段而非标题 | 必须扫描 tips.jsonl **全文**，用主标识符（flag 名/设置项名/命令名）做精确匹配 |
 | 0 变化时提交 tips.jsonl 改动 | 无实质变更却产生 commit，污染 git 历史 | 触发「🚦 零变更总闸」跳过 Step 4 与完整性校验；**但仍须推进 `.last-synced-version` 并为该锚点单独提交**——这不是"无意义 commit"，不推进会导致下次重复扫描同一区间 |
@@ -480,8 +481,8 @@ echo "{最新版本}" > .claude/skills/sync-cc-tips/.last-synced-version
 | `scripts/check_slash_name.py` | 斜杠名存在性取证 | 第三步按需调用（每个待写入的斜杠名一次） |
 | `scripts/test_*.py` | 上述脚本的单测（本机无 pytest，用 `python -m unittest discover -s .claude/skills/sync-cc-tips/scripts -p "test_*.py"`） | 改动脚本后必跑 |
 | `.last-synced-version` | 同步锚点（纯版本号，无 `v` 前缀） | 第一步读、第五步写 |
-| `references/entry-authoring.md` | 新增条目的信息补全与完整性校验清单 | 第三步判定有新增、生成 `body` 前加载 |
-| `references/preview-format.md` | CHECKPOINT 残影栏与聚集栏的格式示例、标注映射、召回边界 | 第四步 `pending_review > 0` 或 `shared_main_groups > 0` 时加载 |
+| `references/entry-authoring.md` | 新增条目的信息补全与「条目信息完整性清单」 | 第三步判定有新增、生成 `body` 前加载 |
+| `references/preview-format.md` | CHECKPOINT 残影栏与聚集栏的格式示例、标注映射、召回边界 | 第四步 `candidates > 0` 或 `shared_main_groups > 0` 时加载 |
 | `references/measurements.md` | 各判据与阈值背后的实测数值、实跑快照、清理规模、证伪实验 | **正常执行不加载**；质疑或改动某个阈值/禁令时加载 |
 | `known-issues.md` | 真实使用中暴露的问题台账 | **本 skill 执行中发现自身缺陷时追加一行**；累积满 3 条「待处理」触发 darwin-skill 优化循环 |
 | `test-prompts.json` | 验证 prompt 与期望行为 | darwin-skill 优化循环的验证素材；**改动 SKILL.md 流程后须复查相关 `expected` 是否失效** |

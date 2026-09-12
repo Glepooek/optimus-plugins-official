@@ -1,6 +1,6 @@
 # CHECKPOINT 预览两栏格式
 
-**何时加载**：第四步生成 CHECKPOINT 变更预览、且 `detect_residue.py` 报出 `pending_review > 0` 或 `shared_main_groups > 0` 时。只需生成变更清单（新增/修改/删除/跳过）时不必加载。
+**何时加载**：第四步生成 CHECKPOINT 变更预览、且 `detect_residue.py` 报出 `candidates > 0` 或 `shared_main_groups > 0` 时。⚠️ 判据是 `candidates` 而非 `pending_review`——候选全部已登记豁免时 `pending_review` 为 0，但残影栏仍须列出，仍然需要本文件的标注映射。只需生成变更清单（新增/修改/删除/跳过）时不必加载。
 
 **两栏是两个不同的信号，不要合并成一栏**：
 
