@@ -242,7 +242,7 @@ Codex 没有与 `disable-model-invocation` 等价的 SKILL.md frontmatter 字段
 
 因此 U8 要**核实一次实际状态**，而不是断言默认值成立；发现自动更新被开启时**向人报告**，不擅自改用户的全局设置——这不是本 skill 的权限范围。
 
-排查项一并记入 `known-issues.md`：`CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE=1` 可让后台 pull 失败时保留既有 clone 而不是删库重克隆，避免一次网络抖动把已装好的插件弄没——本仓因为锁 sha 已使后台 pull 基本不会发生，不需要主动设置它，但值得记录以说明该变量与本机制的关系。
+相关环境变量：`CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE=1` 可让后台 pull 失败时保留既有 clone 而不是删库重克隆，避免一次网络抖动把已装好的插件弄没。本仓因为锁 sha 已使后台 pull 基本不会发生，**不需要主动设置它**；这里记录只是说明该变量与本机制的关系，不构成本 skill 的待办项。
 
 ## 失败处理
 
