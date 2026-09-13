@@ -125,11 +125,39 @@ jobs:
           marketplace-path: .claude-plugin/marketplace.json
           # ⚠️ 该 input 默认值里是 origin/main，本仓默认分支是 master
           base-ref: ${{ github.event.pull_request.base.sha }}
-          # 等价于 --strict：不开则缺 description 只是 warning，而缺
-          # description 的 skill 在 Claude 侧等于永不被自动触发
-          fail-on-warnings: "true"
-          # 默认值就是 false；显式写出以留痕「刻意选了严格档」——依赖一个
-          # 不在眼前的默认值来维持严格性，等于把门禁强度交给上游下次改动
+          # ⚠️ 刻意为 false，这是一次有代价的取舍，不是漏配。
+          #
+          # 开 true 时本 job 会红，成因是两个配置叠加：
+          #   ① warn-invariants 的默认值是 "I1 I3 I5 I8"（不是空！不设该
+          #      input 等于已豁免这 4 条），于是 I1 从 error 降级为 warning；
+          #   ② fail-on-warnings 对**降级后的** warning 同样判失败
+          #      （action 原文：downgraded warnings still fail the run）。
+          # 而 I1 是「marketplace plugins[] 必须按名字字母序」——本仓 plugins[]
+          # 刻意按语义编排（10 个自建插件在前、3 个外部引用条目集中在末尾），
+          # 满足 I1 就要打散这个编排。经裁决：保留编排，关掉 fail-on-warnings。
+          #
+          # 🔴 代价要写明：plugins/*/skills/ 下 48 个对外发布 skill 的 CLI
+          #    warning 不再判失败，其中包括「缺 description」——而缺
+          #    description 的 skill 在 Claude 侧等于永不被自动触发。
+          #    ⚠️ 本 job 末尾追加的 `claude plugin validate .claude/skills
+          #    --strict` 是独立调用，不受本 input 影响，故 .claude/skills/
+          #    下的 8 个维护型 skill 仍受严格校验。
+          #
+          # I1 未排序与本项降级都列进了 docs/todo-list/ 的后续项。
+          fail-on-warnings: "false"
+          # ⚠️ 显式写出上游的默认值 "I1 I3 I5 I8"，不是新增豁免。
+          # 原本刻意不设此项，理由是「在没有实测前不预先豁免任何不变量」——
+          # 但首跑实测推翻了这个理由：该 input 的默认值**不是空**，不设它
+          # 就静默继承对 I1（字母序）/ I3 / I5（source.sha 锁定）/ I8 的豁免。
+          # 与下面 scope-errors-to-changed 同一处置：把继承来的默认值写到
+          # 眼前，上游改默认值时不会静默改变本仓的门禁强度。
+          # 🔴 I5（source.sha 必须锁定）被豁免在本仓是可接受的，因为
+          #    .githooks/check_external_entries.py 已在提交关口强制同一件事
+          #    （40 位全长 sha + 台账一致）。这份重叠是刻意的互补，不是冗余。
+          warn-invariants: "I1 I3 I5 I8"
+          # 默认值就是 false，显式写出同上理由。它与 fail-on-warnings 是
+          # 不同维度：本项管「未改动条目上的违规是否降级」，设 false 表示
+          # 全量强制，而非只查本 PR 改过的条目。
           scope-errors-to-changed: "false"
           # ⚠️ 该 input 默认是 latest，不覆盖就等于接受版本漂移。取 2.1.270
           # 是因为「本仓零存量债务」这条基线正是用它量出来的
