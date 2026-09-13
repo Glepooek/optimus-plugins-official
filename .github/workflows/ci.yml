@@ -18,13 +18,25 @@
 # 的必需检查永久 Expected。
 #
 # 全部 checkout 传 persist-credentials: false（默认是 true）。默认值会把
-# GITHUB_TOKEN 以 http.extraheader 的形式写进 .git/config，同 job 的**后续
-# 每个 step** 都能读到它。本仓恰好是最该关掉它的形态：plugin-validate 里跑
-# 第三方 composite action 并 npm install -g，new-skill-eval-case 要处理
-# fork PR 的文件名——而上面刚说过，五个检查一件都不需要凭据，也不推任何东西
-# （permissions 已收到 contents: read）。
+# GITHUB_TOKEN 配置进本地 git，使同 job 的**后续每个 step** 都能拿它做认证的
+# git 操作。本仓恰好是最该关掉它的形态：plugin-validate 里跑第三方 composite
+# action 并 npm install -g，new-skill-eval-case 要处理 fork PR 的文件名——
+# 而上面刚说过，五个检查一件都不需要凭据，也不推任何东西（permissions 已收到
+# contents: read）。
 # ⚠️ 这不是在防某个已知漏洞，而是把一个用不到的凭据从可达范围里去掉；
 #    日后若有 step 真要 push，得显式改回来，那时才是需要论证的时刻。
+#
+# ⚠️ **凭据的落位形态随 checkout 版本变化，本注释刻意不再描述细节。** v5 是把
+#    http.extraheader 直接写进 .git/config；v6.0.0 起改为写入单独文件、由
+#    .git/config 用 includeIf 引用（v6.0.1 又补了 worktree 支持）。上面那句
+#    「配置进本地 git」对两种形态都成立，**结论也不随形态变**——凭据始终在
+#    job 内可达。这段警告本身是 v5→v7 升级（#22）把原描述变成过期描述才加的：
+#    要判断当前形态请读该版本的实现，不要读本注释。
+# 🔴 **每次升 checkout 大版本都要重新确认 persist-credentials 这个 input 还
+#    存在**（v7 已确认：仍在 action.yml 里、default 仍为 true）。理由是
+#    **未知 input 在 Actions 里只产生 warning、不失败**——它哪天被移除或改名，
+#    这道加固会静默失效而 CI 照样全绿。与本文件开头那条「改 job 名要同步改
+#    ruleset」是同一类形态：配置写在那里，但已经不再起作用。
 #
 # 设计判据全文见
 # docs/superpowers/specs/2026-09-13-pr-flow-and-free-ci-design.md § 5
