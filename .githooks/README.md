@@ -35,6 +35,14 @@ git config core.hooksPath .githooks
 
 **全部条目与插件目录**（判据真源是 `knowledge-base/claude-code-plugin-system/`，每条报错都带对应索引条目 ID）：marketplace 名是否撞上 17 个 Anthropic 保留名或 Claude Desktop 的三个保留名、marketplace 与条目名是否满足 kebab-case 与 Claude Desktop 托管同步的字符集、本地路径源的 `./` 前缀 / `..` / 反斜杠 / 目标目录存在性、`relevance` 的 `topic` 长度与五种信号的条数与长度上限（含 `hosts` 的裸小写主机名形态与 `manifestDeps` 的 `file` 末尾锚定）、以及 `.claude-plugin/` 目录内除清单外是否混进了组件目录。这一组针对的同样是「不报错」的形态：保留名会在某个版本起让整个 marketplace 停止加载、条目名不合规会被 Claude Desktop 静默删除、拼错的信号名只会静默不匹配、组件放进 `.claude-plugin/` 后插件仍显示为启用而组件一个都调不出来。
 
+### 不挂在 pre-commit 上的门禁
+
+`check_new_skill_eval_case.py`（21 个单元测试）检查「新增 skill 是否带了 eval case」：从 `git diff --diff-filter=A base...head` 取新增文件，筛出 `plugins/<plugin>/skills/<skill>/SKILL.md`，要求同目录下 `evals/` 有子目录含 `case.yaml` 或 `prompt.md`。缺失即失败并给出应建的路径。
+
+**它不在上面那张表里，因为它不由 `pre-commit` 调用**——它需要两个 ref 之间的 diff，而 `pre-commit` 必须保持暂存区无关（原因见「与 CI 的关系」）。它接受 base/head 两个 ref 作参数，只由 `.github/workflows/ci.yml` 的 `new-skill-eval-case` job 调用。位置仍放 `.githooks/` 是遵守 `.claude/rules/hook-conventions.md` 的「仓库级门禁必须放 `.githooks/`」。
+
+⚠️ 文件名全程在 Python 内解析，**不经 shell、不用 `xargs`**：本仓的必需检查不跳过 fork PR，而 fork 的文件名不可信。
+
 ```bash
 python -m unittest discover -s .githooks -p "test_*.py"
 ```
