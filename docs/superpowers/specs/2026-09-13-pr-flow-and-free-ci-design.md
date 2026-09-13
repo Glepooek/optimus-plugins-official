@@ -275,11 +275,13 @@ remote: - 6 of 6 required status checks are expected.
 
 但第二行暴露了一个双向死锁：`required_status_checks` 先于 CI workflow 被配置，6 个 job 在 GitHub 上一个都不存在，于是**每个 PR 的 6 项检查全部永久停在 "Expected — Waiting for status to be reported"**——主干既不能直推、也不能通过 PR 合并。这与 § 3.4.1 记录的官方那个死锁是同一形态，只是成因从「`paths:` 未命中」换成了「workflow 不存在」。
 
-现有配置（读自 `GET /repos/{owner}/{repo}/rulesets/23134670`，公开仓库无需认证，`updated_at` 05:44:26）与本 spec 规格的逐项对照：
+现有配置（读自 `GET /repos/{owner}/{repo}/rulesets/23134670`，公开仓库无需认证）与本 spec 规格的逐项对照。
 
-| 规则 | 原始状态 | 目标 | 现状 |
+🔴 **「现状」列是快照，不是当前状态。** 下表为 **2026-09-13 08:56:12**（`updated_at`）的复核结果；首次取证在 05:44:26，两者有**五行不同**，差异已在对应格内注明原值。**读这一列不能代替读 API**——§ 4.4 那句「不要凭 UI 记忆或本节文字判断当前状态」同样适用于本表自己。ruleset 名亦已由 `main` 改为 **`master-protection`**（§ 4.4 的可选清理项，已执行）。
+
+| 规则 | 原始状态 | 目标 | 现状（2026-09-13 08:56 复核） |
 |---|---|---|---|
-| `conditions.ref_name.include` | `~DEFAULT_BRANCH` | 不变 | ⚠️ 现为 `~DEFAULT_BRANCH` + `refs/heads/main` + `refs/heads/master`。本仓无 `main` 分支，该条空转无害，但会让人以为有——可选清理项 |
+| `conditions.ref_name.include` | `~DEFAULT_BRANCH` | 不变 | ✅ 现为 `~DEFAULT_BRANCH` + `refs/heads/master`。**原记的 `refs/heads/main` 已删**——那是本仓不存在的分支，空转无害但会让人以为有，属当时标记的可选清理项，已执行 |
 | `deletion` | 有 | 保留 | ✓ |
 | `non_fast_forward` | 有 | 保留 | ✓ 即「禁 force push」 |
 | `pull_request` | 有 | 保留 | ✓ 本次裁决的核心 |
@@ -287,11 +289,11 @@ remote: - 6 of 6 required status checks are expected.
 | └ `require_extra_approval_for_unattributed_changes` | true | false | ✅ 已改 false |
 | └ `allowed_merge_methods` | `merge`/`squash`/`rebase` | 仅 `squash` | ✅ 已收窄 |
 | `required_signatures` | 有 | 删除 | ✅ 已删（`updated_at` 05:09:52） |
-| `copilot_code_review` | `review_on_push` | 保留 | ✓ 现另加 `review_draft_pull_requests: true`，无害。**它不阻塞合并**——不计入 approval，既帮不上批准数也拦不住合并 |
+| `copilot_code_review` | `review_on_push` | 保留 | 🔴 **该规则现已不存在**（原记「保留 ✓，另加 `review_draft_pull_requests: true`」）。它不阻塞合并——不计入 approval，既帮不上批准数也拦不住合并，因此删除不改变任何门禁强度。⚠️ 但**目标列写的是「保留」而实际已删，这是规格与配置的一处未裁决分歧**，只是代价为零故不构成风险 |
 | `required_linear_history` | 缺 | 新增 | ✅ 已新增 |
-| `required_status_checks` | 缺 | 5 项 | 🔴 **配成了 6 项，且早于 CI 存在**——多出的 `skill-eval` 见 § 4.2 其四；整条规则须先移除，见 § 4.5 |
-| └ `strict_required_status_checks_policy` | — | spec 未设计 | ⚠️ 现为 `true`（= 合并前分支必须最新）。单人串行提交撞不上，但给 § 6.3 的「轮询 + 显式 merge」多一个失败模式：master 在轮询期间前进则 merge 被拒 |
-| bypass 名单 | 含当前账号 | 清空 | ✅ 已清空（`bypass_actors: null`） |
+| `required_status_checks` | 缺 | 5 项 | ✅ **现为正确的 5 项**（`gates-data`/`gates-hooks`/`gates-tests`/`plugin-validate`/`new-skill-eval-case`，`integration_id: 15368`）。原记「🔴 配成了 6 项且早于 CI 存在」——多出的 `skill-eval` 已移除，整条规则按 § 4.5 的解锁路径先删后加，因此现在的 5 项是**在 CI 已存在之后从 UI 列表里选出来的**，不是手打 |
+| └ `strict_required_status_checks_policy` | — | spec 未设计 | ✅ **现为 `false`**（原记「⚠️ 现为 `true`」，用户已自行处置）。由此 § 6.3「轮询 + 显式 merge」少了一个失败模式：master 在轮询期间前进不再导致 merge 被拒。⚠️ 代价是合并时分支可以不是最新的——本仓单人串行提交，该代价不成立 |
+| bypass 名单 | 含当前账号 | 清空 | ✅ 已清空。⚠️ 复核时该字段**整个不存在**（首次取证是 `bypass_actors: null`）——两者同义，API 对空名单可省略该键，**不要把「字段没了」读成「读错了 ruleset」** |
 
 ### 4.2 四项冲突：前三项已解决，第四项是新出现的
 
@@ -328,12 +330,14 @@ GitHub MCP 无 ruleset 工具（§ 3.2），`gh` 未安装。两条路：
 
 | 手段 | 说明 |
 |---|---|
-| **Web UI**（实际采用） | 仓库 → Settings → Rules → Rulesets → `main` → 按 § 4.1 现状列逐项核对 |
+| **Web UI**（实际采用） | 仓库 → Settings → Rules → Rulesets → `master-protection` → 按 § 4.1 现状列逐项核对 |
 | `curl` + PAT | `PATCH /repos/{owner}/{repo}/rulesets/23134670`，需 PAT 具备仓库 admin 权限 |
 
 ⚠️ **读取不需要认证，写入需要。** 本 spec 全部现状取证都走匿名 `GET /repos/{owner}/{repo}/rulesets/23134670`（公开仓库），因此「配置到底是什么」这个问题在任何时候都能零成本核实——**不要凭 UI 记忆或本节文字判断当前状态，直接读 API**。本节两次被推翻都是靠这条。
 
-建议顺带把 ruleset 改名为 `master-protection`——现名 `main` 会让人以为它作用于 `main` 分支，而本仓不存在该分支（实际 target 是 `~DEFAULT_BRANCH` 即 `master`）。这是可选的清理项，不影响功能。
+✅ **ruleset 已改名为 `master-protection`**（2026-09-13 完成）。原名 `main` 会让人以为它作用于 `main` 分支，而本仓不存在该分支（实际 target 是 `~DEFAULT_BRANCH` 即 `master`）。这原是可选清理项、不影响功能。
+
+⚠️ **改名有一处不容易想到的连带风险，虽然本次未触发：** 必需检查是靠 **job 名字符串**匹配的（AGENTS.md 记的「改 job 名必须同步改 ruleset」），而 ruleset 自身的**名字**不参与任何匹配——所以改 ruleset 名安全，改 job 名危险。**两件事听起来像一类，机制上相反。**
 
 ### 4.5 ⚠️ 实施顺序：原定顺序已被推翻，记录事故与实际解锁路径
 
