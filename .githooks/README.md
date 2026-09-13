@@ -12,7 +12,7 @@
 git config core.hooksPath .githooks
 ```
 
-未启用时 hook 静默不执行，不会有任何提示。
+未启用时 hook 静默不执行，不会有任何提示——**但改动仍会被 PR 上的 CI 拦住**（`gates-hooks` job 跑的是同一个脚本，见「与 CI 的关系」）。这批门禁此前只在配置过 `core.hooksPath` 的机器上生效过，搬进 CI 后第一次有了不依赖本机配置的执行点。
 
 ## 检查项
 
@@ -29,7 +29,7 @@ git config core.hooksPath .githooks
 
 第 2 项由 `check_hook_configs.py` 实现（21 个单元测试），扫 `plugins/*/hooks/hooks.json` 与 `.claude/settings*.json`，查七项机械可判定的错配：`async` 与展示类输出的错配、`async`/`asyncRewake` 用在非 command handler、handler 类型与事件不符、非工具事件上的 `if`、不支持 matcher 的事件上写了 matcher、永不匹配的 `mcp__<server>` matcher、PowerShell 裸占位符，另加拼错的事件名。判据真源是 `knowledge-base/claude-code-hooks/`，每条报错都带对应索引条目 ID。脚本定位不到被引用的脚本文件时不报——宁可漏报也不误报。两类文件的 `hooks` 键要求不同：`hooks.json` 缺顶层 `hooks` 对象是错配；`settings*.json` 是通用设置文件（`enabledPlugins`、`permissions`、`env` 等），完全不配 `hooks` 属常态，只在该键存在而类型不对时才报。
 
-第 3 项由 `check_external_entries.py` 实现（85 个单元测试），分两组判据。
+第 3 项由 `check_external_entries.py` 实现（49 个单元测试），分两组判据。
 
 **外部引用条目**（`source` 为对象，非本地相对路径）：`sha` 是否 40 位全长、是否误写 `version`、`strict:false` 是否配了非空 `skills` 数组、`source.source` 类型与 `git-subdir` 的 `path`、展示元数据（`description`/`homepage`/`author`）是否齐备，以及是否登记进 `.claude/skills/add-external-skill/registry.md` 的「已接入」表且台账 sha 与条目 sha 一致；另外还会检查拷贝模式落位的 `external_plugins/*/UPSTREAM.md` 是否存在且含 40 位 SHA。这些写歪的形态多数不报错——漏 `sha` 只是静默退回「跟随分支最新」，缺 `skills` 数组则整条加载失败，都是需要借提交关口拦的形态。刻意不联网：条目结构完美但上游仓库已被删除或转私有，这一项抓不到，只能靠实际安装时暴露。
 
@@ -46,6 +46,14 @@ git config core.hooksPath .githooks
 ```bash
 python -m unittest discover -s .githooks -p "test_*.py"
 ```
+
+## 与 CI 的关系
+
+`.github/workflows/ci.yml` 的 `gates-hooks` job **逐字执行 `sh .githooks/pre-commit`**，不在 workflow YAML 里重写一份门禁逻辑。这是本目录唯一的第二执行点。
+
+🔴 **由此产生一条硬约定：`pre-commit` 不得引入依赖暂存区的检查**（`git diff --cached`、`git diff --name-only --staged` 等）。当前六项检查全部基于工作树与 `git ls-files`，**这条性质必须保持**——一旦引入，CI 的逐字复用即失效，门禁判据会在两个环境间静默分叉：本地拦得住的 CI 拦不住，反之亦然。
+
+需要 diff 的门禁改为「接受 base/head 两个 ref 作参数、只由 CI 调用、不进 `pre-commit` 序列」，`check_new_skill_eval_case.py` 就是这个形态（见上一节）。
 
 ## 为什么挂在 hook 而不是 skill 里
 

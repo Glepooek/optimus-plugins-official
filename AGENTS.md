@@ -100,10 +100,12 @@ python -m unittest discover -s .githooks -p "test_*.py"
 | marketplace 的插件 `description` / `displayName` 等展示元数据 | ❌ | — | — | ❌ |
 | **只改 `plugin.json` 自身的 `version`** | ❌ | — | — | ❌ |
 | 外部引用条目（`source` 为 `url`/`github`/`git-subdir`，如 `cangjie-skill`/`archify`/`ppt-master`）的 `sha` / `ref` | — 无该文件 | — | — | ❌ |
+| `plugins/*/skills/<name>/evals/` 内任一文件 | ✅ | ✅ | — | ❌ |
 | `.claude/` 下任何文件 | ❌ | — | — | ❌ |
+| `.github/` 下任何文件（workflow、action 配置） | ❌ | — | — | ❌ |
 | `docs/`、`knowledge-base/`、`AGENTS.md`、`CLAUDE.md` | ❌ | — | — | ❌ |
 
-**七条判读要点：**
+**八条判读要点：**
 
 1. **同一次改动可能同时升两层**——改 SKILL.md 要同时升该 skill 的 `metadata.version` 与所属插件的两份 `plugin.json`。这不是重复，是两类版本号记录不同的事
 2. **marketplace 顶层只在「集合里的插件数变了」时升**——新增或删除插件。**改插件内部内容、改插件 `description` 都不升它**
@@ -112,6 +114,7 @@ python -m unittest discover -s .githooks -p "test_*.py"
 5. **外部引用条目（`url`/`github`/`git-subdir`）不参与任何一层**——如 `cangjie-skill`/`archify`/`ppt-master`，版本由上游 commit SHA 决定（`source.sha` 已固定），我们既无处写也不该代写
 6. **「新插件起 `1.0.0`」只适用于本仓自建插件**——链接模式的外部条目没有 `plugin.json`，无从起版本号（顶层仍升 Minor，先例 `4d741b8`：12.1.9 → 12.2.0）；拷贝模式的起始值取上游版本号，因为上游版本是读者判断「这份副本是哪一代内容」的唯一线索，归零会把它丢掉
 7. **拷贝模式有本地改动时，version 为「上游版本 + `-optimus.N`」**——插件缓存按 version 分目录，改了 `external_plugins/` 里的内容却保持 version 逐字不变，已安装的人拿到的仍是旧缓存、改动装不上。后缀同时兼作「这不是纯上游内容」的显式标记
+8. **`.github/` 不升任何版本号**——它不在任何插件内、不随插件分发。这一条按核心规则本可推导，写成明文只为省掉下次重新推导。反过来，**`evals/` 那一行是既有第一行的特例明写**：改 eval case 要升插件两份 `plugin.json` 与该 skill 的 `metadata.version`，因为 eval 套件落在 `plugins/*/skills/<name>/` 内。⚠️ 「只改 evals/ 却要升 skill 版本」反直觉到值得一条明文——`metadata.version` 是描述性版本号，本就该反映「这个 skill 演进到哪一步」，**有行为测试的 skill 与没有的确实不是同一步**
 
 ### 升级幅度
 
@@ -158,6 +161,16 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 ## 提交与推送
 
 **必须**使用 `commit-cc-plugin` skill，禁止手动执行 git 工作流。说"提交"或"推上去"即可触发。该 skill 只负责这一次提交本身——暂存范围、原子性、message 格式、推送。
+
+**主干 `master` 已开启保护规则，直推会被服务端以 `GH013` 拒绝。** 提交路径是「特性分支 → PR → CI 全绿 → squash merge」，`commit-cc-plugin` 的第五步已按此改造。
+
+**Codex 侧走标准 git 时同样必须建分支走 PR**——ruleset 是服务端强制，不依赖任何 harness 的自觉。分支名按 `knowledge-base/git/rules/01-branching.md` 的 `<type>/<简短描述>`，`type` 与本次 commit 的 Conventional Commits type 逐字对齐。
+
+**门禁现在有两个执行点**：`.githooks/pre-commit` 在本地（需 `git config core.hooksPath .githooks`），`.github/workflows/ci.yml` 在每个 PR 上跑**同一批脚本**。后者不依赖本机配置，是 `pre-commit` 长期缺口的补齐——本地未启用 hook 仍会被 PR 上的 CI 拦住。
+
+**五个必需检查的 job 名**（`gates-hooks`、`gates-tests`、`gates-data`、`plugin-validate`、`new-skill-eval-case`）**同时被 `ci.yml` 与 GitHub 服务端 ruleset 引用**，而后者不在版本库里、改动不留 diff。🔴 **改 job 名必须同步改 ruleset**，否则那项检查会静默不再被要求——属「不报错的失效形态」。
+
+**新增 skill 必须带 eval case**：`plugins/<plugin>/skills/<skill>/evals/<case>/` 下需有 `prompt.md`（或 `case.yaml`），由 `new-skill-eval-case` job 强制，**存量不回溯**。可参照的活体样本是 `jenkins-build` 的 20 条（10 正例 `min: 1` / 10 负例 `min: 0` + `max: 0`）。⚠️ 门禁只查 case **存在**，不查内容有没有意义——内容质量属人工评审。
 
 仓库长期一致性由 `.githooks/pre-commit` 拦截，与 skill 分工明确：每插件两份 `plugin.json` 版本同值、`plugins/*/hooks/hooks.json` 与 Claude Code 契约相符、marketplace 外部引用条目锁 40 位 `sha`、不写 `version`、已登记台账「已接入」表且台账 sha 与条目一致、`.kiro`/`.agents` 符号链接镜像完整且以 `120000` 模式入库。**新克隆的仓库需执行一次 `git config core.hooksPath .githooks` 启用**（该配置是本机的，不随仓库分发）。
 
