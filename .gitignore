@@ -423,6 +423,27 @@ FodyWeavers.xsd
 .claude/memory/
 .claude/plans/
 .claude/worktrees/
+# darwin-skill 的评分工作目录。skill 正文本身装在全局（~/.claude/skills/darwin-skill），
+# 本仓这个目录只承接产物与判据两类东西，处置相反：
+#   - 产物（cards/ 的 HTML 与 PNG、CLI 的 results/）由本行排除——可从判据重新生成
+#   - 判据（results.tsv）已入库，靠 `git add -f` 纳入跟踪：gitignore 只管**未跟踪**
+#     文件，已跟踪文件的改动照常出现在 git status
+# ⚠️ 但「照常出现在 status」不等于「add 也照常」——实测三个命令对同一个已跟踪文件给出
+# 三种口径：`git status` 正常显示改动；`git check-ignore <该文件>` 判为未忽略；而
+# `git add <该文件>` 仍会报「paths are ignored」并**退出码 1**（改动其实已被暂存）。
+# 成因是**目录级排除的剪枝早于「已跟踪」判定**：尾斜杠让 git 在目录层就停止递归，
+# index 里那条记录压根没被 pathspec 匹配上。因此暂存它时要么带 `-f`，要么容忍退出码 1
+# ——🔴 放进 `&&` 链里会中断后续命令。
+# 🔴 `git add -f` 并**没有**绕开 gitignore 那条边界（本注释此前如此声称，是错的），
+# 它只是把同一次撞击推迟到文件真正进入 index 的那一刻：`git check-ignore` 默认也查
+# index，results.tsv 进 index 后本目录就不再被判为「已忽略」，于是 pre-commit 的镜像
+# 检查反过来要求给 darwin-skill 补 .kiro/.agents 两处符号链接并阻断提交（实测退出码 1）。
+# 已于 2026-09-14 修好判据：第一条判据换成「目录里有没有 SKILL.md」，gitignore 那条
+# 加 --no-index，见 .githooks/check_skill_mirrors.py。**镜像门禁不再依赖本行的写法。**
+# ⚠️ 若日后要改成白名单形态，仍有一条与门禁无关的纯语法约束：尾斜杠 `darwin-skill/`
+# 会让 git 剪掉整棵子树、不再递归进入，后续 `!darwin-skill/results.tsv` 豁免根本不生效；
+# 要豁免必须写成 `darwin-skill/*`。本行保持尾斜杠形态，是因为已跟踪文件本就不受影响、
+# 无需任何豁免——这仍是最简形态。
 .claude/skills/darwin-skill/
 .claude/skills/sync-cc-docs-to-youdaonote/data/.catalog-staging.md
 .playwright-mcp/

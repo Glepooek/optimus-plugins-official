@@ -2,3 +2,15 @@
 # shebang 的一部分，报 "bad interpreter: /bin/sh^M" 而静默失效。
 # 仅约束此文件，其余文件沿用本机 core.autocrlf 设置。
 .githooks/pre-commit text eol=lf
+
+# darwin-skill 的评分历史是纯追加型单文件：多分支并行各自评分时，新行都落在
+# 文件尾部，三方合并会把它们判成同一处冲突。merge=union 让两边的行全部保留。
+# ⚠️ 与「重新生成」这类解法不同：它是历史日志而非当前状态，两边的行都是事实，
+# 择一即等于丢掉一次真实评分记录。
+# eol=lf 与上面 pre-commit 那条同因不同果：本机 core.autocrlf=true，检出时会把
+# LF 换成 CRLF，而这是九列 TSV——按 \t 切分后**末列 eval_mode 会带上 \r**，
+# darwin SKILL.md 那个「dry_run 占比 ≥30% 触发评估失效警告」的判断正是读这一列，
+# 失配后不报错、只是静默算不准。🔴 该风险是「纳入跟踪」这个动作凭空造出来的：
+# 此前它未被跟踪、从不经过 autocrlf，一直是 LF。入库看似纯增量，实则把它接进了
+# 一条会改写内容的管道。
+.claude/skills/darwin-skill/results.tsv merge=union text eol=lf
