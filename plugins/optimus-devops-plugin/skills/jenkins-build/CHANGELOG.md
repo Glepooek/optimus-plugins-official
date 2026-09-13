@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1] - 2026-09-13
+
+### Removed
+- `evals/` 整个目录（20 个 case、40 个文件）。按用户裁决删除，一并消解了 `docs/todo-list/2026-09-12-todo.md` 的 A1（`09-trigger` 期望标注可疑）——不再需要在「改 skill 的 description」与「改 case 的期望」之间选
+- ⚠️ **删除后本仓不再有任何可被 `claude plugin eval` 发现的 case**：`wpf-code-review/evals/` 是非官方格式、产出 0 个。`AGENTS.md`「新增 skill 必须带 eval case」那条因此失去活体样本，已就地改为指向文件形态规范
+- 原始语料未随之丢失：skill 根下 `trigger-eval.json` 仍是完整的 20 条 `{query, should_trigger}`（实测 10 正 / 10 负），重建时可按 `docs/superpowers/specs/2026-09-13-pr-flow-and-free-ci-design.md` § 5.9.1「目录与文件形态」机械迁回
+
 ## [1.3.0] - 2026-09-13
 
 ### Added
