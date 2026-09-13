@@ -101,48 +101,88 @@
 | Copilot review 与 `GITHUB_TOKEN` 发起的 review **不计入** approval | 「找个自动批准者」这条路不存在 |
 | fork PR 拿不到仓库 secret | 必需检查必须全部零凭据（§ 3.1 第 5 条已满足） |
 | GitHub Actions 对公开仓库免费、无分钟数上限 | CI 本身零成本 |
+| **主干已存在一个 active ruleset**（名 `main`、id `23134670`、`2026-09-13T05:02:49Z` 创建） | § 4 从「新建保护」改为「修订现有 ruleset」；完整配置与冲突见 § 4.1 |
+| 当前账号在该 ruleset 的 **bypass 名单内** | 直推 `master` 仍成功，服务端只回 `Bypassed rule violations`——规则存在但对唯一使用者无效 |
+| 本机**零提交签名配置** | `user.signingkey`/`gpg.format`/`commit.gpgsign` 均未设，最近 5 个提交 `git log --format=%G?` 全为 `N` |
 
-## 4. 主干保护配置规格（一次性，人工执行）
+## 4. 主干保护配置规格（修订现有 ruleset，人工执行）
 
-### 4.1 用 Ruleset 而非 Classic branch protection
+### 4.1 现状取证：ruleset 已存在，但当前形态不可满足
 
-两者都免费可用，选 Ruleset 的理由是**逃生口的形态不同**：
+主干上已有一个 active ruleset，名 `main`、id `23134670`、创建于 `2026-09-13T05:02:49Z`。**本节的原始设计是「从零新建」，取证后改为「修订现有」**——两者的差别不只是措辞：现有配置里有三项若照原样移出 bypass 名单会立即锁死主干。
 
-- Classic 的对应开关是「Include administrators」。本仓唯一使用者就是 admin，**不勾等于零保护**；勾上后没有任何显式逃生口。
-- Ruleset 的 **Bypass list 默认为空**，即包括 admin 在内无人可绕过。真需要救急时，把 ruleset 的 Enforcement status 临时改为 `Disabled`——这是一次**显式、留痕、需刻意为之**的操作，而不是悄悄绕过。
+发现方式值得记录：一次常规的 `git push origin master` 成功了，但服务端回了
 
-这符合 `03-pull-requests.md:24` 的「禁止直接推送」：直推必须真的被拒绝，而非依赖自觉。
+```
+remote: Bypassed rule violations for refs/heads/master:
+remote: - Changes must be made through a pull request.
+remote: - Commits must have verified signatures.
+remote:   Found 1 violation: efeb3b49...
+```
 
-### 4.2 逐字段配置
+`Bypassed` 不是错误而是通告：规则命中了，因当前账号在 bypass 名单内而放行。**没有这一行，这个 ruleset 会长期给人「主干已受保护」的错觉，而实际上唯一会推它的人恰好豁免——保护的有效范围与实际使用者的交集是空集。**
 
-路径：仓库 → Settings → Rules → Rulesets → New branch ruleset
+现有配置（读自 `GET /repos/{owner}/{repo}/rulesets/23134670`，公开仓库无需认证）与本 spec 规格的逐项对照：
 
-| 字段 | 值 | 理由 |
-|---|---|---|
-| Ruleset Name | `master-protection` | — |
-| Enforcement status | **Active** | — |
-| Bypass list | **留空** | § 4.1；唯一使用者即 admin，留空才有实效 |
-| Target branches | Include default branch（即 `master`） | § 3.3：默认分支是 `master` 不是 `main` |
-| ☑ Restrict deletions | 勾选 | 防误删主干 |
-| ☑ Block force pushes | 勾选 | `03-pull-requests.md:24` 明文禁止 force push |
-| ☑ Require linear history | 勾选 | `03-pull-requests.md` §2 推荐 squash merge 保持线性主干 |
-| ☑ Require a pull request before merging | 勾选 | 本次裁决的核心 |
-| └ Required approvals | **0** | § 3.3：作者不能批自己，单人仓库设 1 会永久死锁 |
-| └ Dismiss stale approvals | 不勾 | approvals=0 时无意义 |
-| └ Require review from Code Owners | 不勾 | 个人账号无 team，CODEOWNERS 无从指派 |
-| └ Require conversation resolution | 不勾 | 单人仓库自问自答，纯摩擦 |
-| ☑ Require status checks to pass | 勾选 | `03-pull-requests.md:25` 的「CI 全绿」部分，本次**强化落地** |
-| └ 必需检查项 | `gates`、`plugin-validate`、`new-skill-eval-case` | 见 § 5.1 的三个 job 名，三个都要选上 |
-| └ Require branches to be up to date | **不勾** | 单人顺序提交撞车概率低；勾上会在 master 前进时强制 update branch，给全自动流程多加一次往返 |
-| ☐ Require signed commits | 不勾 | 本仓无签名约定，勾上会立即锁死全部提交 |
+| 规则 | 现状 | 目标 | 判定 |
+|---|---|---|---|
+| `conditions.ref_name.include` | `~DEFAULT_BRANCH` | 不变 | ✓ 等价于 `master` |
+| `deletion` | 有 | 保留 | ✓ |
+| `non_fast_forward` | 有 | 保留 | ✓ 即「禁 force push」 |
+| `pull_request` | 有 | 保留 | ✓ 本次裁决的核心 |
+| └ `required_approving_review_count` | **1** | **0** | 🔴 见 § 4.2 |
+| └ `require_extra_approval_for_unattributed_changes` | **true** | **false** | 🔴 见 § 4.2 |
+| └ `allowed_merge_methods` | `merge`/`squash`/`rebase` | **仅 `squash`** | ⚠️ 收窄以配合线性历史 |
+| `required_signatures` | **有** | **删除** | 🔴 见 § 4.3（用户裁决） |
+| `copilot_code_review` | 有（`review_on_push: true`） | 保留 | ✓ 免费的额外一层，**且不阻塞合并**——它不计入 approval，所以既帮不上 `count:1` 也拦不住合并 |
+| `required_linear_history` | **缺** | **新增** | ⚠️ `03-pull-requests.md` §2 推荐 squash 保持线性 |
+| `required_status_checks` | **缺** | **新增** | 🔴 需求 3 的落点整个缺失，CI 全绿无法强制 |
+| bypass 名单 | **含当前账号** | **清空** | 🔴 见 § 4.2 |
 
-### 4.3 ⚠️ 实施顺序的硬约束
+### 4.2 三项致命冲突
 
-**保护必须最后开。** 开启后 `git push origin master` 立即被拒绝，而 `commit-cc-plugin` 第五步当前正是直推 master——若先开保护，下一次提交就会卡死在一个还没改好的 skill 上。
+**其一：合并条件当前不可满足。** `required_approving_review_count: 1` 叠加四个事实——GitHub 不允许 PR 作者批准自己的 PR、个人账号无 team reviewer、Copilot review 不计入 approval、`require_extra_approval_for_unattributed_changes: true` 还要再加一票。单人仓库里这组条件凑不出所需批准数。**一旦移出 bypass 名单，主干将既不能直推、也不能通过 PR 合并**——这不是配置得严，而是配置得不可满足。
 
-正确顺序：CI workflow 落地并验证通过 → 改 `commit-cc-plugin` 与 `AGENTS.md` → 改知识库条款 → **最后**开 ruleset。
+处置：`required_approving_review_count` 改 **0**，`require_extra_approval_for_unattributed_changes` 改 **false**。规范侧的对应改动是 § 7.1 给 `03-pull-requests.md:25` 加作用域限定；两者必须成对做，只改一边会留下「配置与规范互相矛盾」的新版死结。
 
-另一处顺序依赖：**必需检查项必须先在 GitHub 上跑过至少一次，名字才会出现在 ruleset 的可选列表里**。因此开 ruleset 前必须已有一个真实 PR 触发过 CI。
+**其二：bypass 名单必须清空。** 名单里有唯一使用者时，保护的实际作用范围为空。清空后的逃生口改为「把 Enforcement status 临时改为 `Disabled`」——一次显式、留痕、需刻意为之的操作，而不是每次推送时静默绕过。这才满足 `03-pull-requests.md:24` 的「禁止直接推送」：直推必须**真的被拒绝**。
+
+**其三：缺 `required_status_checks` 意味着需求 3 落不了地。** 没有这一项，CI 可以红着而 PR 照样能合。§ 5 设计的三个零 token 检查必须挂进这里才有约束力。
+
+### 4.3 `required_signatures`：删除（用户裁决）
+
+本机零签名配置（`user.signingkey`/`gpg.format`/`commit.gpgsign` 均未设，最近 5 个提交 `%G?` 全为 `N`）。移出 bypass 名单后，未签名提交会被服务端拒绝——**连特性分支的推送都会被拒**，因为该规则作用于向受保护分支推送的 commit 及其合并。
+
+两条路各自的代价已提交用户裁决，**结论：从 ruleset 删除 `required_signatures`**。放弃这条安全边界，换取零配置成本。
+
+⚠️ 该裁决同时意味着 spec 不引入任何签名相关约定；若日后要恢复该规则，需先完成 SSH signing 配置（`gpg.format=ssh` + `user.signingkey` + `commit.gpgsign=true` + 在 GitHub 账号加 Signing Key），再改 ruleset，顺序不能颠倒。
+
+### 4.4 修订手段
+
+GitHub MCP 无 ruleset 工具（§ 3.2），`gh` 未安装。两条路：
+
+| 手段 | 说明 |
+|---|---|
+| **Web UI**（推荐） | 仓库 → Settings → Rules → Rulesets → `main` → 按 § 4.1 目标列逐项改 |
+| `curl` + PAT | `PATCH /repos/{owner}/{repo}/rulesets/23134670`，需 PAT 具备仓库 admin 权限 |
+
+建议顺带把 ruleset 改名为 `master-protection`——现名 `main` 会让人以为它作用于 `main` 分支，而本仓不存在该分支（实际 target 是 `~DEFAULT_BRANCH` 即 `master`）。这是可选的清理项，不影响功能。
+
+### 4.5 ⚠️ 实施顺序的硬约束
+
+**bypass 名单最后清空。** 清空后 `git push origin master` 立即被拒绝，而 `commit-cc-plugin` 第五步当前正是直推 master——若先清空，下一次提交就会卡死在一个还没改好的 skill 上。
+
+正确顺序：
+
+1. CI workflow 落地
+2. 开一个真实 PR 触发 CI —— **必需检查项必须先在 GitHub 上跑过至少一次，名字才会出现在 ruleset 的可选列表里**
+3. 改 `commit-cc-plugin` 与 `AGENTS.md`
+4. 改知识库条款（§ 7.1 / § 7.2，走 `knowledge-base-maintain`）
+5. 修订 ruleset：删 `required_signatures`、approval 数改 0、补 `required_status_checks` 与 `required_linear_history`、收窄 merge 方法
+6. **最后**清空 bypass 名单
+
+⚠️ 第 2 步与第 5 步之间有真实的依赖：没跑过的 job 名选不上。而第 1 步的 PR 本身要在 bypass 名单还在、或 approval 数已改 0 的前提下才能合并——**建议第 5 步的「approval 数改 0」提前到第 2 步之前单独做**，这样第 2 步的 PR 就能正常合并，不必依赖 bypass。
+
 
 ## 5. CI 设计
 
@@ -407,7 +447,7 @@ CI 逐字执行 `sh .githooks/pre-commit`，因此该脚本**不得引入依赖�
 | 3 | 官方静态校验全绿 | CI 中 22 个校验目标（1 marketplace + 10 插件 + 9 skills + 1 agents + 1 `.claude/skills`）`--strict` 全部退出 0 |
 | 4 | 知识库与 tips 一致性 | `check_index.py` / `check_refs.py` / `validate_tips.py` 均退出 0 |
 | 5 | **阴性对照**：eval case 门禁真的会拦 | 造一个「新增 SKILL.md 但无对应 `evals/` 目录」的 PR，`new-skill-eval-case` **必须红**；补上目录后转绿 |
-| 6 | **阴性对照**：主干真的推不上去 | 开 ruleset 后 `git push origin master` **必须被服务端拒绝**（不是本地 hook 拒绝） |
+| 6 | **阴性对照**：主干真的推不上去 | 清空 bypass 名单后 `git push origin master` **必须被服务端拒绝**。⚠️ 判据是「拒绝」而非「有提示」——当前状态下该命令会**成功**并回 `Bypassed rule violations`，把那行提示误当成保护生效正是本次要消除的错觉 |
 | 7 | 全自动流程闭环 | 走一次完整 `commit-cc-plugin`：建分支 → push → PR → CI 绿 → squash merge → 回主干；主干 commit 含 `Co-Authored-By`（§ 6.5） |
 | 8 | 知识库改动未破坏一致性 | `knowledge-base-maintain` 的一致性校验通过，领域版本与 CHANGELOG 已同步 |
 | 9 | 新门禁有测试与文档 | `test_check_new_skill_eval_case.py` 通过；`.githooks/README.md` 已登记 |
@@ -422,7 +462,8 @@ CI 逐字执行 `sh .githooks/pre-commit`，因此该脚本**不得引入依赖�
 | 4 | **会话中断导致 PR 悬挂** | § 6.4 已述，靠 § 6.2 的接续逻辑兜住 |
 | 5 | **Windows 本地与 Linux CI 的行为差异未实测**：符号链接、路径大小写、`git ls-files -s` 的模式位 | `actions/checkout` 保留符号链接为已知行为，但**本仓未实测**。验收第 1 项即是这项的实测；若 `pre-commit` 在 CI 首跑失败，按失败内容判断是脚本假设了 Windows 还是 CI 环境缺配置 |
 | 6 | **`.claude/settings.json` 是否纳入版本库** | 遗留未决项，与本 spec 解耦。它当前已被 `git add` 但未提交；本次交付**不处理**，需单独裁决 |
-| 7 | 首个 PR 的鸡生蛋问题：必需检查名字要先跑过一次才能选 | § 4.3 已列入实施顺序：ruleset 最后开 |
+| 7 | 首个 PR 的鸡生蛋问题：必需检查名字要先跑过一次才能选 | § 4.5 已列入实施顺序，并把「approval 数改 0」提前，使首个 PR 不依赖 bypass 即可合并 |
+| 8 | **现有 ruleset 由用户在本会话期间手动创建**，其意图未完整记录 | 本 spec § 4.1 已把它的完整配置固化为取证，§ 4.2 / § 4.3 逐项给出改动理由。`required_signatures` 一项已单独交用户裁决（结论：删除），不做替用户推断 |
 
 
 
