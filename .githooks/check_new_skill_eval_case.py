@@ -95,10 +95,8 @@ def main():
             print(f"  - {d}")
             print(f"      需要 {d}/{EVAL_DIR}/<case-name>/prompt.md"
                   f"（或 case.yaml）")
-        print("  可参照的样本："
-              "plugins/optimus-devops-plugin/skills/jenkins-build/evals/")
-        print("  判据见 docs/superpowers/specs/"
-              "2026-09-13-pr-flow-and-free-ci-design.md § 5.7")
+        print("  判据与文件形态见 docs/superpowers/specs/"
+              "2026-09-13-pr-flow-and-free-ci-design.md § 5.7、§ 5.9.1")
         return 1
 
     if checked:
