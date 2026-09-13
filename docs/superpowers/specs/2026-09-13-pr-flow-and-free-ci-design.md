@@ -133,7 +133,7 @@ remote:   Found 1 violation: efeb3b49...
 | └ `required_approving_review_count` | **1** | **0** | 🔴 见 § 4.2 |
 | └ `require_extra_approval_for_unattributed_changes` | **true** | **false** | 🔴 见 § 4.2 |
 | └ `allowed_merge_methods` | `merge`/`squash`/`rebase` | **仅 `squash`** | ⚠️ 收窄以配合线性历史 |
-| `required_signatures` | **有** | **删除** | 🔴 见 § 4.3（用户裁决） |
+| `required_signatures` | **已删除** ✅ | 删除 | ✓ 用户已按 § 4.3 裁决执行（`updated_at` 05:09:52） |
 | `copilot_code_review` | 有（`review_on_push: true`） | 保留 | ✓ 免费的额外一层，**且不阻塞合并**——它不计入 approval，所以既帮不上 `count:1` 也拦不住合并 |
 | `required_linear_history` | **缺** | **新增** | ⚠️ `03-pull-requests.md` §2 推荐 squash 保持线性 |
 | `required_status_checks` | **缺** | **新增** | 🔴 需求 3 的落点整个缺失，CI 全绿无法强制 |
@@ -153,7 +153,7 @@ remote:   Found 1 violation: efeb3b49...
 
 本机零签名配置（`user.signingkey`/`gpg.format`/`commit.gpgsign` 均未设，最近 5 个提交 `%G?` 全为 `N`）。移出 bypass 名单后，未签名提交会被服务端拒绝——**连特性分支的推送都会被拒**，因为该规则作用于向受保护分支推送的 commit 及其合并。
 
-两条路各自的代价已提交用户裁决，**结论：从 ruleset 删除 `required_signatures`**。放弃这条安全边界，换取零配置成本。
+两条路各自的代价已提交用户裁决，**结论：从 ruleset 删除 `required_signatures`**。放弃这条安全边界，换取零配置成本。**该项已执行完毕**（`updated_at` 05:09:52 起该规则不再存在），是本 spec 中唯一已落地的改动。
 
 ⚠️ 该裁决同时意味着 spec 不引入任何签名相关约定；若日后要恢复该规则，需先完成 SSH signing 配置（`gpg.format=ssh` + `user.signingkey` + `commit.gpgsign=true` + 在 GitHub 账号加 Signing Key），再改 ruleset，顺序不能颠倒。
 
