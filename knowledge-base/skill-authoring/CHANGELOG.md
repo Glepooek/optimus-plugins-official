@@ -2,6 +2,24 @@
 
 本领域自 7.2.1 起使用**独立版本号**。7.2.0 及之前为知识库统一全局版本号时代，相关条目见下方「全局版本时代」，其版本号为当时的全局版本。
 
+## [8.0.0] - 2026-09-13
+
+eval 用例的**存放位置与文件形态**改为官方 `claude plugin eval` 格式，原 `evals/evals.json` 不再是合规位置。这是 Major 而非 Patch：`skill-authoring.03.test-case-design` 的 MUST 换掉了它要求的产物本身，**按旧条款做出的合规产物在新条款下变为不合规**，外部消费者必须迁移，不是措辞优化。方法论未动——§2 的 with/without 基线、§3 的断言写法要求、§4 的 evidence 要求、§5 的 delta 判据、§6 模式分析、§7 人工 review、§8 迭代循环全部原样保留，本次只替换它们的载体。
+
+### Changed
+- `skill-authoring.03.test-case-design`（`rules/03-skill-evaluation.md` §1）：测试用例由 `evals/evals.json` 改存 `evals/<case-name>/prompt.md`（frontmatter 承载 case 字段、正文是用户提问）+ `evals/<case-name>/graders/*.md`（frontmatter 承载 `type`/`weight`、正文是判据）；单文件 `case.yaml` 为官方等价写法。🔴 **外部消费者需要做的事：把已有 `evals/evals.json` 拆成上述两类文件**——`prompt` 字段成为 `prompt.md` 正文，`expected_output` 字段原样成为 `llm` grader 的正文（两者本是同一件事的两种包装，不需要重新发明判据措辞）
+- `skill-authoring.03.test-case-design`：新增两处结构差异警示——官方 case 顶层 15 个合法键（zod strict）中**没有 `files`**，输入文件不再是用例的字段而靠工作区预置；`expected_outcome` 不受枚举约束，任意字符串都能过校验，因此它不是可依赖的判据
+- `skill-authoring.03.baseline-comparison`（§2）：补官方 `--ablation` 默认值即 `with-without`，故本节第一条 MUST 在用官方工具时是默认行为；并记入一个反直觉耦合——with-without 下 with-only 的 grader（**含 `tool_used: Skill`**）被当作 plugin-fired 指示器而**不计入分数**，判据全是 `tool_used: Skill` 的套件在该模式下会失去全部判据。另补三个执行时默认值：`--runs` 默认 `case.runs ?? 3`、`--judge-model` 默认 haiku、`--threshold` 默认 1.0
+- `skill-authoring.03.assertions`（§3）：补 assertion 在官方格式下的落位即 grader 的 `type`，六种中 `regex`/`tool_order`/`tool_used`/`file_exists` 免费、`llm`/`baseline` 付费，并逐行对应到本节既有条款；`tool_used` 配 `max: 0` 使「不该触发的语境」也能零成本判定
+- `skill-authoring.ref.eval-workspace`（`reference/eval-workspace-structure.md`）：目录图改为官方 case 形态，新增 CLI 产物落点 `evals/results/<ISO 时间戳>/aggregate-result.json` 与 `casesTotal`/`stopReason`/`judgeCostUsd` 三处读数陷阱；`### evals.json` 一节改为 `### prompt.md + graders/*.md`；`timing`/`grading`/`benchmark` 三节保留并注明官方由 `aggregate-result.json` 一份承担，`feedback.json` 注明**官方无对等物、须自行维护**
+- `rules/06-continuous-improvement.md` §1 第三条对 03 篇的指向由 `evals.json` 驱动改为用例目录驱动（连带修正，避免留下悬空的旧形态提及）
+
+### 依据
+- 官方 `claude plugin eval` 的 case schema 与 grader 类型（`--bare` 脚手架实测 + zod strict 报错逐键取证）
+- 用户 2026-09-13 裁决「官方格式为唯一规范」；本仓 `wpf-code-review` 的 6 条素材已按此迁移并合并（`ddd353bd`），是本次规范的活体样本
+- 🔴 `evals/results/` 必须 gitignore 的第二层理由（它是天然缺 marker 的子目录，会被 case 校验门禁判成「建了一半的 case」，导致**跑一次 eval 就让下一次提交失败**）来自本仓实测，见 `.githooks/check_new_skill_eval_case.py`
+
+
 ## [7.5.0] - 2026-09-12
 
 `rules/06-continuous-improvement.md` 新增 §5-§10，把持续优化从「有没有机制」推进到「机制怎么用才不会越优化越贵」。六条全部来自实际教训，不是推演：某 skill 连续 6 轮优化而其功能在这些提交期间一次未执行；台账（known-issues + CHANGELOG 共 918 行）已超过它所描述的正文（498 行）且每轮被完整重读；一轮新写的检查项贡献了该轮全部三条高危缺陷。
