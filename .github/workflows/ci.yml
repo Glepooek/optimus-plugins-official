@@ -48,10 +48,10 @@ jobs:
   gates-hooks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           # ubuntu runner 默认只有 python3，pre-commit 里调的是 python
           python-version: '3.x'
@@ -64,10 +64,10 @@ jobs:
   gates-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
       - name: 9 个目录的单元测试
@@ -111,10 +111,10 @@ jobs:
   gates-data:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
       - run: python .claude/skills/knowledge-base-maintain/scripts/check_index.py
@@ -131,7 +131,7 @@ jobs:
   plugin-validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0          # action 的 detect-changes 需要完整历史
           persist-credentials: false
@@ -229,11 +229,11 @@ jobs:
   new-skill-eval-case:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0          # 需要 base 与 head 之间的完整 diff
           persist-credentials: false
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
       # 两个 sha 经 env 传入而非直接插值进 run：sha 本身不可控，但保持
