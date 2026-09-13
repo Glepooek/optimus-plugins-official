@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.0] - 2026-09-13
+
+### Added
+- 20 个官方格式 eval case（`evals/<NN>-trigger/` 10 个正例 + `evals/<NN>-no-trigger/` 10 个负例，各含 `prompt.md` + `graders/triggered.md`），可被 `claude plugin eval` 直接发现并运行——已实测确认该 skill 目录下的 `evals/` 在 plugin 级调用时能被发现
+- 负例 grader 显式写 `min: 0` 与 `max: 0` 两项：`tool_used` 的 `min` 默认为 1，只写 `max: 0` 会得到空区间 `1..0`，10 条负例会全部无法通过且不报错
+
+### Removed
+- `evals/trigger-eval.json`（自定义 20 元素数组格式，无任何工具消费，`claude plugin eval` 在它上面找到 0 个 case）。20 条 query 已逐条迁入上述 case，删除前从落盘文件反向核对每条恰好命中一处。实测该数据集为 10 正 + 10 负，与 `[1.2.0]` 条目所记的「11 条不应触发」不符
+
 ## [1.2.2] - 2026-07-10
 
 ### Added
