@@ -2,6 +2,18 @@
 
 本领域自 7.2.1 起使用**独立版本号**。7.2.0 及之前为知识库统一全局版本号时代，相关条目见下方「全局版本时代」，其版本号为当时的全局版本。
 
+## [7.2.2] - 2026-09-13
+
+### Changed
+- `rules/03-pull-requests.md` § 3「保护分支设置」原「主干分支要求至少一名 reviewer 批准且 CI 全绿才允许合并」**拆为两条**：CI 全绿改为无条件要求；reviewer 批准加「多人协作仓库」作用域限定，并说明**单人维护仓库不适用**——GitHub 不允许 PR 作者批准自己的 PR，要求 ≥1 批准会使主干永久不可合并，此类仓库以「CI 全绿 + 保护规则禁止直推」作为等效约束。同步更新 `git.03.branch-protection` 的 `summary`
+- `rules/03-pull-requests.md` § 1「PR 规范」的「CI 通过 + review 批准才可合并」补上指向 § 3 的作用域指针——否则同一文件内一条无条件要求 review 批准、另一条限定为多人仓库，读者按哪条办取决于先读到哪一节。同步更新 `git.03.pr-conventions` 的 `summary`
+
+### Fixed
+- `rules/01-branching.md` § 2「分支命名规范」的 `type` 枚举**与该条自身的原则相矛盾**：条款要求「`type` 取值与提交信息 `type` 对齐」，而括号里列的是 `feature`——`rules/02-commit-messages.md` § 1 的 Conventional Commits 常用 type 里并无 `feature`，只有 `feat`。枚举改为 `feat`/`fix`/`docs`/`refactor`/`chore`，`release`/`hotfix` 保留但改为「另用」表述（本节后两条各自引用它们，删掉会留下指向不存在 type 的条款）；示例 `feature/123-add-login` → `feat/123-add-login`
+- 连带修正 `reference/branching-workflows.md` § 2「分支命名示例大全」——该节是 `git.01.branch-naming` 的 `source`，其 type 表把 `feature` 列为合法值，不改则形成「规则的理由文档反驳规则本身」的语义环。§ 2 的 type 表与命名变体示例、§ 3 生命周期的 git 命令示例中的 `feature/` 一并改为 `feat/`。**§ 1 工作流对比表的 `feature/*` 不改**——那里描述的是 Git Flow 的规范分支模型（外部事实），不是本规范的 type 取值
+
+---
+
 ## [7.2.1] - 2026-08-29
 
 ### Changed
