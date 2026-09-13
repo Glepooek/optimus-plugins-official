@@ -2,16 +2,18 @@
 name: commit-cc-plugin
 description: 在 optimus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户明确表达提交或推送意图，如说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"、"推一下"、"存一下"。
 metadata:
-  version: "4.0.0"
+  version: "5.0.0"
   author: desktop client team
   category: workflow
-compatibility: 需要 Git 仓库环境及远程推送权限；无 MCP 或第三方 CLI 依赖。
-allowed-tools: Bash
+compatibility: 需要 Git 仓库环境及远程推送权限；需 github MCP server（本仓库 plugins/optimus-mcp-servers/.mcp.json 内置）用于开 PR、轮询必需检查、squash merge；不依赖 gh CLI 或其他第三方 CLI。
+allowed-tools: Bash github
 ---
 
 # /commit-cc-plugin
 
-本仓库的提交工作流：把改动干净地暂存、写成一条规范的 commit message、推送到 master。
+本仓库的提交工作流：把改动干净地暂存、写成一条规范的 commit message、经特性分支与 PR 合入 master。
+
+主干 `master` 已开启保护规则，**直推会被服务端拒绝**（`GH013`），这是服务端强制、不依赖任何 harness 的自觉。因此本 skill 的终点不是 `git push origin master`，而是「特性分支 → PR → 五项必需检查全绿 → squash merge」。
 
 版本号该不该升、升多少，依据是 `AGENTS.md` 的「版本管理规则」节，在改动插件内容时就该判断完；漏升由 `.githooks/pre-commit` 拦截。
 
@@ -43,6 +45,17 @@ git log --oneline -5
 | 与本次改动属于**同一逻辑任务** | 一并提交，提交消息中说明 |
 | 与本次改动**无关** | `git restore --staged <file>` 取消暂存，单独处理 |
 
+🔴 **CHECKPOINT — 当前分支判定（继续前必须完成）：**
+
+主干 `master` 已开启保护规则，直推会被服务端以 `GH013` 拒绝。提交路径是「特性分支 → PR → CI 绿 → squash merge」。
+
+| 当前分支 | 处置 |
+|---|---|
+| `master` | 正常流程，第四步前新建特性分支（见「第三步之后」） |
+| 已在特性分支上 | **说明上一轮流程未走完**（CI 未过，或会话中断在轮询阶段）。沿用该分支，不新建；用 MCP `list_pull_requests`（按 `head` 过滤）查是否已有开着的 PR——有则本次提交推上去后**追加进同一个 PR** |
+
+⚠️ 第二支不是防御性设计，而是必要配套：本 skill 用「轮询 + 显式 merge」实现 auto-merge 的等效效果（见第五步），会话在等 CI 期间中断时 PR 会停在未合并状态，**必须靠下一次触发接续**。CI 变红同样会让流程停在中途。
+
 ## 第二步 — 暂存与原子性核查
 
 **禁止 `git add -A`**，逐文件暂存：
@@ -64,12 +77,22 @@ git diff --staged --stat   # 确认暂存内容
 
 ## 第三步 — Unpushed 提交检测与 Amend 合并
 
-在写 commit message 前，按 [`knowledge-base/git/rules/01-branching.md`](../../../knowledge-base/git/rules/01-branching.md) 的分支同步约定，检测当前分支相对 `origin/master` 是否已有未推送的提交。**本步 fetch 一次，第五步的同步推送复用其结果，不重复 fetch**：
+在写 commit message 前，按 [`knowledge-base/git/rules/01-branching.md`](../../../knowledge-base/git/rules/01-branching.md) 的分支同步约定，检测当前分支相对**当前分支的上游**（`@{upstream}`）是否已有未推送的提交：
 
 ```bash
-git fetch origin master --quiet 2>/dev/null || true
-git log origin/master..HEAD --oneline
+# 特性分支上要相对**本分支的上游**判断，不是相对 origin/master
+UPSTREAM=$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null)
+if [ -n "$UPSTREAM" ]; then
+  git fetch origin --quiet 2>/dev/null || true
+  git log "$UPSTREAM"..HEAD --oneline
+else
+  echo "本分支尚无上游（首次推送），无未推送提交可合并"
+fi
 ```
+
+⚠️ **基准必须是 `@{upstream}` 而不是 `origin/master`。** 在特性分支上，`origin/master..HEAD` 会把本分支的全部提交都算成「未推送」，从而每次都误触发 §A 的 amend 询问——而那些提交往往已经推上去、甚至已经在一个开着的 PR 里。
+
+⚠️ **`@{upstream}` 不存在是正常状态而非错误**——特性分支首次 `git push -u` 之前本就没有上游，此时「无未推送提交」是正确结论，走上表第一行。
 
 🔴 **CHECKPOINT**：
 
@@ -96,6 +119,25 @@ git log origin/master..HEAD --oneline
 3. 第四步改用 `git commit --amend -m "{汇总 message}"` 而非新建 commit
 
 仅 amend 最近一个未推送提交，不做多提交 squash。
+
+## 第三步之后 — 建特性分支（仅当第一步判定为在 `master` 上时执行）
+
+分支名按 [`knowledge-base/git/rules/01-branching.md`](../../../knowledge-base/git/rules/01-branching.md) 的 `<type>/<简短描述>`，**`type` 与本次 commit 的 Conventional Commits type 逐字对齐**：
+
+```bash
+git switch -c <type>/<简短描述>
+```
+
+示例：`fix/hook-configs-settings-json`、`feat/pr-flow-ci`、`docs/agents-commit-section`。
+
+⚠️ **建分支排在提交之前，理由是「少一步、少一个可能记错的命令」**，不是「否则必须用破坏性命令」。**会话中途才发现忘了建分支时不必推翻重来**，两条命令即可无损补救：
+
+```bash
+git switch -c <type>/<描述>          # 新分支从当前 HEAD 拉出，已有 commit 自然归它
+git branch -f master origin/master   # master 未被 checkout，-f 只改指针
+```
+
+第二条作用于一个**未被 checkout** 的分支，因此只移动引用、不触碰工作树，用不上 `--hard`。（`reset --hard` 之所以危险是它会同时重置工作树；分支指针的移动本身是无损的。）
 
 ## 第四步 — 提交
 
@@ -174,35 +216,92 @@ git show -s --format=%B HEAD | grep -F '\n'
 | `不是 40 位小写十六进制` / `条目内不得写 version` / `未登记在 … 的「已接入」表` / `缺锚点 <!-- registry:active -->` | marketplace 外部引用条目写歪，触发 `check_external_entries.py`。按 `/add-external-skill` 的写入规则修正条目或台账 |
 | `台账 sha … 不一致` | 先判明哪一个对应实际验证过的状态，不要随手对齐——先看是条目还是台账反映的是「更新做了一半」，修那个偏离实际状态的一边 |
 
-## 第五步 — 同步推送
+## 第五步 — 推分支、开 PR、等 CI、合并
 
-按 [`knowledge-base/git/rules/01-branching.md`](../../../knowledge-base/git/rules/01-branching.md) 和 [`knowledge-base/git/rules/03-pull-requests.md`](../../../knowledge-base/git/rules/03-pull-requests.md) 的主干保护与同步约定，提交后先 rebase 同步远端，再推送。**复用第三步已完成的 fetch**（若第三步已 fetch 且本地未落后，`git pull --rebase` 会静默返回）：
+主干只能经 PR 合入（服务端 ruleset 强制，不依赖任何 harness 的自觉）。六个动作，前两个用 git，中间三个用 GitHub MCP，最后回到 git：
+
+| # | 动作 | 手段 |
+|---|---|---|
+| 1 | 推特性分支 | `git push -u origin <branch>` |
+| 2 | 开 PR | MCP `create_pull_request`（`base: master`、`head: <branch>`） |
+| 3 | 等 CI | MCP `pull_request_read`（`method: get_check_runs`），轮询至五个必需检查全部结束 |
+| 4 | 合并 | MCP `merge_pull_request`（`merge_method: "squash"`） |
+| 5 | 回主干 | `git switch master && git pull --rebase origin master` |
+| 6 | 清分支 | `git branch -d <branch>` **再** `git push origin --delete <branch>` |
+
+⚠️ 第 1 步**不用 MCP 的 `push_files`**——那是通过 API 造新 commit，会与本地已有的 commit 分叉。ruleset 只作用于 `master`，特性分支可自由推。
+
+**第 2 步的 PR 内容：** title 取 commit 摘要行，body 取 commit 正文，结尾加 `🤖 Generated with [Claude Code](https://claude.com/claude-code)`。该尾注**只进 PR body，不进** squash 后的 commit message。
+
+**第 3 步等的五个必需检查**（名字逐字，同时被 `.github/workflows/ci.yml` 与服务端 ruleset 引用）：`gates-hooks`、`gates-tests`、`gates-data`、`plugin-validate`、`new-skill-eval-case`。
+
+⚠️ 轮询要用 `get_check_runs` 而不是 `get_status`：后者查的是 legacy commit status，本仓五项是 check run，用 `get_status` 会得到 `total_count: 0` 的空结果，**看起来像「CI 还没开始」而实际上可能早已全绿**。
+
+🔴 **第 3 步出现失败检查时：停下报告，不自动重试、不自动改代码。** CI 红说明门禁真的拦到了东西，与第四步 `pre-commit` 阻断时「禁止绕过」的处置同构。
+
+⚠️ **绿灯本身不等于「查过了」。** 五项里 `plugin-validate` 是增量的：只改 `docs/` 的 PR 上它会打印 `Changed external entries: 0` 与 `Changed in-repo plugin folders: []`，然后 30/40/41 三步全部 `skipping`——绿灯此时几乎不携带关于插件的信息。改动落在 `plugins/` 时才是它发挥作用的时候，那时应能在日志里看到被命中的插件目录名。
+
+🔴 **第 4 步必须显式传 `commit_title` 与 `commit_message`**，两处各有一个静默失效形态：
+
+| 漏传 | 后果 |
+|---|---|
+| `commit_message` | GitHub 用 PR body 生成 message，**特性分支 commit 里的 `Co-Authored-By` 尾注不会进入 squash 后的 commit**——主干上的 AI 协作者标注从此静默消失 |
+| `commit_title` 里的 `(#N)` | **显式传 `commit_title` 时 GitHub 不再自动追加 `(#N)` 后缀**。漏了会让主干 log 分成「带 PR 号」与「不带」两种 |
+
+因此 `commit_title` 写成 `<type>(<scope>): <摘要> (#N)`，`commit_message` 原样带上 commit 正文与 `Co-Authored-By` 尾注。
+
+🔴 **`commit_message` 里的尖括号必须是原始 `<` `>`，不得写成 HTML 实体 `&lt;` `&gt;`。** 这是第三个静默失效形态，且比上面两个更隐蔽：尾注在文本上看着还在，但邮箱不是合法的 `<email>` 形态，**GitHub 不会把它识别为 co-author**，`merge_pull_request` 也照样返回成功。合并后立刻自检：
 
 ```bash
-git pull --rebase origin master
-git push origin master
+git switch master && git pull --rebase origin master
+git log -1 --format=%B | git interpret-trailers --parse
 ```
 
-三种失败的处置：
+Expected: 输出 `Co-Authored-By: <模型名> <noreply@anthropic.com>`，尖括号是**真尖括号**。
 
-| 失败 | 处置 |
+🔴 **一旦写坏就无法修复**：改已在 `master` 上的 commit message 只能靠 force push，而 ruleset 的 `non_fast_forward` 会服务端硬拒。**所以这条自检必须在合并后立刻做，但它只能用于「知道自己写坏了」，不能用于「修好它」**——真正的防线是传参时就不转义。
+
+⚠️ **第 6 步的顺序是硬约束：先删本地、后删远端。**
+
+| 顺序 | `git branch -d` 的结果 |
 |---|---|
-| `cannot pull with rebase: You have unstaged changes`（exit 128） | 见下方「工作区不干净」 |
-| rebase 冲突 | 解决后 `git rebase --continue`；放弃用 `git rebase --abort` 并告知用户 |
-| push 失败 | 重试一次；仍失败则报告错误，**禁止** force push 或 `--no-verify` |
+| **先本地、后远端**（本 skill 采用） | ✅ 成功，只给一行 warning：`… has been merged to refs/remotes/origin/<branch>, but not yet merged to HEAD` |
+| 先远端、后本地 | ❌ 拒绝，报 `not fully merged` |
 
-**工作区不干净**——第一步 CHECKPOINT 明确允许把无关改动排除在本次提交外，被排除的文件就留在工作区，rebase 会被它们挡住。**越是按第一步规范排除了无关文件，越必然撞上这个失败**。
+机制是 **`-d` 的「已合并」判定不只看 HEAD，也看远端追踪引用**。顺序正确时 `origin/<branch>` 仍存在且与本地同 commit，判定通过；先删远端则该引用消失，判定只能对 HEAD 做，而 squash 产生的是一个**全新的 commit 对象**、特性分支的 commit 从未成为它的祖先，按可达性确实「未合并」。
+
+🔴 **万一顺序反了、`-d` 已被拒，不能因此改用 `-D`**：`-D` 对「真的没合进去」和「合进去了但换了对象」一视同仁，用它等于放弃判断。正确判据是**比对树对象**：
+
+```bash
+git rev-parse <branch>^{tree}   # 与
+git rev-parse master^{tree}     # 相等 ⇒ 内容已完整落地，再 -D
+```
+
+树对象相等意味着两边文件内容逐字节一致，这正是「已合并」在 squash 语境下的实质含义。
+
+### 这是 auto-merge 的等效实现，不是 GitHub 的 auto-merge
+
+GitHub 原生 auto-merge 是一个 GraphQL mutation（`enablePullRequestAutoMerge`），**MCP 服务器未提供对应工具**。上表用「轮询 + 显式 merge」达到同样的最终状态。实质差异只有一处：
+
+| | 原生 auto-merge | 本流程 |
+|---|---|---|
+| 会话在等 CI 期间中断 | GitHub 在服务端继续等，CI 绿后自行合并 | PR 停在未合并状态，**需下次触发本 skill 时接续**（第一步 CHECKPOINT 的第二支） |
+
+**不为此引入 `gh` CLI**——它能做到原生 auto-merge，但为「会话中断时少一次接续」的收益引入新依赖不划算，而接续逻辑本来就必须存在（CI 变红同样会让流程停在中途）。
+
+### 工作区不干净
+
+**工作区不干净**——第一步 CHECKPOINT 明确允许把无关改动排除在本次提交外，被排除的文件就留在工作区，第 5 步的 `git pull --rebase` 会被它们挡住。**越是按第一步规范排除了无关文件，越必然撞上这个失败**。
 
 不要为了让 rebase 通过就把无关文件一并提交——那会破坏第二步刚校验过的原子性。正确做法是只把它们临时挪走：
 
 ```bash
 git stash push -m "commit-cc-plugin: 临时挪走无关改动" <排除的文件路径...>
-git pull --rebase origin master
-git push origin master
+git switch master && git pull --rebase origin master
 git stash pop
 ```
 
-⚠️ `git stash push` 必须**列出具体文件路径**，不加路径的裸 `git stash` 会把工作区全部改动一起挪走，`pop` 时若遇冲突更难还原。推送完成后必须 `git stash pop` 原样恢复，不要留在 stash 里——用户会以为改动丢了。
+⚠️ `git stash push` 必须**列出具体文件路径**，不加路径的裸 `git stash` 会把工作区全部改动一起挪走，`pop` 时若遇冲突更难还原。必须 `git stash pop` 原样恢复，不要留在 stash 里——用户会以为改动丢了。
 
 ## 常见错误
 
@@ -216,3 +315,11 @@ git stash pop
 | rebase 被未暂存改动挡住，就把无关文件一并提交 | 破坏了刚校验过的原子性。用 `git stash push <文件>` 只挪走它们，push 后 `git stash pop` 恢复（第五步「工作区不干净」） |
 | 在本 skill 内逐步核对版本号该升多少 | 版本决策的依据是 `AGENTS.md` 版本管理规则，发生在**改动插件内容时**，不是提交时。本 skill 不重复该判断，漏升由 `pre-commit` 拦截 |
 | hook 报「缺符号链接」就手动建完了事、不看是不是自己删错了 | 先确认该 skill 是新增（应补链接）还是被删（应连同镜像一起 `git rm`），别把删除操作补成半成品 |
+| `git push origin master` 直推主干 | 主干已开保护，直推被 `GH013` 拒绝。走第五步的「分支 → PR → CI → squash merge」 |
+| `merge_pull_request` 不传 `commit_message` | squash 会丢掉 `Co-Authored-By`，主干上的 AI 协作者标注静默消失（第五步第 4 步） |
+| `commit_message` 里把 `<>` 写成 `&lt;` `&gt;` | 尾注看着还在，但不是合法 `<email>` 形态，GitHub 不识别为 co-author，且**合并后无法修复**（改 master 的 message 需 force push，被 ruleset 硬拒）。传参不转义，合并后立刻 `git interpret-trailers --parse` 自检 |
+| `commit_title` 不带 `(#N)` | 显式传 `commit_title` 时 GitHub 不再自动追加 PR 号，主干 log 会分成两种风格 |
+| 用 `get_status` 轮询 CI | 那是 legacy commit status，本仓五项是 check run，会得到 `total_count: 0` 的空结果并被误读成「CI 还没开始」。用 `get_check_runs` |
+| 清分支时先删远端 | `git branch -d` 的已合并判定也看远端追踪引用，反了会报 `not fully merged`。顺序：先本地、后远端 |
+| `-d` 被拒就改用 `-D` | `-D` 对「真没合」与「合了但换了对象」一视同仁。先比 `<branch>^{tree}` 与 `master^{tree}`，相等才 `-D` |
+| 会话中途发现忘了建分支，就推翻重做 | `git switch -c <分支>` 后 `git branch -f master origin/master` 即可无损搬运（「第三步之后」小节） |

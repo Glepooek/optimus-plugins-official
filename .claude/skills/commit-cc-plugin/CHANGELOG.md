@@ -1,5 +1,30 @@
 # Changelog
 
+## [5.0.0] - 2026-09-13
+
+### Removed
+- **第五步「同步推送」整节移除**（含 `git pull --rebase origin master` + `git push origin master`、三种失败处置表）：主干已由服务端 ruleset 强制只能经 PR 合入，直推被 `GH013` 拒绝，该节描述的动作**物理上已不可执行**。这是 Major 的依据——skill 的终点动作变了，用户说「提交」不再得到「已推上 master」而是「PR 已 squash merge」
+
+### Added
+- **第五步重写为六个动作**：推特性分支 → MCP `create_pull_request` → MCP `pull_request_read`（`get_check_runs`）轮询五项必需检查 → MCP `merge_pull_request`（squash）→ 回主干 → 清分支
+- 第一步新增 CHECKPOINT「当前分支判定」：在 `master` 上则第四步前建分支；已在特性分支上则说明上一轮未走完，沿用该分支并查是否已有开着的 PR。该支是「轮询 + 显式 merge」这一 auto-merge 等效实现的必要配套，不是防御性设计
+- 新增「第三步之后 — 建特性分支」小节，含忘记建分支时的无损补救（`git switch -c` + `git branch -f master origin/master`，只移动引用不触碰工作树，用不上 `--hard`）
+- 新增「这是 auto-merge 的等效实现」小节：GitHub 原生 auto-merge 是 GraphQL mutation，MCP 未提供对应工具，故用轮询替代；差异只在会话中断时 PR 会悬挂。明确不为此引入 `gh` CLI
+- 第五步记入三个**静默失效形态**：漏传 `commit_message` 会丢 `Co-Authored-By`；`commit_title` 需自带 `(#N)`；🔴 **`commit_message` 里的尖括号写成 HTML 实体 `&lt;`/`&gt;` 时尾注看着还在但 GitHub 不识别为 co-author，且合并后无法修复**（改 master 的 message 需 force push，被 `non_fast_forward` 硬拒）。配 `git interpret-trailers --parse` 自检
+- 第五步记入清分支的顺序硬约束（先本地后远端）与 `-d` 被拒时的树对象判据（`<branch>^{tree}` 与 `master^{tree}` 相等才 `-D`）
+- 第五步提示 `plugin-validate` 是增量检查：只改 `docs/` 的 PR 上 30/40/41 三步全 `skipping`，绿灯此时几乎不携带插件相关信息
+- 常见错误表新增 7 条（直推主干、漏传 `commit_message`、尖括号转义、`commit_title` 漏 `(#N)`、用 `get_status` 轮询、清分支顺序反了、`-d` 被拒改用 `-D`、忘建分支就推翻重做）
+
+### Changed
+- **第三步的比较基准从 `origin/master` 改为 `@{upstream}`**：在特性分支上 `origin/master..HEAD` 会把本分支全部提交都算成未推送，每次误触发 §A 的 amend 询问。`@{upstream}` 不存在（首次 `push -u` 之前）是正常状态而非错误
+- 删掉第三步「第五步的同步推送复用其结果，不重复 fetch」一句：新第五步的 `git pull --rebase` 发生在 squash merge **之后**，那时 master 已前进，复用旧 fetch 结果会拿到过期状态
+- 「工作区不干净」小节的命令块改为 `stash push <文件>` → `git switch master && git pull --rebase` → `stash pop`（原为 pull + push origin master）
+- 开篇一句从「推送到 master」改为「经特性分支与 PR 合入 master」，并说明这是服务端强制
+- `compatibility` 从「无 MCP 或第三方 CLI 依赖」改为声明需 `github` MCP server（本仓库 `plugins/optimus-mcp-servers/.mcp.json` 内置）；`allowed-tools` 由 `Bash` 改为 `Bash github`
+
+### Fixed
+- 常见错误表补入「用 `get_status` 轮询 CI」：`get_status` 查的是 legacy commit status，本仓五项是 check run，会返回 `total_count: 0` 的空结果并被误读成「CI 还没开始」。该误读在手工演练 PR #10 时真实发生过一次
+
 ## [4.0.0] - 2026-09-08
 
 ### Removed
