@@ -615,20 +615,29 @@ git branch -f master origin/master   # master 未被 checkout，-f 只改指针
 | 3 | 等 CI | MCP `pull_request_read`（`method: get_check_runs`） | 轮询至五个必需检查全部结束 |
 | 4 | 合并 | MCP `merge_pull_request`（`merge_method: "squash"`） | 见 § 6.5 关于 message 的注意事项 |
 | 5 | 回主干 | `git switch master && git pull --rebase origin master` | — |
-| 6 | 清分支 | 删本地与远端特性分支 | — |
+| 6 | 清分支 | `git branch -d <branch>` **再** `git push origin --delete <branch>` | ⚠️ 顺序是硬约束，反了会撞上 `not fully merged`，见下 |
 
 第 3 步出现失败检查时：**停下报告，不自动重试、不自动改代码**。CI 红说明门禁真的拦到了东西，与 `pre-commit` 阻断时「禁止绕过」的处置同构。
 
-⚠️ **第 6 步「清分支」有一个实测到的坑：squash merge 之后 `git branch -d` 会拒绝删除**，报 `not fully merged`。这不是 git 出错——squash 产生的是一个**全新的 commit 对象**，特性分支的那些 commit 从未成为它的祖先，按可达性判断确实「未合并」。
+⚠️ **第 6 步「清分支」有一个实测到的坑，但它取决于删除顺序：**
 
-🔴 **不能因此就改用 `-D`**：`-D` 对「真的没合进去」和「合进去了但换了对象」这两种情形一视同仁，直接用等于放弃判断。正确判据是**比对树对象**：
+| 顺序 | `git branch -d` 的结果 |
+|---|---|
+| **先删本地、后删远端**（推荐） | ✅ 成功，只给一行 warning：`deleting branch … that has been merged to refs/remotes/origin/<branch>, but not yet merged to HEAD` |
+| 先删远端、后删本地 | ❌ 拒绝，报 `not fully merged` |
+
+差异的机制是：**`-d` 的「已合并」判定不只看 HEAD，也看远端追踪引用。** 顺序正确时 `origin/<branch>` 仍存在且与本地同 commit，判定通过；先删远端则该引用消失，判定只能对 HEAD 做，而 squash 产生的是一个**全新的 commit 对象**、特性分支的 commit 从未成为它的祖先，按可达性确实「未合并」。
+
+**因此第 6 步的顺序是硬约束：先 `git branch -d <branch>`，再 `git push origin --delete <branch>`。** 这样 `-d` 的安全检查仍在做一件有意义的事（确认本地与远端一致），也就用不上 `-D`。
+
+🔴 **万一顺序反了、`-d` 已被拒，不能因此改用 `-D`**：`-D` 对「真的没合进去」和「合进去了但换了对象」这两种情形一视同仁，直接用等于放弃判断。此时正确判据是**比对树对象**：
 
 ```bash
 git rev-parse <branch>^{tree}   # 与
 git rev-parse master^{tree}     # 相等 ⇒ 内容已完整落地，再 -D
 ```
 
-树对象相等意味着两边的文件内容逐字节一致，这正是「已合并」在 squash 语境下的实质含义。本会话执行第一个 PR 时两边均为 `945812d6345c0f30015bfc8fa43577b37bcf28d8`，据此才 `-D`。**这条判据必须写进 SKILL.md，否则要么日常撞上一个看起来像故障的拒绝、要么养成无脑 `-D` 的习惯。**
+树对象相等意味着两边文件内容逐字节一致，这正是「已合并」在 squash 语境下的实质含义。**两条都要写进 SKILL.md**：顺序约束用于日常不撞上这个坑，树对象判据用于万一撞上了不至于养成无脑 `-D` 的习惯。
 
 ### 6.4 ⚠️ 这是 auto-merge 的等效实现，不是 GitHub 的 auto-merge
 
