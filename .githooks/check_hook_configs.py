@@ -186,8 +186,13 @@ def check_matcher(event, matcher, hooks_json_path):
     return problems
 
 
-def check_hooks_file(path, repo_root):
-    """校验一个 hooks.json，返回问题描述列表。"""
+def check_hooks_file(path, repo_root, hooks_required=True):
+    """校验一个 hooks.json，返回问题描述列表。
+
+    hooks_required=False 用于 .claude/settings*.json：那是通用设置文件，
+    hooks 只是众多可选键之一（enabledPlugins、permissions、env…），
+    完全不配 hooks 是常态而非错配。键存在但类型不对仍照报。
+    """
     path = pathlib.Path(path)
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -197,6 +202,8 @@ def check_hooks_file(path, repo_root):
         return [f"[{path}] 无法读取：{e}"]
 
     events = data.get("hooks")
+    if events is None and not hooks_required:
+        return []
     if not isinstance(events, dict):
         return [f"[{path}] 缺顶层 hooks 对象"]
 
@@ -234,15 +241,15 @@ def check_hooks_file(path, repo_root):
 def check_all(repo_root):
     """扫描 plugins/*/hooks/hooks.json 与 .claude/settings*.json，返回全部问题。"""
     repo_root = pathlib.Path(repo_root)
-    targets = sorted(repo_root.glob("plugins/*/hooks/hooks.json"))
+    targets = [(p, True) for p in sorted(repo_root.glob("plugins/*/hooks/hooks.json"))]
     for name in ("settings.json", "settings.local.json"):
         p = repo_root / ".claude" / name
         if p.is_file():
-            targets.append(p)
+            targets.append((p, False))
 
     problems = []
-    for t in targets:
-        problems.extend(check_hooks_file(t, repo_root))
+    for t, hooks_required in targets:
+        problems.extend(check_hooks_file(t, repo_root, hooks_required))
     return problems, len(targets)
 
 

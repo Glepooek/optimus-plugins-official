@@ -192,6 +192,37 @@ class TestHookConfigChecks(unittest.TestCase):
         })
         self.assertEqual(check_all(self.root)[0], [])
 
+    # --- settings*.json 的 hooks 键是可选的 ---
+
+    def _write_settings(self, payload, name="settings.json"):
+        base = self.root / ".claude"
+        base.mkdir(parents=True, exist_ok=True)
+        path = base / name
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return path
+
+    def test_settings_without_hooks_key_is_legal(self):
+        """settings.json 是通用设置文件，只声明 enabledPlugins 完全合法。"""
+        self._write_settings({"enabledPlugins": {"x@y": True}})
+        problems, scanned = check_all(self.root)
+        self.assertEqual(problems, [])
+        self.assertEqual(scanned, 1)
+
+    def test_settings_with_non_dict_hooks_is_still_reported(self):
+        """键存在但类型不对是真错配，放宽不及于此。"""
+        self._write_settings({"hooks": ["not-a-dict"]})
+        problems, _ = check_all(self.root)
+        self.assertTrue(any("缺顶层 hooks 对象" in p for p in problems))
+
+    def test_hooks_json_without_hooks_key_still_reported(self):
+        """放宽只针对 settings*.json，hooks.json 缺 hooks 仍是错。"""
+        base = self.root / "plugins" / "p" / "hooks"
+        base.mkdir(parents=True)
+        (base / "hooks.json").write_text(json.dumps({"other": 1}),
+                                         encoding="utf-8")
+        problems, _ = check_all(self.root)
+        self.assertTrue(any("缺顶层 hooks 对象" in p for p in problems))
+
 
 if __name__ == "__main__":
     unittest.main()
