@@ -537,12 +537,18 @@ claude plugin eval "plugins/${{ inputs.plugin }}" \
 ```
 plugins/<plugin>/skills/<skill>/evals/
   <case-name>/
-    prompt.md          # frontmatter: name/description/max_turns/allowed_tools；正文是用户提问
+    prompt.md          # frontmatter: max_turns/runs/allowed_tools；正文是用户提问
     graders/
       triggered.md     # frontmatter: type/tool/min/max/weight
 ```
 
+⚠️ **本节原写 `frontmatter: name/description/max_turns/allowed_tools`，已于 2026-09-13 更正。** `name`/`description` 确在官方 case 的 15 个合法键内（不是非法字段），但**官方 `--bare` 脚手架不生成它们**，本仓迁成官方格式的 6 条也未写——case 的标识由目录名承担。写成模板必备项会让人以为漏了它们就不合规。
+
+⚠️ **顶层 15 个合法键（zod strict，未识别键逐个报错）里没有 `files`**：`schema_version`/`name`/`description`/`tags`/`plugins`/`runs`/`expected_outcome`/`model`/`max_turns`/`timeout_seconds`/`allowed_tools`/`artifact_publish`/`growthbook_overrides`/`append_system_prompt`/`env`。需要输入文件靠工作区预置，不能作为 case 的一个键传入。
+
 采用 `prompt.md + graders/*.md` 而非单文件 `case.yaml`：**判据与提问分成两个文件，是为了让「改提问」与「改判据」变成两次互不牵连的改动**——本仓这批 case 的提问措辞会随 skill 的 `description` 调整而反复微调，而判据（该不该触发）一旦定下就不动。
+
+⚠️ **CLI 的运行产物落在 `<eval 目录>/results/<ISO 时间戳>/`，而 eval 目录默认就叫 `evals/`**——产物与人工维护的 case 目录同级、且天然缺 marker，会被 `new-skill-eval-case --all` 判成「建了一半的 case」。已加两道防线（`.gitignore` 的 `evals/results/` + 校验器按名字跳过 `results/`），见 `.githooks/README.md`。缺任一道的后果分别是：只忽略仍会阻断提交、只跳过则产物被误提交。
 
 #### 5.9.2 `jenkins-build`：20 条整体迁移
 
@@ -559,13 +565,28 @@ plugins/<plugin>/skills/<skill>/evals/
 
 ⚠️ **原文件 `trigger-eval.json` 迁移后删除**，不保留两份。理由：它是自定义格式、无任何工具消费，留着就是第二份真源，而两份判据迟早分叉。迁移时必须逐条核对 20 条 query 全部落地，**不能只迁一部分就删原文件**。
 
-#### 5.9.3 `wpf-code-review`：本次不迁，记明原因
+#### 5.9.3 `wpf-code-review`：原定不迁，已于 2026-09-13 按 A4 裁决迁完
 
 6 条素材的 `expected_output` 是自然语言描述的期望产出（「应指出虚拟化被关闭」之类），**四种免费 grader 都判不了**：`regex` 匹配不了语义、`tool_used` 与产出质量无关、`file_exists` 无文件产出、`tool_order` 不适用。唯一能判的是付费 `llm` grader。
 
-处置：**本次不迁，原文件原样保留**，在 § 10 风险里记为未来项。理由不是省钱（6 条也就 ≈$0.90），而是 `llm` grader 有两个尚未取证的问题：判据措辞怎么写才稳定、`--threshold` 默认 1.0 对自然语言判据是否过严。**在没测过之前迁过去，等于把一批判据不可靠的 case 塞进套件，之后每次跑都要人工分辨「是 skill 退化了还是评委抖动」。**
+原处置：**本次不迁，原文件原样保留**，在 § 10 风险里记为未来项。理由不是省钱（6 条也就 ≈$0.90），而是 `llm` grader 有两个尚未取证的问题：判据措辞怎么写才稳定、`--threshold` 默认 1.0 对自然语言判据是否过严。**在没测过之前迁过去，等于把一批判据不可靠的 case 塞进套件，之后每次跑都要人工分辨「是 skill 退化了还是评委抖动」。**
 
-⚠️ 这是刻意的不对称：`jenkins-build` 迁是因为判据确定、迁移机械；`wpf-code-review` 不迁是因为判据本身需要先做实验。**同一批「已有素材」按可判定性分了两类处理，不按文件数平均用力。**
+✅ **已迁（2026-09-13，`ddd353bd`）：6 条落成 `evals/<case>/prompt.md` + `graders/criteria.md`，原 `evals.json` 删除。** 触发迁移的不是上面两条顾虑被解决，而是 **A4 裁决把它从「迁不迁」变成了「必须迁」**——`knowledge-base/skill-authoring/` 8.0.0 起以官方格式为唯一规范，不迁就是留一个规范外的产物。
+
+🔴 **两条顾虑必须分开结算，一条被削弱、一条原样成立：**
+
+| 原顾虑 | 结算 |
+|---|---|
+| 判据措辞怎么写才稳定 | **被削弱，不是被解决。** 取证是：`expected_output` 与 `llm` grader 正文**是同一个产物的两种包装**，迁移只是把它从 JSON 字段搬进 markdown 正文，**没有发明任何新措辞**。所以迁移本身不引入新的措辞风险——但那 6 段措辞原本的稳定性依旧未测 |
+| `--threshold` 默认 1.0 对自然语言判据是否过严 | **原样成立。** 验收第 11 项的全量跑 `judgeCostUsd` 合计 **$0**，即评委在本仓至今**零次被调用**，1.0 是否过严仍无一手观测。⚠️ 这一条不会随迁移自行消解，只会在第一次真正付费跑起来时才有数据 |
+
+⚠️ 迁移时按 § 10 风险 11 的取证给 6 条都写了 `max_turns: 20`（官方 `--bare` 模板默认 10）：`stopReason: max_turns` 会让 `llm` 评委读到被硬截断的半句话、把「答案没写完」判成「答得不对」，产出**稳定复现的假失败**。这是「引入 `llm` grader 必须同时调 `max_turns` 与 `--runs`」中前一半的落地。
+
+🔴 **后一半没落地，且是一个已知冲突**：6 条 case 声明 `runs: 3`，而 `skill-eval.yml` 的 `--runs 1` 会**覆盖** case 里的声明。刻意保留原值，理由是「让规范迁移不顺带改动一个付费 workflow 的成本档」（去掉 `--runs 1` 会让 frontend 从 6 次运行变 18 次）。登记为 todo B2 的具体化形态，须显式裁决而非默默生效。
+
+⚠️ **另有一项使这 6 条当前不可执行**：`skill-eval.yml` 缺 `ANTHROPIC_API_KEY`（todo B1），因此它们**形态合规但在 CI 里一次都跑不了**。「迁完了」与「跑起来了」是两件事，不要合并宣称。
+
+⚠️ 原文记的不对称仍值得保留为教训：`jenkins-build` 当时迁是因为判据确定、迁移机械；`wpf-code-review` 当时不迁是因为判据本身需要先做实验。**同一批「已有素材」按可判定性分了两类处理，不按文件数平均用力。** 🔴 但后续走向推翻了这个排序的稳定性——`jenkins-build` 那 20 条已按 A1 裁决**整套删除**，而当时判为「先别动」的 6 条成了本仓唯一的活体样本。**按可判定性排优先级是对的，但它预测不了哪一份素材最终会留下。**
 
 ## 6. `commit-cc-plugin` 的改造
 
@@ -816,5 +837,5 @@ CI 逐字执行 `sh .githooks/pre-commit`，因此该脚本**不得引入依赖�
 | 7 | **首个 PR 的鸡生蛋问题已真实爆发**：必需检查先于 CI 配好，6 项全部永久 Expected，主干双向锁死 | § 4.5「实际解锁路径」已给出处置：先移除整条 `required_status_checks`，走 PR 合入 CI，再按 UI 列表**勾选**加回 5 项。⚠️ 教训是那条依赖会倒逼人手打 job 名，而手打绕过了「先跑一次」这道天然校验——`skill-eval` 混入正是该路径的产物 |
 | 8 | **现有 ruleset 由用户在本会话期间手动创建**，其意图未完整记录 | 本 spec § 4.1 已把它的完整配置固化为取证，§ 4.2 / § 4.3 逐项给出改动理由。`required_signatures` 一项已单独交用户裁决（结论：删除），不做替用户推断 |
 | 9 | 🔴 **eval 报告默认外发到 claude.ai**，而本仓 case 含内部 Jenkins job 名等信息 | `--no-publish` 在 § 5.8 定为恒开、验收第 12 项专门核对。⚠️ **这是本 spec 唯一一个「默认行为即数据外发」的依赖**：其余工具的默认值出错只影响判据强度，这一项出错是信息泄漏。case 级另有 `artifact_publish` 键，新增 case 时须确认未开启——**门禁查不到它**（`new-skill-eval-case` 只查文件存在），只能靠评审 |
-| 10 | **`wpf-code-review` 的 6 条素材仍是非官方格式**，`claude plugin eval` 在它上面找到 0 个 case | § 5.9.3 已记明：唯一可用的是付费 `llm` grader，而其判据措辞稳定性与 `--threshold` 默认 1.0 的适用性均未取证。列为未来项。⚠️ **风险不是「暂时没迁」而是「看起来已经有 eval 了」**——目录里躺着一个名为 `evals/` 的文件夹却一个 case 都不产出，与 § 3.1 第 2 条那个 `contents: []` 教训同形：**存在一个文件不等于存在一份判据** |
+| 10 | ~~**`wpf-code-review` 的 6 条素材仍是非官方格式**，`claude plugin eval` 在它上面找到 0 个 case~~ **→ ✅ 已解决（2026-09-13，`ddd353bd`）** | 原处置：§ 5.9.3 记为未来项，因唯一可用的是付费 `llm` grader 而其判据措辞稳定性与 `--threshold` 1.0 适用性均未取证。⚠️ **风险不是「暂时没迁」而是「看起来已经有 eval 了」**——目录里躺着一个名为 `evals/` 的文件夹却一个 case 都不产出，与 § 3.1 第 2 条那个 `contents: []` 教训同形：**存在一个文件不等于存在一份判据**。<br>✅ 已按 A4 裁决迁成官方格式，`--all` 门禁从扫到 0 个 case 变为 **6 个**，计数已用「`--case <名>` + `--max-cost-usd 0` 逐个走到 cost ceiling（exit 2），阴性对照传不存在的 case 名得到 `No eval cases found matching`（exit 1）」两种互斥输出确认。<br>🔴 **但「存在文件 ≠ 存在判据」这条教训只是换了形态、没有消失**：这 6 条的判据是付费 `llm` grader，而 `skill-eval.yml` 缺 `ANTHROPIC_API_KEY`（todo B1），**它们至今一次都没跑过**。现在的形态是「存在一份可被发现的判据，但它从未被执行过」——比原形态好，仍不是「eval 在保护这个 skill」。<br>⚠️ 迁移本身还暴露了一个**门禁自伤**：CLI 把产物写进 `<eval 目录>/results/`，而 eval 目录默认就叫 `evals/`，于是**跑一次 eval 就让下一次提交失败**。已加两道防线（见 § 5.9.1 末与 `.githooks/README.md`），这类风险在本 spec 写作时完全没被预见到——因为它只在「门禁与工具产物同处一个命名空间」时才出现，而那要等到真的跑起来才看得见 |
 | 11 | **`--runs 1` 在引入 `llm` grader 后不再合适** | 当前全部判据是 `tool_used` 布尔判定，确定性的，重复不增信息。`llm` 评委有抖动，单次结果不可据以判定回归。§ 5.8 已就地记明「届时调回 ≥3」——⚠️ 但这条依赖人记得，**没有任何机制会在新增 `llm` grader 时提醒调 `--runs`**。🔴 **验收第 11 项的全量跑给这条风险添了两项硬证据，并且暴露出它不只是「`--runs` 一个旋钮」的问题**：① `judgeCostUsd` 合计 **$0**——20 条 case 全程没有任何评委被调用过，也就是说「评委在本仓的行为」至今零观测，`--threshold` 默认 1.0 是否过严（§ 5.9.3 的顾虑）仍未取证；② **20 条里 11 条触顶 `max_turns: 3`**（`stopReason: max_turns`）。第 ② 项对 `tool_used` 无害——它只数工具调用次数，回答被截断不影响计数；但 `llm` grader 读的是**最终回答文本**，在一半以上 case 里那段文本是被硬截断的半句话，评委会把「答案没写完」判成「答得不对」。**因此引入 `llm` grader 前必须同时调 `max_turns` 与 `--runs` 两处，只调后者会得到一批稳定复现的假失败**——稳定的错误比抖动的错误更难识别为错误 |
