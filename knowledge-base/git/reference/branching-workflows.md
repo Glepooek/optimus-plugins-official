@@ -28,7 +28,7 @@
 
 | type | 用途 | 命名示例 |
 |---|---|---|
-| `feature` | 新功能开发 | `feature/add-login`、`feature/123-user-profile-page` |
+| `feat` | 新功能开发 | `feat/add-login`、`feat/123-user-profile-page` |
 | `fix` | 非紧急 bug 修复（走正常发布节奏） | `fix/null-reference-on-logout`、`fix/456-pagination-off-by-one` |
 | `hotfix` | 生产环境紧急修复（需立即发布） | `hotfix/critical-payment-timeout`、`hotfix/789-security-patch` |
 | `release` | 发布收尾分支 | `release/2.3.0`、`release/v2.3.0-rc` |
@@ -38,9 +38,9 @@
 
 **常见团队实践变体**（非本仓库强制要求，供参考）：
 
-- **带日期前缀**：`2026-08/feature/xxx`——适合发布节奏按日历周期的团队，但会让分支名变长且与 issue 追踪脱节，多数团队不采用
-- **带作者缩写**：`feature/js-add-login`——`rules/01-branching.md` 已明确禁止用姓名作为唯一标识，但缩写+功能描述的组合本质仍是姓名标识，同样不推荐
-- **纯 issue 编号**：`feature/JIRA-1234`——editor/IDE 里排序整齐，但脱离编号系统时完全不可读，建议至少保留简短描述作为编号的补充（如 `feature/1234-add-login`）
+- **带日期前缀**：`2026-08/feat/xxx`——适合发布节奏按日历周期的团队，但会让分支名变长且与 issue 追踪脱节，多数团队不采用
+- **带作者缩写**：`feat/js-add-login`——`rules/01-branching.md` 已明确禁止用姓名作为唯一标识，但缩写+功能描述的组合本质仍是姓名标识，同样不推荐
+- **纯 issue 编号**：`feat/JIRA-1234`——editor/IDE 里排序整齐，但脱离编号系统时完全不可读，建议至少保留简短描述作为编号的补充（如 `feat/1234-add-login`）
 
 ## 3. 分支生命周期管理
 
@@ -51,7 +51,7 @@
 ```bash
 git checkout main
 git pull origin main          # 确保从最新主干拉分支
-git checkout -b feature/add-login
+git checkout -b feat/add-login
 ```
 
 ### 3.2 与主干同步
@@ -59,7 +59,7 @@ git checkout -b feature/add-login
 特性分支存活期间，主干可能持续有新提交合入。为避免分支存活过久后产生大规模冲突，应定期同步：
 
 ```bash
-git checkout feature/add-login
+git checkout feat/add-login
 git fetch origin
 git rebase origin/main         # 或 git merge origin/main，团队统一一种策略
 ```
@@ -76,8 +76,8 @@ PR 合并后，分支已完成使命，应及时清理，避免分支列表堆�
 ```bash
 git checkout main
 git pull origin main
-git branch -d feature/add-login              # 删除本地分支
-git push origin --delete feature/add-login   # 删除远程分支（多数 Git 平台支持 PR 合并后自动删除）
+git branch -d feat/add-login              # 删除本地分支
+git push origin --delete feat/add-login   # 删除远程分支（多数 Git 平台支持 PR 合并后自动删除）
 ```
 
 批量清理已合并且远程已删除（显示为 `[gone]`）的本地分支：
