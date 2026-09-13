@@ -101,8 +101,8 @@
 | Copilot review 与 `GITHUB_TOKEN` 发起的 review **不计入** approval | 「找个自动批准者」这条路不存在 |
 | fork PR 拿不到仓库 secret | 必需检查必须全部零凭据（§ 3.1 第 5 条已满足） |
 | GitHub Actions 对公开仓库免费、无分钟数上限 | CI 本身零成本 |
-| **主干已存在一个 active ruleset**（名 `main`、id `23134670`、`2026-09-13T05:02:49Z` 创建） | § 4 从「新建保护」改为「修订现有 ruleset」；完整配置与冲突见 § 4.1 |
-| 当前账号在该 ruleset 的 **bypass 名单内** | 直推 `master` 仍成功，服务端只回 `Bypassed rule violations`——规则存在但对唯一使用者无效 |
+| **主干已存在一个 active ruleset**（名 `main`、id `23134670`、`2026-09-13T05:02:49Z` 创建） | § 4 从「新建保护」改为「修订现有 ruleset」；两次被现实推翻的经过见 § 4.1 |
+| bypass 名单**已清空**（`updated_at` 05:44:26） | 直推 `master` 现被 `GH013` 硬拒绝。此前含当前账号时只回 `Bypassed rule violations`——规则存在但对唯一使用者无效 |
 | 本机**零提交签名配置** | `user.signingkey`/`gpg.format`/`commit.gpgsign` 均未设，最近 5 个提交 `git log --format=%G?` 全为 `N` |
 
 ### 3.4 官方 marketplace 仓库的 CI 取证
@@ -170,12 +170,13 @@ action 内 `Install claude CLI` 一步有 40 行自愈逻辑，注释给出根�
 | `bump-plugin-shas.yml`、`revert-failed-bumps.yml` | 自动跟随上游升级 `source.sha`。本仓 3 个外部引用条目正是锁 sha 的形态，**高度相关但属新功能**，不在本次三项需求内，列为未来项 |
 | `validate-frontmatter.yml` | 它校验的是官方六字段之外的自定义约定，用 bun + TypeScript。本仓的 frontmatter 约定在 `.claude/rules/skill-conventions.md`，与官方不同，直接抄会校验错的规则。**思路借鉴**（见 § 5.7 的 `--diff-filter` 与文件名处理），实现不抄 |
 
-## 4. 主干保护配置规格（修订现有 ruleset，人工执行）
-### 4.1 现状取证：ruleset 已存在，但当前形态不可满足
+## 4. 主干保护配置（ruleset 已修订完毕，本节转为记录与善后）
 
-主干上已有一个 active ruleset，名 `main`、id `23134670`、创建于 `2026-09-13T05:02:49Z`。**本节的原始设计是「从零新建」，取证后改为「修订现有」**——两者的差别不只是措辞：现有配置里有三项若照原样移出 bypass 名单会立即锁死主干。
+### 4.1 取证过程：从「以为要新建」到「已改完并锁死」
 
-发现方式值得记录：一次常规的 `git push origin master` 成功了，但服务端回了
+这一节被现实推翻过两次，两次都值得记录，因为两次的失效形态都不报错。
+
+**第一次推翻——它已经存在。** 本节原始设计是「从零新建保护」。取证方式是一次常规的 `git push origin master`：它**成功了**，但服务端回了
 
 ```
 remote: Bypassed rule violations for refs/heads/master:
@@ -186,32 +187,56 @@ remote:   Found 1 violation: efeb3b49...
 
 `Bypassed` 不是错误而是通告：规则命中了，因当前账号在 bypass 名单内而放行。**没有这一行，这个 ruleset 会长期给人「主干已受保护」的错觉，而实际上唯一会推它的人恰好豁免——保护的有效范围与实际使用者的交集是空集。**
 
-现有配置（读自 `GET /repos/{owner}/{repo}/rulesets/23134670`，公开仓库无需认证）与本 spec 规格的逐项对照：
+**第二次推翻——它已经改完了，而且顺序反了。** 用户在本会话期间按 § 4.2 / § 4.3 把六项改动全部执行，**包括 § 4.5 明确要求放到最后的「清空 bypass 名单」**。下一次 `git push origin master` 就换成了硬拒绝：
 
-| 规则 | 现状 | 目标 | 判定 |
+```
+remote: error: GH013: Repository rule violations found for refs/heads/master.
+remote: - Changes must be made through a pull request.
+remote: - 6 of 6 required status checks are expected.
+```
+
+⚠️ **这一次的输出恰好是验收第 6 项要的阴性对照**：直推必须**真的被拒绝**，而不是回一行提示。该项由此达成，证据即上面这段 `GH013`。
+
+但第二行暴露了一个双向死锁：`required_status_checks` 先于 CI workflow 被配置，6 个 job 在 GitHub 上一个都不存在，于是**每个 PR 的 6 项检查全部永久停在 "Expected — Waiting for status to be reported"**——主干既不能直推、也不能通过 PR 合并。这与 § 3.4.1 记录的官方那个死锁是同一形态，只是成因从「`paths:` 未命中」换成了「workflow 不存在」。
+
+现有配置（读自 `GET /repos/{owner}/{repo}/rulesets/23134670`，公开仓库无需认证，`updated_at` 05:44:26）与本 spec 规格的逐项对照：
+
+| 规则 | 原始状态 | 目标 | 现状 |
 |---|---|---|---|
-| `conditions.ref_name.include` | `~DEFAULT_BRANCH` | 不变 | ✓ 等价于 `master` |
+| `conditions.ref_name.include` | `~DEFAULT_BRANCH` | 不变 | ⚠️ 现为 `~DEFAULT_BRANCH` + `refs/heads/main` + `refs/heads/master`。本仓无 `main` 分支，该条空转无害，但会让人以为有——可选清理项 |
 | `deletion` | 有 | 保留 | ✓ |
 | `non_fast_forward` | 有 | 保留 | ✓ 即「禁 force push」 |
 | `pull_request` | 有 | 保留 | ✓ 本次裁决的核心 |
-| └ `required_approving_review_count` | **1** | **0** | 🔴 见 § 4.2 |
-| └ `require_extra_approval_for_unattributed_changes` | **true** | **false** | 🔴 见 § 4.2 |
-| └ `allowed_merge_methods` | `merge`/`squash`/`rebase` | **仅 `squash`** | ⚠️ 收窄以配合线性历史 |
-| `required_signatures` | **已删除** ✅ | 删除 | ✓ 用户已按 § 4.3 裁决执行（`updated_at` 05:09:52） |
-| `copilot_code_review` | 有（`review_on_push: true`） | 保留 | ✓ 免费的额外一层，**且不阻塞合并**——它不计入 approval，所以既帮不上 `count:1` 也拦不住合并 |
-| `required_linear_history` | **缺** | **新增** | ⚠️ `03-pull-requests.md` §2 推荐 squash 保持线性 |
-| `required_status_checks` | **缺** | **新增 5 项**：`gates-hooks`、`gates-tests`、`gates-data`、`plugin-validate`、`new-skill-eval-case` | 🔴 需求 3 的落点整个缺失，CI 全绿无法强制。名字须与 § 5.1 的 job 名逐字一致 |
-| bypass 名单 | **含当前账号** | **清空** | 🔴 见 § 4.2 |
+| └ `required_approving_review_count` | 1 | 0 | ✅ 已改 0 |
+| └ `require_extra_approval_for_unattributed_changes` | true | false | ✅ 已改 false |
+| └ `allowed_merge_methods` | `merge`/`squash`/`rebase` | 仅 `squash` | ✅ 已收窄 |
+| `required_signatures` | 有 | 删除 | ✅ 已删（`updated_at` 05:09:52） |
+| `copilot_code_review` | `review_on_push` | 保留 | ✓ 现另加 `review_draft_pull_requests: true`，无害。**它不阻塞合并**——不计入 approval，既帮不上批准数也拦不住合并 |
+| `required_linear_history` | 缺 | 新增 | ✅ 已新增 |
+| `required_status_checks` | 缺 | 5 项 | 🔴 **配成了 6 项，且早于 CI 存在**——多出的 `skill-eval` 见 § 4.2 其四；整条规则须先移除，见 § 4.5 |
+| └ `strict_required_status_checks_policy` | — | spec 未设计 | ⚠️ 现为 `true`（= 合并前分支必须最新）。单人串行提交撞不上，但给 § 6.3 的「轮询 + 显式 merge」多一个失败模式：master 在轮询期间前进则 merge 被拒 |
+| bypass 名单 | 含当前账号 | 清空 | ✅ 已清空（`bypass_actors: null`） |
 
-### 4.2 三项致命冲突
+### 4.2 四项冲突：前三项已解决，第四项是新出现的
 
-**其一：合并条件当前不可满足。** `required_approving_review_count: 1` 叠加四个事实——GitHub 不允许 PR 作者批准自己的 PR、个人账号无 team reviewer、Copilot review 不计入 approval、`require_extra_approval_for_unattributed_changes: true` 还要再加一票。单人仓库里这组条件凑不出所需批准数。**一旦移出 bypass 名单，主干将既不能直推、也不能通过 PR 合并**——这不是配置得严，而是配置得不可满足。
+**其一：合并条件当前不可满足（已解决）。** `required_approving_review_count: 1` 叠加四个事实——GitHub 不允许 PR 作者批准自己的 PR、个人账号无 team reviewer、Copilot review 不计入 approval、`require_extra_approval_for_unattributed_changes: true` 还要再加一票。单人仓库里这组条件凑不出所需批准数。**一旦移出 bypass 名单，主干将既不能直推、也不能通过 PR 合并**——这不是配置得严，而是配置得不可满足。
 
-处置：`required_approving_review_count` 改 **0**，`require_extra_approval_for_unattributed_changes` 改 **false**。规范侧的对应改动是 § 7.1 给 `03-pull-requests.md:25` 加作用域限定；两者必须成对做，只改一边会留下「配置与规范互相矛盾」的新版死结。
+处置：`required_approving_review_count` 改 **0**，`require_extra_approval_for_unattributed_changes` 改 **false**，两项均已执行。规范侧的对应改动是 § 7.1 给 `03-pull-requests.md:25` 加作用域限定——⚠️ **配置侧已先行落地，规范侧尚未改，此刻正处在「配置与规范互相矛盾」的中间态**，§ 7.1 必须补上，否则就是把旧死结换了个方向。
 
-**其二：bypass 名单必须清空。** 名单里有唯一使用者时，保护的实际作用范围为空。清空后的逃生口改为「把 Enforcement status 临时改为 `Disabled`」——一次显式、留痕、需刻意为之的操作，而不是每次推送时静默绕过。这才满足 `03-pull-requests.md:24` 的「禁止直接推送」：直推必须**真的被拒绝**。
+**其二：bypass 名单必须清空（已执行）。** 名单里有唯一使用者时，保护的实际作用范围为空。清空后的逃生口改为「把 Enforcement status 临时改为 `Disabled`」——一次显式、留痕、需刻意为之的操作，而不是每次推送时静默绕过。这才满足 `03-pull-requests.md:24` 的「禁止直接推送」：直推必须**真的被拒绝**（证据见 § 4.1 的 `GH013`）。
 
-**其三：缺 `required_status_checks` 意味着需求 3 落不了地。** 没有这一项，CI 可以红着而 PR 照样能合。§ 5 设计的五个零 token 检查必须挂进这里才有约束力。
+**其三：缺 `required_status_checks` 意味着需求 3 落不了地（已配置，但配早了）。** 没有这一项，CI 可以红着而 PR 照样能合，§ 5 设计的五个零 token 检查必须挂进这里才有约束力。该项已配置——**但在 CI workflow 存在之前配置它，制造了 § 4.1 记的双向死锁**。这不是配置内容错，是配置**时机**错，处置见 § 4.5。
+
+**其四（新出现）：`skill-eval` 不该在必需检查里。** 实际配置的 6 项里含 `skill-eval`，而 § 5.1 那张表把它明确标为 **❌ 不是必需检查**。两个独立的理由，各自都是充分的：
+
+| 理由 | 后果 |
+|---|---|
+| 它只有 `workflow_dispatch` 触发 | 永远不会在 PR 上产生 check run，**这一项自身就是永久 Expected**——与 § 3.4.1 官方注释记的「`workflow_dispatch` 的 check run 不关联 PR」是同一条机制 |
+| 它是唯一**收费**的 job（每个 case 起真实 `claude` 子进程） | 进必需检查等于每个 PR 都付费，直接违背 § 1.3 那条「若 eval 收费则换方案」的用户约束 |
+
+处置：删掉该 context，必需检查最终为 5 项，与 § 5.1 逐字一致。
+
+⚠️ **这个偏差的来源值得记一笔：** § 5.1 的表里六个 job 同列，「是否必需检查」是其中一列。照表配置时整列被一并勾上是很自然的读法——**把「不要做的事」和「要做的事」放进同一张表的同一列，就要承担被连带执行的风险**。表本身不改（六个 job 的成本对比正需要并列），但 § 5.1 正文已加了独立一句强调 `skill-eval` 不进必需检查。
 
 ### 4.3 `required_signatures`：删除（用户裁决）
 
@@ -227,25 +252,49 @@ GitHub MCP 无 ruleset 工具（§ 3.2），`gh` 未安装。两条路：
 
 | 手段 | 说明 |
 |---|---|
-| **Web UI**（推荐） | 仓库 → Settings → Rules → Rulesets → `main` → 按 § 4.1 目标列逐项改 |
+| **Web UI**（实际采用） | 仓库 → Settings → Rules → Rulesets → `main` → 按 § 4.1 现状列逐项核对 |
 | `curl` + PAT | `PATCH /repos/{owner}/{repo}/rulesets/23134670`，需 PAT 具备仓库 admin 权限 |
+
+⚠️ **读取不需要认证，写入需要。** 本 spec 全部现状取证都走匿名 `GET /repos/{owner}/{repo}/rulesets/23134670`（公开仓库），因此「配置到底是什么」这个问题在任何时候都能零成本核实——**不要凭 UI 记忆或本节文字判断当前状态，直接读 API**。本节两次被推翻都是靠这条。
 
 建议顺带把 ruleset 改名为 `master-protection`——现名 `main` 会让人以为它作用于 `main` 分支，而本仓不存在该分支（实际 target 是 `~DEFAULT_BRANCH` 即 `master`）。这是可选的清理项，不影响功能。
 
-### 4.5 ⚠️ 实施顺序的硬约束
+### 4.5 ⚠️ 实施顺序：原定顺序已被推翻，记录事故与实际解锁路径
 
-**bypass 名单最后清空。** 清空后 `git push origin master` 立即被拒绝，而 `commit-cc-plugin` 第五步当前正是直推 master——若先清空，下一次提交就会卡死在一个还没改好的 skill 上。
-
-正确顺序：
+**原定的硬约束是「bypass 名单最后清空」**，理由是 `commit-cc-plugin` 第五步当前正是直推 master，先清空会让下一次提交卡死在一个还没改好的 skill 上。原定顺序：
 
 1. CI workflow 落地
 2. 开一个真实 PR 触发 CI —— **必需检查项必须先在 GitHub 上跑过至少一次，名字才会出现在 ruleset 的可选列表里**
 3. 改 `commit-cc-plugin` 与 `AGENTS.md`
 4. 改知识库条款（§ 7.1 / § 7.2，走 `knowledge-base-maintain`）
-5. 修订 ruleset：删 `required_signatures`、approval 数改 0、补 `required_status_checks` 与 `required_linear_history`、收窄 merge 方法
+5. 修订 ruleset
 6. **最后**清空 bypass 名单
 
-⚠️ 第 2 步与第 5 步之间有真实的依赖：没跑过的 job 名选不上。而第 1 步的 PR 本身要在 bypass 名单还在、或 approval 数已改 0 的前提下才能合并——**建议第 5 步的「approval 数改 0」提前到第 2 步之前单独做**，这样第 2 步的 PR 就能正常合并，不必依赖 bypass。
+**实际发生的是：第 5、6 步先做了，第 1–4 步一步没做。** 后果精确地就是原定约束要防的那件事，且比预想更重——不只是 `commit-cc-plugin` 卡住，而是 § 4.1 记的双向死锁：直推被拒，PR 也因 6 项检查永久 Expected 而合不了。
+
+⚠️ **值得记住的不是「顺序写得不够醒目」，而是这一类约束的性质：** 第 2 步与第 5 步之间的依赖（没跑过的 job 名在 UI 列表里选不上）会**倒逼**人手打 job 名，而手打就绕过了「先跑一次」这道天然校验——`skill-eval` 混进必需检查正是这条路径的产物。**顺序约束一旦被绕过，它原本顺带提供的校验也一起消失了。**
+
+#### 实际解锁路径（用户已拍板）
+
+不走 Enforcement `Disabled`，而是**只移除整条 `required_status_checks` 规则**，其余保护一项不动。理由：
+
+| | Disabled 逃生口 | 只删 `required_status_checks`（采用） |
+|---|---|---|
+| 「禁止直推」是否仍生效 | ❌ 全部保护失效 | ✅ 始终生效 |
+| spec 与 CI workflow 怎么合进 master | 直推 | **走第一个真实 PR** |
+| 第一次 PR 流程演练 | 被跳过 | 就是它本身，顺带实测 § 6.3 的 MCP 工具链 |
+| 与现实是否一致 | — | ✅ CI 还不存在，不声明它才是诚实的配置 |
+
+顺序：
+
+1. 移除 `required_status_checks` 整条规则（含 `skill-eval`，一次处理完 § 4.2 其四）
+2. 走 PR 把本 spec 合进 master —— **第一次真实 PR，同时是 § 6.3 工具链的实测**
+3. 写 plan，然后落地 CI workflow（同样走 PR）
+4. 该 PR 跑完后，5 个 job 名进入 UI 可选列表
+5. 按列表**勾选**加回 `required_status_checks`（5 项）——不手打，避免重演 § 4.2 其四
+6. 改 `commit-cc-plugin`、`AGENTS.md`、知识库条款（§ 7.1 / § 7.2）
+
+⚠️ 第 6 步排在最后不再有风险了：主干已经锁上，`commit-cc-plugin` 的直推第五步从现在起本就不可用，改它是补齐而非解锁。**但这意味着第 2、3 步的 PR 要手工走一遍 § 6.3 的动作**——skill 还没改，流程得由本次会话手动执行。这也正好是第一次演练。
 
 
 ## 5. CI 设计
@@ -266,6 +315,8 @@ GitHub MCP 无 ruleset 工具（§ 3.2），`gh` 未安装。两条路：
 **五个必需检查而非一个聚合 job**，五个 job 并行、失败时一眼看出坏在哪类。代价是每个 job 各自 checkout + setup-python（约 10–15 秒 ×5），公开仓库 Actions 免费无上限，可接受。
 
 ⚠️ 五个 job 名同时被 `ci.yml` 与 GitHub 服务端的 ruleset 引用，**后者不在版本库里、改动不留 diff**。改名必须同步改 ruleset，否则那项检查静默不再被要求（§ 10 风险 2）。
+
+🔴 **`skill-eval` 绝对不进必需检查列表。** 上表最后一行的「❌」是硬约束，不是建议：它只有 `workflow_dispatch` 触发，进了必需检查就是一项永久 Expected，会把主干锁死；它也是唯一收费的 job。**这件事已经真实发生过一次**，经过与代价见 § 4.2 其四。
 
 ### 5.2 三条适用于全部 job 的约定
 
@@ -533,7 +584,7 @@ CI 逐字执行 `sh .githooks/pre-commit`，因此该脚本**不得引入依赖�
 | 3 | 官方静态校验全绿 | `plugin-validate` job 退出 0，且其 90-report 报告须逐项核对：① marketplace 校验已执行；② 3 个外部条目**已被 clone 并校验**（这是本仓此前完全没有的判据）；③ 本 PR 改动的插件目录已被 40 步命中；④ 追加步骤 `claude plugin validate .claude/skills --strict` 退出 0。⚠️ **判据不是「22 个目标全绿」**——官方 action 的 40 步是**增量**校验（只看本 PR 改动的插件），22 个目标的全量结果只存在于 § 3.1 第 6 条的本机基线里，不是 CI 每次的产出 |
 | 4 | 知识库与 tips 一致性 | `check_index.py` / `check_refs.py` / `validate_tips.py` 均退出 0 |
 | 5 | **阴性对照**：eval case 门禁真的会拦 | 造一个「新增 SKILL.md 但无对应 `evals/` 目录」的 PR，`new-skill-eval-case` **必须红**；补上目录后转绿 |
-| 6 | **阴性对照**：主干真的推不上去 | 清空 bypass 名单后 `git push origin master` **必须被服务端拒绝**。⚠️ 判据是「拒绝」而非「有提示」——当前状态下该命令会**成功**并回 `Bypassed rule violations`，把那行提示误当成保护生效正是本次要消除的错觉 |
+| 6 | **阴性对照**：主干真的推不上去 | ✅ **已达成**：清空 bypass 名单后 `git push origin master` 被服务端以 `GH013 … push declined due to repository rule violations` 拒绝（原文见 § 4.1）。⚠️ 判据是「拒绝」而非「有提示」——此前同一命令会**成功**并回 `Bypassed rule violations`，把那行提示误当成保护生效正是本次要消除的错觉 |
 | 7 | 全自动流程闭环 | 走一次完整 `commit-cc-plugin`：建分支 → push → PR → CI 绿 → squash merge → 回主干；主干 commit 含 `Co-Authored-By`（§ 6.5） |
 | 8 | 知识库改动未破坏一致性 | `knowledge-base-maintain` 的一致性校验通过，领域版本与 CHANGELOG 已同步 |
 | 9 | 新门禁有测试与文档 | `test_check_new_skill_eval_case.py` 通过；`.githooks/README.md` 已登记 |
@@ -548,5 +599,5 @@ CI 逐字执行 `sh .githooks/pre-commit`，因此该脚本**不得引入依赖�
 | 4 | **会话中断导致 PR 悬挂** | § 6.4 已述，靠 § 6.2 的接续逻辑兜住 |
 | 5 | **Windows 本地与 Linux CI 的行为差异未实测**：符号链接、路径大小写、`git ls-files -s` 的模式位 | `actions/checkout` 保留符号链接为已知行为，但**本仓未实测**。验收第 1 项即是这项的实测；若 `pre-commit` 在 CI 首跑失败，按失败内容判断是脚本假设了 Windows 还是 CI 环境缺配置 |
 | 6 | **`.claude/settings.json` 是否纳入版本库** | 遗留未决项，与本 spec 解耦。它当前已被 `git add` 但未提交；本次交付**不处理**，需单独裁决 |
-| 7 | 首个 PR 的鸡生蛋问题：必需检查名字要先跑过一次才能选 | § 4.5 已列入实施顺序，并把「approval 数改 0」提前，使首个 PR 不依赖 bypass 即可合并 |
+| 7 | **首个 PR 的鸡生蛋问题已真实爆发**：必需检查先于 CI 配好，6 项全部永久 Expected，主干双向锁死 | § 4.5「实际解锁路径」已给出处置：先移除整条 `required_status_checks`，走 PR 合入 CI，再按 UI 列表**勾选**加回 5 项。⚠️ 教训是那条依赖会倒逼人手打 job 名，而手打绕过了「先跑一次」这道天然校验——`skill-eval` 混入正是该路径的产物 |
 | 8 | **现有 ruleset 由用户在本会话期间手动创建**，其意图未完整记录 | 本 spec § 4.1 已把它的完整配置固化为取证，§ 4.2 / § 4.3 逐项给出改动理由。`required_signatures` 一项已单独交用户裁决（结论：删除），不做替用户推断 |
