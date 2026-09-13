@@ -1,0 +1,98 @@
+# 手动的行为闸——本仓唯一会产生费用的 workflow。
+#
+# 🔴 job 名 skill-eval 绝对不进必需检查列表。两个各自充分的理由：
+#    ① 它只有 workflow_dispatch 触发，永远不会在 PR 上产生 check run，
+#       进了必需检查就是一项永久 Expected，主干双向锁死；
+#    ② 它是唯一收费的 job，进必需检查等于每个 PR 都付费。
+#    这件事已真实发生过一次，经过见 spec § 4.2 其四。
+#    ⚠️ 本文件合并后 skill-eval 可能开始出现在 ruleset 的 UI 列表里——
+#       不要因为「看到它在列表里」就以为该勾选。
+#
+# ⚠️ 当前本仓**没有** ANTHROPIC_API_KEY secret，所以本 workflow 现在点
+#    Run 会在最后一步失败（前面的 checkout 与 CLI 安装会正常通过）。
+#    本机跑 `claude plugin eval` 走的是已登录的 Claude Code 凭据
+#    （CLI 原文：runs ... on your machine, as you / on your own
+#    credential），而 GitHub runner 上没有登录态，必须靠 secret。
+#    启用方式：Settings → Secrets and variables → Actions →
+#    New repository secret，Name 为 ANTHROPIC_API_KEY。
+#    ⚠️ fork PR 拿不到仓库 secret，但本 workflow 只有 workflow_dispatch
+#    触发、不在 PR 上跑，所以不受影响。
+#
+# 为什么仍要保留它：claude plugin validate 查的是 schema 合法性，查不了
+# 行为——一个 frontmatter 完全合法的 skill 完全可能因 description 写得含糊
+# 而永不被触发，或反过来在不该触发的语境下被触发。只有 eval 能发现这件事。
+#
+# 判据见 spec § 5.8。
+
+name: skill-eval
+
+on:
+  workflow_dispatch:
+    inputs:
+      plugin:
+        # 必填而非「留空跑全部」：仓库根不是合法运行位置（无 plugin.json），
+        # 「全部」只能实现为按插件循环，而循环会把一次误触的成本乘以插件数。
+        # 必填一个插件名 = 把成本上界写进接口本身，比在文档里叮嘱可靠。
+        description: 插件目录名，如 optimus-devops-plugin
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  skill-eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      # 只为借它安装 claude CLI 的自愈逻辑（见 ci.yml 里的说明）。
+      # ⚠️ base-ref 传 github.sha：workflow_dispatch 下没有
+      #    pull_request.base.sha，而该 input 的默认值是 origin/main（本仓
+      #    无 main 分支）。传 head 自身让 detect-changes 得到空 diff、
+      #    快速跑完，CLI 则留在 runner 上供下一步使用。
+      - uses: anthropics/claude-plugins-community/.github/actions/validate-plugins@426e469f322952061102b286b378c0c9733a0934
+        with:
+          marketplace-path: .claude-plugin/marketplace.json
+          base-ref: ${{ github.sha }}
+          claude-cli-version: "2.1.270"
+      - name: 跑该插件的全部 eval case
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PLUGIN: ${{ inputs.plugin }}
+        run: |
+          test -d "plugins/$PLUGIN" \
+            || { echo "plugins/$PLUGIN 不存在"; exit 1; }
+          # 六个开关全部有据可依，不是保守起见：
+          #   --trust-plugin      非交互环境必需，否则卡在首次信任提示
+          #   --no-publish        🔴 报告默认发布到 claude.ai，而本仓 case
+          #                       含内部 Jenkins job 名——发布是外发行为
+          #   --ablation none     两个理由，第二个才是硬的：
+          #                       ① 默认 with-without 是 2 臂、成本翻倍；
+          #                       ② 🔴 CLI 原文「under with-without, graders
+          #                          marked with-only, incl. tool_used:
+          #                          Skill, are a plugin-fired indicator
+          #                          rather than part of the score」——本仓
+          #                          20 个 grader 全是 tool_used: Skill，
+          #                          在 with-without 下会全部不计入分数，
+          #                          eval 就彻底失去判据。none 是判据成立
+          #                          的必要条件，不只是省钱
+          #   --runs 1            默认是 case.runs ?? 3；case 文件自己也写了
+          #                       runs: 1，这里再传一次作命令行兜底。
+          #                       ⚠️ 引入 llm grader 后须两处一起调回 ≥3
+          #   --max-cost-usd 5    ⚠️ 它挡不住第一次 run（CLI 原文：ceiling
+          #                       is checked before each run launches），
+          #                       只是失控时的刹车
+          # 不设 --scaffold（会执行 case 作者提供的 bash）、
+          # 不设 --allow-real-servers（会在 OS 沙箱外起真实 MCP 服务器）。
+          #
+          # ⚠️ --threshold 未设，采用默认 1.0：任何 case 分数低于 1.0 就
+          #    exit 1。对行为闸而言这是期望行为（有 case 没过就该红），
+          #    但它意味着本 job 的绿灯判据是「20 个 case 全部满分」。
+          claude plugin eval "plugins/$PLUGIN" \
+            --trust-plugin \
+            --no-publish \
+            --ablation none \
+            --runs 1 \
+            --max-cost-usd 5
