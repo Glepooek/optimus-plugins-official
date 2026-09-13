@@ -44,7 +44,7 @@ jobs:
   skill-eval:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # 与 ci.yml 同一处置（理由见该文件顶部），但本 job 的动机更强一层：
