@@ -57,23 +57,21 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
-      - name: 8 个目录的单元测试
+      - name: 9 个目录的单元测试
         run: |
-          # ⚠️ 全仓共 9 个测试目录，这里刻意只列 8 个。
-          #    未列入的是 plugins/optimus-frontend-plugin/skills/
-          #    mastergo-to-wpf-page/scripts —— 它的 test_optimization.py 有
-          #    9 个存量失败（AnchorSafety 3 / GridSizing 1 / ValueSafety 5），
-          #    根因是 dsl_to_xaml.py 把对象类型的 stroke / fontWeight 直接
-          #    str() 进 XAML 属性值，产出 BorderBrush="{'r': 1, ...}" ——
-          #    以 { 开头的属性值会被 WPF 当作 markup extension，运行时抛
-          #    解析异常。这批失败随 de88b9d（重命名该 skill）入库即为红，
-          #    与本次交付无关，是真实功能缺陷而非平台差异。
+          # 全仓 9 个测试目录全部列入，无排除项。
           #
-          # 🔴 修复那 9 个测试后必须把该目录加回本列表，否则它永久无保护。
-          #    追踪见 docs/todo-list/2026-09-12-todo.md。
+          # ⚠️ plugins/optimus-frontend-plugin/skills/mastergo-to-wpf-page/scripts
+          #    此前被刻意排除：它的 test_optimization.py 有 9 个存量失败
+          #    （AnchorSafety 3 / GridSizing 1 / ValueSafety 5），随 de88b9d
+          #    （重命名该 skill）入库即为红。之所以排除而非留红：gates-tests 是
+          #    必需检查，留红会让主干每个 PR 都无法合并（bypass_actors 为 null，
+          #    无人能绕过）。2026-09-13 按用户裁决删除那 9 条测试，该目录转绿
+          #    并加回本列表（裁决见 docs/todo-list/2026-09-12-todo.md 的 A3）。
           #
-          # 之所以排除而非留红：gates-tests 是必需检查，留红会让主干每个 PR
-          # 都无法合并（bypass_actors 为 null，无人能绕过）。
+          # 🔴 那 9 条测试盯的三个缺陷一个都没修——删的是测试不是实现。根因分析
+          #    已搬进该 skill 的 known-issues.md，**那里是它们在版本库里的唯一
+          #    记录**（本注释此前承担该职责，随排除一并撤销）。
           fail=0
           for d in \
             .githooks \
@@ -82,6 +80,7 @@ jobs:
             .claude/skills/sync-cc-tips/scripts \
             plugins/optimus-frontend-plugin/skills/mastergo-icon-expoter/scripts \
             plugins/optimus-frontend-plugin/skills/mastergo-to-wpf-components/scripts \
+            plugins/optimus-frontend-plugin/skills/mastergo-to-wpf-page/scripts \
             plugins/optimus-frontend-plugin/skills/svg-to-xaml-path/scripts \
             plugins/optimus-mcp-servers/scripts
           do
