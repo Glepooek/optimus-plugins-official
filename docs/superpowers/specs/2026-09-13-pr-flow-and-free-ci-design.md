@@ -289,7 +289,7 @@ remote: - 6 of 6 required status checks are expected.
 | └ `require_extra_approval_for_unattributed_changes` | true | false | ✅ 已改 false |
 | └ `allowed_merge_methods` | `merge`/`squash`/`rebase` | 仅 `squash` | ✅ 已收窄 |
 | `required_signatures` | 有 | 删除 | ✅ 已删（`updated_at` 05:09:52） |
-| `copilot_code_review` | `review_on_push` | 保留 | 🔴 **该规则现已不存在**（原记「保留 ✓，另加 `review_draft_pull_requests: true`」）。它不阻塞合并——不计入 approval，既帮不上批准数也拦不住合并，因此删除不改变任何门禁强度。⚠️ 但**目标列写的是「保留」而实际已删，这是规格与配置的一处未裁决分歧**，只是代价为零故不构成风险 |
+| `copilot_code_review` | `review_on_push` | **删除**（2026-09-13 裁决） | ✅ 已删。原目标是「保留」，复核发现配置里已无此规则，**经用户裁决把规格改为「删除」以消除分歧**。它不阻塞合并——不计入 approval，既帮不上批准数也拦不住合并，故删除**不改变任何门禁强度**。⚠️ 失去的是「每次 push 自动 Copilot review」这个**信息源**，不是门禁；本仓五项必需检查一件都不依赖它 |
 | `required_linear_history` | 缺 | 新增 | ✅ 已新增 |
 | `required_status_checks` | 缺 | 5 项 | ✅ **现为正确的 5 项**（`gates-data`/`gates-hooks`/`gates-tests`/`plugin-validate`/`new-skill-eval-case`，`integration_id: 15368`）。原记「🔴 配成了 6 项且早于 CI 存在」——多出的 `skill-eval` 已移除，整条规则按 § 4.5 的解锁路径先删后加，因此现在的 5 项是**在 CI 已存在之后从 UI 列表里选出来的**，不是手打 |
 | └ `strict_required_status_checks_policy` | — | spec 未设计 | ✅ **现为 `false`**（原记「⚠️ 现为 `true`」，用户已自行处置）。由此 § 6.3「轮询 + 显式 merge」少了一个失败模式：master 在轮询期间前进不再导致 merge 被拒。⚠️ 代价是合并时分支可以不是最新的——本仓单人串行提交，该代价不成立 |
