@@ -135,25 +135,36 @@ jobs:
           # 刻意按语义编排（10 个自建插件在前、3 个外部引用条目集中在末尾），
           # 满足 I1 就要打散这个编排。经裁决：保留编排，关掉 fail-on-warnings。
           #
-          # 🔴 代价要写明：plugins/*/skills/ 下 48 个对外发布 skill 的 CLI
-          #    warning 不再判失败，其中包括「缺 description」——而缺
-          #    description 的 skill 在 Claude 侧等于永不被自动触发。
-          #    ⚠️ 本 job 末尾追加的 `claude plugin validate .claude/skills
-          #    --strict` 是独立调用，不受本 input 影响，故 .claude/skills/
-          #    下的 8 个维护型 skill 仍受严格校验。
+          # 🔴 它放掉的是 CLI warning 判失败（步骤 20/40），其中包括
+          #    「缺 description」——而缺 description 的 skill 在 Claude 侧
+          #    等于永不被自动触发。**这一层已由本 job 末尾两个独立 step
+          #    全部补回**：它们直接调 CLI，不经 action，因此不受本 input 与
+          #    I1 的耦合影响。所以本项为 false 的实际残留代价只剩
+          #    「invariant warning 不判失败」，而 warn-invariants 已收窄到
+          #    只有 I1 一条（见下），即残留代价 = I1 未排序这一件事。
           #
-          # I1 未排序与本项降级都列进了 docs/todo-list/ 的后续项。
+          # I1 未排序仍是未决项，已登记 docs/todo-list/2026-09-12-todo.md 的 B7。
           fail-on-warnings: "false"
-          # ⚠️ 显式写出上游的默认值 "I1 I3 I5 I8"，不是新增豁免。
-          # 原本刻意不设此项，理由是「在没有实测前不预先豁免任何不变量」——
-          # 但首跑实测推翻了这个理由：该 input 的默认值**不是空**，不设它
-          # 就静默继承对 I1（字母序）/ I3 / I5（source.sha 锁定）/ I8 的豁免。
-          # 与下面 scope-errors-to-changed 同一处置：把继承来的默认值写到
-          # 眼前，上游改默认值时不会静默改变本仓的门禁强度。
-          # 🔴 I5（source.sha 必须锁定）被豁免在本仓是可接受的，因为
-          #    .githooks/check_external_entries.py 已在提交关口强制同一件事
-          #    （40 位全长 sha + 台账一致）。这份重叠是刻意的互补，不是冗余。
-          warn-invariants: "I1 I3 I5 I8"
+          # ⚠️ 这**不是**上游默认值。上游默认是 "I1 I3 I5 I8"（不是空！），
+          # 所以「不设此项」等于静默豁免 4 条——plan 原本刻意不设，理由是
+          # 「在没有实测前不预先豁免任何不变量」，而实测推翻了那个手法本身：
+          # 不设它才是豁免最多的选项。正确实现是显式设成**实测出的违规集合**。
+          #
+          # 本机按 11-validate-invariants.sh 的逐条判据复算全部 11 条
+          # （CLI 2.1.270 / marketplace 13 条目）：仅 I1 违规，
+          # I2/I3/I4/I5/I8/I9/I10/I11 全部通过。故名单收窄到 I1 一条，
+          # 其余 3 条从 warning 回到 error 档。
+          #
+          # 🔴 I1（marketplace plugins[] 必须按名字字母序，不区分大小写）
+          #    是唯一真正的豁免：本仓 plugins[] 刻意按语义编排（10 个自建
+          #    插件在前、3 个外部引用条目集中在末尾），满足 I1 就要打散这个
+          #    编排。经裁决保留编排，见 todo B7。
+          # 🔴 I5（外部条目 source.sha 必须 40 位）回到 error 档是零风险的：
+          #    .githooks/check_external_entries.py 已在 gates-hooks 里强制
+          #    同一件事（40 位全长 sha + 台账一致）。这份重叠是刻意的互补。
+          #    官方 marketplace 仓库同样把 I5 排除在豁免名单外，其注释：
+          #    「Official curated marketplace: SHA-pin (I5) is a HARD error」。
+          warn-invariants: "I1"
           # 默认值就是 false，显式写出同上理由。它与 fail-on-warnings 是
           # 不同维度：本项管「未改动条目上的违规是否降级」，设 false 表示
           # 全量强制，而非只查本 PR 改过的条目。
@@ -165,6 +176,35 @@ jobs:
       # 定位插件，而 .claude/skills/ 不属任何插件，完全不在其扫描范围内。
       # claude 已由 action 装到 runner 全局，同 job 后续 step 直接可用。
       - run: claude plugin validate .claude/skills --strict
+
+      # 🔴 把 fail-on-warnings: "false" 放掉的严格档拿回来。
+      #
+      # 那个 input 之所以是 false，只因 I1（字母序）与本仓的语义编排冲突；
+      # 但它的副作用波及**全部** CLI warning，包括 plugins/*/skills/ 下 48 个
+      # 对外发布 skill 的「缺 description」——而缺 description 的 skill 在
+      # Claude 侧等于永不被自动触发，属功能性失效。
+      #
+      # 本 step 直接调 CLI、不经 action，因此完全不受 I1 与 fail-on-warnings
+      # 的耦合影响：一件事的强度不必为另一件事的取舍买单。
+      #
+      # ⚠️ 传 <plugin>/skills 而非单个 skill 目录——单个 skill 目录不是合法
+      #    校验目标（报 No manifest found in directory）。
+      # ⚠️ 只覆盖 plugins/：external_plugins/ 是拷贝自上游的内容，其 skill
+      #    的 frontmatter 质量不该由本仓的门禁判失败（官方 action 的 40 步
+      #    仍会在它改动时增量校验它）。当前该目录为空。
+      #
+      # 本机 CLI 2.1.270 实测 9 个含 skills/ 的插件全绿
+      # （optimus-mcp-servers 无 skills/，被 -d 判断跳过），故设为硬失败。
+      - name: 各插件 skills 目录的严格校验
+        run: |
+          fail=0
+          for d in plugins/*/skills; do
+            [ -d "$d" ] || continue
+            echo "::group::$d"
+            claude plugin validate "$d" --strict || fail=1
+            echo "::endgroup::"
+          done
+          exit "$fail"
 
   # ---------------------------------------------------------------------------
   # 「新增 skill 必须带 eval case」。纯静态 diff 检查，零 token——强制 case
