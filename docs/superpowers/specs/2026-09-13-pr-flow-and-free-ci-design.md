@@ -70,8 +70,8 @@
 **四条对设计有决定性影响的结论：**
 
 - **第 3 条 + 第 4 条 ⇒ CI 必须加 `--strict`。** 缺 `description` 的 skill 在 Claude 侧等于永不被自动触发，属功能性失效，却在默认档静默通过。不加 `--strict` 的 CI 是只会亮绿灯的刹车。
-- **第 5 条 ⇒ 这一项可以无条件作必需检查。** 不需要 secret，因此 fork PR 也能跑通（fork PR 拿不到仓库 secret，任何依赖凭据的检查都会在 fork 场景失败）。
-- **第 7 条 ⇒ CI 需要两类调用**：每个插件根各一次（清单），每个 `plugins/*/skills` 各一次（组件）。只跑一类会漏掉另一类。
+- **第 5 条 + 第 6 条 ⇒ 门禁可以在上线第一天就硬失败、且无条件作必需检查。** 零凭据意味着不需要 secret，fork PR 同样跑得通（fork PR 拿不到仓库 secret，任何依赖凭据的检查都会在 fork 场景失败）；零存量债务意味着不必先设「只对改动文件严格」的过渡档（`scope-errors-to-changed` 因此保持 `false`）。
+- **第 7 条 ⇒ 校验目标必须分两类给**：插件根（校验清单）与 `skills/` 父目录（校验组件），传单个 skill 目录会直接报错。§ 5.6 采用的官方 composite action 内部已按这个形态调用（00 步定位插件根、40 步校验），**因此本仓不需要自己维护这份目标清单——但 `.claude/skills/` 不属任何插件，落在它的定位逻辑之外，须另加一步**。
 - **第 8 条 ⇒ 它不能取代本仓自有门禁。** 官方校验与 `.githooks/` 的三个门禁是互补的两套判据，都要跑。
 
 ### 3.2 GitHub MCP 的能力边界
@@ -105,8 +105,72 @@
 | 当前账号在该 ruleset 的 **bypass 名单内** | 直推 `master` 仍成功，服务端只回 `Bypassed rule violations`——规则存在但对唯一使用者无效 |
 | 本机**零提交签名配置** | `user.signingkey`/`gpg.format`/`commit.gpgsign` 均未设，最近 5 个提交 `git log --format=%G?` 全为 `N` |
 
-## 4. 主干保护配置规格（修订现有 ruleset，人工执行）
+### 3.4 官方 marketplace 仓库的 CI 取证
 
+对 `anthropics/claude-plugins-official`（经用户 fork `Glepooek/claude-plugins-official` 读取）的 `.github/` 逐个核查。它有 9 个 workflow，与本次需求相关的是 `validate-plugins.yml`、`validate-frontmatter.yml`，以及被前者引用的 composite action。
+
+**两个仓库均为 public**（实测 `GET /repos/...` 的 `visibility: public`），因此 `uses: anthropics/claude-plugins-community/...` 可直接引用。
+
+#### 3.4.1 🔴 必需检查绝对不能加 `paths:` 过滤器
+
+`validate-plugins.yml` 的 `paths:` 长达 40 行，通篇是补漏历史，注释点名了 PR #5416。机制是：
+
+> `validate` 是 required status check，一个 PR 若未命中 `paths:`，该检查就永远停在 **"Expected — Waiting for status to be reported"**，PR 永久无法合并。
+
+他们为此逐条补了 `plugins/*/.claude-plugin/**`（`*` 不跨 `/`，一级模式匹配不到两级目录）、`.github/workflows/**`、`.github/policy/**`、`.github/bump-tracking.json`、`plugins/*/README.md`、`plugins/*/assets/**`、`plugins/*/.mcp.json`、`plugins/*/hooks/**`。注释还明确记载：**`workflow_dispatch` 的 check run 不关联 PR，所以手动跑一次也救不了**。
+
+**本 spec 的约定：所有必需检查一律不设 `paths:`，每个 PR 全跑。** 代价是几分钟 runner 时间（公开仓库免费无上限），收益是彻底消除这一类死锁。这一条比任何 YAML 结构都重要。
+
+#### 3.4.2 🔴 `claude` CLI 在 hosted runner 上的安装不可靠
+
+action 内 `Install claude CLI` 一步有 40 行自愈逻辑，注释给出根因：
+
+> claude-code 包把运行时作为**平台原生 optional dependency**、由 postinstall 脚本抓取。在 hosted runner 上该抓取会间歇性 stall 或被跳过（`npm --omit=optional`、某些 pnpm 配置），留下「added 1 package」但没有可用的 `claude` 二进制（`native binary not installed`）。
+
+因此**裸 `npm i -g @anthropic-ai/claude-code && claude --version` 会非确定性失败，卡住恰好赶上的那个 PR**。官方的五层处置：`--include=optional` 强制装原生依赖、每个网络步骤加 `timeout -k 10 300`、3 次重试且**重试前删包目录 + 清 cache**（npm 对已在磁盘的 `@latest` 会 no-op 从而跳过 postinstall，否则重试是假重试）、兜底直接 `node install.cjs`、`rm -rf` 前加路径守卫。
+
+**本 spec 的处置：不自己写这套，直接复用官方 composite action（§ 5.6）。** 一份手写的 `npm i -g` + 校验循环看起来更简单、也更好读，但它把一个已知的非确定性失败留在了每个 PR 的必经路径上——**这是本次取证否掉的最大一处「更简单方案」**。
+
+#### 3.4.3 composite action 的能力与边界
+
+`anthropics/claude-plugins-community/.github/actions/validate-plugins`（官方 fork 中锁的是 `426e469f322952061102b286b378c0c9733a0934`，本仓沿用同一 SHA），7 个实质步骤：
+
+| 步骤 | 做什么 | 对本仓 |
+|---|---|---|
+| 00 detect-changes | 对每个变更文件**向上走目录树找最近含 `.claude-plugin/plugin.json` 的祖先** | ✅ 通用逻辑、不硬编码 `plugins/`，本仓 `plugins/<name>/` 与 `external_plugins/<name>/` 均命中，**无需任何路径配置** |
+| 11 invariants I1–I11 | 自定义策略不变量，含 **I5 = `source.sha` 锁定** | ⚠️ 与 `.githooks/check_external_entries.py` 部分重叠，两者都留（见 § 5.6） |
+| 20 CLI validate marketplace | `claude plugin validate` 校验 marketplace | ✅ |
+| 30 CLI validate external | **clone 外部插件再校验**，`external-timeout-secs` 默认 120 | ✅ **纯增益**：补上 `check_external_entries.py` 自陈的盲区——「刻意不联网，上游仓库被删除或转私有抓不到」 |
+| 40 CLI validate local folders | 校验**本 PR 改动的**插件目录 | ⚠️ 增量而非全量；且**抓不到 `.claude/skills/`**（不属任何插件，无 `.claude-plugin/plugin.json`） |
+| 41 aux-file JSON parse | 解析插件的附属 JSON | ✅ |
+| 90 report | 产出 markdown 报告 | ✅ |
+
+四个要在 `with:` 里写明的输入。三个必须覆盖默认值（`base-ref`、`fail-on-warnings`、`claude-cli-version`）；`scope-errors-to-changed` 的默认值就是我们要的，**写出来是为了让「刻意选了严格档」留痕**——依赖一个不在眼前的默认值来维持严格性，等于把门禁强度交给上游的下一次改动：
+
+| 输入 | 默认值 | 本仓要传 | 原因 |
+|---|---|---|---|
+| `base-ref` | `…\|\| 'origin/main'` | `${{ github.event.pull_request.base.sha }}` | **默认值里是 `origin/main`，本仓默认分支是 `master`** |
+| `fail-on-warnings` | `false` | **`true`** | 等价于 § 3.1 第 3/4 条论证的 `--strict`；不开则缺 `description` 只是 warning |
+| `scope-errors-to-changed` | `false` | 保持 `false` | 本仓零存量债务（§ 3.1 第 6 条），可承受全量严格 |
+| `claude-cli-version` | **`latest`** | **`2.1.270`** | 见 § 10 风险 1。取 `2.1.270` 而非任意版本，是因为 § 3.1「零存量债务」这条基线正是用本机 `2.1.270` 量出来的——**CI 的判据版本与基线量测版本必须同一个，否则「零债务」这个前提在 CI 里不成立** |
+
+另需 `actions/checkout` 配 `fetch-depth: 0`（diff 需要完整历史）。
+
+#### 3.4.4 ⚠️ 不要照抄官方的 job 命名
+
+`validate-plugins.yml` 与 `validate-frontmatter.yml` 的 job **都叫 `validate`**。两个同名 check run 会让 required status checks 的名字匹配含混——正是 § 10 风险 2 记的那个脆弱点。**本仓每个 job 用唯一且描述性的名字。**
+
+#### 3.4.5 暂不借鉴的部分
+
+| workflow | 为什么不用 |
+|---|---|
+| `scan-plugins.yml`（27 KB） | 第三方插件安全扫描，本仓插件全部自建或已人工审过，成本收益不成比例 |
+| `validate-licenses.yml` | 面向 curated marketplace 的第三方 license 合规；本仓 `external_plugins/` 拷贝模式有一定相关性，**列为未来项** |
+| `close-external-prs.yml`、`external-pr-scope-guard.yml` | 官方靠它自动关闭 fork PR。本仓是个人插件仓库，不采用「一律关闭外部 PR」策略，故 fork PR 照跑必需检查（全部零凭据，fork 也能跑通）。**代价见 § 5.7 关于文件名注入的处置** |
+| `bump-plugin-shas.yml`、`revert-failed-bumps.yml` | 自动跟随上游升级 `source.sha`。本仓 3 个外部引用条目正是锁 sha 的形态，**高度相关但属新功能**，不在本次三项需求内，列为未来项 |
+| `validate-frontmatter.yml` | 它校验的是官方六字段之外的自定义约定，用 bun + TypeScript。本仓的 frontmatter 约定在 `.claude/rules/skill-conventions.md`，与官方不同，直接抄会校验错的规则。**思路借鉴**（见 § 5.7 的 `--diff-filter` 与文件名处理），实现不抄 |
+
+## 4. 主干保护配置规格（修订现有 ruleset，人工执行）
 ### 4.1 现状取证：ruleset 已存在，但当前形态不可满足
 
 主干上已有一个 active ruleset，名 `main`、id `23134670`、创建于 `2026-09-13T05:02:49Z`。**本节的原始设计是「从零新建」，取证后改为「修订现有」**——两者的差别不只是措辞：现有配置里有三项若照原样移出 bypass 名单会立即锁死主干。
@@ -136,7 +200,7 @@ remote:   Found 1 violation: efeb3b49...
 | `required_signatures` | **已删除** ✅ | 删除 | ✓ 用户已按 § 4.3 裁决执行（`updated_at` 05:09:52） |
 | `copilot_code_review` | 有（`review_on_push: true`） | 保留 | ✓ 免费的额外一层，**且不阻塞合并**——它不计入 approval，所以既帮不上 `count:1` 也拦不住合并 |
 | `required_linear_history` | **缺** | **新增** | ⚠️ `03-pull-requests.md` §2 推荐 squash 保持线性 |
-| `required_status_checks` | **缺** | **新增** | 🔴 需求 3 的落点整个缺失，CI 全绿无法强制 |
+| `required_status_checks` | **缺** | **新增 5 项**：`gates-hooks`、`gates-tests`、`gates-data`、`plugin-validate`、`new-skill-eval-case` | 🔴 需求 3 的落点整个缺失，CI 全绿无法强制。名字须与 § 5.1 的 job 名逐字一致 |
 | bypass 名单 | **含当前账号** | **清空** | 🔴 见 § 4.2 |
 
 ### 4.2 三项致命冲突
@@ -147,7 +211,7 @@ remote:   Found 1 violation: efeb3b49...
 
 **其二：bypass 名单必须清空。** 名单里有唯一使用者时，保护的实际作用范围为空。清空后的逃生口改为「把 Enforcement status 临时改为 `Disabled`」——一次显式、留痕、需刻意为之的操作，而不是每次推送时静默绕过。这才满足 `03-pull-requests.md:24` 的「禁止直接推送」：直推必须**真的被拒绝**。
 
-**其三：缺 `required_status_checks` 意味着需求 3 落不了地。** 没有这一项，CI 可以红着而 PR 照样能合。§ 5 设计的三个零 token 检查必须挂进这里才有约束力。
+**其三：缺 `required_status_checks` 意味着需求 3 落不了地。** 没有这一项，CI 可以红着而 PR 照样能合。§ 5 设计的五个零 token 检查必须挂进这里才有约束力。
 
 ### 4.3 `required_signatures`：删除（用户裁决）
 
@@ -186,18 +250,34 @@ GitHub MCP 无 ruleset 工具（§ 3.2），`gh` 未安装。两条路：
 
 ## 5. CI 设计
 
-### 5.1 总体：三个零 token 的必需检查 + 一个手动的行为检查
+### 5.1 总体：五个零 token 的必需检查 + 一个手动的行为检查
 
 新建 `.github/`（当前仓库**无此目录**，从零建立）：
 
 | 文件 | job | 触发 | 成本 | 是否必需检查 |
 |---|---|---|---|---|
-| `.github/workflows/ci.yml` | `gates` | `pull_request` → `master` | 零 | ✅ |
+| `.github/workflows/ci.yml` | `gates-hooks` | `pull_request` → `master` | 零 | ✅ |
+| 同上 | `gates-tests` | 同上 | 零 | ✅ |
+| 同上 | `gates-data` | 同上 | 零 | ✅ |
 | 同上 | `plugin-validate` | 同上 | 零 | ✅ |
 | 同上 | `new-skill-eval-case` | 同上 | 零 | ✅ |
-| `.github/workflows/skill-eval.yml` | `eval` | **仅 `workflow_dispatch`** | 按 case 计费 | ❌ |
+| `.github/workflows/skill-eval.yml` | `skill-eval` | **仅 `workflow_dispatch`** | 按 case 计费 | ❌ |
 
-### 5.2 job `gates` —— 逐字执行 `.githooks/pre-commit`，不复制逻辑
+**五个必需检查而非一个聚合 job**，五个 job 并行、失败时一眼看出坏在哪类。代价是每个 job 各自 checkout + setup-python（约 10–15 秒 ×5），公开仓库 Actions 免费无上限，可接受。
+
+⚠️ 五个 job 名同时被 `ci.yml` 与 GitHub 服务端的 ruleset 引用，**后者不在版本库里、改动不留 diff**。改名必须同步改 ruleset，否则那项检查静默不再被要求（§ 10 风险 2）。
+
+### 5.2 三条适用于全部 job 的约定
+
+**其一：一律不设 `paths:` 过滤器。** 判据见 § 3.4.1——必需检查加 `paths:` 会让未命中的 PR 永久停在 "Expected — Waiting for status to be reported"，且 `workflow_dispatch` 救不了。官方为此打了至少 5 次补丁。
+
+**其二：`permissions: contents: read`。** 最小权限，与官方一致。`new-skill-eval-case` 若改用 `gh pr diff` 需额外 `pull-requests: read`，但本 spec 用 `git diff` 避开（见 § 5.7）。
+
+**其三：第三方 action 一律 SHA-pin。** 官方对 `oven-sh/setup-bun` 与自家 composite action 都是 SHA-pin。`actions/*` 官方 action 用 major tag 即可。
+
+不跳过 fork PR。官方用 `if: github.event.pull_request.head.repo.full_name == github.repository` 跳过，但那是因为它有 `close-external-prs.yml` 自动关闭 fork PR；本仓不采用该策略，若跳过则 fork PR 的必需检查永久 Expected、无法合并。五个检查全部零凭据（§ 3.1 第 5 条），fork 场景照样跑通。
+
+### 5.3 job `gates-hooks` —— 逐字执行 `.githooks/pre-commit`，不复制逻辑
 
 **关键取证：`.githooks/pre-commit` 全程未使用 `git diff --cached`**，它的六项检查全部基于工作树与 `git ls-files`，与暂存区无关。因此 CI 可以直接 `sh .githooks/pre-commit`，而不是在 workflow YAML 里重写一份门禁逻辑。
 
@@ -205,20 +285,9 @@ GitHub MCP 无 ruleset 工具（§ 3.2），`gh` 未安装。两条路：
 
 ⚠️ **由此产生一条新约定，必须写进 `.githooks/README.md`**：`pre-commit` 不得引入依赖暂存区的检查（`git diff --cached`、`git diff --name-only --staged` 等）。一旦引入，CI 的逐字复用即失效，门禁判据会在两个环境间分叉。
 
-`gates` 的完整步骤：
+步骤：checkout → `actions/setup-python@v6`（`python-version: '3.x'`，提供 `python` 别名，ubuntu 默认只有 `python3`）→ `sh .githooks/pre-commit`。
 
-| # | 步骤 | 命令 |
-|---|---|---|
-| 1 | checkout | `actions/checkout@v5` |
-| 2 | Python | `actions/setup-python@v6`（`python-version: '3.x'`；提供 `python` 别名，ubuntu 默认只有 `python3`） |
-| 3 | 仓库一致性门禁 | `sh .githooks/pre-commit` |
-| 4 | 单元测试（**9 个目录各跑一次**） | 见 § 5.3 |
-| 5 | 知识库一致性 | `python .claude/skills/knowledge-base-maintain/scripts/check_index.py`<br>`python .claude/skills/knowledge-base-maintain/scripts/check_refs.py` |
-| 6 | tips 库一致性 | `python .claude/skills/sync-cc-tips/scripts/validate_tips.py` |
-
-第 5、6 步的当前基线（实测）：索引 790 条无问题、284 个消费者文件章节号引用全部有效、tips 250 条九项检查全通过。**均无存量债务，可直接设为硬失败。**
-
-### 5.3 9 个测试目录必须逐个调用
+### 5.4 job `gates-tests` —— 9 个测试目录必须逐个调用
 
 `unittest discover` **不跨目录递归**（`AGENTS.md`「本地测试」已记载该事实），因此不能用一条命令覆盖全部。九个目录：
 
@@ -234,53 +303,70 @@ plugins/optimus-frontend-plugin/skills/svg-to-xaml-path/scripts
 plugins/optimus-mcp-servers/scripts
 ```
 
-实现上用一个 shell 循环遍历该列表，任一失败即整步失败。**不把目录列表硬编码进 YAML 的九个 step**——那样新增测试目录时容易漏改，且失败时要翻九个折叠块。
+实现上用一个 shell 循环遍历该列表，任一失败即整 job 失败。**不把目录列表硬编码成九个 step**——那样新增测试目录时容易漏改，且失败时要翻九个折叠块。
 
-### 5.4 job `plugin-validate` —— 官方静态校验
+### 5.5 job `gates-data` —— 数据文件一致性
 
-| # | 步骤 | 说明 |
-|---|---|---|
-| 1 | checkout | — |
-| 2 | `actions/setup-node@v6` | Node 22 |
-| 3 | `npm i -g @anthropic-ai/claude-code` | 安装 CLI |
-| 4 | 全量 `claude plugin validate --strict` | 目标见下表 |
+| 检查 | 当前基线（实测） |
+|---|---|
+| `python .claude/skills/knowledge-base-maintain/scripts/check_index.py` | 790 条记录无问题 |
+| `python .claude/skills/knowledge-base-maintain/scripts/check_refs.py` | 284 个消费者文件章节号引用全部有效 |
+| `python .claude/skills/sync-cc-tips/scripts/validate_tips.py` | 250 条、九项检查全通过 |
 
-**必须加 `--strict`**（§ 3.1 第 3、4 条：默认档下缺 `description` 只报 warning 且退出 0）。
+**均无存量债务，可直接设为硬失败。**
 
-校验目标（§ 3.1 第 7 条：单个 skill 目录不是合法目标，必须分两类）：
+### 5.6 job `plugin-validate` —— 复用官方 composite action
 
-| 目标 | 数量 | 校验什么 |
-|---|---|---|
-| `.claude-plugin/marketplace.json` | 1 | marketplace 清单 |
-| `plugins/*/` | 10 | 每插件 `plugin.json` 清单 |
-| `plugins/*/skills/` | 9 | 插件对外发布的 skill 组件 |
-| `plugins/*/agents/` | 1 | agent 组件 |
-| `.claude/skills/` | 1 | 本仓自用 skill（不发布，但 frontmatter 同样要合法） |
+**不自己写 `npm i -g` + 校验循环。** 判据见 § 3.4.2：裸安装会非确定性失败并卡住 PR，官方 action 内已有 40 行自愈逻辑（强制 optional 依赖、每步超时、真重试、postinstall 兜底）。
 
-**不校验 `.kiro/skills/` 与 `.agents/skills/`**——它们是指向 `.claude/skills/` 的符号链接，校验等于重复；镜像完整性已由 `pre-commit` 第 4-6 项负责。
+```
+- uses: actions/checkout@v5
+  with:
+    fetch-depth: 0          # detect-changes 需要完整历史
+- uses: anthropics/claude-plugins-community/.github/actions/validate-plugins@426e469f322952061102b286b378c0c9733a0934
+  with:
+    marketplace-path: .claude-plugin/marketplace.json
+    base-ref: ${{ github.event.pull_request.base.sha }}   # 默认值是 origin/main，本仓 master
+    fail-on-warnings: "true"                              # 等价于 --strict
+    scope-errors-to-changed: "false"                      # 本仓零债务，可全量严格
+    claude-cli-version: "2.1.270"                         # 默认 latest 会漂移，见 § 10 风险 1
+```
 
-**无需任何 secret**（§ 3.1 第 5 条实测：空配置目录、清空 API key 环境变量仍正常退出 0）。这一点决定了它在 fork PR 场景也能跑——fork PR 拿不到仓库 secret，任何依赖凭据的必需检查都会在那里失败。
+四个输入的取值理由见 § 3.4.3 的表。`warn-invariants` 暂不设——先跑一次看 I1–I11 在本仓的实际命中情况，再决定要不要降级某几项；**在没有实测前不预先豁免任何不变量**。
 
-### 5.5 job `new-skill-eval-case` —— 需求 3 的零成本落地
+**补一步覆盖 action 的盲区。** action 按「含 `.claude-plugin/plugin.json` 的祖先目录」定位插件，因此 `.claude/skills/`（本仓自用维护型 skill，不属任何插件）完全不在其扫描范围内。在 action 之后追加一步：
+
+```
+- run: claude plugin validate .claude/skills --strict
+```
+
+`claude` 已由 action 装到 runner 全局，同 job 后续 step 可直接调用，无需重装。
+
+⚠️ **与 `.githooks/check_external_entries.py` 的重叠是刻意保留的。** action 的 I5 查 `source.sha` 锁定，自家脚本也查——但两者不可互相取代：自家脚本额外校验 `add-external-skill` 台账与条目 sha 是否一致（官方没有这个概念），且必须能在 `pre-commit` 里本地跑；官方 action 则会 clone 上游、抓到「仓库已删除或转私有」这个自家脚本明确声明抓不到的形态。**互补，都留。**
+
+### 5.7 job `new-skill-eval-case` —— 需求 3 的零成本落地
 
 这是**「新增 skill 必须带 eval case」与「不为 CI 付费」两个约束的交点**：强制 case **存在**（纯静态 diff 检查，零成本），但不在 CI 里**运行** case（避免 token）。
 
 逻辑：
 
-1. `git diff --name-only --diff-filter=A origin/master...HEAD` 取本 PR **新增**的文件
+1. `git diff --name-only --diff-filter=A <base-sha>...HEAD` 取本 PR **新增**的文件
 2. 从中筛出形如 `plugins/<plugin>/skills/<skill>/SKILL.md` 的路径
 3. 对每个命中项，要求 `evals/<plugin>/<skill>/` 存在且含 `case.yaml` 或 `prompt.md`
 4. 无命中项 → 直接通过（**存量不回溯**，用户已拍板）
 
-`--diff-filter=A` 是这里的要点：只看**新增**的 SKILL.md，修改已有 skill 不触发。这正是「新增必须带 case，存量不回溯」的机械表达。
+`--diff-filter=A` 是这里的要点：只看**新增**的 SKILL.md，修改已有 skill 不触发。这正是「新增必须带 case，存量不回溯」的机械表达。官方 `validate-frontmatter.yml` 用 `--diff-filter=AMRC`（排除删除），因为它要校验改动过的文件；本 job 的语义不同，只要 `A`。
+
+**⚠️ 文件名必须在 Python 里处理，不能进 shell。** 官方 `validate-frontmatter.yml` 的注释记载了这个考虑——它跳过 fork PR 的理由之一就是「防止来自 fork 的不可信文件名进入下游 shell 步骤」。本 spec 不跳过 fork（§ 5.2），因此该风险必须在实现层消除：`.githooks/check_new_skill_eval_case.py` 用 `subprocess` 取 diff、在 Python 内解析路径，**不经 `xargs`、不做 shell 插值**。
 
 ⚠️ 本 spec 不创建任何 eval case（§ 2 非目标）。该 job 上线后处于「无命中即通过」状态，直到下一次真的新增 skill 时才第一次生效——那时它会要求作者补 case。这是刻意的：门禁先于第一个用例存在，才能保证第一个用例不被漏掉。
 
-### 5.6 workflow `skill-eval.yml` —— 手动的行为闸
+### 5.8 workflow `skill-eval.yml` —— 手动的行为闸
 
 - 触发：**仅 `workflow_dispatch`**，可选输入 `target`（插件名或 skill 名，留空为全部）
 - 需要 `ANTHROPIC_API_KEY` secret
 - 不进必需检查列表，不在 PR 上自动运行
+- CLI 安装复用官方 action 的自愈逻辑（可只调该 action 再手动跑 eval，或抽出其安装步骤）
 
 保留它的理由：`validate` 查的是 schema 合法性，**查不了行为**——一个 frontmatter 完全合法的 skill 完全可能因 `description` 写得含糊而永不被触发。只有 eval 能发现这件事。把它做成手动入口，是在「这件事只有 eval 查得出」与「每个 PR 都付费不可接受」之间取的位置。
 
@@ -322,7 +408,7 @@ plugins/optimus-mcp-servers/scripts
 |---|---|---|---|
 | 1 | 推特性分支 | `git push -u origin <branch>` | ruleset 只作用于 `master`，特性分支可自由推。**不用 MCP 的 `push_files`**——那是通过 API 造新 commit，会与本地已有的 commit 分叉 |
 | 2 | 开 PR | MCP `create_pull_request` | `base: master`、`head: <branch>`；title 取 commit 摘要行，body 取 commit 正文 + 归属尾注 |
-| 3 | 等 CI | MCP `pull_request_read`（`method: get_check_runs`） | 轮询至三个必需检查全部结束 |
+| 3 | 等 CI | MCP `pull_request_read`（`method: get_check_runs`） | 轮询至五个必需检查全部结束 |
 | 4 | 合并 | MCP `merge_pull_request`（`merge_method: "squash"`） | 见 § 6.5 关于 message 的注意事项 |
 | 5 | 回主干 | `git switch master && git pull --rebase origin master` | — |
 | 6 | 清分支 | 删本地与远端特性分支 | — |
@@ -399,12 +485,12 @@ CI 逐字执行 `sh .githooks/pre-commit`，因此该脚本**不得引入依赖�
 
 | 文件 | 说明 |
 |---|---|
-| `.github/workflows/ci.yml` | 三个零 token job（§ 5.2 / 5.4 / 5.5） |
-| `.github/workflows/skill-eval.yml` | 手动 eval（§ 5.6） |
-| `.githooks/check_new_skill_eval_case.py` | § 5.5 的 diff 检查实现 |
+| `.github/workflows/ci.yml` | 五个零 token job（§ 5.3 – § 5.7），无 `paths:` 过滤；官方 composite action 按 40 位 SHA 引用（`426e469f…`）、`claude-cli-version` 传 `2.1.270` |
+| `.github/workflows/skill-eval.yml` | 手动 eval（§ 5.8） |
+| `.githooks/check_new_skill_eval_case.py` | § 5.7 的 diff 检查实现；文件名在 Python 内解析，不经 shell |
 | `.githooks/test_check_new_skill_eval_case.py` | 配套单测 |
 
-**为什么 diff 检查放 `.githooks/` 却不挂进 `pre-commit`：** `.claude/rules/hook-conventions.md` 约定「仓库级门禁必须放 `.githooks/`」，所以脚本位置遵守该约定；但它依赖两个 ref 之间的 diff，而 § 5.2 又要求 `pre-commit` 保持暂存区无关。两者的解法是——脚本接受 base/head 两个 ref 作参数、**只由 CI 调用**，不进 `pre-commit` 的检查序列。目录约定与暂存区无关性因此都不破。
+**为什么 diff 检查放 `.githooks/` 却不挂进 `pre-commit`：** `.claude/rules/hook-conventions.md` 约定「仓库级门禁必须放 `.githooks/`」，所以脚本位置遵守该约定；但它依赖两个 ref 之间的 diff，而 § 5.3 又要求 `pre-commit` 保持暂存区无关。两者的解法是——脚本接受 base/head 两个 ref 作参数、**只由 CI 调用**，不进 `pre-commit` 的检查序列。目录约定与暂存区无关性因此都不破。
 
 按 `AGENTS.md` 的门禁改动要求，新增门禁必须**脚本 + 测试 + 文档**三件齐备，缺一不可。
 
@@ -444,7 +530,7 @@ CI 逐字执行 `sh .githooks/pre-commit`，因此该脚本**不得引入依赖�
 |---|---|---|
 | 1 | 本地门禁在 Linux 上可跑 | CI 中 `sh .githooks/pre-commit` 退出 0 |
 | 2 | 9 个测试目录全绿 | CI 中每个 `unittest discover` 退出 0，累计用例数与本地一致 |
-| 3 | 官方静态校验全绿 | CI 中 22 个校验目标（1 marketplace + 10 插件 + 9 skills + 1 agents + 1 `.claude/skills`）`--strict` 全部退出 0 |
+| 3 | 官方静态校验全绿 | `plugin-validate` job 退出 0，且其 90-report 报告须逐项核对：① marketplace 校验已执行；② 3 个外部条目**已被 clone 并校验**（这是本仓此前完全没有的判据）；③ 本 PR 改动的插件目录已被 40 步命中；④ 追加步骤 `claude plugin validate .claude/skills --strict` 退出 0。⚠️ **判据不是「22 个目标全绿」**——官方 action 的 40 步是**增量**校验（只看本 PR 改动的插件），22 个目标的全量结果只存在于 § 3.1 第 6 条的本机基线里，不是 CI 每次的产出 |
 | 4 | 知识库与 tips 一致性 | `check_index.py` / `check_refs.py` / `validate_tips.py` 均退出 0 |
 | 5 | **阴性对照**：eval case 门禁真的会拦 | 造一个「新增 SKILL.md 但无对应 `evals/` 目录」的 PR，`new-skill-eval-case` **必须红**；补上目录后转绿 |
 | 6 | **阴性对照**：主干真的推不上去 | 清空 bypass 名单后 `git push origin master` **必须被服务端拒绝**。⚠️ 判据是「拒绝」而非「有提示」——当前状态下该命令会**成功**并回 `Bypassed rule violations`，把那行提示误当成保护生效正是本次要消除的错觉 |
@@ -456,7 +542,7 @@ CI 逐字执行 `sh .githooks/pre-commit`，因此该脚本**不得引入依赖�
 
 | # | 风险 | 处置 |
 |---|---|---|
-| 1 | **CLI 版本漂移**：`npm i -g @anthropic-ai/claude-code` 拉最新版，未来 `validate` 新增 warning 类型会让 `--strict` 突然变红，且与本次改动无关 | workflow 里**固定版本号**，升级作为显式动作。`sync-cc-tips` 每次同步 changelog 时本就在读 CLI 变更，可顺带评估是否升 CI 里的固定版本 |
+| 1 | **CLI 版本漂移**：未来 `validate` 新增一类 warning，叠加 `fail-on-warnings: true` 会让全部 PR 一夜变红，且与任何一次改动都无关 | 显式传 `claude-cli-version: "2.1.270"` 覆盖官方 action 的默认值 —— ⚠️ **该 input 默认是 `latest`，不覆盖就等于接受漂移**。加上 § 5.2 的 action SHA-pin，「校验逻辑」与「校验器版本」两个维度同时冻结，升级是一次显式的成对动作。`sync-cc-tips` 每次同步 changelog 时本就在读 CLI 变更，可顺带评估是否升这两个 pin |
 | 2 | **改 job 名会静默失去保护**：ruleset 的必需检查按名字匹配，改名后 GitHub 不报错，只是那项检查不再被要求 | 属「不报错的失效形态」。job 名写进 `.github/workflows/ci.yml` 顶部注释并在 `AGENTS.md` 登记，改名必须同步改 ruleset |
 | 3 | **eval case 格式未定**：`new-skill-eval-case` 只检查目录与文件存在，不校验 case 内容 | 刻意的。case 的 schema 属 eval 套件那次工作，本 spec 只锁目录约定 `evals/<plugin>/<skill>/`。当前门禁处于「无新增 skill 即通过」状态 |
 | 4 | **会话中断导致 PR 悬挂** | § 6.4 已述，靠 § 6.2 的接续逻辑兜住 |
@@ -464,8 +550,3 @@ CI 逐字执行 `sh .githooks/pre-commit`，因此该脚本**不得引入依赖�
 | 6 | **`.claude/settings.json` 是否纳入版本库** | 遗留未决项，与本 spec 解耦。它当前已被 `git add` 但未提交；本次交付**不处理**，需单独裁决 |
 | 7 | 首个 PR 的鸡生蛋问题：必需检查名字要先跑过一次才能选 | § 4.5 已列入实施顺序，并把「approval 数改 0」提前，使首个 PR 不依赖 bypass 即可合并 |
 | 8 | **现有 ruleset 由用户在本会话期间手动创建**，其意图未完整记录 | 本 spec § 4.1 已把它的完整配置固化为取证，§ 4.2 / § 4.3 逐项给出改动理由。`required_signatures` 一项已单独交用户裁决（结论：删除），不做替用户推断 |
-
-
-
-
-
