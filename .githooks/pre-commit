@@ -11,7 +11,6 @@
 set -u
 
 fail=0
-note() { echo "  - $1"; fail=1; }
 
 echo "[pre-commit] 仓库一致性检查"
 
@@ -44,33 +43,17 @@ if ! python .githooks/check_external_entries.py . ; then
 fi
 
 # --- 4. .claude/skills 的双 harness 符号链接镜像 ---
-# 每个纳入版本库的 skill 都要在 .kiro/skills（Claude/Kiro）与 .agents/skills（Codex）
-# 有同名符号链接。被 gitignore 的 skill 不分发，跳过。
-for d in .claude/skills/*/; do
-  name=$(basename "$d")
-  git check-ignore -q ".claude/skills/$name" && continue
-  for mirror in .kiro .agents; do
-    if [ ! -e "$mirror/skills/$name" ]; then
-      note "缺符号链接 $mirror/skills/$name（补齐：ln -s ../../.claude/skills/$name $mirror/skills/$name）"
-    fi
-  done
-done
-
-# 反向：镜像指向已删除的 skill
-for m in .kiro/skills/* .agents/skills/*; do
-  [ -e "$m" ] || [ -L "$m" ] || continue
-  name=$(basename "$m")
-  if [ ! -d ".claude/skills/$name" ]; then
-    note "$m 指向已不存在的 .claude/skills/$name（清理：git rm $m）"
-  fi
-done
-
-# 符号链接必须以 120000 模式入库。core.symlinks=false 时 git 会把它们
-# 存成内容为路径字符串的普通文件（100644），克隆到另一台机器就不是链接了。
-bad_mode=$(git ls-files -s .kiro/skills .agents/skills | grep -v '^120000 ' || true)
-if [ -n "$bad_mode" ]; then
-  note "以下镜像未以 symlink 模式入库（应为 120000）："
-  echo "$bad_mode" | sed 's/^/      /'
+# 每个**由本仓分发**的 skill 都要在 .kiro/skills（Claude/Kiro）与 .agents/skills
+# （Codex）有同名符号链接，且以 120000 模式入库；反向还要检出悬空镜像。
+#
+# 🔴 「由本仓分发」有两条**正交**的排除理由——没有 SKILL.md（镜像它无意义）、
+#    被 gitignore（刻意不分发）。判据与 `git check-ignore --no-index` 的必要性
+#    见 check_skill_mirrors.py 的 docstring，那里记着这次判据被撞出来的经过。
+#
+# ⚠️ 本项 2026-09-14 前是内联在本文件里的 sh，是五项中唯一没有单测的一项；
+#    抽成脚本正是为了让那两条判据可被 test_check_skill_mirrors.py 覆盖。
+if ! python .githooks/check_skill_mirrors.py . ; then
+  fail=1
 fi
 
 # --- 5. eval case 目录没有建了一半的 ---

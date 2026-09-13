@@ -135,9 +135,21 @@ python -m unittest discover -s .githooks -p "test_*.py"
 
 ### darwin-skill 评分门禁
 
-Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分数 ≥ 改动前分数才可提交，倒退则先修正。（评分产物落在 gitignore 的 `.claude/skills/darwin-skill/results.tsv`，不进版本库。）
+Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分数 ≥ 改动前分数才可提交，倒退则先修正。
+
+🔴 **darwin-skill 本体用 Claude Code 全局安装的那份，不在本库找。** 位置是 `~/.claude/skills/darwin-skill/`（本机为符号链接 → `~/.agents/skills/darwin-skill/`），含 `SKILL.md`、`references/`、`scripts/`、`templates/`。**本仓 `.claude/skills/darwin-skill/` 里没有 `SKILL.md`**——它只是评分的工作目录，承接产物与判据。⚠️ 这条要写成明文，是因为本文件旧措辞只提到「产物落在 `.claude/skills/darwin-skill/`」，曾被读成「该 skill 属于本仓、本仓找不到它就没法评分」，据此在 todo B6 记下过一次错误的「两次都无法执行」（实际它一直可用，纠正见该条补记）。
+
+评分结果落 `.claude/skills/darwin-skill/results.tsv`（相对路径，由 `darwin-skill/SKILL.md` 规定，**每仓一份**），九列 TSV：`timestamp / commit / skill / old_score / new_score / status / dimension / note / eval_mode`。**该文件已入库**（2026-09-13 裁决）——它是棘轮机制「上次分数」的唯一载体，从源码重新生成不出来，与覆盖率报告那类产物不同。同目录的 `cards/`（HTML + PNG）与 CLI 的 `results/` 仍被排除；`.gitattributes` 给它配了 `merge=union`，因为它是纯追加型单文件、多分支并行会在尾部冲突，而两边的行都是事实、择一即丢掉一次真实评分。
+
+⚠️ **入库机制反直觉，改动前先读 `.gitignore` 那几行注释**：`.gitignore` 仍整目录排除 `.claude/skills/darwin-skill/`，`results.tsv` 是靠 `git add -f` 纳入跟踪的——gitignore 只管**未跟踪**文件，已跟踪文件的改动照常出现在 `git status`。⚠️ **但「status 照常」不等于「`git add` 照常」**：实测三个命令对同一个已跟踪文件给出三种口径——`status` 正常显示、`check-ignore <该文件>` 判为未忽略、而 `git add <该文件>` 仍报「paths are ignored」并**退出码 1**（改动其实已被暂存）。成因是目录级排除的剪枝早于「已跟踪」判定。**下次要暂存它时带 `-f`**，否则放进 `&&` 链里会中断后续命令。
+
+🔴 **本节此前有一句是错的，已于 2026-09-14 更正：`git add -f` 并没有绕开 gitignore 那条边界，它只是把同一次撞击推迟到文件真正进入 index 的那一刻。** `git check-ignore` **默认也查 index**，`results.tsv` 进 index 后该目录就不再被报告为已忽略，于是「把判据入库」这个动作反过来触发了 `pre-commit` 的镜像检查、要求给 darwin-skill 补 `.kiro`/`.agents` 两处符号链接并阻断提交（实测退出码 1）。⚠️ 之所以会写错，是因为那次「通过」的测试跑在 `results.tsv` **尚未 `add -f`** 的状态下——**测的是一个不包含本次关键动作的中间态**。
+
+处置是把判据修对，不是给 darwin-skill 补镜像（它没有 `SKILL.md`，镜像它是错误声明）：镜像检查已抽成 `.githooks/check_skill_mirrors.py`（此前是 `pre-commit` 里唯一无单测的内联 sh），判据改为**两条正交的排除理由**——① 目录里没有 `SKILL.md` → 镜像它无意义；② 被 gitignore → 刻意不分发，且第 ② 条加了 `--no-index`。**因此镜像门禁不再依赖 `.gitignore` 那行的写法**，此前那条「不要改成白名单形态」的警告随之作废；白名单形态仅剩一条与门禁无关的语法约束（尾斜杠会让 git 剪掉子树、`!` 豁免不生效），见该行注释。
 
 **该门禁只约束 skill**——darwin-skill 的 rubric 针对 SKILL.md 结构，对 agent 无对应评分维度，agent 改动改为按其 spec 的验收清单人工核验。
+
+🔴 **对只改 `evals/` 的改动，这个门禁结构性空转。** 版本矩阵那条 `evals/` 特例会把这类改动判成 Minor（从而触发本门禁），而 darwin 的九维 rubric **全部针对 `SKILL.md` 的结构与效果、完全不读 `evals/`**——SKILL.md 一字未改时 dim1-7/dim9 必然不变，只有 dim8 会因重新采样产生噪声。此时正确的记法是 `baseline`（首评，`old_score` 记 `-`）而非声称「新分 ≥ 旧分、门禁通过」：**跑它是为了留一条基线，不是为了拿一个有信息量的比较。** 两者的区别在于前者诚实、后者是把噪声当成通过证据。
 
 ---
 
@@ -214,7 +226,7 @@ Minor/Major 升级前必须用 `darwin-skill` 对改动的 skill 评分：新分
 | `.githooks/check_external_entries.py` | marketplace 外部引用条目机械自检（检查项见 `.githooks/README.md`），`pre-commit` 第 3 项检查 | 两者共用 |
 | `.githooks/pre-commit` | 提交门禁：插件版本同值 + hook 配置合规 + 外部条目合规 + skill 镜像完整（需 `git config core.hooksPath .githooks` 启用） | 两者共用 |
 
-**已被 gitignore 的目录（有意排除，非缺失）：** `.claude/skills/darwin-skill/`（评估产物）、`.remember/`、`.codegraph/`
+**已被 gitignore 的目录（有意排除，非缺失）：** `.claude/skills/darwin-skill/`（评分工作目录；⚠️ 其中 `results.tsv` 已用 `git add -f` 纳入跟踪，**不受该行影响**——判据入库、产物排除，见「darwin-skill 评分门禁」节）、`.remember/`、`.codegraph/`
 
 ---
 

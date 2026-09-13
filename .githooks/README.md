@@ -36,6 +36,25 @@ git config core.hooksPath .githooks
 
 **全部条目与插件目录**（判据真源是 `knowledge-base/claude-code-plugin-system/`，每条报错都带对应索引条目 ID）：marketplace 名是否撞上 17 个 Anthropic 保留名或 Claude Desktop 的三个保留名、marketplace 与条目名是否满足 kebab-case 与 Claude Desktop 托管同步的字符集、本地路径源的 `./` 前缀 / `..` / 反斜杠 / 目标目录存在性、`relevance` 的 `topic` 长度与五种信号的条数与长度上限（含 `hosts` 的裸小写主机名形态与 `manifestDeps` 的 `file` 末尾锚定）、以及 `.claude-plugin/` 目录内除清单外是否混进了组件目录。这一组针对的同样是「不报错」的形态：保留名会在某个版本起让整个 marketplace 停止加载、条目名不合规会被 Claude Desktop 静默删除、拼错的信号名只会静默不匹配、组件放进 `.claude-plugin/` 后插件仍显示为启用而组件一个都调不出来。
 
+### `check_skill_mirrors.py`：第 4–6 项，判据是「这个 skill 由本仓分发吗」
+
+第 4–6 项由 `check_skill_mirrors.py` 实现（10 个单元测试）。⚠️ **它 2026-09-14 前是内联在 `pre-commit` 里的 sh，是七项中唯一没有单测的一项**；抽成脚本不是为了整齐，而是因为它的判据被撞出了一个错，而当时没有任何测试宿主能承接对这个判据的断言。
+
+🔴 **「由本仓分发」有两条正交的排除理由，缺任一条都误判：**
+
+| # | 排除理由 | 为什么 | 活体 |
+|---|---|---|---|
+| 一 | 目录里没有 `SKILL.md` | 镜像的目的是让 skill 被两个 harness **发现**，一个没有 `SKILL.md` 的目录镜像过去对两侧都无意义 | `.claude/skills/darwin-skill/` 是评分的**工作目录**，skill 正文装在全局 `~/.claude/skills/darwin-skill/` |
+| 二 | 被 gitignore 排除 | 是 skill，但本仓刻意不分发 | 同上（当下恰好同时满足两条） |
+
+⚠️ **两条只是在当下这一个目录上重合，并不等价**——有 `SKILL.md` 却被忽略的目录属理由二，没有 `SKILL.md` 也未被忽略的目录属理由一。单测 `test_two_exclusion_reasons_are_independent` 用三个目录把这件事钉住，正是因为「从单一样本推出两个条件等价」在本项上已经发生过一次。
+
+🔴 **理由二的实现必须带 `--no-index`，这是本项被撞出的那个错：** `git check-ignore` **默认也查 index**，子树内任一文件经 `git add -f` 进入 index 后，该目录就不再被报告为已忽略。于是「把 `results.tsv` 判据入库」这个动作会反过来触发本检查、要求给 `darwin-skill` 补两处镜像并阻断提交。git 自己的文档正为此列出该开关：「when developing patterns including negation to match a path previously added with `git add -f`」。
+
+⚠️ **由此得到的教训比那一行开关更重要**：`git add -f` 并没有绕开 gitignore 那条边界，它只是把同一次撞击**推迟**到文件真正进入 index 的那一刻。此前 `.gitignore`、`AGENTS.md`、todo B8 三处都写着「`git add -f` 不碰 gitignore 的判定，是一条不移动边界的落地路径」——那个判断是在 `results.tsv` **尚未** `add -f` 的中间态下测出来的，测的状态里不含本次的关键动作。三处已随本项一并更正。
+
+单测 `test_add_f_does_not_make_an_ignored_skill_distributed` 是该事故的活体复现，在临时目录里跑**真 git**（不 mock `check-ignore`）——把 git 换成替身的测试恰好绕过出错的那一环，永远抓不到它。已做阴性对照：临时把实现换成漏掉 `--no-index` 的版本，该目录立刻被判为分发并报出 2 条缺镜像。
+
 ### `check_new_skill_eval_case.py`：一个脚本，两个模式，一个挂得上一个挂不上
 
 该脚本（31 个单元测试）有两个互不重叠的模式，**分界线正是「要不要 diff」**：
@@ -68,6 +87,8 @@ python -m unittest discover -s .githooks -p "test_*.py"
 🔴 **由此产生一条硬约定：`pre-commit` 不得引入依赖暂存区的检查**（`git diff --cached`、`git diff --name-only --staged` 等）。当前七项检查全部基于工作树与 `git ls-files`，**这条性质必须保持**——一旦引入，CI 的逐字复用即失效，门禁判据会在两个环境间静默分叉：本地拦得住的 CI 拦不住，反之亦然。
 
 需要 diff 的门禁改为「接受 base/head 两个 ref 作参数、只由 CI 调用、不进 `pre-commit` 序列」。⚠️ **这条约定约束的是检查，不是文件**：`check_new_skill_eval_case.py` 的两个模式分别落在约定的两侧——增量模式走上面那条路，`--all` 模式因为只读工作树而挂进了 `pre-commit`（见上一节）。**判断该不该挂，看的是这个检查要不要 diff，而不是它所在的脚本以前挂没挂。**
+
+⚠️ **「暂存区无关」不等于「不许碰 index」，这个区别在第 4–6 项上有实际后果。** 约定的实质是「判据不得随**这次暂存了什么**而变」，因此禁的是 `git diff --cached` 这类「本次要提交什么」的查询；而 `git ls-files -s`（第 6 项读模式位）把 index 当作「仓库已跟踪什么」的视图，在干净工作树下等于 HEAD，CI checkout 后结论一致。**`git check-ignore` 的默认行为恰好踩在两者之间**——它读 index，却让判据随「这个子树里有没有文件被 `add -f` 过」而翻转，这已经不是稳定的仓库状态视图了。`--no-index` 把它拉回纯 `.gitignore` 判定，也就把这一项拉回约定之内。**同一句「读 index」，一处安全一处不安全，分界线是「读到的东西会不会随一次 `git add` 改变判据」。**
 
 ## 为什么挂在 hook 而不是 skill 里
 
