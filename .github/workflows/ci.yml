@@ -1,0 +1,188 @@
+# 本仓库的必需检查（required status checks）。
+#
+# 🔴 下面五个 job 的名字同时被本文件与 GitHub 服务端 ruleset（id 23134670）
+#    引用，而后者不在版本库里、改动不留 diff。改名必须同步改 ruleset，否则
+#    那项检查会静默不再被要求——属「不报错的失效形态」。五个名字：
+#      gates-hooks / gates-tests / gates-data / plugin-validate / new-skill-eval-case
+#
+# 🔴 一律不设 paths: 过滤器。必需检查加 paths: 会让未命中的 PR 永久停在
+#    "Expected — Waiting for status to be reported"，而 workflow_dispatch 的
+#    check run 不关联 PR、手动跑一次也救不了。官方 claude-plugins-official
+#    为此打了至少 5 次补丁（其 validate-plugins.yml 的 paths: 长达 40 行）。
+#
+# 🔴 skill-eval 不在这里。它是唯一收费的 job、只有 workflow_dispatch 触发，
+#    见 .github/workflows/skill-eval.yml。把它加进必需检查会让主干双向锁死
+#    （已真实发生过一次）。
+#
+# 不跳过 fork PR：五个检查全部零凭据，fork 场景照样跑通。跳过会让 fork PR
+# 的必需检查永久 Expected。
+#
+# 设计判据全文见
+# docs/superpowers/specs/2026-09-13-pr-flow-and-free-ci-design.md § 5
+
+name: CI
+
+on:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 逐字执行本地门禁，不在 YAML 里重写一份逻辑。
+  # pre-commit 靠 `git config core.hooksPath .githooks` 本机启用、不随仓库
+  # 分发，因此它在任何未做该配置的环境中从未生效过。搬进 CI 后这批门禁
+  # 第一次有了不依赖本机配置的执行点。
+  # ---------------------------------------------------------------------------
+  gates-hooks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          # ubuntu runner 默认只有 python3，pre-commit 里调的是 python
+          python-version: '3.x'
+      - run: sh .githooks/pre-commit
+
+  # ---------------------------------------------------------------------------
+  # unittest discover 不跨目录递归，每个目录必须逐个调用。
+  # 用循环而非一堆 step：新增测试目录时只改一处，且失败时不必翻多个折叠块。
+  # ---------------------------------------------------------------------------
+  gates-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: 8 个目录的单元测试
+        run: |
+          # ⚠️ 全仓共 9 个测试目录，这里刻意只列 8 个。
+          #    未列入的是 plugins/optimus-frontend-plugin/skills/
+          #    mastergo-to-wpf-page/scripts —— 它的 test_optimization.py 有
+          #    9 个存量失败（AnchorSafety 3 / GridSizing 1 / ValueSafety 5），
+          #    根因是 dsl_to_xaml.py 把对象类型的 stroke / fontWeight 直接
+          #    str() 进 XAML 属性值，产出 BorderBrush="{'r': 1, ...}" ——
+          #    以 { 开头的属性值会被 WPF 当作 markup extension，运行时抛
+          #    解析异常。这批失败随 de88b9d（重命名该 skill）入库即为红，
+          #    与本次交付无关，是真实功能缺陷而非平台差异。
+          #
+          # 🔴 修复那 9 个测试后必须把该目录加回本列表，否则它永久无保护。
+          #    追踪见 docs/todo-list/2026-09-12-todo.md。
+          #
+          # 之所以排除而非留红：gates-tests 是必需检查，留红会让主干每个 PR
+          # 都无法合并（bypass_actors 为 null，无人能绕过）。
+          fail=0
+          for d in \
+            .githooks \
+            .claude/skills/knowledge-base-maintain/scripts \
+            .claude/skills/sync-cc-docs-to-youdaonote/scripts \
+            .claude/skills/sync-cc-tips/scripts \
+            plugins/optimus-frontend-plugin/skills/mastergo-icon-expoter/scripts \
+            plugins/optimus-frontend-plugin/skills/mastergo-to-wpf-components/scripts \
+            plugins/optimus-frontend-plugin/skills/svg-to-xaml-path/scripts \
+            plugins/optimus-mcp-servers/scripts
+          do
+            echo "::group::$d"
+            python -m unittest discover -s "$d" -p "test_*.py" || fail=1
+            echo "::endgroup::"
+          done
+          exit "$fail"
+
+  # ---------------------------------------------------------------------------
+  # 数据文件一致性。三项均从仓库根不带参数运行。
+  # ⚠️ validate_tips.py 的 length 检查只报告不判失败（当前 over_count=18 而
+  #    ok=true），所以存量长条目不会让本 job 红——硬失败是安全的。
+  # ---------------------------------------------------------------------------
+  gates-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - run: python .claude/skills/knowledge-base-maintain/scripts/check_index.py
+      - run: python .claude/skills/knowledge-base-maintain/scripts/check_refs.py
+      - run: python .claude/skills/sync-cc-tips/scripts/validate_tips.py
+
+  # ---------------------------------------------------------------------------
+  # 官方静态校验。不自己写 npm i -g：claude-code 把运行时作为平台原生
+  # optional dependency 由 postinstall 抓取，在 hosted runner 上会间歇性
+  # stall 或被跳过，留下「added 1 package」但没有可用的 claude 二进制。
+  # 官方 composite action 内已有 40 行自愈逻辑（强制 optional 依赖、每步
+  # 超时、重试前清包目录与 cache、postinstall 兜底）。
+  # ---------------------------------------------------------------------------
+  plugin-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0          # action 的 detect-changes 需要完整历史
+      - uses: anthropics/claude-plugins-community/.github/actions/validate-plugins@426e469f322952061102b286b378c0c9733a0934
+        with:
+          marketplace-path: .claude-plugin/marketplace.json
+          # ⚠️ 该 input 默认值里是 origin/main，本仓默认分支是 master
+          base-ref: ${{ github.event.pull_request.base.sha }}
+          # ⚠️ 刻意为 false，这是一次有代价的取舍，不是漏配。
+          #
+          # 开 true 时本 job 会红，成因是两个配置叠加：
+          #   ① warn-invariants 的默认值是 "I1 I3 I5 I8"（不是空！不设该
+          #      input 等于已豁免这 4 条），于是 I1 从 error 降级为 warning；
+          #   ② fail-on-warnings 对**降级后的** warning 同样判失败
+          #      （action 原文：downgraded warnings still fail the run）。
+          # 而 I1 是「marketplace plugins[] 必须按名字字母序」——本仓 plugins[]
+          # 刻意按语义编排（10 个自建插件在前、3 个外部引用条目集中在末尾），
+          # 满足 I1 就要打散这个编排。经裁决：保留编排，关掉 fail-on-warnings。
+          #
+          # 🔴 代价要写明：plugins/*/skills/ 下 48 个对外发布 skill 的 CLI
+          #    warning 不再判失败，其中包括「缺 description」——而缺
+          #    description 的 skill 在 Claude 侧等于永不被自动触发。
+          #    ⚠️ 本 job 末尾追加的 `claude plugin validate .claude/skills
+          #    --strict` 是独立调用，不受本 input 影响，故 .claude/skills/
+          #    下的 8 个维护型 skill 仍受严格校验。
+          #
+          # I1 未排序与本项降级都列进了 docs/todo-list/ 的后续项。
+          fail-on-warnings: "false"
+          # ⚠️ 显式写出上游的默认值 "I1 I3 I5 I8"，不是新增豁免。
+          # 原本刻意不设此项，理由是「在没有实测前不预先豁免任何不变量」——
+          # 但首跑实测推翻了这个理由：该 input 的默认值**不是空**，不设它
+          # 就静默继承对 I1（字母序）/ I3 / I5（source.sha 锁定）/ I8 的豁免。
+          # 与下面 scope-errors-to-changed 同一处置：把继承来的默认值写到
+          # 眼前，上游改默认值时不会静默改变本仓的门禁强度。
+          # 🔴 I5（source.sha 必须锁定）被豁免在本仓是可接受的，因为
+          #    .githooks/check_external_entries.py 已在提交关口强制同一件事
+          #    （40 位全长 sha + 台账一致）。这份重叠是刻意的互补，不是冗余。
+          warn-invariants: "I1 I3 I5 I8"
+          # 默认值就是 false，显式写出同上理由。它与 fail-on-warnings 是
+          # 不同维度：本项管「未改动条目上的违规是否降级」，设 false 表示
+          # 全量强制，而非只查本 PR 改过的条目。
+          scope-errors-to-changed: "false"
+          # ⚠️ 该 input 默认是 latest，不覆盖就等于接受版本漂移。取 2.1.270
+          # 是因为「本仓零存量债务」这条基线正是用它量出来的
+          claude-cli-version: "2.1.270"
+      # 补 action 的盲区：它按「含 .claude-plugin/plugin.json 的祖先目录」
+      # 定位插件，而 .claude/skills/ 不属任何插件，完全不在其扫描范围内。
+      # claude 已由 action 装到 runner 全局，同 job 后续 step 直接可用。
+      - run: claude plugin validate .claude/skills --strict
+
+  # ---------------------------------------------------------------------------
+  # 「新增 skill 必须带 eval case」。纯静态 diff 检查，零 token——强制 case
+  # 存在，但不在 CI 里运行 case（运行成本是机制内在的）。
+  # ---------------------------------------------------------------------------
+  new-skill-eval-case:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0          # 需要 base 与 head 之间的完整 diff
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      # 两个 sha 经 env 传入而非直接插值进 run：sha 本身不可控，但保持
+      # 「不做 shell 插值」的一贯做法，与脚本内不经 shell 解析文件名同源
+      - env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python .githooks/check_new_skill_eval_case.py "$BASE_SHA" "$HEAD_SHA"
