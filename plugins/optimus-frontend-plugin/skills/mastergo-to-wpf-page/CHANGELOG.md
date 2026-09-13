@@ -1,3 +1,16 @@
+## [2.0.2] - 2026-09-13
+
+### Removed
+- `scripts/test_optimization.py` 的 9 个存量失败测试：`ValueSafetyTests` 整类（5 条）、`GridSizingTests` 整类（1 条）、`AnchorSafetyTests` 的 3 条（叶子锚点那条通过，已保留）。按用户裁决删除（`docs/todo-list/2026-09-12-todo.md` 的 A3）。删除后该目录 47 个测试全绿
+- 随之不再被引用的 `import re`
+
+### Added
+- `known-issues.md`：承接那 9 条测试所盯的三个缺陷（对象类型 `stroke`/`fontWeight` 被 `str()` 进属性值导致 WPF 按 markup extension 解析并抛异常、锚点吞掉子内容、Grid 把不增长的子元素判为 star），状态一律「待处理」
+
+### Changed
+- `.github/workflows/ci.yml` 的 `gates-tests` 把本 skill 的 `scripts` 目录加回列表（8 → 9 个目录）。此前排除是因为那 9 个失败会让必需检查常红、主干每个 PR 都合不了（`bypass_actors` 为空，无人能绕过）
+- 🔴 **这次动的是测试不是实现，三个缺陷一个都没修。** `ci.yml` 里承载根因分析的注释随排除一并撤销，`known-issues.md` 因此是它们在版本库里的唯一记录；被删测试的原文可用 `git show f149819:<本 skill>/scripts/test_optimization.py` 取回，fixture 全部原地保留
+
 ## [2.0.1] - 2026-08-20
 
 ### Added

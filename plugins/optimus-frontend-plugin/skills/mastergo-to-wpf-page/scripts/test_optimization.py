@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 import tempfile
 from pathlib import Path
 
@@ -94,45 +93,6 @@ class SectionPlacementTests(CliTestCase):
         self.assertEqual([entry["index"] for entry in report["sections"]], [2, 3])
 
 
-class ValueSafetyTests(CliTestCase):
-    """A value that cannot be proven safe never reaches the XAML."""
-
-    def test_object_stroke_is_rejected_rather_than_stringified(self) -> None:
-        result, out = self.convert("invalid-values.json")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        xaml = (out / "GeneratedPage.xaml").read_text(encoding="utf-8")
-        self.assertNotIn("BorderBrush", xaml)
-        self.assertNotIn("'r':", xaml)
-
-    def test_unparsable_text_styles_are_dropped_but_valid_ones_survive(self) -> None:
-        result, out = self.convert("invalid-values.json")
-        xaml = (out / "GeneratedPage.xaml").read_text(encoding="utf-8")
-        self.assertNotIn("FontWeight=", xaml)
-        self.assertNotIn("justified", xaml)
-        self.assertIn('FontFamily="Inter"', xaml)
-
-    def test_no_attribute_value_opens_a_markup_extension(self) -> None:
-        result, out = self.convert("invalid-values.json")
-        xaml = (out / "GeneratedPage.xaml").read_text(encoding="utf-8")
-        for value in re.findall(r'="([^"]*)"', xaml):
-            if value.startswith("{"):
-                self.assertTrue(value.startswith("{StaticResource "), value)
-
-    def test_every_rejected_value_is_recorded_as_a_fallback(self) -> None:
-        result, out = self.convert("invalid-values.json")
-        report = json.loads((out / "conversion-report.json").read_text(encoding="utf-8"))
-        reasons = {(entry["nodeId"], entry["reason"]) for entry in report["fallbacks"]}
-        self.assertIn("v:1", {node for node, _ in reasons})
-        self.assertIn("v:2", {node for node, _ in reasons})
-
-    def test_opacity_with_no_paint_to_bake_into_is_reported(self) -> None:
-        result, out = self.convert("invalid-values.json")
-        report = json.loads((out / "conversion-report.json").read_text(encoding="utf-8"))
-        ghosts = [entry for entry in report["fallbacks"] if entry["nodeId"] == "v:3"]
-        self.assertTrue(ghosts, report["fallbacks"])
-        self.assertIn("opacity", ghosts[0]["reason"])
-
-
 class AnchorSafetyTests(CliTestCase):
     """A registered anchor may replace a node only when nothing would be lost."""
 
@@ -154,36 +114,6 @@ class AnchorSafetyTests(CliTestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         xaml = (out / "GeneratedPage.xaml").read_text(encoding="utf-8")
         self.assertIn('<controls:PrimaryButton', xaml)
-
-    def test_an_anchor_never_swallows_its_child_content(self) -> None:
-        result, out = self.convert("anchor-with-children.json", mapping=self.MAPPING)
-        xaml = (out / "GeneratedPage.xaml").read_text(encoding="utf-8")
-        self.assertIn("保存", xaml)
-        self.assertIn("行内", xaml)
-
-    def test_an_anchor_on_a_flex_container_is_arbitrated_not_ignored(self) -> None:
-        result, out = self.convert("anchor-with-children.json", mapping=self.MAPPING)
-        report = json.loads((out / "conversion-report.json").read_text(encoding="utf-8"))
-        recorded = {entry["nodeId"] for entry in report["fallbacks"]}
-        self.assertIn("c:3", recorded)
-
-    def test_a_rejected_anchor_explains_itself_in_the_report(self) -> None:
-        result, out = self.convert("anchor-with-children.json", mapping=self.MAPPING)
-        report = json.loads((out / "conversion-report.json").read_text(encoding="utf-8"))
-        reasons = {entry["nodeId"]: entry["reason"] for entry in report["fallbacks"]}
-        self.assertIn("c:1", reasons)
-        self.assertIn("child", reasons["c:1"])
-
-
-class GridSizingTests(CliTestCase):
-    """Only a child that actually grows may claim star sizing."""
-
-    def test_non_growing_children_keep_auto_columns(self) -> None:
-        result, out = self.convert("mixed-grow.json")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        xaml = (out / "GeneratedPage.xaml").read_text(encoding="utf-8")
-        self.assertEqual(xaml.count('<ColumnDefinition Width="Auto" />'), 2)
-        self.assertEqual(xaml.count('<ColumnDefinition Width="*" />'), 1)
 
 
 if __name__ == "__main__":
