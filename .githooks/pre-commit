@@ -73,6 +73,20 @@ if [ -n "$bad_mode" ]; then
   echo "$bad_mode" | sed 's/^/      /'
 fi
 
+# --- 5. eval case 目录没有建了一半的 ---
+# evals/ 下每个子目录都必须含 case.yaml 或 prompt.md。缺 marker 的子目录会被
+# claude plugin eval **静默忽略**——不报错，只是少跑一个 case，而总数只出现在
+# verbose 输出里。这与本文件其余四项是同一形态：失效了不报错。
+#
+# ⚠️ 同一个脚本的另一个模式（<base> <head>）依赖 diff，**不能**挂在这里；
+#    --all 模式不看 diff、只读工作树，因此不破坏「pre-commit 暂存区无关」
+#    这条硬约定（见 .githooks/README.md「与 CI 的关系」）。
+#    两个模式查的不是同一件事：那个只在新增 SKILL.md 时触发，本项覆盖
+#    「给存量 skill 补 case 却补错形态」——那个缺口此前无人看守。
+if ! python .githooks/check_new_skill_eval_case.py --all . ; then
+  fail=1
+fi
+
 if [ "$fail" -ne 0 ]; then
   echo "[pre-commit] 未通过。修正后重新提交，不要用 --no-verify 绕过。"
   exit 1

@@ -7,6 +7,7 @@ import unittest
 from check_new_skill_eval_case import (
     check,
     has_eval_case,
+    malformed_case_dirs,
     new_skill_dirs,
 )
 
@@ -194,6 +195,87 @@ class TestCheckAgainstRealGit(unittest.TestCase):
         self._write("plugins/p/skills/old/evals/c1/prompt.md", "q")
         self._commit("plugins/p/skills/old/evals/c1/prompt.md")
         self.assertEqual(check(self.base, "HEAD", self.root), ([], 0))
+
+
+class TestMalformedCaseDirs(unittest.TestCase):
+    """全量模式：evals/ 下**每个**子目录都要含 marker。
+
+    与 TestHasEvalCase 测的是相反的量词——那里是「任一合格即可」，
+    这里是「每个都要合格」。两个判据并存是刻意的，理由见
+    malformed_case_dirs 的 docstring。
+    """
+
+    def setUp(self):
+        self.root = pathlib.Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def _case(self, skill, name, marker=None):
+        d = self.root / "plugins" / skill / "skills" / "s" / "evals" / name
+        d.mkdir(parents=True)
+        if marker:
+            (d / marker).write_text("x", encoding="utf-8")
+
+    def test_empty_repo_reports_zero(self):
+        """没有任何 case 目录时通过，且计数为 0——本仓当前正是这个状态。"""
+        self.assertEqual(malformed_case_dirs(self.root), ([], 0))
+
+    def test_all_good_dirs_pass(self):
+        self._case("p", "c1", "prompt.md")
+        self._case("p", "c2", "case.yaml")
+        self.assertEqual(malformed_case_dirs(self.root), ([], 2))
+
+    def test_one_bad_among_good_is_reported(self):
+        """🔴 这条是本模式存在的理由：has_eval_case 在此返回 True。
+
+        2 个合格 + 1 个缺 marker 时，「这个 skill 有 case」成立，而
+        claude plugin eval 会静默少跑那一个。
+        """
+        self._case("p", "c1", "prompt.md")
+        self._case("p", "c2", "prompt.md")
+        self._case("p", "broken")
+        self.assertTrue(has_eval_case(self.root, "plugins/p/skills/s"))
+        self.assertEqual(
+            malformed_case_dirs(self.root),
+            (["plugins/p/skills/s/evals/broken"], 3))
+
+    def test_loose_file_under_evals_is_not_flagged(self):
+        """散落在 evals/ 根下的文件不构成 case 目录，本模式刻意不判它。
+
+        这是 wpf-code-review/evals/evals.json 的形态。它遵守
+        knowledge-base/skill-authoring 的 MUST 条款，两套 eval 规范谁服从谁
+        待人裁决（todo A4），门禁不替人做取舍。
+        """
+        e = self.root / "plugins/p/skills/s/evals"
+        e.mkdir(parents=True)
+        (e / "evals.json").write_text("{}", encoding="utf-8")
+        self.assertEqual(malformed_case_dirs(self.root), ([], 0))
+
+    def test_maintenance_and_external_skills_are_not_scanned(self):
+        """扫描范围与 new_skill_dirs 一致：只 plugins/。"""
+        for base in (".claude/skills/s", "external_plugins/p/skills/s"):
+            d = self.root / base / "evals" / "broken"
+            d.mkdir(parents=True)
+        self.assertEqual(malformed_case_dirs(self.root), ([], 0))
+
+    def test_multiple_plugins_are_all_scanned(self):
+        self._case("a", "bad1")
+        self._case("b", "bad2")
+        bad, total = malformed_case_dirs(self.root)
+        self.assertEqual(total, 2)
+        self.assertEqual(sorted(bad), [
+            "plugins/a/skills/s/evals/bad1",
+            "plugins/b/skills/s/evals/bad2",
+        ])
+
+    def test_file_directly_inside_case_dir_position(self):
+        """marker 必须在子目录内，放在更深一层不算。"""
+        d = self.root / "plugins/p/skills/s/evals/c1/graders"
+        d.mkdir(parents=True)
+        (d / "prompt.md").write_text("x", encoding="utf-8")
+        self.assertEqual(malformed_case_dirs(self.root),
+                         (["plugins/p/skills/s/evals/c1"], 1))
 
 
 if __name__ == "__main__":
