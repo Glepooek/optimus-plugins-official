@@ -38,7 +38,7 @@ git config core.hooksPath .githooks
 
 ### `check_new_skill_eval_case.py`：一个脚本，两个模式，一个挂得上一个挂不上
 
-该脚本（28 个单元测试）有两个互不重叠的模式，**分界线正是「要不要 diff」**：
+该脚本（31 个单元测试）有两个互不重叠的模式，**分界线正是「要不要 diff」**：
 
 | 模式 | 判据 | 挂在 `pre-commit`？ | 由谁调用 |
 |---|---|---|---|
@@ -51,7 +51,9 @@ git config core.hooksPath .githooks
 
 ⚠️ **两个模式的量词刻意相反**：增量模式问「这个 skill 有没有 case」（任一子目录合格即可），`--all` 问「有没有哪个 case 只建了一半」（每个子目录都要合格）。**后者不被前者覆盖**——3 个子目录里 2 个合格 1 个缺 marker 时，前者判通过，而 `claude plugin eval` 会静默少跑那一个。
 
-⚠️ **`--all` 刻意不判定「有 `evals/` 却一个合格子目录都没有」**，尽管 `plugins/optimus-frontend-plugin/skills/wpf-code-review/evals/` 正是这个形态（只有一个散落的 `evals.json`，`claude plugin eval` 在它上面找到 0 个 case）。原因是那不是错误，而是**另一套规范的合规产物**：`knowledge-base/skill-authoring/rules/03-skill-evaluation.md` 有一条 MUST「测试用例存到 `evals/evals.json`」。本仓因此有两套 eval 规范并存，谁服从谁需要人裁决，已登记 `docs/todo-list/2026-09-12-todo.md` 的 A4。**在裁决前把它判失败，等于用一个门禁替人做了规范取舍。**
+🔴 **`--all` 跳过名为 `results/` 的子目录，这不是可选的宽松而是必需的。** `claude plugin eval` 把 `aggregate-result.json` 写进 `<eval 目录>/results/<ISO 时间戳>/`，而 eval 目录默认就叫 `evals/`——**产物与人工维护的 case 目录同级，且天然缺 marker**。不跳过的后果实测过：在 skill 目录内跑一次 eval，下一次提交就被 `pre-commit` 阻断，**门禁反过来惩罚使用被它保护的东西**。第二道防线是 `.gitignore` 的 `evals/results/`（不入库）。两道都要：只忽略不跳过仍会阻断提交，只跳过不忽略则产物会被误提交。代价是一个真名叫 `results` 的 case 会被静默跳过，可接受——该名字已被 CLI 占用。
+
+⚠️ **`--all` 仍不判定「有 `evals/` 却一个合格子目录都没有」，但理由已经换了。** 原理由是「那是另一套规范的合规产物」——`knowledge-base/skill-authoring/rules/03-skill-evaluation.md` 曾有一条 MUST「测试用例存到 `evals/evals.json`」，而 `wpf-code-review/evals/` 正是它的产物，两套规范谁服从谁需要人裁决。**该裁决已于 2026-09-13 作出：官方格式为唯一规范**，那 6 条素材已迁成 `evals/<case>/prompt.md` + `graders/criteria.md`，本仓再无此形态的实例。现在的理由是一条纯粹的判据边界：**「一个 case 都没有」与「这个 skill 不需要 case」在文件系统上不可区分**，而「新增必须带 case、存量不回溯」的存量豁免恰恰意味着后者合法存在——要收紧成失败，就得先有一份「哪些 skill 必须有 case」的名单，而那正是增量模式已经用 diff 回答的问题，不该在全量模式里再造一份会过期的名单。
 
 ⚠️ 文件名全程在 Python 内解析，**不经 shell、不用 `xargs`**：本仓的必需检查不跳过 fork PR，而 fork 的文件名不可信。
 

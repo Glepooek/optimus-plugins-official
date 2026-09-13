@@ -243,9 +243,11 @@ class TestMalformedCaseDirs(unittest.TestCase):
     def test_loose_file_under_evals_is_not_flagged(self):
         """散落在 evals/ 根下的文件不构成 case 目录，本模式刻意不判它。
 
-        这是 wpf-code-review/evals/evals.json 的形态。它遵守
-        knowledge-base/skill-authoring 的 MUST 条款，两套 eval 规范谁服从谁
-        待人裁决（todo A4），门禁不替人做取舍。
+        这曾是 wpf-code-review/evals/evals.json 的形态。⚠️ **该形态已在
+        2026-09-13 随 A4 裁决消失**（官方格式为唯一规范，6 条素材已迁成
+        evals/<case>/ 子目录，evals.json 已删），所以这条测试锁的不再是一个
+        活体形态，而是「文件不是目录」这条判据本身——官方 CLI 同样只认子目录，
+        散落文件在它那里也产出 0 个 case，两边保持一致。
         """
         e = self.root / "plugins/p/skills/s/evals"
         e.mkdir(parents=True)
@@ -268,6 +270,40 @@ class TestMalformedCaseDirs(unittest.TestCase):
             "plugins/a/skills/s/evals/bad1",
             "plugins/b/skills/s/evals/bad2",
         ])
+
+    def test_cli_results_dir_is_skipped(self):
+        """🔴 results/ 是 CLI 的运行产物，不判、也不计数。
+
+        不跳过的后果实测过：在 skill 目录内跑一次 `claude plugin eval`，
+        产物落到 evals/results/ ——一个天然缺 marker 的子目录——于是**下一次
+        提交被 pre-commit 阻断**。门禁反过来惩罚使用被它保护的东西，
+        属于比漏检更糟的失效形态。第二道防线是 .gitignore 的 evals/results/。
+        """
+        self._case("p", "results")
+        self.assertEqual(malformed_case_dirs(self.root), ([], 0))
+
+    def test_cli_results_dir_does_not_inflate_count(self):
+        """跳过要彻底：results/ 既不进 bad 也不进 total。
+
+        计入 total 会让「已检查 N 个」这句绿灯话虚报一个——而本仓给绿灯带计数
+        的全部意义就是让「查了几件」可核对。
+        """
+        self._case("p", "c1", "prompt.md")
+        self._case("p", "c2", "case.yaml")
+        self._case("p", "results")
+        self.assertEqual(malformed_case_dirs(self.root), ([], 2))
+
+    def test_cli_results_dir_real_shape_is_skipped(self):
+        """按实测到的真实形态建：results/<ISO 时间戳>/aggregate-result.json。
+
+        时间戳子目录在 results/ **内部**，因此不在扫描层级上——本条锁的是
+        「跳过发生在 results 这一层」，而不是靠时间戳目录恰好也没 marker。
+        """
+        d = (self.root / "plugins/p/skills/s/evals/results"
+             / "2026-09-13T14-22-21-053Z")
+        d.mkdir(parents=True)
+        (d / "aggregate-result.json").write_text("{}", encoding="utf-8")
+        self.assertEqual(malformed_case_dirs(self.root), ([], 0))
 
     def test_file_directly_inside_case_dir_position(self):
         """marker 必须在子目录内，放在更深一层不算。"""

@@ -435,3 +435,15 @@ FodyWeavers.xsd
 # Python bytecode cache
 __pycache__/
 *.py[cod]
+
+# claude plugin eval 的运行产物。CLI 把 aggregate-result.json 写进
+# <eval 目录>/results/<ISO 时间戳>/，而 eval 目录默认就叫 evals/——因此产物
+# 落在**被测对象自己的目录里**，与人工维护的 case 目录同级。
+# 两个落点都要盖：在插件根运行落 plugins/<插件>/evals/results/，
+# 在 skill 目录内运行落 plugins/<插件>/skills/<skill>/evals/results/。
+# 🔴 这不只是「别把产物提交上去」：results/ 是一个**没有 case.yaml/prompt.md
+#    的子目录**，落在 skills/*/evals/ 下时会被 check_new_skill_eval_case.py
+#    的全量模式判成「建了一半的 case」而阻断提交——即跑一次 eval 就让下一次
+#    提交失败。脚本侧已按名字排除 results/（见该文件 docstring），本条是
+#    第二道：不入库。两道都要，少任何一道都会以不同形式咬人。
+evals/results/

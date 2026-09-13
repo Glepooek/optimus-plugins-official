@@ -2,7 +2,7 @@
 name: wpf-code-review
 description: 用于审查 WPF 代码的 MVVM 架构、XAML 编写规范、数据绑定、控件/依赖属性、资源主题、布局渲染、线程调度、性能、异常/安全等全量规范，并覆盖虚拟化、Freezable 冻结、Shape 优化等性能诊断。当用户提到：审查/检查/review WPF 代码、.xaml 文件、WPF 项目代码规范、准备合并/PR、代码质量检查、界面卡顿、滚动慢、内存高、MVVM 规范、绑定规范时，务必使用此 skill。
 metadata:
-  version: "2.0.5"
+  version: "2.1.0"
   author: desktop client team
   category: quality
 compatibility: 需要 .NET/WPF/XAML 代码库；支持基于用户粘贴代码审查，也可扫描本地代码库（Grep/Glob）；可直接编辑修复（Edit）；无需额外 CLI/MCP。
