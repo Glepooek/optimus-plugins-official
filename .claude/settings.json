@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "optimus-mcp-servers@optimus-plugins-official": true
+  }
+}
