@@ -17,6 +17,15 @@
 # 不跳过 fork PR：五个检查全部零凭据，fork 场景照样跑通。跳过会让 fork PR
 # 的必需检查永久 Expected。
 #
+# 全部 checkout 传 persist-credentials: false（默认是 true）。默认值会把
+# GITHUB_TOKEN 以 http.extraheader 的形式写进 .git/config，同 job 的**后续
+# 每个 step** 都能读到它。本仓恰好是最该关掉它的形态：plugin-validate 里跑
+# 第三方 composite action 并 npm install -g，new-skill-eval-case 要处理
+# fork PR 的文件名——而上面刚说过，五个检查一件都不需要凭据，也不推任何东西
+# （permissions 已收到 contents: read）。
+# ⚠️ 这不是在防某个已知漏洞，而是把一个用不到的凭据从可达范围里去掉；
+#    日后若有 step 真要 push，得显式改回来，那时才是需要论证的时刻。
+#
 # 设计判据全文见
 # docs/superpowers/specs/2026-09-13-pr-flow-and-free-ci-design.md § 5
 
@@ -40,6 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v6
         with:
           # ubuntu runner 默认只有 python3，pre-commit 里调的是 python
@@ -54,6 +65,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
@@ -99,6 +112,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
@@ -119,6 +134,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0          # action 的 detect-changes 需要完整历史
+          persist-credentials: false
       - uses: anthropics/claude-plugins-community/.github/actions/validate-plugins@426e469f322952061102b286b378c0c9733a0934
         with:
           marketplace-path: .claude-plugin/marketplace.json
@@ -216,6 +232,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0          # 需要 base 与 head 之间的完整 diff
+          persist-credentials: false
       - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
