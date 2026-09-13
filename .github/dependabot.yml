@@ -1,0 +1,50 @@
+# dependabot 只开 github-actions 一个生态。
+#
+# 🔴 判据不是「本仓没有别的依赖」——实际有三处：
+#      plugins/optimus-office-plugin/skills/docx-writer/scripts/dotnet/
+#        ×2 个 .csproj（System.CommandLine 2.0.5、DocumentFormat.OpenXml 3.5.1）
+#      plugins/optimus-qa-plugin/skills/optimus-qa-ui-scripts/assets/templates/
+#        package.json
+#    判据是**版本矩阵**：那三处都落在 plugins/*/skills/<name>/ 内，按
+#    AGENTS.md 矩阵第一行，改动它们必须同时升该插件两份 plugin.json 与该
+#    skill 的 metadata.version。dependabot 不会做这三件事，于是每个升级 PR
+#    都是一次「功能变了版本号不变」的不完整交付，得由人手工补齐才能合——
+#    那已经不是自动化，只是把工作换了个地方发起。
+#    ⚠️ 另有一层：CI 不构建那两个 .NET 项目（gates-tests 只跑 python
+#    unittest），升级后没有任何检查能证明它还能用。而 templates/package.json
+#    是给用户的脚手架模板、不是本仓自己的依赖，替用户升更没有依据。
+#
+# ✅ **`.github/` 是全仓唯一「改动不触发版本矩阵」的路径**（矩阵有明文一行），
+#    所以也是唯一能让 dependabot 的 PR 直接可合的地方。这不是巧合——
+#    「自动化能不能收尾」和「改动要不要升版本」在本仓是同一个问题的两面。
+#
+# 🔴 ignore 掉 anthropics/claude-plugins-community 的理由是硬的：
+#    ci.yml 里它是 SHA-pin（@426e469f…），且与 claude-cli-version: "2.1.270"
+#    构成**成对**的 pin——注释原文是「校验逻辑与校验器版本两个维度同时冻结，
+#    升级是一次显式的成对动作」。dependabot 只会动前者，产出一个「校验逻辑
+#    升了、校验器版本没升」的半截 PR，而那正是 spec § 10 风险 1 要防的漂移。
+#    ⚠️ 它是 ignore 而非「让它提 PR 再人工补」：一个每次都需要人补另一半的
+#    自动 PR，与没有自动化的差别只是多了一次关闭动作。
+#
+# commit-message.prefix 必须设：dependabot 默认写 "Bump X from A to B"，
+# 不符合本仓的 Conventional Commits 约定。⚠️ 这一项直接决定主干 message
+# 的形态——dependabot 的 PR 不经 commit-cc-plugin，squash 时 GitHub 用 PR
+# 标题作默认 commit_title，没人会在那一刻替它改写。
+
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      github-actions:
+        patterns: ["*"]
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore
+      include: scope
+    ignore:
+      - dependency-name: anthropics/claude-plugins-community
