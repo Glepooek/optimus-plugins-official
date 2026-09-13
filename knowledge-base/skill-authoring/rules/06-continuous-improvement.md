@@ -10,7 +10,7 @@
 
 - **必须**：新 skill 交付后，必须用 darwin-skill 跑一次基线评估，建立初始分数记录——即使当前没有明显优化空间，也要留基线，为后续棘轮机制（新分数不得低于基线）提供比较基准
 - **必须**：基线评估记录评分依据与评估模式（`full_test` 或 `dry_run`），不能只写最终分数
-- **区分于 `03-skill-evaluation.md`**：03 是创建阶段作者自驱的 eval 迭代（`evals.json` 驱动，聚焦"这个 skill 达到预期效果没有"）；本节是交付后独立于作者视角的结构性基线扫描（darwin-skill 驱动，含 runtime 中立性红灯扫描、frontmatter 质量、失败模式编码等结构维度），两者不是重复劳动
+- **区分于 `03-skill-evaluation.md`**：03 是创建阶段作者自驱的 eval 迭代（`evals/<case>/prompt.md` + `graders/*.md` 用例驱动，聚焦"这个 skill 达到预期效果没有"）；本节是交付后独立于作者视角的结构性基线扫描（darwin-skill 驱动，含 runtime 中立性红灯扫描、frontmatter 质量、失败模式编码等结构维度），两者不是重复劳动
 
 ## 2. known-issues.md：使用期反馈记录
 
