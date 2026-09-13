@@ -1,0 +1,77 @@
+# 用 actionlint 校验 workflow 本身。它懂 Actions 的 schema 与表达式语法，
+# 因此能拦住纯 YAML linter 查不出的一类错——最典型的是未加引号的 `${{ }}`
+# 里含 `#`：YAML 把 ` #` 当注释、静默截断表达式，产出一份**能被 YAML 解析
+# 通过、但 GitHub Actions 拒绝运行**的文件。
+#
+# 🔴 本 job 名（actionlint）**不在** ci.yml 顶部那五项必需检查里，服务端
+#    ruleset 当前也没有它。但它是按「可以成为必需检查」的规格写的：
+#    **刻意不设 paths: 过滤器**，所以每个 PR 都会跑、不会出现未命中而永久
+#    停在 "Expected" 的死锁（判据同 ci.yml 顶部那条红线）。
+#    ⚠️ 因此这里与 dotnet/skills 的同名 workflow 有一处刻意的偏离：那份
+#    带三段 paths:（workflows/actions/actionlint.yaml），因为它不是必需
+#    检查、只求省 runner 时间；本仓宁可每个 PR 多跑十几秒，换「日后想把它
+#    设为必需检查时不必先改文件」。
+#    要真正生效为第 6 项，须在 Settings → Rules → Rulesets → master-protection
+#    的可选列表里**勾选**它（本 workflow 合并并跑过一次后才会出现在列表里）。
+#    不要手打名字——手打会绕过「先跑一次」这道天然校验，spec § 4.5 记的
+#    skill-eval 混入必需检查正是那条路径的产物。
+#
+# 为什么值得单独立一项：ci.yml 的五项全在校验**仓库内容**（门禁脚本、单测、
+# 数据一致性、插件清单），没有一项校验**CI 自身**。而 workflow 写坏的失效
+# 形态特别隐蔽——一份跑不起来的 workflow 不会红，它压根不产生 check run，
+# 表现为「那项检查永远 Expected」，与「还没开始跑」无法区分。
+#
+# 判据参照 https://github.com/dotnet/skills 的 .github/workflows/actionlint.yml
+
+name: actionlint
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: 下载并校验 actionlint
+        env:
+          # 版本与 sha256 是**成对**的 pin，升级时必须同时改两处。
+          # 该 sha256 经双源确认：release API 的 asset digest 与发布者
+          # actionlint_1.7.12_checksums.txt 里的值逐字相同。
+          ACTIONLINT_VERSION: "1.7.12"
+          ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+        run: |
+          set -euo pipefail
+          curl -fsSLo actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          # 🔴 先验后解。跳过这一步就等于让一个未经校验的二进制在 runner 上
+          #    执行——而本仓其余 job 全部零凭据、刻意不给 runner 任何可偷的
+          #    东西，这里若留个口子，那些克制就都白费了。
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum -c -
+          tar -xzf actionlint.tar.gz actionlint
+          ./actionlint --version
+
+      - name: 校验全部 workflow
+        run: |
+          set -euo pipefail
+          # 不传任何文件路径：actionlint 不带参数时自行发现
+          # .github/workflows/ 下的全部 workflow。⚠️ 这不只是少打几个字——
+          # 逐个列出文件名会在新增 workflow 时静默漏掉那一份，而漏掉的表现
+          # 恰好是「绿灯」，与官方那个 paths: 补漏史同一类失效形态。
+          #
+          # ⚠️ -shellcheck= -pyflakes= 关掉两个嵌入 linter。
+          #    本门禁要拦的是「GitHub Actions 根本跑不起来的 workflow」，
+          #    而 ci.yml 的 run: 里有多段 shell 循环（gates-tests 的 9 目录
+          #    遍历、plugin-validate 的 per-plugin 校验），把 shell 风格
+          #    警告一并判失败会让本 job 变成一个风格检查器，冲淡它的判据。
+          #    ⚠️ 关掉不是「这些警告不重要」，而是它们与本 job 的判据不同类；
+          #    要查 shell 风格该单独立一项，而不是搭在这里顺手做。
+          ./actionlint -shellcheck= -pyflakes= -color
