@@ -74,19 +74,33 @@ jobs:
           #   --trust-plugin      非交互环境必需，否则卡在首次信任提示
           #   --no-publish        🔴 报告默认发布到 claude.ai，而本仓 case
           #                       含内部 Jenkins job 名——发布是外发行为
-          #   --ablation none     两个理由，第二个才是硬的：
+          #   --ablation none     两个理由，第一个全仓通用，第二个只对
+          #                       optimus-devops-plugin 成立：
           #                       ① 默认 with-without 是 2 臂、成本翻倍；
           #                       ② 🔴 CLI 原文「under with-without, graders
           #                          marked with-only, incl. tool_used:
           #                          Skill, are a plugin-fired indicator
-          #                          rather than part of the score」——本仓
-          #                          20 个 grader 全是 tool_used: Skill，
-          #                          在 with-without 下会全部不计入分数，
-          #                          eval 就彻底失去判据。none 是判据成立
-          #                          的必要条件，不只是省钱
-          #   --runs 1            默认是 case.runs ?? 3；case 文件自己也写了
-          #                       runs: 1，这里再传一次作命令行兜底。
-          #                       ⚠️ 引入 llm grader 后须两处一起调回 ≥3
+          #                          rather than part of the score」——
+          #                          jenkins-build 那 20 个 grader 全是
+          #                          tool_used: Skill，在 with-without 下会
+          #                          全部不计入分数，eval 就彻底失去判据。
+          #                          对该插件 none 是判据成立的必要条件，
+          #                          不只是省钱。
+          #                       ⚠️ wpf-code-review 的 6 个 grader 是 llm、
+          #                          不是 with-only，理由 ② 对它不适用；
+          #                          它靠的只是理由 ①。
+          #   --runs 1            默认是 case.runs ?? 3。
+          #                       🔴 **该 input 现在与 case 文件冲突，是一个
+          #                          未决项，不是笔误**：jenkins-build 的 20
+          #                          个 case 自己写 runs: 1，命令行这一次是
+          #                          兜底、无冲突；而 wpf-code-review 的 6 个
+          #                          case 写的是 runs: 3（llm grader 有抖动，
+          #                          单次结果不足以判定回归，见 spec § 10
+          #                          风险 11），**命令行会把它压回 1 次**。
+          #                       ⚠️ 保留 --runs 1 而非删掉它，是刻意不在本次
+          #                          迁移里改动一个付费 workflow 的成本档：
+          #                          删掉它 = frontend 插件从 6 run 变 18 run。
+          #                          该取舍已登记 todo，待裁决。
           #   --max-cost-usd 5    ⚠️ 它挡不住第一次 run（CLI 原文：ceiling
           #                       is checked before each run launches），
           #                       只是失控时的刹车
@@ -95,7 +109,12 @@ jobs:
           #
           # ⚠️ --threshold 未设，采用默认 1.0：任何 case 分数低于 1.0 就
           #    exit 1。对行为闸而言这是期望行为（有 case 没过就该红），
-          #    但它意味着本 job 的绿灯判据是「20 个 case 全部满分」。
+          #    但它意味着本 job 的绿灯判据是「该插件全部 case 满分」——
+          #    jenkins-build 是 20 个，wpf-code-review 是 6 个。
+          # 🔴 **1.0 对 llm grader 是否过严至今零观测**：验收时那次全量跑
+          #    judgeCostUsd 合计 $0，因为当时全仓没有任何 llm grader，评委
+          #    一次都没被调用过。wpf-code-review 的 6 个是本仓第一批 llm
+          #    grader，第一次真跑之前不要把它的红灯读成 skill 退化。
           claude plugin eval "plugins/$PLUGIN" \
             --trust-plugin \
             --no-publish \

@@ -30,6 +30,13 @@ import sys
 EVAL_DIR = "evals"
 # 一个子目录被认作 case 的标志（官方两种等价写法）
 CASE_MARKERS = ("case.yaml", "prompt.md")
+# 🔴 CLI 的运行产物目录名，全量扫描必须跳过它。claude plugin eval 把
+# aggregate-result.json 写进 <eval 目录>/results/<ISO 时间戳>/，而 eval 目录
+# 默认就叫 evals/——产物因此与人工维护的 case 目录同级、且天然缺 marker。
+# 不跳过的后果是「跑一次 eval 就让下一次提交失败」，即门禁反过来惩罚使用它。
+# 代价：一个真名叫 results 的 case 会被静默跳过。可接受——这个名字已被 CLI
+# 占用，把它同时用作 case 名本身就会与产物目录撞名。
+RESULT_DIR = "results"
 
 
 def added_files(base, head, repo_root="."):
@@ -105,15 +112,23 @@ def malformed_case_dirs(repo_root="."):
     ⚠️ 只扫 plugins/*/skills/*/evals/，与 new_skill_dirs 的范围一致：
       .claude/skills/ 不对外发布、external_plugins/ 是上游拷贝。
 
-    ⚠️ **不判定「有 evals/ 却一个合格子目录都没有」**，尽管那正是
-    plugins/optimus-frontend-plugin/skills/wpf-code-review/evals/ 的现状
-    （只有一个散落的 evals.json，claude plugin eval 在它上面找到 0 个 case）。
-    原因是那不是错误，而是**另一套规范的合规产物**：
-    knowledge-base/skill-authoring/rules/03-skill-evaluation.md 有一条 MUST
-    「测试用例存到 evals/evals.json」，并配 reference/eval-workspace-structure.md
-    描述整个工作区。本仓因此有两套 eval 规范并存，谁服从谁需要人裁决——
-    已登记 docs/todo-list/2026-09-12-todo.md 的 A4。**在裁决前把它判失败，
-    等于用一个门禁替人做了规范取舍。**
+    ⚠️ **跳过名为 results/ 的子目录**，理由见模块顶部 RESULT_DIR 的注释：
+    它是 CLI 的运行产物，不是人写的 case。
+
+    ⚠️ **仍不判定「有 evals/ 却一个合格子目录都没有」**，但理由已经换了。
+    原理由是「那是另一套规范的合规产物」——
+    knowledge-base/skill-authoring/rules/03-skill-evaluation.md 曾有一条 MUST
+    「测试用例存到 evals/evals.json」，而 wpf-code-review/evals/ 正是它的产物
+    （只有一个散落的 evals.json，claude plugin eval 在它上面找到 0 个 case），
+    两套规范谁服从谁需要人裁决，门禁不该替人做规范取舍。
+    **该裁决已于 2026-09-13 作出：官方格式为唯一规范**，那 6 条素材已迁成
+    evals/<case>/prompt.md + graders/criteria.md，本仓再无「有 evals/ 却 0 个
+    case」的实例。
+    现在的理由变成一条纯粹的判据边界：**「一个 case 都没有」与「这个 skill
+    不需要 case」在文件系统上不可区分**，而「新增 skill 必须带 case、存量不
+    回溯」的存量豁免恰恰意味着后者合法存在。要收紧成失败，就得先有一份
+    「哪些 skill 必须有 case」的名单——那是增量模式（按 diff 判新增）已经在
+    用另一种方式回答的问题，不该在全量模式里再造一份会过期的名单。
     """
     root = pathlib.Path(repo_root)
     bad, total = [], 0
@@ -121,7 +136,7 @@ def malformed_case_dirs(repo_root="."):
         if not evals.is_dir():
             continue
         for sub in sorted(evals.iterdir()):
-            if not sub.is_dir():
+            if not sub.is_dir() or sub.name == RESULT_DIR:
                 continue
             total += 1
             if not any((sub / m).is_file() for m in CASE_MARKERS):
