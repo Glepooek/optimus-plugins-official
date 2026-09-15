@@ -14,3 +14,9 @@
 # 此前它未被跟踪、从不经过 autocrlf，一直是 LF。入库看似纯增量，实则把它接进了
 # 一条会改写内容的管道。
 .claude/skills/darwin-skill/results.tsv merge=union text eol=lf
+
+# install.sh 与 pre-commit 同因：它是要被用户直接执行的 shell 脚本，CRLF 会让
+# shebang 变成 `#!/usr/bin/env bash\r`，在 Linux/macOS（以及 Git Bash）上报
+# "bad interpreter" 而静默失效。本机 core.autocrlf=true，不固定就会在检出时
+# 被换成 CRLF —— 即「作者机器上是 LF 所以能跑，别人机器上是 CRLF 所以跑不了」。
+plugins/optimus-avalonia-plugin/install.sh text eol=lf
