@@ -1,7 +1,7 @@
 # Avalonia 技能集引入与优化 spec
 
 > 日期：2026-09-15
-> 状态：**已引入（原样）**，优化待实施
+> 状态：**优化已收尾**（P0 部分/P1/P2/P4 完成，P3 经裁决跳过、嵌套 skill 扁平化经裁决暂缓）。现为历史决策记录，**正文不再回写**——裁决与遗留项见 [`docs/todo-list/2026-09-15-todo.md`](../../todo-list/2026-09-15-todo.md)，各 skill 的实际改动见其自身 `CHANGELOG.md`。⚠️ 下方 §5.3 的怀疑**已被核实推翻**（master Overview 的版本与 compiled bindings 声明两句均正确），结论见该 todo 文件的「P4 核实结论」节
 > 上游：github.com/linuxdevel/Avalonia-skills（MIT License），拷贝自 2026-09-15 的 main 分支快照
 
 ## 1. 背景与目标
