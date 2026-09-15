@@ -30,7 +30,7 @@
 
 - `avalonia-controls/`（5 子：input/data-display/layout/media/navigation）与 `avalonia-pro-max/`（9 子）是**嵌套目录**，路径为 6 段 `skills/<name>/<sub>/SKILL.md`。
 - 本仓工具链只认**扁平 5 段** `skills/<name>/SKILL.md`：`.githooks/check_new_skill_eval_case.py::new_skill_dirs()` 以 `len(parts) == 5` 判新增 skill，嵌套 skill（6 段）对增量门禁**不可见**——实测 pre-commit 全量模式「已检查 25 个」只数到 19 个顶层 skill + 6 个 wpf-code-review 存量 case，14 个嵌套 skill 的 eval 目录未纳入。
-- 待确认风险：若 Claude Code 的插件 skill 发现**不递归**扫描子目录，则这 14 个嵌套 skill 不可被调用。
+- **已确认（2026-09-15 实测）**：Claude Code 插件 skill 发现**不递归**——`claude plugin details optimus-avalonia-plugin` 只报 `Skills (19)`，14 个嵌套 skill 对 Claude 用户不可调用；Codex **递归**——`codex debug prompt-input` 的 `### Available skills` 报 33 个全量（含嵌套路径 `r13/avalonia-controls/input/SKILL.md` 等）。交叉验证佐证：`claude plugin validate` 报了 2 个扁平 skill 的 `: ` YAML 错误，却漏报 5 个嵌套 skill 的同款错误。
 
 ### 3.2 `name` 字段命名不一致
 
@@ -41,6 +41,10 @@
 ### 3.3 处置建议（写入优化计划，非本次改动）
 
 见 §6 P0：优先确认 harness 是否支持嵌套；若否，则扁平化 14 个嵌套 skill 并统一 `name`（连字符），同步改 master 路由表。
+
+### 3.4 frontmatter YAML 解析错误（已修复，2026-09-15）
+
+`avalonia-services` 与 `avalonia-property-system` 两个扁平 skill 的 `description` 未加引号、值内含 `: `（如 `TopLevel: clipboard`、`property system: StyledProperty`），YAML 把「冒号+空格」判为键值分隔，导致整段 frontmatter 解析失败、运行时 metadata 被静默丢弃（`claude plugin details` 里这两项 always-on 成本显示 `< 20`，即 description 为空）。已修复：`description` 值加双引号；两 skill `metadata.version` `1.0.0 → 1.0.1`，插件 `1.0.0 → 1.0.1`（Patch）。属上游原样带入的问题。
 
 ## 4. wpf-migration skill 深审（任务 3）
 
@@ -104,7 +108,7 @@
 
 | 优先级 | 项 | 动作 | 依赖 |
 |---|---|---|---|
-| **P0** | 结构（§3） | 确认 harness 是否递归发现嵌套 skill；若否 → 扁平化 14 个嵌套 skill、`name` 统一连字符、同步 master 路由表 | 先做一次真实 `--plugin-dir` 加载验证 |
+| **P0** | 结构（§3） | ✅ 已确认：Claude 不递归（19/33）、Codex 递归（33/33）。扁平化 14 个嵌套 skill、`name` 统一连字符、同步 master 路由表（**用户裁决暂缓，未实施**） | 已实测 `claude plugin details` + `codex debug prompt-input` |
 | **P1** | wpf-migration 修复 | 修 E1–E4；补 G1–G7 七个缺失章节；更正 E2 的 Style/ControlTheme 措辞 | §4 结论 |
 | **P2** | 需核实项 | 核实 V1–V3（查一手 API 文档）后更正或删除 | — |
 | **P3** | 覆盖缺口 | 评估 C1/C2/C3 是否值得新建 skill（C1 或并入 app-development；C3 依赖版本事实） | §5.2 |

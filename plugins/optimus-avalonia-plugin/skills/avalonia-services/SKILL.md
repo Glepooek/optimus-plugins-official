@@ -1,8 +1,8 @@
 ---
 name: avalonia-services
-description: Use when accessing Avalonia platform services via TopLevel: clipboard read/write, file/folder/save dialogs via StorageProvider, URI/file launching via Launcher, screen and window info, focus manager, in-app notifications via WindowNotificationManager, or IME input method access.
+description: "Use when accessing Avalonia platform services via TopLevel: clipboard read/write, file/folder/save dialogs via StorageProvider, URI/file launching via Launcher, screen and window info, focus manager, in-app notifications via WindowNotificationManager, or IME input method access."
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
   category: platform
 ---
