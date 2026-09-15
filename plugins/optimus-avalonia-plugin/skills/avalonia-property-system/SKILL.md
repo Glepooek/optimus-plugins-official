@@ -1,8 +1,8 @@
 ---
 name: avalonia-property-system
-description: Use when working with Avalonia's property system: StyledProperty, DirectProperty, AttachedProperty, property inheritance, metadata override, coercion, value priority, or observing property changes via GetObservable or OnPropertyChanged.
+description: "Use when working with Avalonia's property system: StyledProperty, DirectProperty, AttachedProperty, property inheritance, metadata override, coercion, value priority, or observing property changes via GetObservable or OnPropertyChanged."
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
   category: platform
 ---
