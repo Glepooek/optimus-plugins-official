@@ -1,3 +1,15 @@
+## [1.2.0] - 2026-09-15
+
+### Added
+- 新增 `Bindings Compile by Default` 章节：Avalonia 12 起 compiled bindings 默认开启，每条绑定都需要一个「起始类型」——通常是作用域（`Window` / `UserControl` / `DataTemplate`）上的 `x:DataType`，少数模板场景由编译器推断（如 `ItemTemplate` 从其 items）。缺起始类型时 XAML 编译器抛 `Cannot parse a compiled binding without an explicit x:DataType directive...`，**构建失败**，不会静默回退反射。`{ReflectionBinding}` 是 WPF `{Binding}` 的逐绑定等价物
+- `Common Mistakes` 补一条：误以为 `{Binding}` 仍按反射解析
+
+### Fixed
+- `What Works Without Changes` 中「Data binding patterns（仅需命名空间与 `RelativeSource` 语法调整）」在 v12 下已不成立——缺 `x:DataType` 的绑定是**构建失败**，不是语法调整。该行改为指向新增章节
+
+### 依据
+依据取 Avalonia 编译器源码（一手源最高档），非文档叙述：`AvaloniaXamlIlBindingPathTransformer.cs` 中 `startTypeResolver` 在找不到祖先 `AvaloniaXamlIlDataContextTypeMetadataNode` 时抛 `XamlBindingsTransformException`；`AvaloniaXamlIlDataContextTypeTransformer.cs` 中该 metadata 的来源除 `x:DataType` 外还有内联 `DataContext`、`[DataType]` 属性与 `[InheritDataTypeFromItems]` 推断。抛错路径的判据是节点类型等于 `CompiledBindingExtension`，故 `{ReflectionBinding}` 不受影响
+
 ## [1.1.1] - 2026-09-15
 
 ### Fixed

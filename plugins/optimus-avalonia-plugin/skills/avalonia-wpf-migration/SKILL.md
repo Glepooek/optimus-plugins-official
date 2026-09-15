@@ -466,12 +466,15 @@ Dispatcher.UIThread.Post(() => { /* fire-and-forget */ });
 
 `Dispatcher.BeginInvoke()` maps to `UIThread.Post()`. `Dispatcher.CurrentDispatcher`, `Dispatcher.FromThread()`, `Dispatcher.Yield()`, and `DispatcherPriority` keep the same names. `DependencyObject.Dispatcher` becomes `AvaloniaObject.Dispatcher`.
 
+## Bindings Compile by Default
+WPF's `{Binding}` resolves paths by reflection at runtime. Avalonia 12 compiles bindings, so each one needs a starting type — normally an `x:DataType` directive on the enclosing scope (`Window`, `UserControl`, `DataTemplate`); the compiler infers it in a few template cases, such as an `ItemTemplate` from its items. Without a starting type the XAML compiler raises `Cannot parse a compiled binding without an explicit x:DataType directive` and **the build fails** — it does not quietly fall back to reflection. `{ReflectionBinding}` is the per-binding equivalent of WPF's `{Binding}`: it restores runtime reflection resolution and needs no `x:DataType`. Full topic: `avalonia-data-binding`.
+
 ## What Works Without Changes
 - `INotifyPropertyChanged` implementations
 - `ICommand` implementations
 - `ObservableCollection<T>` usage
 - `IValueConverter` / `IMultiValueConverter` implementations
-- Data binding patterns (with namespace and `RelativeSource` syntax adjustments)
+- Data binding patterns (namespace and `RelativeSource` syntax adjustments — but bindings now also need a starting type; see **Bindings Compile by Default**)
 - Most MVVM framework code (ReactiveUI, CommunityToolkit.Mvvm)
 - `ItemsControl`, `ListBox` (similar APIs — but see the `Items` / `ItemsSource` note above)
 - `DataGrid` (same API, but requires the separate package and theme registration)
@@ -484,6 +487,7 @@ Ordered by how quietly they fail — the first four compile and run but behave w
 - **Turning every `Style TargetType` into a `ControlTheme`.** Apply the decision rule above — only the implicit-default-look role maps to `ControlTheme`; setters matched by type/class/state stay as `Style` with a `Selector`.
 - **Porting `RenderTransformOrigin` unchanged.** The default pivot differs (`Center` vs `TopLeft`), so transforms render differently. Set it explicitly to reproduce WPF.
 - **Relying on WPF's `Visibility` three-state semantics.** Avalonia's `IsVisible` is a boolean — the XAML won't compile. `IsVisible="False"` covers `Collapsed`; for `Hidden`'s "invisible but still occupying space", use `Opacity="0"`.
+- Assuming `{Binding}` still resolves by reflection — v12 compiles bindings, so one with no `x:DataType` in scope fails the build; `{ReflectionBinding}` restores the WPF behavior
 - Using WPF Trigger syntax — silently ignored or compile error
 - Using `pack://` URIs — assets not found
 - Calling `MessageBox.Show()` — doesn't exist
