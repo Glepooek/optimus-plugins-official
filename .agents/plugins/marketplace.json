@@ -9,6 +9,12 @@
       "category": "Frontend"
     },
     {
+      "name": "optimus-avalonia-plugin",
+      "source": { "source": "local", "path": "./plugins/optimus-avalonia-plugin" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "Frontend"
+    },
+    {
       "name": "optimus-backend-plugin",
       "source": { "source": "local", "path": "./plugins/optimus-backend-plugin" },
       "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
