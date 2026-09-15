@@ -1,3 +1,12 @@
+## [1.1.1] - 2026-09-15
+
+### Fixed
+- 映射表三处 Notes 述而不准，逐条回一手源码核实后改写（三条的 Avalonia 侧目标写法本身正确，改的是差异描述）：
+  - `ResourceDictionary` `Source=` → `ResourceInclude`：原注「URI scheme differs」把差异说成了表面问题。`ResourceDictionary` 根本没有 `Source` 属性，合并只能经 `MergedDictionaries`（`IList<IResourceProvider>`）——是结构差异，不是 URI 写法差异
+  - `BindingOperations.ClearBinding()` → `ClearValue`：原注「Slightly different」过低描述了差异。Avalonia 的 `BindingOperations` 只有 `DoNothing` 字段、两个已废弃的 `Apply` 重载和 `GetBindingExpressionBase`，**没有 `ClearBinding`**
+  - `CollectionViewSource` → `DataGridCollectionView`：原注「Different class」遗漏了两个决定性限制——它只服务 `DataGrid`（`Avalonia.Collections` 命名空间，随 `Avalonia.Controls.DataGrid` 独立包分发），Avalonia 没有 WPF `ICollectionView` 的通用等价物
+- `Common Mistakes` 补一条：沿用 `CollectionViewSource` / `ICollectionView` 做筛选排序分组——需改为在 view model 中处理，而非换个类名了事
+
 ## [1.1.0] - 2026-09-15
 
 ### Added

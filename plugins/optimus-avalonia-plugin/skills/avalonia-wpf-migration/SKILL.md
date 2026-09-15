@@ -2,7 +2,7 @@
 name: avalonia-wpf-migration
 description: Use when migrating a WPF application to Avalonia, mapping WPF concepts to Avalonia equivalents, or understanding differences between WPF and Avalonia APIs.
 metadata:
-  version: "1.1.0"
+  version: "1.1.1"
   author: desktop client team
   category: platform
 ---
@@ -34,7 +34,7 @@ Sections below lead with the highest-risk differences. Styling, `TemplateBinding
 | `RelativeSource Self` | `{Binding $self.Property}` | Different syntax |
 | `RelativeSource AncestorType` | `{Binding $parent[TypeName].Property}` | Different syntax |
 | `ElementName=myControl` | `#myControl` | e.g. `{Binding #myControl.Text}` |
-| `ResourceDictionary` `Source=` | `ResourceInclude Source="avares://..."` | URI scheme differs |
+| `ResourceDictionary` `Source=` | `ResourceInclude Source="avares://..."` | No `Source` property — add to `MergedDictionaries` |
 | `pack://application:,,,/` | `avares://AssemblyName/` | Asset URI scheme |
 | `EventManager.RegisterRoutedEvent` | `RoutedEvent.Register<TOwner, TArgs>` | Generic, not `typeof()` |
 | `MouseLeftButtonDown` / `MouseRightButtonDown` | `PointerPressed` | Branch on `PointerUpdateKind` |
@@ -48,7 +48,7 @@ Sections below lead with the highest-risk differences. Styling, `TemplateBinding
 | `MessageBox.Show()` | No built-in — use dialog or notification | API removed |
 | `Dispatcher.Invoke()` | `Dispatcher.UIThread.InvokeAsync()` | Async-first |
 | `Dispatcher.BeginInvoke()` | `Dispatcher.UIThread.Post()` | Fire-and-forget |
-| `BindingOperations.ClearBinding()` | `control.ClearValue(prop)` | Slightly different |
+| `BindingOperations.ClearBinding()` | `control.ClearValue(prop)` | Avalonia `BindingOperations` has no `ClearBinding` |
 | `AllowsTransparency="True"` | `TransparencyLevelHint="Transparent"` | No click-through support |
 | `WindowStyle="None"` | `WindowDecorations="None"` | |
 | `ResizeMode` | `CanResize` (bool) | Enum → bool |
@@ -60,7 +60,7 @@ Sections below lead with the highest-risk differences. Styling, `TemplateBinding
 | `IValueConverter` / `IMultiValueConverter` | Same | Same interface |
 | `ObservableCollection<T>` | `ObservableCollection<T>` | Same |
 | `ICommand` | `ICommand` | Same |
-| `CollectionViewSource` | `DataGridCollectionView` | Different class |
+| `CollectionViewSource` | `DataGridCollectionView` | No general equivalent — `DataGrid` only, separate package |
 | `Frame` + `NavigationService` | ContentControl + ViewModel swap | MVVM pattern preferred |
 
 ## Styles: No Triggers
@@ -491,5 +491,6 @@ Ordered by how quietly they fail — the first four compile and run but behave w
 - Assigning to `ItemsControl.Items` — read-only; use `ItemsSource`
 - Adding `DataGrid` without registering its theme in `App.axaml` — renders unstyled or blank
 - Reaching for `RoutedCommand` / `CommandBinding` — neither exists; use `ICommand`
+- Reaching for `CollectionViewSource` / `ICollectionView` — no general equivalent; `DataGridCollectionView` serves `DataGrid` only and needs its own package
 - Reading a `StyledProperty` from your own backing field — returns stale data; use `GetValue`
 - Calling `SetValue` on a `DirectProperty` — throws; use `SetAndRaise`
