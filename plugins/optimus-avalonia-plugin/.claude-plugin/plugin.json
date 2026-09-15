@@ -1,0 +1,12 @@
+{
+  "name": "optimus-avalonia-plugin",
+  "version": "1.0.0",
+  "description": "Avalonia 跨平台 UI 开发：XAML、布局、样式、数据绑定、MVVM、控件、动画、WPF 迁移等 33 个参考 skill（上游 linuxdevel/Avalonia-skills，MIT License）",
+  "author": {
+    "name": "optimus",
+    "url": "https://www.optimus.cn"
+  },
+  "homepage": "https://github.com/Glepooek/optimus-plugins-official",
+  "repository": "https://github.com/Glepooek/optimus-plugins-official",
+  "license": "MIT"
+}
