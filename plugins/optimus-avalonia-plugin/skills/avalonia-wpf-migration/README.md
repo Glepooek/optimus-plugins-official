@@ -1,6 +1,6 @@
 # avalonia-wpf-migration
 
-> 版本：1.0.0 | 分类：platform
+> 版本：1.1.0 | 分类：platform
 
 Use when migrating a WPF application to Avalonia, mapping WPF concepts to Avalonia equivalents, or understanding differences between WPF and Avalonia APIs.
 
