@@ -2,7 +2,7 @@
 name: avalonia-wpf-migration
 description: Use when migrating a WPF application to Avalonia, mapping WPF concepts to Avalonia equivalents, or understanding differences between WPF and Avalonia APIs.
 metadata:
-  version: "1.1.1"
+  version: "1.2.0"
   author: desktop client team
   category: platform
 ---
