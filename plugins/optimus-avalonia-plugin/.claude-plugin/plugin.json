@@ -1,7 +1,7 @@
 {
   "name": "optimus-avalonia-plugin",
-  "version": "2.0.0",
-  "description": "Avalonia 跨平台 UI：通过官方 Avalonia Docs MCP 路由开发和代码审查，提供 WPF 项目分析、XPF/原生路线选型与迁移编排",
+  "version": "2.1.0",
+  "description": "Avalonia 跨平台 UI：通过官方 Avalonia Docs MCP 路由开发、代码审查、WPF 迁移与 Linux/deb 发布",
   "author": {
     "name": "optimus",
     "url": "https://www.optimus.cn"
