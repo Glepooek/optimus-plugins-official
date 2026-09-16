@@ -15,7 +15,7 @@
     {
       "name": "optimus-avalonia-plugin",
       "source": "./plugins/optimus-avalonia-plugin",
-      "description": "Avalonia 跨平台 UI 开发：XAML、布局、样式、数据绑定、MVVM、控件、动画、WPF 迁移等 33 个参考 skill（上游 linuxdevel/Avalonia-skills，MIT License）"
+      "description": "Avalonia 跨平台 UI：通过官方 Avalonia Docs MCP 路由开发和代码审查，提供 WPF 项目分析、XPF/原生路线选型与迁移编排"
     },
     {
       "name": "optimus-backend-plugin",
@@ -45,7 +45,7 @@
     {
       "name": "optimus-mcp-servers",
       "source": "./plugins/optimus-mcp-servers",
-      "description": "MCP 服务集成：GitHub、MasterGo 设计协作、飞书项目"
+      "description": "MCP 服务集成：GitHub、Avalonia 文档、MasterGo 设计协作、飞书项目"
     },
     {
       "name": "optimus-media-plugin",

@@ -10,6 +10,10 @@
       "url": "https://api.githubcopilot.com/mcp/",
       "bearer": "GITHUB_TOKEN"
     },
+    "avalonia-docs": {
+      "transport": "http",
+      "url": "https://docs-mcp.avaloniaui.net/mcp"
+    },
     "mastergo-magic-mcp": {
       "transport": "stdio",
       "command": "npx",

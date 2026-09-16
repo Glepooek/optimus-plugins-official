@@ -25,15 +25,14 @@ def load():
 
 
 def render_claude(cfg):
-    """Claude Code 的 .mcp.json：HTTP 用 headers+${VAR}，stdio 用 env+${VAR}。"""
+    """Claude Code 的 .mcp.json：HTTP 可选 headers+${VAR}，stdio 用 env+${VAR}。"""
     servers = {}
     for name, s in cfg["servers"].items():
         if s["transport"] == "http":
-            servers[name] = {
-                "type": "http",
-                "url": s["url"],
-                "headers": {"Authorization": "Bearer ${%s}" % s["bearer"]},
-            }
+            entry = {"type": "http", "url": s["url"]}
+            if bearer := s.get("bearer"):
+                entry["headers"] = {"Authorization": "Bearer ${%s}" % bearer}
+            servers[name] = entry
         else:  # stdio
             entry = {"command": s["command"], "args": list(s["args"])}
             env = {}
@@ -46,7 +45,7 @@ def render_claude(cfg):
 
 
 def render_codex(cfg):
-    """Codex 的 config.toml：HTTP 用 bearer_token_env_var，stdio 用 env_vars 转发环境变量。"""
+    """Codex 的 config.toml：HTTP 可选 bearer_token_env_var，stdio 用 env_vars 转发环境变量。"""
     lines = [
         "# ~/.codex/config.toml",
         "# Optimus MCP 服务器配置（Codex 原生字段，不使用变量字符串插值）。",
@@ -61,7 +60,8 @@ def render_codex(cfg):
         lines.append("[mcp_servers.%s]" % name)
         if s["transport"] == "http":
             lines.append('url = "%s"' % s["url"])
-            lines.append('bearer_token_env_var = "%s"' % s["bearer"])
+            if bearer := s.get("bearer"):
+                lines.append('bearer_token_env_var = "%s"' % bearer)
         else:
             lines.append('command = "%s"' % s["command"])
             args = ", ".join(json.dumps(a, ensure_ascii=False) for a in s["args"])

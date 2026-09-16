@@ -1,7 +1,7 @@
 {
   "name": "optimus-avalonia-plugin",
-  "version": "1.0.6",
-  "description": "Avalonia 跨平台 UI 开发：XAML、布局、样式、数据绑定、MVVM、控件、动画、WPF 迁移等 33 个参考 skill（上游 linuxdevel/Avalonia-skills，MIT License）",
+  "version": "2.0.0",
+  "description": "Avalonia 跨平台 UI：通过官方 Avalonia Docs MCP 路由开发和代码审查，提供 WPF 项目分析、XPF/原生路线选型与迁移编排",
   "skills": "./skills/",
   "author": {
     "name": "optimus",
@@ -12,15 +12,15 @@
   "license": "MIT",
   "interface": {
     "displayName": "Optimus Avalonia",
-    "shortDescription": "Avalonia 跨平台 UI 开发工具集",
-    "longDescription": "Avalonia 跨平台 UI 开发：XAML、布局、样式、数据绑定、MVVM、控件、动画、WPF 迁移等 33 个参考 skill",
+    "shortDescription": "Avalonia Docs MCP 驱动的迁移与代码审查工具集",
+    "longDescription": "通过官方 Avalonia Docs MCP 路由开发和代码审查，提供 WPF 项目分析、XPF/原生路线选型与迁移编排",
     "developerName": "Optimus",
     "category": "Frontend",
     "capabilities": [
       "Skills"
     ],
     "defaultPrompt": [
-      "开始一段 Avalonia 跨平台 UI 开发任务"
+      "审查本次 Avalonia AXAML 与 C# UI 改动，并给出官方依据"
     ]
   }
 }

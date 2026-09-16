@@ -9,12 +9,17 @@
 - **功能**: 提供 GitHub Copilot MCP API 访问
 - **环境变量**: `GITHUB_TOKEN`
 
-### 2. MasterGo Magic MCP
+### 2. Avalonia Docs MCP
+- **类型**: HTTP
+- **功能**: 提供 Avalonia UI 官方文档查询
+- **环境变量**: 无需认证
+
+### 3. MasterGo Magic MCP
 - **类型**: stdio
 - **功能**: MasterGo 设计协作工具集成
 - **环境变量**: `MG_MCP_TOKEN`
 
-### 3. 飞书项目 MCP
+### 4. 飞书项目 MCP
 - **类型**: stdio
 - **功能**: 飞书项目（Feishu Project）全功能集成
 - **环境变量**: `MCP_USER_TOKEN`
@@ -31,7 +36,7 @@
 
 ## 配置说明
 
-> **单一真源**：三台服务器的通用定义在插件根目录 `mcp.config.json`。运行
+> **单一真源**：四台服务器的通用定义在插件根目录 `mcp.config.json`。运行
 > `python scripts/gen_mcp_config.py` 会按各 harness 原生字段生成两套配置：
 > `.mcp.json`（Claude Code，用 `headers`/`env` + `${VAR}` 插值）与
 > `config.toml.example`（Codex，用 `bearer_token_env_var`/`env_vars`，不做 `${VAR}`
@@ -69,7 +74,7 @@
    如果需要手动管理，在项目 `.claude/settings.json` 中添加：
    ```json
    {
-     "enabledMcpjsonServers": ["github", "mastergo-magic-mcp", "FeishuProjectMcp"]
+     "enabledMcpjsonServers": ["github", "avalonia-docs", "mastergo-magic-mcp", "FeishuProjectMcp"]
    }
    ```
 
@@ -92,9 +97,12 @@ codex plugin add optimus-mcp-servers@optimus-plugins-official
 url = "https://api.githubcopilot.com/mcp/"
 bearer_token_env_var = "GITHUB_TOKEN"
 
+[mcp_servers.avalonia-docs]
+url = "https://docs-mcp.avaloniaui.net/mcp"
+
 [mcp_servers.mastergo-magic-mcp]
 command = "npx"
-args = ["-y", "@mastergo/magic-mcp", "--url=https://mastergo.com"]
+args = ["-y", "@mastergo/magic-mcp", "--token=<MG_MCP_TOKEN>", "--url=https://mastergo.com"]
 env_vars = ["MG_MCP_TOKEN"]
 
 [mcp_servers.FeishuProjectMcp]

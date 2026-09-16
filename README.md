@@ -4,20 +4,23 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 企业级开发工具链插件仓库，同时支持 **Claude Code** 与 **OpenAI Codex CLI** 两个 harness。
-两套 harness 共用同一份 SKILL.md 真源（`.claude/skills/`），通过符号链接镜像（`.kiro/skills/`、`.agents/skills/`）分发，无需双份维护。
+两套 harness 共用同一份发布 skill 真源（`plugins/*/skills/*/SKILL.md`）；仅本仓维护型 skill 位于 `.claude/skills/`，并通过 `.kiro/skills/`、`.agents/skills/` 符号链接镜像分发。
 
 ## 📦 插件列表
 
 | 插件 | 职责 |
 |---|---|
 | [optimus-frontend-plugin](plugins/optimus-frontend-plugin) | WPF 前端开发：MasterGo 设计稿转页面与组件库、SVG 转 XAML、XAML 代码审查 |
+| [optimus-avalonia-plugin](plugins/optimus-avalonia-plugin) | Avalonia 跨平台 UI：通过官方 Avalonia Docs MCP 路由开发与代码审查，提供 WPF 项目分析、XPF/原生路线选型与迁移编排 |
 | [optimus-backend-plugin](plugins/optimus-backend-plugin) | 后端开发：需求到实现全流程、公司服务 API 对接、C# 代码审查 |
 | [optimus-qa-plugin](plugins/optimus-qa-plugin) | 测试 QA：用例设计与报告、JMeter 与 UI 自动化、设计稿一致性校验、飞书项目同步 |
 | [optimus-prd-plugin](plugins/optimus-prd-plugin) | PRD 全流程：需求文档创建、优化与审查 |
 | [optimus-office-plugin](plugins/optimus-office-plugin) | 文档处理：Word/Excel/PPT/PDF 生成，网页与本地文件转 Markdown |
 | [optimus-devops-plugin](plugins/optimus-devops-plugin) | DevOps：Jenkins 构建、项目分析、周报转写、skill 链接同步；内置 SessionStart（技巧轮播）+ Notification hooks |
-| [optimus-mcp-servers](plugins/optimus-mcp-servers) | MCP 服务集成：GitHub、MasterGo 设计协作、飞书项目 |
+| [optimus-mcp-servers](plugins/optimus-mcp-servers) | MCP 服务集成：GitHub、Avalonia Docs、MasterGo 设计协作、飞书项目 |
 | [optimus-media-plugin](plugins/optimus-media-plugin) | 音视频处理：分析、转码压缩、裁剪缩放、在线下载与播放预览 |
+| [optimus-decision-plugin](plugins/optimus-decision-plugin) | 工程决策支持：数据结构、算法策略与复杂度分析 |
+| [optimus-session-plugin](plugins/optimus-session-plugin) | 跨会话交接：保存进度、决策与恢复上下文 |
 
 ## 🔧 外部依赖
 
@@ -26,13 +29,16 @@
 | 插件 | 关键依赖 |
 |---|---|
 | optimus-frontend-plugin | MasterGo MCP（设计稿读取）、Python 3 |
+| optimus-avalonia-plugin | Avalonia Docs MCP（由 `optimus-mcp-servers` 提供，无需认证）；实际迁移/构建依赖目标项目的 .NET SDK |
 | optimus-backend-plugin | superpowers 插件（后端开发流程硬性依赖）、服务注册表 `api-doc-test.optimus.cn`（有本地缓存降级）、Python `requests` + `beautifulsoup4`（接口文档/网页抓取） |
 | optimus-qa-plugin | JMeter（性能测试执行）、Playwright + Midscene（UI 自动化）、MasterGo MCP、飞书项目 MCP、Figma MCP + Chrome DevTools MCP（UI 一致性校验，需自行配置）、Python（XMind 生成） |
 | optimus-prd-plugin | 无 |
 | optimus-office-plugin | markitdown、Playwright CLI（网页转 Markdown）、PptxGenJS（PPT 生成）、reportlab + pypdf（PDF 生成）、pandas + openpyxl（Excel 处理）、LibreOffice（文档转换/重算）、.NET SDK + OpenXML SDK（docx-writer） |
 | optimus-devops-plugin | Jenkins（需账号/API Token）、Python `requests` + `pyyaml`、Git（项目分析与周报提取提交记录） |
-| optimus-mcp-servers | GitHub Copilot MCP（`GITHUB_TOKEN`）、MasterGo Magic MCP（`MG_MCP_TOKEN`）、飞书项目 MCP（`MCP_USER_TOKEN`） |
+| optimus-mcp-servers | GitHub Copilot MCP（`GITHUB_TOKEN`）、Avalonia Docs MCP（无需认证）、MasterGo Magic MCP（`MG_MCP_TOKEN`）、飞书项目 MCP（`MCP_USER_TOKEN`） |
 | optimus-media-plugin | ffmpeg/ffprobe（编解码分析与处理）、ffplay（播放预览，需图形显示环境）、yt-dlp（在线视频/音频下载） |
+| optimus-decision-plugin | 无 |
+| optimus-session-plugin | 无 |
 
 ## 🚀 快速开始
 
@@ -59,6 +65,9 @@ git clone https://github.com/Glepooek/optimus-plugins-official ~/.claude/plugins
 # MasterGo 设计稿转 WPF 页面
 /optimus-frontend-plugin:mastergo-to-wpf-page
 
+# 分析 WPF 迁移到 Avalonia 时应选 XPF 还是原生 Avalonia
+/optimus-avalonia-plugin:avalonia-wpf-migration
+
 # 音视频压缩、分辨率转换、片段截取
 /optimus-media-plugin:media-compress
 /optimus-media-plugin:media-resize
@@ -67,7 +76,7 @@ git clone https://github.com/Glepooek/optimus-plugins-official ~/.claude/plugins
 
 ### Codex CLI 安装与使用
 
-仓库在 `.agents/plugins/marketplace.json` 定义了 Codex marketplace（8 个插件），支持 Codex CLI 安装。
+仓库在 `.agents/plugins/marketplace.json` 定义了 Codex marketplace，支持 Codex CLI 安装。
 
 **方式 1：远程添加（推荐）**
 
@@ -104,14 +113,17 @@ codex plugin marketplace upgrade
 
 注意：`upgrade` 只对 Git 市场生效（远程添加的）；「方式 2」本地路径添加的市场没有可刷新的快照，无需 upgrade。
 
-Codex 中调用插件 skill（自动带 `plugin:` 前缀）：
+Codex 中可用自然语言触发，或以 `@plugin:skill` 明确调用：
 
 ```bash
 # MasterGo 设计稿转 WPF 页面
-/optimus-frontend-plugin:mastergo-to-wpf-page
+@optimus-frontend-plugin:mastergo-to-wpf-page
+
+# 评估 WPF→Avalonia 的迁移路线
+@optimus-avalonia-plugin:avalonia-wpf-migration
 
 # 分析音视频编码/分辨率/码率/时长
-/optimus-media-plugin:media-analyze
+@optimus-media-plugin:media-analyze
 ```
 
 此外，本仓库维护流程类 skill（如 `commit-cc-plugin`、`test-locally`）也会通过 `.agents/skills/` 镜像暴露给 Codex。

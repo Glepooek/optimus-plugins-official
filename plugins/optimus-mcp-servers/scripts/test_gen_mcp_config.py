@@ -9,6 +9,9 @@ PLUGIN_DIR = Path(__file__).resolve().parent.parent
 GEN = PLUGIN_DIR / "scripts" / "gen_mcp_config.py"
 MCP_JSON = PLUGIN_DIR / ".mcp.json"
 CODEX_TOML = PLUGIN_DIR / "config.toml.example"
+README = PLUGIN_DIR / "README.md"
+sys.path.insert(0, str(GEN.parent))
+import gen_mcp_config
 
 
 class GenMcpConfigTest(unittest.TestCase):
@@ -41,11 +44,38 @@ class GenMcpConfigTest(unittest.TestCase):
         codex = CODEX_TOML.read_text(encoding="utf-8")
         self.assertIn("bearer_token_env_var = \"GITHUB_TOKEN\"", codex)
 
+    def test_unauthenticated_http_omits_auth_fields(self):
+        cfg = {
+            "env_vars": {},
+            "servers": {
+                "avalonia-docs": {
+                    "transport": "http",
+                    "url": "https://docs-mcp.avaloniaui.net/mcp",
+                }
+            },
+        }
+
+        claude = gen_mcp_config.render_claude(cfg)["mcpServers"]["avalonia-docs"]
+        self.assertEqual(
+            claude,
+            {"type": "http", "url": "https://docs-mcp.avaloniaui.net/mcp"},
+        )
+
+        codex = gen_mcp_config.render_codex(cfg)
+        self.assertIn('[mcp_servers.avalonia-docs]\nurl = "https://docs-mcp.avaloniaui.net/mcp"', codex)
+        self.assertNotIn("bearer_token_env_var", codex)
+
     def test_codex_stdio_uses_env_vars(self):
         codex = CODEX_TOML.read_text(encoding="utf-8")
         self.assertIn("env_vars = [\"MG_MCP_TOKEN\"]", codex)
         self.assertIn("env_vars = [\"MCP_USER_TOKEN\"]", codex)
 
+    def test_readme_codex_example_passes_mastergo_token_arg(self):
+        readme = README.read_text(encoding="utf-8")
+        self.assertIn(
+            "args = [\"-y\", \"@mastergo/magic-mcp\", \"--token=<MG_MCP_TOKEN>\", \"--url=https://mastergo.com\"]",
+            readme,
+        )
     def test_claude_http_uses_headers_interpolation(self):
         claude = json.loads(MCP_JSON.read_text(encoding="utf-8"))
         gh = claude["mcpServers"]["github"]
