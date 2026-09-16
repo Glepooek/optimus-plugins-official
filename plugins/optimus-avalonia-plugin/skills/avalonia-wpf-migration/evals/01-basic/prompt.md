@@ -1,6 +1,3 @@
 # 评估用例：avalonia-wpf-migration
 
-请加载 `avalonia-wpf-migration` skill 的参考知识，完成一个落在其知识域内的 Avalonia 开发任务，并据此判断该 skill 提供的 API / 代码模式 / 常见错误清单是否**正确、完整、可执行**。
-
-触发场景（来自 description）：
-> Use when migrating a WPF application to Avalonia, mapping WPF concepts to Avalonia equivalents, or understanding differences between WPF and Avalonia APIs.
+针对一个真实或最小 WPF 项目，验证本 skill 是否先调用 Avalonia Docs MCP 的 `analyze_wpf_project`，在 XPF / 原生 Avalonia 之间设置确认点，并只按需加载官方主题映射；检查它不会在分析前批量改写代码或以“可编译”代替跨平台验收。

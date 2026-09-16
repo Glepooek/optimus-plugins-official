@@ -1,7 +1,7 @@
 {
   "name": "optimus-avalonia-plugin",
-  "version": "1.0.6",
-  "description": "Avalonia 跨平台 UI 开发：XAML、布局、样式、数据绑定、MVVM、控件、动画、WPF 迁移等 33 个参考 skill（上游 linuxdevel/Avalonia-skills，MIT License）",
+  "version": "2.0.0",
+  "description": "Avalonia 跨平台 UI：通过官方 Avalonia Docs MCP 路由开发和代码审查，提供 WPF 项目分析、XPF/原生路线选型与迁移编排",
   "author": {
     "name": "optimus",
     "url": "https://www.optimus.cn"

@@ -1,43 +1,46 @@
 # avalonia
 
-> 版本：1.0.0 | 分类：platform
+> 版本：2.1.0 | 分类：workflow
 
-Use when working with Avalonia UI framework — building, styling, binding, animating, or deploying Avalonia apps with .NET.
+Avalonia 开发入口：调用官方 Avalonia Docs MCP 确认框架事实，并将代码审查和 WPF 迁移交由受控流程处理。
 
 ## 所处层级
 
 ```
 ┌─────────────┐
-│★ platform    │  avalonia（本 skill）
+│★ workflow   │  avalonia（本 skill）
 ├─────────────┤
-│             │  ↑ 由 avalonia（master 路由）按任务调度加载
+│ quality     │  avalonia-code-review（限定范围的代码审查）
+│ workflow    │  avalonia-wpf-migration（WPF 迁移编排）
+│ platform    │  Avalonia Docs MCP（官方 API / 文档 / 映射）
 └─────────────┘
 ```
 
-本 skill 属 platform 层（Avalonia 平台专项参考），由 master 路由 `avalonia` 按 description 匹配调度，无产出依赖。
+本 skill 负责路由和验证边界；官方框架知识由 MCP 提供，代码审查和 WPF 迁移由对应 skill 接手。
 
 ## 触发词 / 调用方式
 
-用户进行 Avalonia 相关开发、需要本 skill 覆盖的知识域时触发；或由 `avalonia` master 路由内部调度。触发场景详见 SKILL.md 的 `description`。
+Avalonia 开发、AXAML、样式、绑定、控件、跨平台报错、Avalonia API 查询；审查任务转入 `avalonia-code-review`，WPF 迁移任务转入 `avalonia-wpf-migration`。
 
 ## 业务逻辑流程图
 
 ```
-Step 1  识别任务落在本 skill 知识域
+Step 1  收敛项目范围与任务类型
    ↓
-Step 2  加载本 skill 参考知识（API / 代码模式 / 常见错误）
+Step 2  查询 Avalonia Docs MCP 的当前官方资料
    ↓
-Step 3  将知识应用到代码编写 / 审查 / 迁移
+Step 3  最小改动、代码审查、迁移编排或构建/测试验证
 ```
 
 ## 产出物数据流
 
-输入（Avalonia 开发任务 / 代码）→ 本 skill（参考知识）→ 正确、地道的 Avalonia 代码或结论 → 人工接手。
+输入（Avalonia 任务 / 项目代码 / 报错）→ 本 skill（官方资料路由）→ 开发建议、审查报告或迁移计划 → 构建/测试记录 → 人工接手。
 
-## Skill 依赖关系图
+## 依赖关系图
 
 ```
-avalonia（master 路由）──调度──▶ ★ avalonia
-                                  │
-                                  └── 无下游，独立使用
+                 ┌──▶ avalonia-code-review
+★ avalonia ──────┼──▶ avalonia-wpf-migration
+     │           └──▶ Avalonia Docs MCP
+     └──查询──────────────────▶ Avalonia Docs MCP
 ```
