@@ -1,30 +1,36 @@
 #!/usr/bin/env bash
 # Avalonia Skills Installer — optimus-avalonia-plugin 版
 #
-# 把本插件 skills/ 下的每个 skill 符号链接到各 agent harness 的用户级 skill 目录，
-# 使 skill 在没有插件机制的 harness（如 Kiro）里也能被发现。
+# 两级分发：先把本插件 skills/ 复制到枢纽目录，再从枢纽符号链接到各 agent
+# harness 的用户级 skill 目录，使 skill 在没有插件机制的 harness（如 Kiro）里也能被发现。
 #
-# 与上游 linuxdevel/Avalonia-skills 的 install.sh 有三处实质差异，改动理由如下：
+#   ${PLUGIN_ROOT}/skills ──复制──▶ ~/.agents/skills/<name> ──符号链接──▶ claude/codex/kiro
+#     （分发源，须在 checkout 内运行）  （安装后的真源）                  （用户级目录）
 #
-#   1. 不下载任何东西。上游把仓库拉到 ~/.local/share/avalonia-skills 再链接过去，
-#      因为它是「一个脚本分发一个仓库」。本脚本就住在插件里，源即 ${PLUGIN_ROOT}/skills
-#      —— 插件已是单一真源，再引入一个中性存放点会造出第二真源（AGENTS.md 的
-#      「单一真源」原则）。因此本脚本必须从插件 checkout 内运行，不支持 curl | bash。
+# 为什么中间要有 ~/.agents/skills 枢纽，而不是像上一版那样从插件目录直接链接：
+#   1. 插件 checkout 不是稳定驻留地——会被移动、删除、换分支。复制到用户 home
+#      后，安装不依赖插件目录的存续。
+#   2. ~/.agents/skills 是跨 harness 的中性枢纽，与本仓 sync-skill-symlinks
+#      skill 的约定同构（source=~/.agents/skills，targets=claude/codex/kiro）。
+#   3. 代价：真源从「插件 checkout」变为「枢纽副本」，「改插件即刻生效」变成
+#      「重跑本脚本完成更新」。本脚本幂等，重跑即更新。
 #
-#   2. harness 目录改为 claude / codex / kiro 三家（上游是 opencode / claude / agents）。
-#      ⚠️ Codex 的用户级目录实测是 ~/.codex/skills，**不是** ~/.agents/skills ——
-#      后者只在「工作目录相对」位置被 Codex 发现（仓库根作工作目录时因此有效，
-#      这也是仓库内 .agents/skills 镜像能工作的原因）。取证：codex-cli 0.154.0，
-#      隔离 CODEX_HOME 后跑 `codex debug prompt-input`，六处候选路径各埋一个带唯一
-#      名字的 SKILL.md，只有 $CODEX_HOME/skills 与 <cwd>/.agents/skills 被报告。
+# ⚠️ Codex 的用户级目录实测是 ~/.codex/skills，**不是** ~/.agents/skills ——
+# 后者只在「工作目录相对」位置被 Codex 发现（仓库根作工作目录时因此有效，
+# 这也是仓库内 .agents/skills 镜像能工作的原因）。所以枢纽只当真源存放点，
+# 各 harness 一律经链接取用。取证：codex-cli 0.154.0，隔离 CODEX_HOME 后跑
+# `codex debug prompt-input`，六处候选路径各埋一个带唯一名字的 SKILL.md，
+# 只有 $CODEX_HOME/skills 与 <cwd>/.agents/skills 被报告。
 #
-#   3. 链接前后各加一道符号链接能力探测/复核。原因见下方 symlink_works()：
-#      Windows 上 ln -s 对目录会**静默退化成复制**（退出码 0、无告警），
-#      那样装出来的就不是链接而是旧副本，且此后插件更新不会生效。
+# 与上游 linuxdevel/Avalonia-skills 的 install.sh 相比：不下载任何东西（上游
+# 把仓库拉到 ~/.local/share 再链接；本脚本源即插件 checkout，不支持 curl | bash）；
+# 目标 harness 为 claude / codex / kiro 三家（上游是 opencode / claude / agents）；
+# 链接前后各一道符号链接能力探测/复核——Windows 上 ln -s 对目录会**静默退化成
+# 复制**（退出码 0、无告警），装出来的就不是链接而是旧副本。
 #
 # Usage:
-#   ./install.sh                    # 安装到 ~/.claude/skills、~/.codex/skills、~/.kiro/skills
-#   ./install.sh --target DIR       # 额外安装到 DIR（可重复）
+#   ./install.sh                    # 复制到 ~/.agents/skills，链接到 ~/.claude/skills、~/.codex/skills、~/.kiro/skills
+#   ./install.sh --target DIR       # 额外链接到 DIR（可重复）
 #   ./install.sh --help
 
 set -euo pipefail
@@ -34,9 +40,14 @@ set -euo pipefail
 PLUGIN_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 SKILLS_SOURCE="${PLUGIN_ROOT}/skills"
 
-# 已知 agent 的用户级 skill 目录。三家都会被创建（不存在时），
+# 安装枢纽：skill 的安装后真源。先从插件复制到这里，再被各 harness 链接。
+# ⚠️ 它本身不是任何 harness 的用户级 skill 目录（Codex 只认 ~/.codex/skills
+# 与 <cwd>/.agents/skills，取证见头部注释），只是分发枢纽。
+HUB_DIR="${HOME}/.agents/skills"
+
+# 需要从枢纽取用 skill 的 harness 用户级目录。三家都会被创建（不存在时），
 # 因为本脚本的用途正是让 skill 在「还没装插件机制」的 harness 里也能被发现。
-AGENT_DIRS=(
+LINK_DIRS=(
     "${HOME}/.claude/skills"    # Claude Code
     "${HOME}/.codex/skills"     # Codex CLI
     "${HOME}/.kiro/skills"      # Kiro
@@ -112,10 +123,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --help|-h)
             printf "Usage: install.sh [--target DIR]...\n"
-            printf "  把 skills/ 下的每个 skill 链接到各 agent 的用户级 skill 目录。\n"
-            printf "  源（单一真源）：%s\n" "${SKILLS_SOURCE}"
-            printf "  默认目标：%s\n" "${AGENT_DIRS[*]}"
-            printf "  --target 可重复，用于额外目标目录。\n"
+            printf "  两级分发：先复制到枢纽，再从枢纽链接到各 harness。\n"
+            printf "  分发源：%s\n" "${SKILLS_SOURCE}"
+            printf "  枢纽（安装后真源）：%s\n" "${HUB_DIR}"
+            printf "  链接目标：%s\n" "${LINK_DIRS[*]}"
+            printf "  --target 可重复，用于额外链接目标。\n"
             exit 0
             ;;
         *)
@@ -163,11 +175,39 @@ if ! symlink_works; then
 fi
 info "符号链接能力：可用"
 
-# ── 解析目标目录 ──────────────────────────────────────────────────────────────
+# ── 阶段 1：复制 skill 到枢纽 ────────────────────────────────────────────────
 
-header "Installing skills"
+header "Copying skills to hub"
 
-TARGET_DIRS=("${AGENT_DIRS[@]}")
+if [[ ! -d "$HUB_DIR" ]]; then
+    mkdir -p "$HUB_DIR"
+    info "创建枢纽目录：$HUB_DIR"
+fi
+
+copied=0
+for src in "${SKILL_DIRS[@]}"; do
+    name="$(basename "$src")"
+    dest="${HUB_DIR}/${name}"
+
+    # 先删再拷：dest 已存在时，`cp -r src dest` 会把 src 复制**进**旧目录，
+    # 得到 dest/name 的双层嵌套——cp 对「目标目录已存在」的经典陷阱。
+    # rm -rf 同时覆盖三种占位形态（实体目录 / 指向别处的链接 / 旧副本），
+    # 对符号链接只删链接本身，不会穿透到目标。枢纽的语义就是「重新分发」，
+    # 覆盖即更新——若直接改过枢纽里的文件，重跑本脚本会被插件版本盖掉。
+    if [[ -e "$dest" || -L "$dest" ]]; then
+        warn "覆盖枢纽里已有的副本：$dest"
+        rm -rf "$dest"
+    fi
+    cp -r "$src" "$dest"
+    copied=$((copied + 1))
+done
+success "已复制 ${copied} 个 skill → $HUB_DIR"
+
+# ── 阶段 2：从枢纽链接到各 harness ──────────────────────────────────────────
+
+header "Linking skills into harnesses"
+
+TARGET_DIRS=("${LINK_DIRS[@]}")
 for t in "${EXTRA_TARGETS[@]:-}"; do
     [[ -n "$t" ]] && TARGET_DIRS+=("$t")
 done
@@ -187,24 +227,27 @@ for agent_dir in "${TARGET_DIRS[@]}"; do
 
     for src in "${SKILL_DIRS[@]}"; do
         name="$(basename "$src")"
+        hub_entry="${HUB_DIR}/${name}"
         link="${agent_dir}/${name}"
 
         if [[ -L "$link" ]]; then
-            if same_target "$link" "$src"; then
+            if same_target "$link" "$hub_entry"; then
                 skipped=$((skipped + 1))
                 continue
             fi
+            # 上一版 install.sh 装出的链接直指插件 checkout——在此被重指向枢纽，
+            # 旧安装由此无缝迁移到两级模型，无需先卸载。
             info "重指向已存在的链接：$link"
-            ln -sfn "$src" "$link"
+            ln -sfn "$hub_entry" "$link"
         elif [[ -d "$link" ]]; then
             # 实体目录占位——先备份再链接，绝不静默覆盖用户的东西。
             backup="${link}.backup.$(date +%Y%m%d%H%M%S)"
             warn "已存在实体目录，备份到：$backup"
             mv "$link" "$backup"
-            ln -sfn "$src" "$link"
+            ln -sfn "$hub_entry" "$link"
             backed_up=$((backed_up + 1))
         else
-            ln -sfn "$src" "$link"
+            ln -sfn "$hub_entry" "$link"
         fi
 
         # 复核：这一次创建真的产出了符号链接、且能解析到 SKILL.md。
@@ -225,8 +268,9 @@ done
 header "Done"
 
 printf "\n"
-printf "  ${BOLD}Skills:${RESET}         %d 个（每个 skill 在每个目标目录各一条链接）\n" "${#SKILL_DIRS[@]}"
-printf "  ${BOLD}目标目录:${RESET}       %d 个\n" "${#TARGET_DIRS[@]}"
+printf "  ${BOLD}Skills:${RESET}         %d 个\n" "${#SKILL_DIRS[@]}"
+printf "  ${BOLD}复制到枢纽:${RESET}     %d → %s\n" "$copied" "$HUB_DIR"
+printf "  ${BOLD}链接目录:${RESET}       %d 个\n" "${#TARGET_DIRS[@]}"
 printf "  ${BOLD}新建链接:${RESET}       %d\n" "$installed"
 if [[ $skipped -gt 0 ]]; then
     printf "  ${BOLD}已是当前指向:${RESET}   %d\n" "$skipped"
@@ -234,7 +278,6 @@ fi
 if [[ $backed_up -gt 0 ]]; then
     printf "  ${BOLD}备份的实体目录:${RESET} %d（后缀 .backup.<时间戳>）\n" "$backed_up"
 fi
-printf "  ${BOLD}单一真源:${RESET}       %s\n" "${SKILLS_SOURCE}"
 printf "\n"
 
 if [[ ${#failures[@]} -gt 0 ]]; then
@@ -245,6 +288,6 @@ if [[ ${#failures[@]} -gt 0 ]]; then
     exit 1
 fi
 
-printf "  改动插件内的 skill 即刻在上述所有位置生效，无需重跑本脚本。\n"
-printf "  卸载：删除上述目录里指向 %s 的链接即可。\n" "${SKILLS_SOURCE}"
+printf "  插件里的 skill 有改动后，重跑本脚本即可同步到枢纽与各 harness（幂等）。\n"
+printf "  卸载：删除各 harness 目录里的链接与 %s 下的副本目录即可。\n" "${HUB_DIR}"
 printf "\n"
