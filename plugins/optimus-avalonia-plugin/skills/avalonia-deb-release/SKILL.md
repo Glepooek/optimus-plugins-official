@@ -1,215 +1,123 @@
 ---
 name: avalonia-deb-release
-description: Use when publishing an Avalonia desktop app for Debian or Ubuntu, creating a Linux .deb package, configuring Avalonia Parcel, or validating a Debian package on Linux/WSL. 触发词："Avalonia 发布"、"Avalonia Linux 打包"、"打 deb"、"Ubuntu 安装包"、"Parcel"。
+description: Use when packaging an already-published Avalonia Linux build into a `.deb` with `dpkg-deb`, or validating that package via command-line/GUI install. 触发词："Avalonia Linux 打包"、"打 deb"、"Ubuntu 安装包"、"dpkg-deb"。
 license: MIT
-compatibility: 目标项目需要匹配的 .NET SDK；手动路线需要 Debian/Ubuntu 或 WSL 中的 dpkg-deb，建议安装 lintian、desktop-file-utils 和图形会话/虚拟显示器进行验收。Parcel 路线还需要 Avalonia Plus 的 Parcel CLI 与有效许可证。
+compatibility: 当前环境需已是 Linux（或 WSL2 Debian/Ubuntu），需已安装或可安装 `dpkg-deb`；图形安装验收需要图形桌面会话，无图形会话时该项验收会如实标注未覆盖。
 metadata:
-  version: "1.0.0"
+  version: "2.0.1"
   author: desktop client team
   category: workflow
-allowed-tools: Read Write Bash Glob Grep avalonia-docs
+allowed-tools: Read Write Bash Glob Grep
 ---
 
-# Avalonia Debian 发布
+# Avalonia Debian 打包
 
-面向 Debian/Ubuntu 的发布不是只执行 `dotnet publish`：可安装的 `.deb` 还必须有正确的架构、依赖、启动器、桌面入口、图标、包元数据及干净环境验收。优先使用已获授权的 Avalonia Parcel；无 Parcel CLI 授权或需要完全控制 Debian 布局时，使用官方 `dpkg-deb` 手动路线。
+把已经发布好的 Avalonia Linux 产物打成可安装的 `.deb` 包，并完成命令行与图形界面两种安装验收。不负责 `dotnet publish`、Parcel 自动化、发布策略选择或对外发布——待打包产物由用户提供，本 skill 只管"从产物到能装上并跑起来"这一段。
 
 ## 需求预告
 
-首次响应时一次性收集缺失信息：目标 `.csproj`、应用显示名和 Debian 包名、版本、RID/架构（如 `linux-x64`/`amd64`）、维护者与主页、图标路径、是否需要文件关联/URL scheme、发布产物目录，以及是否有 Avalonia Plus 的 Parcel CLI 许可证。已有信息不得重复询问。
+首次响应时一次性收集缺失信息：包名、版本号、目标架构（如 `amd64`/`arm64`）、maintainer、`Depends` 依赖列表、**待打包产物目录**（已发布好的可执行文件所在目录）、**图标文件路径**（可选，没有则跳过）、**`.desktop` 文件落盘路径**（该文件由本 skill 按模板生成，用户只需给出目标路径，需用户确认字段）、**产出目录**。已有信息不得重复询问。
 
-默认只构建、检查和安装到隔离测试环境；上传制品、创建 Git tag、发布 GitHub Release、更新 APT 仓库或覆盖正式包都属于发布动作，必须先经 CHECKPOINT。
+`dpkg-deb` 是否已安装属依赖检查项，不计入本环节缺失项判断，由 Step 1 实际检测。
 
-## Step 1：确认环境、项目和发布策略
-
-1. 在目标项目根目录确认 `.csproj`、目标框架、应用程序集名、版本来源及发布目录。读取现有 CI/发布脚本，复用既有版本规则，不自行改写版本号。
-2. 在 Linux 主机或 WSL 中检查：
-
-   ```bash
-   dotnet --info
-   dpkg-deb --version
-   command -v lintian || true
-   command -v desktop-file-validate || true
-   ```
-
-   Windows 开发机应在 WSL2 Debian/Ubuntu 或 Linux CI 中构建和验收；不要把 Windows 上产生的 Linux 文件权限当作已验证。
-3. 明确每个 RID 对应一个包：`linux-x64` → `amd64`，`linux-arm64` → `arm64`。不得把 x64 文件标成 `arm64`，也不得用一个 `.deb` 混装多个架构。
-4. 选择路线：
-
-   | 条件 | 路线 |
-   |---|---|
-   | 有 Avalonia Plus、`parcel --version` 可用且许可证已配置 | Parcel 自动化路线 |
-   | 没有 Parcel CLI 授权、需自定义 Debian maintainer scripts/布局 | 手动 `dpkg-deb` 路线 |
-
-   Parcel CLI 仅随 Avalonia Plus 提供；发现缺许可证时直接切换手动路线，不要尝试绕过许可证。
-
-### 🔴 CHECKPOINT：安装构建依赖或修改发布配置
-
-安装系统包、添加/修改 `.parcel`、Debian 控制文件、发布脚本或 CI 配置前，说明会修改的路径、执行环境和可回滚方式，取得用户确认。产物目录和临时 staging 目录可以在确认后清理重建。
-
-## Step 2：准备可发布的 Linux 输出
-
-1. 先运行目标项目已有的测试；失败时停止打包，报告失败测试，不用打包成功掩盖质量问题。
-2. 以目标 RID 显式发布。默认使用自包含发布，避免要求最终用户预装 .NET；若项目必须 framework-dependent，则在 `Depends` 中声明匹配的 .NET runtime。
-
-   ```bash
-   dotnet publish "$PROJECT" -c Release -r "$RID" --self-contained true \
-     -o "$PUBLISH_DIR"
-   test -x "$PUBLISH_DIR/$EXECUTABLE"
-   file "$PUBLISH_DIR/$EXECUTABLE"
-   ```
-
-3. 不要在发布时临时启用 trimming、AOT、single-file 或 ReadyToRun。它们是独立的发布模式，必须先在目标 Linux 上完成应用级回归测试。
-4. 记录版本、Git revision（若项目已提供）、RID、SDK 版本和 publish 命令，供包追溯与故障复现。
-
-## Step 3A：Parcel 自动化路线
-
-1. 通过 `search_avalonia_docs` 查询当前 Parcel `.parcel` 配置字段；不要凭记忆生成可能已过期的 schema。
-2. 配置稳定的 package name、安装目录、应用名、图标、maintainer、桌面分类、版权/许可证、可选 `/usr/bin` 链接，以及应用额外依赖和文件关联/URL scheme。
-3. 不把许可证写入仓库。使用 `AVALONIA_TOOLS_LICENSE_KEY` 或受控 CI secret，并确认日志未输出其值。
-4. 可预装工具并构建：
-
-   ```bash
-   parcel install-tools -r linux-x64 -p deb
-   parcel pack ./MyApp.parcel -r linux-x64 -p deb -o ./artifacts
-   ```
-
-5. 继续执行 Step 4 的包检查和安装验收。Parcel 会生成 `.desktop` 文件并可注册图标、文件关联、URL scheme 与 `/usr/bin` 链接；仍必须在目标发行版实际验证。
-
-## Step 3B：手动 `dpkg-deb` 路线
-
-在项目中创建受版本控制的 `packaging/debian/`（名称可按现有仓库约定调整），至少包含 `control`、启动器、`.desktop` 和图标。staging 目录与 `.deb` 产物不得提交。
-
-### 包布局
-
-```text
-staging/
-├── DEBIAN/control
-├── usr/bin/<package-name>
-├── usr/lib/<package-name>/                 # dotnet publish 的完整输出
-└── usr/share/
-    ├── applications/<package-name>.desktop
-    ├── pixmaps/<package-name>.png
-    └── icons/hicolor/<size>/apps/<package-name>.png  # 推荐
-```
-
-`control` 必须使用实际值；不要复制过期的完整依赖清单。Avalonia 需要 `libx11-6, libice6, libsm6, libfontconfig1`；还要按目标 .NET 版本和发行版补齐 native runtime dependencies。可用 `apt show dotnet-runtime-deps-<major>` 取得目标发行版的当前基线，再以干净系统安装结果为准。
-
-```debcontrol
-Package: <package-name>
-Version: <debian-compatible-version>
-Section: utils
-Priority: optional
-Architecture: <amd64-or-arm64>
-Depends: <Avalonia and target-.NET native dependencies>
-Maintainer: <name <email>>
-Homepage: <https-url>
-Description: <one-line summary>
- <long description starts with one space>
-```
-
-启动器必须以 `exec` 替换 shell 进程，并透传参数：
+## Step 1：确认 Linux 环境与 dpkg-deb
 
 ```bash
-#!/bin/sh
-exec /usr/lib/<package-name>/<executable> "$@"
+uname -s            # 应为 Linux
+dpkg-deb --version  # 必须可执行
 ```
 
-`.desktop` 必须引用安装后的命令与图标名，不引用构建机绝对路径：
+`dpkg-deb` 缺失时提示安装命令（如 `sudo apt-get install -y dpkg-dev`）后终止——不擅自执行系统级安装，由用户自行决定并执行。在 Windows 原生环境（非 WSL）下直接终止，说明需切换到 Linux 或 WSL2 Debian/Ubuntu。
 
-```ini
-[Desktop Entry]
-Name=<display-name>
-Comment=<summary>
-Exec=<package-name> %F
-Icon=<package-name>
-Terminal=false
-Type=Application
-Categories=Utility;
-```
+## Step 2：收集与校验三类路径输入
 
-仅当应用实际支持多文件打开时保留 `%F`；URL 激活使用 `%U`，两者都不适用时移除占位符。
+1. **待打包产物目录**：确认存在且非空；已知可执行文件名时用 `test -x "$PUBLISH_DIR/$EXECUTABLE"` 确认可执行权限。目录为空或找不到可执行文件时报错终止，要求用户确认路径，不猜测。
+2. **图标文件**：提供了就校验文件存在；用户明确没有图标时跳过转换，告知安装后应用将使用系统默认图标。
+3. **`.desktop` 文件路径**：用户提供的是**待生成的目标落盘路径**，不是已存在的文件——按下方模板生成内容。
 
-### 构建命令
+   🔴 **CHECKPOINT：落盘前必须请用户确认字段内容**（尤其 `Exec`/`Categories`），不得替用户假设。
 
-```bash
-set -eu
-rm -rf "$STAGING"
-install -d "$STAGING/DEBIAN" "$STAGING/usr/bin" \
-  "$STAGING/usr/lib/$PACKAGE" "$STAGING/usr/share/applications" \
-  "$STAGING/usr/share/pixmaps"
-install -m 0644 packaging/debian/control "$STAGING/DEBIAN/control"
-install -m 0755 packaging/debian/$PACKAGE "$STAGING/usr/bin/$PACKAGE"
-cp -a "$PUBLISH_DIR/." "$STAGING/usr/lib/$PACKAGE/"
-chmod -R a+rX "$STAGING/usr/lib/$PACKAGE"
-chmod 0755 "$STAGING/usr/lib/$PACKAGE/$EXECUTABLE"
-install -m 0644 packaging/debian/$PACKAGE.desktop \
-  "$STAGING/usr/share/applications/$PACKAGE.desktop"
-install -m 0644 "$ICON" "$STAGING/usr/share/pixmaps/$PACKAGE.png"
-dpkg-deb --root-owner-group --build "$STAGING" \
-  "./artifacts/${PACKAGE}_${VERSION}_${DEB_ARCH}.deb"
-```
+   🔴 **CHECKPOINT：目标路径已有同名文件时，先请用户确认是否覆盖**，未确认不得覆盖。
 
-增加 hicolor 图标时，为 SVG 放入 `usr/share/icons/hicolor/scalable/apps/`；PNG 放入对应 `<size>x<size>/apps/`。构建后进入 Step 4，不能以 `dpkg-deb` 退出码 0 代替安装验收。
+   确认后写入该路径，装有 `desktop-file-validate` 则顺带校验一次：
 
-## Step 4：按层验证包和应用
-
-1. 检查包元数据、路径、权限与桌面入口：
-
-   ```bash
-   dpkg-deb -I "$DEB"
-   dpkg-deb -c "$DEB"
-   lintian "$DEB" || true
-   desktop-file-validate "$STAGING/usr/share/applications/$PACKAGE.desktop"
+   ```ini
+   [Desktop Entry]
+   Type=Application
+   Name=<display-name>
+   Comment=<summary>
+   Exec=<package-name>
+   Icon=<package-name>
+   Terminal=false
+   Categories=Utility;
    ```
 
-   `lintian` 仅用于发现问题；对每条 warning 给出接受理由或修复，不得静默忽略。若没有 `lintian` 或 `desktop-file-validate`，明确记录缺失的验证及安装命令，不能声称已完成该项。
-2. 在干净的、与目标版本相同的 Debian/Ubuntu VM、容器或 WSL 实例中安装，并确认依赖由 APT 解析：
+4. **产出目录**：确认父目录存在且可写；不检查目标 `.deb` 文件本身是否已存在——尚未生成前不存在是正常状态。
+
+## Available scripts
+
+- `scripts/build-deb.sh` — 非交互式打包脚本，见 Step 3 用法与参数说明；`--help` 查看完整接口。
+
+## Step 3：调用自带的 build-deb.sh 执行打包
+
+使用本 skill 自带于 `scripts/build-deb.sh` 的固定脚本执行打包，不在用户项目中生成或复用打包脚本。脚本自身不依赖 `$SkillDir` 之外的任何路径假设，用 skill 加载时提供的绝对 base directory 拼出脚本路径调用：
+
+```bash
+"$SkillDir/scripts/build-deb.sh" \
+  --name <package-name> \
+  --version <version> \
+  --arch <amd64-or-arm64> \
+  --maintainer "<name <email>>" \
+  --publish-dir <待打包产物目录> \
+  --out-dir <产出目录> \
+  --executable <可执行文件名，默认同 package-name> \
+  --desktop-file <Step 2 生成的 .desktop 路径> \
+  --icon <图标路径，可选> \
+  --depends "<真实依赖列表，逗号分隔>" \
+  --description "<one-line summary>"
+```
+
+脚本行为（无需重新实现，仅供理解其产出）：非交互、全部输入走 flag；校验产物目录非空、可执行文件存在、`.desktop`/图标路径存在；按 `DEBIAN/`、`usr/bin/`、`usr/lib/<pkg>/`、`usr/share/applications/`、`usr/share/icons/hicolor/256x256/apps/` 搭建 staging 布局并生成 `/usr/bin/<pkg>` 的 exec 包装脚本；`Installed-Size` 用 `du -sk` 实测得出，不使用占位值；成功时把生成的 `.deb` 绝对路径打印到 stdout，诊断信息在 stderr，非零退出码表示失败并附带具体原因。`--help` 可查看完整参数说明。**不包含 `dotnet publish` 步骤**——产物已由用户在 Step 2 提供。
+
+## Step 4：安装验收（命令行 + 图形界面）
+
+1. **元数据检查**：`dpkg-deb -I "$DEB"`、`dpkg-deb -c "$DEB"`；有 `lintian`/`desktop-file-validate` 则跑，没有就如实标注该项未覆盖，不得声称已完成。
+2. **命令行安装验收**：
 
    ```bash
-   sudo apt install ./"$DEB"
+   sudo apt install ./"$DEB"   # 不用 dpkg -i，它不解析依赖
    dpkg -s "$PACKAGE"
    command -v "$PACKAGE"
-   "$PACKAGE" --help || true
+   "$PACKAGE"                  # 实际启动，确认核心功能路径，不能止步于进程存在
    ```
 
-3. 在真实桌面会话启动，确认 launcher 显示正确名称/图标、命令行启动有效、文件/URL 激活（若声明）有效。无图形会话时只能完成安装和命令行烟测，必须标明桌面集成尚未验证。
-4. 验证卸载和升级：
+3. **图形界面安装验收**：有图形桌面会话时，通过桌面文件管理器双击或系统包管理器 GUI（GNOME Software / GDebi 等）安装 `.deb`。
 
-   ```bash
-   sudo apt remove "$PACKAGE"
-   ! dpkg -s "$PACKAGE"
-   # 有上一版本时：先安装旧包，再 apt install 新包，验证配置和启动行为。
-   ```
+   🔴 **CHECKPOINT：请用户确认应用图标、名称显示正确、点击启动正常**，不得替用户断言验收结果。
 
-5. 产出 `.deb`、SHA-256、验证矩阵与未覆盖风险；签名、上传或对外发布前进入 CHECKPOINT。
-
-### 🔴 CHECKPOINT：对外发布
-
-在上传、签名、创建 Release、推送 APT 仓库或替换现网安装包前，展示包名、版本、架构、SHA-256、验证结果、已知限制和目标渠道，等待用户明确批准。
+   **无图形会话时明确标注该项未覆盖**，不得替用户断言"图形安装可行"。
+4. **卸载验证**：区分 `sudo apt remove "$PACKAGE"`（只删应用本身）与 `sudo apt autoremove "$PACKAGE"`（连带清理因它被拉入、现无其他程序依赖的孤立包），按场景选择，`dpkg -s` 确认已卸载。
 
 ## 失败处理
 
-| 触发条件 | 一线处理 | 仍失败兜底 |
-|---|---|---|
-| `parcel` 找不到或无有效许可证 | 检查 PATH、许可证环境变量与 Avalonia Plus 授权 | 切换官方手动 `dpkg-deb` 路线；不尝试绕过授权 |
-| `dpkg-deb` 缺失或在 Windows 直接运行 | 改在 Debian/Ubuntu、WSL2 或 Linux CI 执行 | 先建立可复现的 Linux 构建环境再继续 |
-| APT 依赖无法满足 | 用目标发行版查询当前包名并修正 `Depends` | 在干净目标版本中重新安装；不要删除依赖字段来“通过” |
-| 包已安装但应用启动失败 | 收集终端输出、`ldd` 和图形会话日志，确认 RID/架构 | 回到 publish 选项和 native dependencies，修复后重新打包和安装验收 |
-| `.desktop` 不显示或图标错误 | 检查 `desktop-file-validate`、`Exec`/`Icon` 与安装路径 | 修复入口/图标布局并在新会话复验，不把缓存偶然命中当成功 |
+| 触发条件 | 处理 |
+|---|---|
+| `dpkg-deb` 缺失或在非 Linux/WSL 环境执行 | 提示安装命令或切换环境，终止，不擅自安装 |
+| 待打包目录为空/无可执行文件 | 报错，要求用户确认产物路径，不猜测 |
+| `.desktop` 目标路径已有同名文件且用户未确认覆盖 | 停止，先请用户确认覆盖或改用其他路径 |
+| 用户未确认生成的 `.desktop` 字段内容 | 停止，先请用户确认模板字段再落盘 |
+| APT 依赖无法满足 | 按目标发行版查询实际包名修正 `Depends`，干净环境重装验证，不删依赖字段"通过" |
+| 无图形会话导致图形安装验收无法执行 | 明确标注该项未覆盖，不得替用户断言 |
 
 ## 不要做什么
 
-- 不把 Windows `win-x64` 输出、Windows 路径或 CRLF 启动器塞进 Linux `.deb`。
-- 不在未确认架构、包名、版本或目标发行版时生成可发布制品。
-- 不将密钥、token、Portal 会话或签名私钥写入 `.parcel`、脚本、仓库或日志。
-- 不把自包含发布误称为零系统依赖，也不复制某个旧发行版的 `Depends` 清单。
-- 不因 `dpkg-deb --build` 成功就声称发布通过；至少完成元数据、干净安装、启动、卸载四层验收。
-- 不在未获确认时上传、签名、替换正式包或创建公开 Release。
+- 不执行 `dotnet publish` 或任何应用构建/发布步骤——待打包产物由用户提供。
+- 不使用/推荐 Parcel——不在本 skill 范围内。
+- 不复制过期的 `Depends` 清单，必须基于真实依赖收集。
+- 不用 `dpkg -i` 做安装验收（不解析依赖）。
+- 不在无图形会话时声称图形安装已验证。
+- 不擅自执行 `apt-get install` 安装系统级构建依赖，只报告命令并终止，交由用户决定。
 
 ## 官方依据
 
 - Avalonia Desktop Linux deployment：`https://docs.avaloniaui.net/docs/deployment/linux`
-- Avalonia Parcel setup：`https://docs.avaloniaui.net/tools/parcel/setup`
-- Avalonia Parcel CLI：`https://docs.avaloniaui.net/tools/parcel/command-line-reference`
-- Avalonia Parcel Linux packaging：`https://docs.avaloniaui.net/tools/parcel/packaging-for-linux`

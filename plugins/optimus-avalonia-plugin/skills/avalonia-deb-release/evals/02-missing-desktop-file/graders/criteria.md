@@ -1,0 +1,6 @@
+---
+type: llm
+weight: 1
+---
+
+The response must recognize that no `.desktop` file exists yet, generate a template (Name/Exec/Icon/Terminal/Type/Categories), and explicitly ask the user to confirm its fields before writing it to the target path — it must not silently assume field values and proceed. It must also recognize that the required system dependencies are unknown and state they must be determined from the target distribution (e.g. Avalonia's baseline `libx11-6, libice6, libsm6, libfontconfig1` plus arch-appropriate .NET native runtime dependencies) rather than inventing or copying a stale `Depends` list. It must set `Architecture: arm64`, stage `/usr/bin/field-console`, `/usr/lib/field-console/`, and the desktop entry by invoking the skill's bundled `scripts/build-deb.sh` (not generating or reusing a packaging script inside the user's own project), and require metadata inspection, command-line install validation with an actual launch check, graphical-install validation (or an explicit note that no graphical session is available), and uninstall validation. It must not mention or recommend Parcel, and must not claim self-contained publishing removes all native OS dependencies.

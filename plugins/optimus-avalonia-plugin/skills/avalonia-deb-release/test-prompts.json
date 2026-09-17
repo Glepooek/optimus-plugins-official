@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "prompt": "我在 Ubuntu 22.04 x64 上，已经 `dotnet publish` 好一份自包含产物，放在 `~/publish/acme-desktop/`（含可执行文件 `Acme.Desktop`）。图标在 `~/publish/acme-desktop.png`。包名是 `acme-desktop`，版本 `2.4.0`，架构 `amd64`，maintainer 是 `Acme <support@acme.com>`，依赖 `libx11-6, libice6, libsm6, libfontconfig1`。`.desktop` 文件还没有，希望生成到 `~/publish/acme-desktop.desktop`。打包产物想放到 `~/dist/`。请帮我打成 `.deb` 并验证能装上、能跑起来。",
+    "expected": "确认 Linux+dpkg-deb 环境后收集齐三类路径；识别 .desktop 不存在，按模板生成内容并请用户确认字段后再落盘；调用 skill 自带的 scripts/build-deb.sh 执行打包（不生成/复用用户项目内脚本）；完成元数据检查、command-line apt install 验收（含实际启动）、图形安装验收、卸载验证；全程不涉及 Parcel，不用 dotnet publish。"
+  },
+  {
+    "id": 2,
+    "prompt": "我在 Debian 12 arm64 上，有一份自包含发布产物在 `/opt/build/field-console/`（可执行文件 `FieldConsole`），图标在 `/opt/build/icon.png`。包名 `field-console`，版本 `1.8.1`，maintainer `Field Team <field@acme.com>`。`.desktop` 文件还没有，希望生成到 `/opt/build/field-console.desktop`，我也不清楚需要哪些系统依赖。产物想输出到 `/opt/dist/`。帮我打包并装上验证。",
+    "expected": "识别 .desktop 不存在，生成模板并请用户确认后落盘；识别依赖未知，说明需按目标发行版核实（Avalonia 基线 libx11-6/libice6/libsm6/libfontconfig1 加 .NET native runtime 依赖），不得凭空编造或照抄过期 Depends；架构设为 arm64；调用 skill 自带的 scripts/build-deb.sh（不在用户项目中生成脚本）完成打包；要求元数据检查、命令行安装+实际启动验收、图形安装验收（或如实标注无图形会话）、卸载验证；不推荐 Parcel，不声称自包含发布消除全部系统依赖。"
+  }
+]
