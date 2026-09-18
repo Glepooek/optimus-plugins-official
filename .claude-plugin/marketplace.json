@@ -45,7 +45,7 @@
     {
       "name": "optimus-mcp-servers",
       "source": "./plugins/optimus-mcp-servers",
-      "description": "MCP 服务集成：GitHub、Avalonia 文档、MasterGo 设计协作、飞书项目"
+      "description": "MCP 服务集成：Avalonia 文档、MasterGo 设计协作、飞书项目"
     },
     {
       "name": "optimus-media-plugin",

@@ -3,13 +3,8 @@
 # 由 scripts/gen_mcp_config.py 从 mcp.config.json 生成，请勿手改。
 #
 # 运行 Codex 前需在当前环境 export 以下变量（或用 shell_environment_policy.set 注入）：
-#   GITHUB_TOKEN     GitHub Copilot MCP 鉴权（Bearer）
 #   MG_MCP_TOKEN     MasterGo API token（服务原生环境变量）
 #   MCP_USER_TOKEN   飞书项目 user_token
-
-[mcp_servers.github]
-url = "https://api.githubcopilot.com/mcp/"
-bearer_token_env_var = "GITHUB_TOKEN"
 
 [mcp_servers.avalonia-docs]
 url = "https://docs-mcp.avaloniaui.net/mcp"

@@ -3,6 +3,8 @@
 用于记录真实使用中暴露的问题，累积满 3 条"待处理"状态即触发一次 darwin-skill 优化循环。
 格式与流程见 `knowledge-base/skill-authoring/rules/06-continuous-improvement.md`。
 
+⚠️ 下表 2026-09-13 的两条描述的是 **GitHub MCP 路径**下的失效形态。6.0.0 已把第五步改为 `gh` CLI：`get_status` 那条的误用形态在 CLI 下不存在（无对应参数），尖括号那条仍然成立但成因变了（不再是 JSON 传参转义，而是手工拼串/复制）。**条目按原样保留**——它们记录的是当时真实发生的事。
+
 | 日期 | 问题描述 | 触发场景/prompt | 状态 | 优化后版本 |
 |---|---|---|---|---|
 | 2026-09-13 | 手工演练 PR 流程（第五步尚未写入本 skill 时）合并 PR #10，给 `merge_pull_request` 的 `commit_message` 传参时把 `Co-Authored-By` 尾注的尖括号写成了 HTML 实体：`Claude Opus 5 (1M context) &lt;noreply@anthropic.com&gt;`。落到主干 commit `c0d6f53` 上，`git interpret-trailers --parse` 逐字输出该实体形态，**GitHub 因邮箱不是合法 `<email>` 形态而不识别为 co-author**，而 `merge_pull_request` 返回 `merged: true` 无任何提示。同一天的 PR #8（`39fa3ef`）尾注正确，可作对照。🔴 **不可修复**：改已在 `master` 上的 commit message 只能 force push，被 ruleset 的 `non_fast_forward` 服务端硬拒，该缺陷永久留在主干 log 里。根因是本 skill 第四步的 message 校验只查「字面量 `\n`」一种格式错误，而经 MCP 传参时新增了一类**转义方向相反**的错误——第四步用 heredoc 直接写文件，从来不需要考虑实体转义 | 手工执行 spec § 6.5 的 squash merge，`commit_message` 参数中误用 `&lt;` `&gt;` | 已优化 | 5.0.0 |

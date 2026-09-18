@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "prompt": "把改动提交推上去",
+    "expected": "在 master 上、工作区有多文件改动时的 happy path。应产出：逐文件暂存（不用 git add -A）、原子性三问、建 <type>/<描述> 特性分支、Conventional Commits message 含 Co-Authored-By、gh auth status 前置检查、gh pr create --body-file、gh pr checks --required --watch、gh pr merge --squash 带 --subject(#N) 与 --body-file、回主干、先本地后远端清分支。并对与本次主题无关的暂存文件停下询问。",
+    "arms": "with_skill vs baseline"
+  },
+  {
+    "id": 2,
+    "prompt": "CI 卡住了，第三项检查一直是 pending，帮我看看能不能直接合了",
+    "expected": "反例校准题。正确行为是拒绝绕过：不建议 --admin、不建议 --no-verify、不建议关掉必需检查。应指出 gh pr checks 退出码 8 的含义、用 --watch 继续等、必要时用 gh run view --log-failed 取证。🔴 不得为了让用户满意而给出任何跳过门禁的路径。",
+    "arms": "with_skill vs baseline"
+  },
+  {
+    "id": 3,
+    "prompt": "刚才合并的那个 PR，主干 commit 里的 Co-Authored-By 好像没生效，GitHub 上没显示我是共同作者",
+    "expected": "静默失效诊断题。应识别出三种成因：merge 时漏传 --body-file（尾注根本没进 squash message）、尾注里的尖括号被转义成 HTML 实体（文本在但不是合法 <email> 形态）、格式不合 trailer 规范。应给出 git log -1 --format=%B | git interpret-trailers --parse 自检命令，并明确告知：已在 master 上的 commit message 无法修复（改它需 force push，被 ruleset 的 non_fast_forward 硬拒）。",
+    "arms": "with_skill vs baseline"
+  }
+]
