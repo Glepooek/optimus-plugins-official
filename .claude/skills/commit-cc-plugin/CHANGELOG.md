@@ -1,5 +1,28 @@
 # Changelog
 
+## [6.0.1] - 2026-09-18
+
+darwin baseline 评估（79.4）后针对 d7/d4 的第一轮优化，外加一处在核对数字时撞见的事实性修正（必需检查项数）。**未改动任何命令、参数或判据**——`gh pr checks --required --watch` 等动作逐字不变，改的是可读性、标记语义与被写错的清单。
+
+按 `skill-conventions.md` §7 跑了 `selfcheck.py --skill-dir .claude/skills/commit-cc-plugin`，得 `failed: [checkpoint_count, dangling_refs]`，逐项核对后确认**三处均为检查器的可移植性缺陷、本 skill 正文无需改动**（正则只认 `**CHECKPOINT**` 紧闭形态、标记定义表行被算作落地点、悬空判定不试仓库根 `.githooks/`）。已记入 `known-issues.md`，归 `sync-cc-tips` 自己的优化轮处理——**没有为让校验变绿而改正文**。
+
+### Added
+- 新增「三种标记的含义」小节，定义 🔴/⛔/⚠️ 三级：🔴 = 必须停下等用户回答或退出；⛔ = 硬性禁令但**无需问人**；⚠️ = 提示。判据是「**有没有人需要回答问题**」而非重要程度——⛔ 标的往往是不可逆的静默失效，只是正确做法唯一
+- 第五步拆出 8 个小标题（前置 / 六个动作 / 动作 2、4 / 动作 3 / 动作 4 / 动作 6 / 不用 --auto / 工作区不干净），最长连续无标题段落从 109 行降到约 25 行
+- 动作 2、4 新增「两处文件来源不同」对照表：**squash body 不要手写**，用 `git show -s --format=%b HEAD` 直接从 commit 取，连「会不会手滑转义」的可能性都消除；PR body 因需另加 `🤖 Generated with` 尾注、与 commit 正文不同，仍用 heredoc 手写。该做法源自 6.0.0 首次实战（PR #52）
+
+### Changed
+- **第五步内部编号由「第 N 步」改为「动作 N」**，并在节首写明该约定。原先「第 3 步」（第五步内部）与「第四步」（顶层）在同一行内出现，指代无从判断——两判官独立指出该缺陷
+- **8 处**非确认型 🔴 降级为 ⛔（多行文本传参、CI 失败停下、合并传参两条、尖括号转义、无法修复、-d 改 -D、清分支顺序）。改前 🔴 出现 16 次、改后 8 次（另 2 次属新增的标记定义表本身），即**改前 16 处里真正需要用户回答的仅 8 处**——符号被复用后真闸口与强调在视觉上无法区分。留下的 8 处是 6 个 CHECKPOINT（L51/60/82/107/218/235）+ 2 个 STOP（L246/247）
+- 第一步 CHECKPOINT 删去对主干保护的整段复述（开篇已讲），GH013 由三处降为两处：L16 定义 + 速查表回指
+- 「绿灯不等于查过了」补一句实测观察：改动落在 `plugins/` 时 `plugin-validate` 耗时明显更长（PR #52 实测 24s vs skipping）
+
+### Fixed
+- **dim8 有效重测完成**（第一轮对照组污染作废后重做）。新设计让**两臂都不读任何文件**、with_skill 由 prompt 内嵌 SKILL.md 摘录，堵住上轮 arm-B 从 `.githooks/README.md` + `ci.yml` + `git log` 重建仓库语境的漏洞。4 份产物交 2 名盲判官按 `test-prompts.json` 的 `expected` 打分，臂别映射由实验者持有。结果：id2 baseline 43.5 vs with_skill 84.5（**Δ+41.0**）、id3 with_skill 84.5 vs baseline 74.0（**Δ+10.5**），dim8 子分 **8.5/10**，`eval_mode: full_test`。⚠️ **本轮未重算 all9 总分**——d7/d4 的结构改动理应影响总分，但那需要完整九维重评，本行只记 dim8
+- **必需检查项数由「五项」修正为「六项」**：服务端 ruleset `master-protection` 实测要求 6 个 context（`gh api repos/:owner/:repo/rulesets/23134670`），`actionlint` 已被勾选进去，而文档侧 5 处仍写「五项」。同批修正 `AGENTS.md` 两处、`tools.md` 一处、`.github/workflows/actionlint.yml` 的注释（后者最严重——它**主动断言**「服务端 ruleset 当前也没有它」，该句已成假）。⚠️ **修法不止于把数字改对**：三处都加了「此处是副本、真源是那条 `gh api`」的标注，否则下次勾选新检查时同样漂移。`CHANGELOG`/`known-issues` 里的「五项」属当时事实，按「跟改即伪造记录」保留不动
+- `results.tsv` 中 commit-cc-plugin 那行的 `commit` 列由 `pending` 回填为真实 sha `085669a`
+- 本轮 Changed 段初稿把降级数写成「12 处」、剩余确认点写成「4 处」，实测为 8 与 8（🔴 出现次数 16 → 10，其中 2 次属新增的标记定义表本身）。数字类声明在写入后逐条复算过
+
 ## [6.0.0] - 2026-09-18
 
 ### Changed

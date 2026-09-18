@@ -168,7 +168,7 @@ Minor/Major 升级前必须用 `darwin-skill` 给改动的 skill 评分：新分
 
 **门禁有两个执行点**：`.githooks/pre-commit` 在本地（需 `git config core.hooksPath .githooks`），`.github/workflows/ci.yml` 在每个 PR 上跑**同一批脚本**——后者不依赖本机配置，补齐了 pre-commit 长期「本地未启用就形同虚设」的缺口。禁止 `--no-verify` 绕过。门禁挂在 hook 而非 skill 正文，是因为 Codex 侧走标准 git 流程读不到 skill，写在 skill 里的检查在 Codex 下完全不生效。
 
-**五个必需检查的 job 名**（`gates-hooks`、`gates-tests`、`gates-data`、`plugin-validate`、`new-skill-eval-case`）**同时被 `ci.yml` 与 GitHub 服务端 ruleset 引用**，而后者不在版本库里、改动不留 diff。🔴 **改 job 名必须同步改 ruleset**，否则那项检查会静默不再被要求——属「不报错的失效形态」。
+**六个必需检查的 job 名**——`ci.yml` 的五项（`gates-hooks`、`gates-tests`、`gates-data`、`plugin-validate`、`new-skill-eval-case`）加 `actionlint.yml` 的 `actionlint`——**由服务端 ruleset `master-protection` 要求，而它不在版本库里、改动不留 diff**。🔴 **改 job 名必须同步改 ruleset**，否则那项检查会静默不再被要求——属「不报错的失效形态」。⚠️ **反方向同样会漂移**：`actionlint` 被勾选为第六项后，本文件与 `commit-cc-plugin/SKILL.md`、`actionlint.yml` 三处都还写着「五项」，直到 2026-09-18 用 `gh api repos/:owner/:repo/rulesets/23134670` 对账才发现。**项数声明处处是副本，真源只有那条 API。**
 
 **新增 skill 必须带 eval case**：`plugins/<plugin>/skills/<skill>/evals/<case>/` 下需有 `prompt.md`（或 `case.yaml`），由 `new-skill-eval-case` job 强制，**存量不回溯**。**活体样本是 `plugins/optimus-frontend-plugin/skills/wpf-code-review/evals/` 的 6 个 case**（`01-listbox-virtualization` 等），照它写即可；规范条款见 `knowledge-base/skill-authoring/rules/03-skill-evaluation.md` § 1。⚠️ 门禁只查 case **存在**，不查内容有没有意义——质量属人工评审。⚠️ 那 6 条的判据是付费 `llm` grader，而 `skill-eval.yml` 缺 `ANTHROPIC_API_KEY`，因此**形态合规但在 CI 里一次都跑不了**——别把它当作「eval 已在 CI 里生效」的证据。
 
@@ -178,7 +178,7 @@ Minor/Major 升级前必须用 `darwin-skill` 给改动的 skill 评分：新分
 
 ## 本地测试
 
-改动 skill / hook / command 后用 `--plugin-dir` 加载本仓做交互验证，见 `test-locally` skill（`/test-locally` 触发）。以下清单本地复现「提交与推送」那五个必需检查中的**三个**——`gates-hooks`、`gates-tests`、`gates-data`；余下 `plugin-validate`（上游 action）与 `new-skill-eval-case`（依赖 PR diff）**无本地等价命令，只能在 PR 上验证**，别把本节跑绿当成 CI 会绿。
+改动 skill / hook / command 后用 `--plugin-dir` 加载本仓做交互验证，见 `test-locally` skill（`/test-locally` 触发）。以下清单本地复现「提交与推送」那六个必需检查中的**三个**——`gates-hooks`、`gates-tests`、`gates-data`；余下 `plugin-validate`（上游 action）、`new-skill-eval-case`（依赖 PR diff）与 `actionlint`（本机未装该二进制）**无本地等价命令，只能在 PR 上验证**，别把本节跑绿当成 CI 会绿。
 
 **七项提交门禁**（对应 `gates-hooks`，CI 逐字复用同一个文件）：
 
