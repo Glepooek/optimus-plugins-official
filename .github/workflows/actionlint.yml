@@ -3,18 +3,21 @@
 # 里含 `#`：YAML 把 ` #` 当注释、静默截断表达式，产出一份**能被 YAML 解析
 # 通过、但 GitHub Actions 拒绝运行**的文件。
 #
-# 🔴 本 job 名（actionlint）**不在** ci.yml 顶部那五项必需检查里，服务端
-#    ruleset 当前也没有它。但它是按「可以成为必需检查」的规格写的：
+# 🔴 本 job 名（actionlint）是服务端 ruleset `master-protection` 的**第 6 项
+#    必需检查**（2026-09-18 `gh api repos/:owner/:repo/rulesets/23134670` 实测，
+#    与 ci.yml 顶部那五项并列）。它按「可以成为必需检查」的规格写：
 #    **刻意不设 paths: 过滤器**，所以每个 PR 都会跑、不会出现未命中而永久
 #    停在 "Expected" 的死锁（判据同 ci.yml 顶部那条红线）。
 #    ⚠️ 因此这里与 dotnet/skills 的同名 workflow 有一处刻意的偏离：那份
 #    带三段 paths:（workflows/actions/actionlint.yaml），因为它不是必需
-#    检查、只求省 runner 时间；本仓宁可每个 PR 多跑十几秒，换「日后想把它
-#    设为必需检查时不必先改文件」。
-#    要真正生效为第 6 项，须在 Settings → Rules → Rulesets → master-protection
-#    的可选列表里**勾选**它（本 workflow 合并并跑过一次后才会出现在列表里）。
+#    检查、只求省 runner 时间；本仓每个 PR 多跑十几秒，换来它能当必需检查用。
+#    ⚠️ 勾选它的正确路径是 Settings → Rules → Rulesets → master-protection
+#    的**可选列表里勾选**（workflow 合并并跑过一次后才会出现在列表里）。
 #    不要手打名字——手打会绕过「先跑一次」这道天然校验，spec § 4.5 记的
 #    skill-eval 混入必需检查正是那条路径的产物。
+#    ⚠️ ruleset 存在服务端、增删不留 diff：本文件这段与 commit-cc-plugin
+#    SKILL.md、AGENTS.md 的项数声明都是**副本而非真源**，曾三处同时停在
+#    「五项」达数日。对账只能靠上面那条 `gh api`。
 #
 # 为什么值得单独立一项：ci.yml 的五项全在校验**仓库内容**（门禁脚本、单测、
 # 数据一致性、插件清单），没有一项校验**CI 自身**。而 workflow 写坏的失效
