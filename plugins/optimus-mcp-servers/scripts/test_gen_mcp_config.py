@@ -41,8 +41,19 @@ class GenMcpConfigTest(unittest.TestCase):
         self.assertNotIn("${", codex)
 
     def test_codex_http_uses_bearer_token_env_var(self):
-        codex = CODEX_TOML.read_text(encoding="utf-8")
-        self.assertIn("bearer_token_env_var = \"GITHUB_TOKEN\"", codex)
+        """当前接入的三台服务器都不需要 Bearer 鉴权，此处只验证渲染逻辑本身。"""
+        cfg = {
+            "env_vars": {"SOME_TOKEN": "示例"},
+            "servers": {
+                "demo": {
+                    "transport": "http",
+                    "url": "https://example.invalid/mcp",
+                    "bearer": "SOME_TOKEN",
+                }
+            },
+        }
+        codex = gen_mcp_config.render_codex(cfg)
+        self.assertIn('bearer_token_env_var = "SOME_TOKEN"', codex)
 
     def test_unauthenticated_http_omits_auth_fields(self):
         cfg = {
@@ -77,9 +88,19 @@ class GenMcpConfigTest(unittest.TestCase):
             readme,
         )
     def test_claude_http_uses_headers_interpolation(self):
-        claude = json.loads(MCP_JSON.read_text(encoding="utf-8"))
-        gh = claude["mcpServers"]["github"]
-        self.assertEqual(gh["headers"]["Authorization"], "Bearer ${GITHUB_TOKEN}")
+        """当前接入的三台服务器都不需要 Bearer 鉴权，此处只验证渲染逻辑本身。"""
+        cfg = {
+            "env_vars": {"SOME_TOKEN": "示例"},
+            "servers": {
+                "demo": {
+                    "transport": "http",
+                    "url": "https://example.invalid/mcp",
+                    "bearer": "SOME_TOKEN",
+                }
+            },
+        }
+        entry = gen_mcp_config.render_claude(cfg)["mcpServers"]["demo"]
+        self.assertEqual(entry["headers"]["Authorization"], "Bearer ${SOME_TOKEN}")
 
     def test_no_argv_token_placeholder(self):
         # 不应再出现依赖 ${VAR} 的 --token 参数（Codex 不展开 ${VAR}）

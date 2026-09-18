@@ -4,7 +4,7 @@
 
 > 面向**开发者使用视角**的 MCP 协议知识库。内容取自 MCP 官方文档站 [modelcontextprotocol.io](https://modelcontextprotocol.io/) 的 `2026-07-28` 版本，覆盖架构概念、server/client 开发、接入方式与授权安全，不收录协议规范的完整技术细节（Schema Reference、SEP 提案、社区治理文档等）。
 
-本领域负责 MCP 协议本身的概念与开发实践；具体 MCP server 的接入配置（如本仓库 `optimus-mcp-servers` 插件已接入的 GitHub/MasterGo/飞书项目）不在本领域范围内，那是各插件自己的配置说明。
+本领域负责 MCP 协议本身的概念与开发实践；具体 MCP server 的接入配置（如本仓库 `optimus-mcp-servers` 插件已接入的 Avalonia Docs/MasterGo/飞书项目）不在本领域范围内，那是各插件自己的配置说明。
 
 ## 文档目的
 
@@ -66,4 +66,4 @@
 
 ## 与仓库已有资产的关系
 
-- `plugins/optimus-mcp-servers/`：本仓库实际接入的 MCP server 配置（GitHub/MasterGo/飞书项目），其 `README.md` 是配置操作指南，与本领域的协议概念知识互补但不重复
+- `plugins/optimus-mcp-servers/`：本仓库实际接入的 MCP server 配置（Avalonia Docs/MasterGo/飞书项目），其 `README.md` 是配置操作指南，与本领域的协议概念知识互补但不重复

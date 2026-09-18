@@ -1,5 +1,24 @@
 # Changelog
 
+## [6.0.0] - 2026-09-18
+
+### Changed
+- **第五步的第 2/3/4 步由 GitHub MCP 全面改为 `gh` CLI**：`create_pull_request` → `gh pr create`、`pull_request_read`（`get_check_runs`）→ `gh pr checks --required --watch --fail-fast`、`merge_pull_request` → `gh pr merge --squash`。第一步 CHECKPOINT 查已有 PR 由 `list_pull_requests` 改为 `gh pr list --head <branch> --state open`
+- `compatibility` 由「需 github MCP server（本仓库 `plugins/optimus-mcp-servers/.mcp.json` 内置）」改为「需 GitHub CLI（`gh`，已通过 `gh auth status` 认证）；不依赖任何 MCP server」；`allowed-tools` 由 `Bash github` 收回为 `Bash`。这是 Major 的依据——运行依赖变了，装了本 skill 但没装 `gh` 的环境会直接卡在第五步
+- 「这是 auto-merge 的等效实现」节改写为「不用 `gh pr merge --auto`」：`gh` 本身支持原生 auto-merge，旧节「MCP 未提供对应工具」的前提已不成立。**新的不采用理由是本仓库 `allow_auto_merge: false`**（2026-09-18 `gh api repos/... --jq .allow_auto_merge` 实测），传 `--auto` 会被服务端拒绝。同时写明打开该开关属仓库配置变更、不在本 skill 职责内
+- 三个静默失效形态的载体随之改写：`commit_message` → `--body-file`、`commit_title` → `--subject`；尖括号那条的成因从「传 JSON 参数时转义」改为「手工拼串或从网页复制时转义」——走 `<<'EOF'` heredoc 写文件不会产生该转义
+
+### Added
+- 第五步开头新增 🔴 **CHECKPOINT「`gh` 可用性」**：跑 `gh auth status`，未安装与未登录分列两种 STOP 处置（均不代为安装或代跑交互式登录）。**刻意排在第 1 步 `git push` 之后**——git 凭据与 `gh` 认证是两套，前者能成功不代表后者可用
+- 第 2/4 步新增 🔴「多行文本一律走 `--body-file`，不用 `--body`」，配 `<<'EOF'` heredoc 示例并说明引号必须有（否则 `$`、反引号、`<` `>` 会被 shell 解释）。这是 CLI 路径**新引入**的失效面，MCP 传 JSON 参数时不存在
+- 第 3 步新增 `gh pr checks` 的退出码判据表（0 全绿 / 8 pending / 4 需认证 / 1 有失败），并写明「判据是退出码，不要读人类可读输出」。8 来自 `gh pr checks --help` 的 Additional exit codes，4 来自 `gh help exit-codes`（2026-09-18 实测 gh 2.101.0）
+- 第 3 步新增 ⚠️ **必须带 `--required`**：不加会把非必需检查一并计入，可选 job 变红即误判为 CI 失败
+- 失败时的取证路径：`gh pr checks --required --json name,bucket,link` 定位失败项 + `gh run view <run-id> --log-failed` 读日志。用 `bucket` 而非裸 `state`——它把各种 state 归并成 pass/fail/pending/skipping/cancel 五类，少一层映射
+- 常见错误表新增 2 条（`gh pr checks` 漏 `--required`、读人类可读输出而非退出码），另 4 条随手段变更改写
+
+### Removed
+- 常见错误表删除「用 `get_status` 轮询 CI」一条：`get_status` / `get_check_runs` 是 MCP `pull_request_read` 的 `method` 取值，`gh pr checks` 无对应参数，该误用形态在 CLI 路径下不存在。原始案例仍保留在 `known-issues.md`
+
 ## [5.0.0] - 2026-09-13
 
 ### Removed

@@ -17,7 +17,7 @@
 | [optimus-prd-plugin](plugins/optimus-prd-plugin) | PRD 全流程：需求文档创建、优化与审查 |
 | [optimus-office-plugin](plugins/optimus-office-plugin) | 文档处理：Word/Excel/PPT/PDF 生成，网页与本地文件转 Markdown |
 | [optimus-devops-plugin](plugins/optimus-devops-plugin) | DevOps：Jenkins 构建、项目分析、周报转写、skill 链接同步；内置 SessionStart（技巧轮播）+ Notification hooks |
-| [optimus-mcp-servers](plugins/optimus-mcp-servers) | MCP 服务集成：GitHub、Avalonia Docs、MasterGo 设计协作、飞书项目 |
+| [optimus-mcp-servers](plugins/optimus-mcp-servers) | MCP 服务集成：Avalonia Docs、MasterGo 设计协作、飞书项目 |
 | [optimus-media-plugin](plugins/optimus-media-plugin) | 音视频处理：分析、转码压缩、裁剪缩放、在线下载与播放预览 |
 | [optimus-decision-plugin](plugins/optimus-decision-plugin) | 工程决策支持：数据结构、算法策略与复杂度分析 |
 | [optimus-session-plugin](plugins/optimus-session-plugin) | 跨会话交接：保存进度、决策与恢复上下文 |
@@ -35,7 +35,7 @@
 | optimus-prd-plugin | 无 |
 | optimus-office-plugin | markitdown、Playwright CLI（网页转 Markdown）、PptxGenJS（PPT 生成）、reportlab + pypdf（PDF 生成）、pandas + openpyxl（Excel 处理）、LibreOffice（文档转换/重算）、.NET SDK + OpenXML SDK（docx-writer） |
 | optimus-devops-plugin | Jenkins（需账号/API Token）、Python `requests` + `pyyaml`、Git（项目分析与周报提取提交记录） |
-| optimus-mcp-servers | GitHub Copilot MCP（`GITHUB_TOKEN`）、Avalonia Docs MCP（无需认证）、MasterGo Magic MCP（`MG_MCP_TOKEN`）、飞书项目 MCP（`MCP_USER_TOKEN`） |
+| optimus-mcp-servers | Avalonia Docs MCP（无需认证）、MasterGo Magic MCP（`MG_MCP_TOKEN`）、飞书项目 MCP（`MCP_USER_TOKEN`） |
 | optimus-media-plugin | ffmpeg/ffprobe（编解码分析与处理）、ffplay（播放预览，需图形显示环境）、yt-dlp（在线视频/音频下载） |
 | optimus-decision-plugin | 无 |
 | optimus-session-plugin | 无 |

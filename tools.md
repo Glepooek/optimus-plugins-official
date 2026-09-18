@@ -2,6 +2,38 @@
 
 ## MCP
 
+### GitHub MCP Server
+
+- **网址**：https://github.com/github/github-mcp-server
+- **简介**：GitHub 官方 MCP server，把 AI 工具直接接到 GitHub 平台上——用自然语言读仓库与代码、处理 issue 与 PR、分析代码、自动化工作流。
+- **开发语言**：Go
+- **核心能力**：
+  - Repository Management：浏览/查询代码、搜索文件、分析提交
+  - Issue & PR Automation：创建与更新 issue / PR、分流、看板维护
+  - CI/CD & Workflow Intelligence：监控 Actions 运行、构建失败、发布
+  - Code Analysis：安全告警、Dependabot alert、代码模式
+  - Team Collaboration：discussion、通知、团队活动
+  - 工具集按需装载：`--toolsets` / `GITHUB_TOOLSETS` 选 toolset（`context`/`actions`/`issues`/`pull_requests`/`repos`/`code_security` 等 20+ 项，默认集为 context+repos+issues+pull_requests+users），`--tools` / `GITHUB_TOOLS` 精确到单个工具；另有只读模式 `--read-only` 与 insiders 抢先模式
+- **安装方式**：
+  远程托管（官方称"最简单的上手方式"），端点 `https://api.githubcopilot.com/mcp/`，支持 OAuth 或 PAT：
+  ```json
+  {
+    "servers": {
+      "github": {
+        "type": "http",
+        "url": "https://api.githubcopilot.com/mcp/",
+        "headers": { "Authorization": "Bearer ${input:github_mcp_pat}" }
+      }
+    }
+  }
+  ```
+  本地 Docker（镜像 `ghcr.io/github/github-mcp-server`）：
+  ```
+  docker run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN=<token> ghcr.io/github/github-mcp-server
+  ```
+  也可 `go build` 从源码构建后跑 `github-mcp-server stdio`。GitHub Enterprise Server 不支持远程托管，须本地部署并用 `--gh-host` / `GITHUB_HOST` 指向自建实例。
+- **备注**：⚠️ **本仓库曾接入远程端点，2026-09-18 已移除**，`commit-cc-plugin` 的 PR 流程改用 GitHub CLI（本仓库已收录）。两者能力高度重叠，取舍理由与 Playwright MCP vs CLI 那条同构——coding agent 场景下 CLI 更省 token（不必把大型 tool schema 塞进上下文），且 `gh` 覆盖了本仓需要的开 PR / 轮询必需检查 / squash merge 三个动作。MCP 的优势在需要持久化状态与迭代式探索的长程 agentic 场景，以及 toolset 粒度的能力裁剪。MIT 许可，GitHub 33k star，最新版本 v1.12.2（2026-09-16）。
+
 ### Playwright MCP
 
 - **网址**：https://github.com/microsoft/playwright-mcp
@@ -33,6 +65,21 @@
 - **备注**：官方 README 明确区分了与 `playwright-cli`（本仓库已收录）的定位——coding agent 场景官方推荐优先用 CLI+SKILLS，因为 CLI 调用更省 token（不需要把大型 tool schema 和冗长 accessibility tree 塞进模型上下文）；MCP 更适合需要持久化状态、迭代式页面结构推理的探索式自动化/自愈测试等长程 agentic 场景。两者同属 Playwright 生态的互补方案，非替代关系。GitHub 35k star，Apache-2.0 许可，最新版本 v0.0.78（2026-07-09）。
 
 ## CLI
+
+### GitHub CLI (gh)
+
+- **网址**：https://github.com/cli/cli
+- **简介**：GitHub 官方命令行工具，README 一句话定位是"`gh` is GitHub on the command line"——把 pull request、issue 等 GitHub 概念搬到终端，与 `git` 和代码放在一起操作。
+- **开发语言**：Go
+- **核心能力**：
+  - 终端内完成 PR、issue 及相关工作流：`gh pr create` / `gh pr checks` / `gh pr merge` / `gh issue` 等
+  - `gh api` 直调任意 REST/GraphQL 端点，覆盖子命令未封装的能力
+  - 自带 agent skill：`gh skill install cli/cli gh --scope user` 安装，`gh skill update gh` 更新
+  - 支持 GitHub.com、GitHub Enterprise Cloud 与受支持的 GitHub Enterprise Server 版本；跨 macOS / Windows / Linux
+  - GitHub 托管的 Actions runner 已预装，按周更新；Codespaces 里加 devcontainer feature `ghcr.io/devcontainers/features/github-cli:1` 即可
+  - 产物可验证：v2.93.0 起 release 不可变，v2.50.0 起产出经 Public Good Sigstore 签名的 Build Provenance Attestation，可用 `gh at verify -R cli/cli <file>` 或 cosign 校验
+- **安装方式**：Windows 用 WinGet；macOS 用 Homebrew；Linux 提供 Debian/Ubuntu/Raspberry Pi 包与 RPM 系（Amazon Linux、CentOS、Fedora、openSUSE、RHEL、SUSE）包；各平台均提供预编译二进制；也可按 `docs/install_source.md` 从源码构建。官方 README 只给出分平台安装文档的链接，未在页面上列出具体命令。
+- **备注**：本仓库 `commit-cc-plugin` skill 的第五步（开 PR → 等五项必需检查 → squash merge）自 6.0.0 起以它为唯一依赖，替换掉原先的 GitHub MCP（后者已从 `optimus-mcp-servers` 移除）。⚠️ 本机实测该仓库 `allow_auto_merge: false`，因此 skill 里刻意不用 `gh pr merge --auto`，改为 `gh pr checks --required --watch` 等待后显式合并。更新方式与卸载方式官方 README 均未给出（只有 agent skill 的 `gh skill update gh`），随各平台包管理器处理。MIT 许可，GitHub 46.3k star，最新版本 v2.101.0（2026-09-15）。
 
 ### Apifox CLI
 
