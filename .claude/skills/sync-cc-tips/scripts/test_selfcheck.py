@@ -101,11 +101,52 @@ class TestCheckpointCount(SelfcheckCase):
         md = SKILL_OK.replace("两个确认点", "三个确认点")
         self.assertFalse(self.run_check(skill_md=md)["checks"]["checkpoint_count"]["ok"])
 
-    def test_missing_declaration_fails(self):
+    def test_missing_declaration_passes(self):
+        """没有声明句不构成缺陷——本检查查的是「声明与实际是否一致」。
+
+        全仓 33 个含 🔴 的 skill 里只有 2 个写这句话，强制要求会让其余 31 个恒报错。
+        这与 CN_RESTATE 当初被改成条件校验是同一个坑，当时只堵了一半。
+        """
         md = SKILL_OK.replace("⚠️ **本流程含 2 个阻塞式人工确认点，不得跳过：**", "")
+        md = md.replace("两个确认点因此始终有人应答。", "")
         chk = self.run_check(skill_md=md)["checks"]["checkpoint_count"]
-        self.assertFalse(chk["ok"])
-        self.assertIn("声明句", chk["errors"][0])
+        self.assertTrue(chk["ok"], chk)
+        self.assertIsNone(chk["declared"])
+        self.assertIn("跳过", chk["skipped"])
+
+    def test_cn_restatement_still_checked_without_digit_declaration(self):
+        """没有数字声明句、但有中文数字复述时，复述仍要与实际落地点数核对。"""
+        md = SKILL_OK.replace("⚠️ **本流程含 2 个阻塞式人工确认点，不得跳过：**", "")
+        md = md.replace("两个确认点", "三个确认点")
+        chk = self.run_check(skill_md=md)["checks"]["checkpoint_count"]
+        self.assertFalse(chk["ok"], chk)
+        self.assertIn("中文数字复述", chk["errors"][0])
+
+    def test_dash_form_counted_as_landing(self):
+        """`**CHECKPOINT — 摘要（…）：**` 把摘要收在同一对星号里，全仓 5 个 skill 在用。
+
+        要求紧跟闭合 `**` 会把它们全部漏掉——commit-cc-plugin 的 6 个确认点曾只认出 1 个。
+        """
+        md = SKILL_OK.replace(
+            "> 🔴 **CHECKPOINT**：写入前展示变更预览。",
+            "🔴 **CHECKPOINT — 遗留暂存文件处理（继续前必须完成）：**",
+        )
+        chk = self.run_check(skill_md=md)["checks"]["checkpoint_count"]
+        self.assertTrue(chk["ok"], chk)
+        self.assertEqual(chk["landing_count"], 2)
+
+    def test_marker_legend_row_not_counted_as_landing(self):
+        """标记图例行（表格**首列**就是标记本身）是定义，不是确认点。
+
+        指令表的首列是触发条件、🔴 落在后面的列，故「首列即标记」可判定为图例。
+        """
+        md = SKILL_OK.replace(
+            "配套文件：",
+            "| 🔴 **CHECKPOINT** / **STOP** | 必须停下 | 不得自行替用户决定 |\n\n配套文件：",
+        )
+        chk = self.run_check(skill_md=md)["checks"]["checkpoint_count"]
+        self.assertTrue(chk["ok"], chk)
+        self.assertEqual(chk["landing_count"], 2)
 
 
 class TestDanglingRefs(SelfcheckCase):
@@ -127,6 +168,66 @@ class TestDanglingRefs(SelfcheckCase):
     def test_external_name_not_treated_as_dangling(self):
         md = SKILL_OK.replace("`known-issues.md`", "`AGENTS.md`")
         self.assertTrue(self.run_check(skill_md=md)["checks"]["dangling_refs"]["ok"])
+
+    def test_data_dir_file_not_dangling(self):
+        """skill 自己的 `data/` 也是候选目录——`folder-map.json` 即在那里。"""
+        md = SKILL_OK.replace("`known-issues.md`", "`folder-map.json`")
+        d, _ = self.make(skill_md=md)
+        (d / "data").mkdir()
+        (d / "data" / "folder-map.json").write_text("{}\n", encoding="utf-8")
+        self.assertTrue(sc.run(d, None)["checks"]["dangling_refs"]["ok"])
+
+    def test_data_dir_absent_file_still_fails(self):
+        """反向：有 data/ 但文件不在里面时仍须报悬空。"""
+        md = SKILL_OK.replace("`known-issues.md`", "`no-such-data.json`")
+        d, _ = self.make(skill_md=md)
+        (d / "data").mkdir()
+        chk = sc.run(d, None)["checks"]["dangling_refs"]
+        self.assertFalse(chk["ok"], chk)
+
+    def test_runtime_artifact_not_dangling(self):
+        """运行时产物（首次执行才生成）的「不存在」是正常态，不判悬空。"""
+        md = SKILL_OK.replace("`known-issues.md`", "`catalog-check-meta.json`")
+        self.assertTrue(self.run_check(skill_md=md)["checks"]["dangling_refs"]["ok"])
+
+    def test_repo_root_githooks_script_not_dangling(self):
+        """引用仓库根 `.githooks/` 下的门禁脚本是正常引用，不是悬空。
+
+        只试 skill 目录内会把 commit-cc-plugin 正文里的 `check_plugin_versions.py`
+        误判为悬空——那个文件确实存在，只是在仓库根而非 skill 目录。
+        """
+        md = SKILL_OK.replace("`known-issues.md`", "`check_plugin_versions.py`")
+        d, tips_path = self.make(skill_md=md)
+        # 造出 <repo>/.githooks/check_plugin_versions.py，skill 在 <repo>/.claude/skills/demo
+        root = d / "repo"
+        (root / ".githooks").mkdir(parents=True)
+        (root / ".githooks" / "check_plugin_versions.py").write_text("x\n", encoding="utf-8")
+        nested = root / ".claude" / "skills" / "demo"
+        nested.mkdir(parents=True)
+        for item in ("SKILL.md", "known-issues.md"):
+            (nested / item).write_text((d / item).read_text(encoding="utf-8"), encoding="utf-8")
+        (nested / "references").mkdir()
+        (nested / "references" / "only-one.md").write_text("x\n", encoding="utf-8")
+
+        chk = sc.run(nested, None)["checks"]["dangling_refs"]
+        self.assertTrue(chk["ok"], chk)
+
+    def test_script_absent_from_githooks_still_fails(self):
+        """反向：仓库根有 .githooks/ 但脚本不在里面时仍须报悬空，别把判据放宽成恒真。"""
+        md = SKILL_OK.replace("`known-issues.md`", "`no-such-gate.py`")
+        d, _ = self.make(skill_md=md)
+        root = d / "repo"
+        (root / ".githooks").mkdir(parents=True)
+        nested = root / ".claude" / "skills" / "demo"
+        nested.mkdir(parents=True)
+        for item in ("SKILL.md", "known-issues.md"):
+            (nested / item).write_text((d / item).read_text(encoding="utf-8"), encoding="utf-8")
+        (nested / "references").mkdir()
+        (nested / "references" / "only-one.md").write_text("x\n", encoding="utf-8")
+
+        chk = sc.run(nested, None)["checks"]["dangling_refs"]
+        self.assertFalse(chk["ok"], chk)
+        self.assertTrue(any("no-such-gate.py" in e for e in chk["errors"]))
 
 
 class TestCategoryShape(SelfcheckCase):

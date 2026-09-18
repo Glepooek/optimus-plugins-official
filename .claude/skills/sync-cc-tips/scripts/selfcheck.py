@@ -43,16 +43,26 @@ CN_TO_INT = {form: n for n, forms in CN_NUM.items() for form in forms}
 # 强制要求它会让所有不用这种措辞的 skill 恒报错（初版即如此，被单测的通过侧抓出）
 CN_RESTATE_RE = re.compile(r"([一二三四五六七八九两])个(?:确认点|阻塞)")
 
-# 🔴 后 30 字符内出现这三种形态之一才算确认点落地点；「见下方 CHECKPOINT」是指针
-CHECKPOINT_RE = re.compile(r"🔴[^|]{0,30}(\*\*CHECKPOINT\*\*|CHECKPOINT[：:]|可协商风险)")
+# 🔴 后 30 字符内出现这三种形态之一才算确认点落地点；「见下方 CHECKPOINT」是指针。
+# `\*\*CHECKPOINT` 不要求紧跟闭合 `**`——`**CHECKPOINT — 摘要（继续前必须完成）：**`
+# 这种把摘要收在同一对星号里的写法全仓有 5 个 skill 在用，要求紧闭会把它们全漏掉。
+CHECKPOINT_RE = re.compile(r"🔴[^|]{0,30}(\*\*CHECKPOINT|CHECKPOINT[：:]|可协商风险)")
+# 标记图例行：表格**首列**就是标记本身（`| 🔴 **CHECKPOINT** / **STOP** | 含义 | …`）。
+# 指令表的首列是触发条件、🔴 落在后面的列，故「首列即标记」可判定为图例而非落地点。
+LEGEND_ROW_RE = re.compile(r"^\s*\|\s*(🔴|⛔|⚠️)")
 DECLARE_DIGIT_RE = re.compile(r"含\s*(\d+)\s*个阻塞式人工确认点")
 BACKTICK_FILE_RE = re.compile(r"`((?:references/|scripts/)?[A-Za-z0-9][A-Za-z0-9._-]*\.(?:md|json|py|sh|jsonl))`")
 JSON_CATEGORY_RE = re.compile(r'"category"\s*:\s*"([^"]*)"')
 
-# 不属本 skill 目录的文件名，正文提到它们是正常引用，不参与悬空判定
+# 不参与悬空判定的文件名，两类：
+# ① **仓库级共享数据**——不在任何单个 skill 目录下，正文提到是正常引用
+# ② **运行时产物**——脚本首次执行才生成，「不存在」是正常态而非缺陷
+#    （`catalog-check-meta.json` 由 `catalog_freshness.py` 写入 `data/`）
 EXTERNAL_NAMES = {
     "AGENTS.md", "CLAUDE.md", "README.md",
     "tips.jsonl", "tips.txt", "plugin.json", "marketplace.json",
+    "catalog.json", "index.jsonl",
+    "catalog-check-meta.json",
     "skill-conventions.md", "doc-conventions.md", "agent-conventions.md",
     "01-skill-format.md", "06-continuous-improvement.md",
     "show-tip.sh", "install.sh", "package_skill.py",
@@ -77,21 +87,31 @@ def check_line_budget(skill_md, known_issues):
 
 
 def check_checkpoints(skill_md):
-    """声明的确认点数（阿拉伯数字与中文数字两处）== 实际落地点数。"""
+    """声明的确认点数（阿拉伯数字与中文数字两处）== 实际落地点数。
+
+    ⚠️ **没有声明句不构成缺陷。** 全仓 33 个含 🔴 的 skill 里只有 2 个写这句话，
+    强制要求会让其余 31 个恒报错——与 CN_RESTATE 那条同一个坑（见文件头注释）。
+    本检查查的是「声明与实际是否一致」，没有声明时不存在可漂移的对象。
+    """
     text = skill_md.read_text(encoding="utf-8")
-    landings = [i + 1 for i, line in enumerate(text.split("\n")) if CHECKPOINT_RE.search(line)]
+    landings = [
+        i + 1
+        for i, line in enumerate(text.split("\n"))
+        if CHECKPOINT_RE.search(line) and not LEGEND_ROW_RE.match(line)
+    ]
     m = DECLARE_DIGIT_RE.search(text)
     res = {"ok": False, "landings": landings, "landing_count": len(landings)}
-    if not m:
-        res["errors"] = ["正文未找到「含 N 个阻塞式人工确认点」声明句"]
-        return res
-    declared = int(m.group(1))
-    res["declared"] = declared
-    errors = []
-    if declared != len(landings):
-        errors.append(f"声明 {declared} 个，实际落地点 {len(landings)} 个（行号 {landings}）")
-    cn_found = sorted({CN_TO_INT[m.group(1)] for m in CN_RESTATE_RE.finditer(text)})
+    cn_found = sorted({CN_TO_INT[x.group(1)] for x in CN_RESTATE_RE.finditer(text)})
     res["cn_restated"] = cn_found
+    errors = []
+    if m:
+        declared = int(m.group(1))
+        res["declared"] = declared
+        if declared != len(landings):
+            errors.append(f"声明 {declared} 个，实际落地点 {len(landings)} 个（行号 {landings}）")
+    else:
+        res["declared"] = None
+        res["skipped"] = "正文未声明确认点数，跳过数目一致性校验（不构成缺陷）"
     for n in cn_found:
         if n != len(landings):
             errors.append(f"中文数字复述与实际不符：正文写「{CN_NUM[n][0]}个确认点」，实际 {len(landings)} 个")
@@ -101,18 +121,37 @@ def check_checkpoints(skill_md):
     return res
 
 
+def _repo_root(skill_dir):
+    """向上找含 `.git` 或 `.githooks` 的目录；找不到返回 None。"""
+    for d in [skill_dir, *skill_dir.parents]:
+        if (d / ".git").exists() or (d / ".githooks").is_dir():
+            return d
+    return None
+
+
 def check_dangling_refs(skill_dir, skill_md):
-    """正文提到的同级/子目录文件真实存在；references/ 下没有无人引用的死文件。"""
+    """正文提到的同级/子目录文件真实存在；references/ 下没有无人引用的死文件。
+
+    ⚠️ 候选路径含 `data/` 与**仓库根的 `.githooks/`**：skill 正文引用自身数据文件
+    （`folder-map.json`）或仓库级门禁脚本（`check_plugin_versions.py`）都是正常
+    引用，只试 `./`、`references/`、`scripts/` 会误判为悬空。
+    """
     text = skill_md.read_text(encoding="utf-8")
+    root = _repo_root(skill_dir)
     errors = []
     mentioned = set()
     for tok in BACKTICK_FILE_RE.findall(text):
         name = tok.rsplit("/", 1)[-1]
         if name in EXTERNAL_NAMES:
             continue
-        cands = [skill_dir / tok, skill_dir / "references" / name, skill_dir / "scripts" / name]
+        cands = [skill_dir / tok, skill_dir / "references" / name,
+                 skill_dir / "scripts" / name, skill_dir / "data" / name]
+        tried = "./、references/、scripts/、data/"
+        if root is not None:
+            cands += [root / ".githooks" / name, root / tok]
+            tried += "、<repo>/.githooks/、<repo>/"
         if not any(c.exists() for c in cands):
-            errors.append(f"正文引用 `{tok}` 但文件不存在（已试 ./、references/、scripts/）")
+            errors.append(f"正文引用 `{tok}` 但文件不存在（已试 {tried}）")
         mentioned.add(name)
     refs_dir = skill_dir / "references"
     if refs_dir.is_dir():
