@@ -2,7 +2,7 @@
 name: commit-cc-plugin
 description: 在 optimus-plugins-official 插件仓库中提交并推送改动时使用。任何涉及此仓库 git 提交/推送的操作，都必须使用此 skill，绝不能用普通 git 工作流替代。触发场景：用户明确表达提交或推送意图，如说"提交"、"推上去"、"push"、"commit"、"保存改动"、"同步到远端"、"帮我提交"、"推到 master"、"推一下"、"存一下"。
 metadata:
-  version: "6.0.1"
+  version: "6.0.2"
   author: desktop client team
   category: workflow
 compatibility: 需要 Git 仓库环境及远程推送权限；需 GitHub CLI（`gh`，已通过 `gh auth status` 认证）用于开 PR、轮询必需检查、squash merge；不依赖任何 MCP server。
@@ -314,7 +314,7 @@ gh run view <run-id> --log-failed    # run-id 取自上一条输出的 link 末�
 
 `bucket` 字段把各种 `state` 归并成 `pass`/`fail`/`pending`/`skipping`/`cancel` 五类，比裸读 `state` 少一层映射。
 
-⚠️ **绿灯本身不等于「查过了」。** 六项里 `plugin-validate` 是增量的：只改 `docs/` 的 PR 上它会打印 `Changed external entries: 0` 与 `Changed in-repo plugin folders: []`，然后 30/40/41 三步全部 `skipping`——绿灯此时几乎不携带关于插件的信息。改动落在 `plugins/` 时才是它发挥作用的时候，那时应能在日志里看到被命中的插件目录名、耗时也明显更长。
+⚠️ **绿灯本身不等于「查过了」。** 六项里 `plugin-validate` 是增量的：只改 `docs/` 的 PR 上它会打印 `Changed external entries: 0` 与 `Changed in-repo plugin folders: []`，然后 30/40/41 三步全部 `skipping`——绿灯此时几乎不携带关于插件的信息。改动落在 `plugins/` 时才是它发挥作用的时候，那时应能在**日志里看到被命中的插件目录名**。⛔ **不要拿耗时当判据**：该 job 的固定开销（checkout、装依赖、拉 action）压过实际校验，跑与不跑的总耗时差不出量级。
 
 ### 动作 4 — 合并
 

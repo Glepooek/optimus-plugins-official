@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.3.3] - 2026-09-18
+
+修 `scripts/selfcheck.py` 的**可移植性缺陷**：`skill-conventions.md` §7 声称 `--skill-dir` 可指向任意 skill，实测对 3 个 skill 误报。**SKILL.md 正文未改动**——缺陷全在检查器一侧，改正文让校验变绿正是 §7 明令禁止的方向。
+
+起因是 `commit-cc-plugin` 6.0.1 优化轮按 §7 跑自检得 `failed: [checkpoint_count, dangling_refs]`，逐项核对后确认本 skill 与那个 skill 的正文都没问题。修完对全部 **7 个维护型 skill 复扫**，又发现两处同类漏判——**只用一个样本验「通用性」等于没验**，这是本轮最该记住的一点。
+
+### Fixed
+- **`CHECKPOINT_RE` 不再要求 `**` 紧闭。** 原正则只认 `**CHECKPOINT**` 与 `CHECKPOINT：`，而 `🔴 **CHECKPOINT — 摘要（继续前必须完成）：**` 这种把摘要收在同一对星号里的写法**全仓有 5 个 skill 在用**（紧闭写法 12 个），`commit-cc-plugin` 的 6 个确认点因此只认出 1 个。改为 `\*\*CHECKPOINT` 前缀匹配
+- **新增 `LEGEND_ROW_RE`，排除标记图例行。** 形如 `| 🔴 **CHECKPOINT** / **STOP** | 含义 | …` 的定义表行被算成落地点——原 `[^|]{0,30}` 只禁 🔴 与 CHECKPOINT **之间**有竖线，行首那根在 🔴 之前。判据取「表格**首列**就是标记本身 → 图例」：指令表的首列是触发条件、🔴 落在后面的列，两者可无歧义区分。⚠️ 刻意没用字符串 hack，判据要能讲清楚为什么
+- **声明句缺失不再判失败。** 「未找到『含 N 个阻塞式人工确认点』」原本直接报错，而**全仓 33 个含 🔴 的 skill 里只有 2 个写这句话**，等于其余 31 个恒报错。改为 `declared = None` + `skipped` 说明。⚠️ 这与 `CN_RESTATE` 当初被改成条件校验是**同一个坑只堵了一半**——那条已因「没有复述不构成缺陷」放宽，声明句本身却仍强制。中文数字复述的一致性校验**独立保留**，没有声明句时照查
+- **悬空判定的候选路径补三类。** ① 仓库根 `.githooks/`（新增 `_repo_root()` 向上找含 `.git` 或 `.githooks` 的目录）——正文引用 `check_plugin_versions.py` 等仓库级门禁脚本是正常引用；② skill 自己的 `data/`——`sync-cc-docs-to-youdaonote` 的 `folder-map.json` 即在那里；③ `EXTERNAL_NAMES` 补 `catalog.json`/`index.jsonl`（仓库级共享数据，与已有的 `tips.jsonl`/`marketplace.json` 同类）与 `catalog-check-meta.json`（**运行时产物**，`catalog_freshness.py` 首次执行才生成，「不存在」是正常态）。⚠️ 这三类性质不同，注释里分开写明，避免后人当成一张白名单随手加
+- 修掉 `check_checkpoints` 里中文数字推导式中遮蔽外层 `m` 的循环变量（改名 `x`）——当时未造成错误，属就近清理本次改动引入的隐患
+
+### Added
+- **9 条单测覆盖上述放宽的双侧**（8 条新增 + 1 条改语义）。放宽判据最危险的失效形态是「修好」与「关掉」在结果上无法区分，故每条放宽都配一条反向测试：`test_script_absent_from_githooks_still_fails`（仓库根有 `.githooks/` 但脚本不在里面 → **仍须报错**）、`test_data_dir_absent_file_still_fails`（同型）、`test_cn_restatement_still_checked_without_digit_declaration`（没有数字声明句时中文复述仍受校验）。正向侧：`test_dash_form_counted_as_landing`、`test_marker_legend_row_not_counted_as_landing`、`test_repo_root_githooks_script_not_dangling`、`test_data_dir_file_not_dangling`、`test_runtime_artifact_not_dangling`。改语义的那条是 `test_missing_declaration_fails` → `test_missing_declaration_passes`，断言由「缺声明句应失败」翻转为「应通过且 `declared is None`」——**原测试锁死的正是本轮要撤掉的那条错误判据**
+- 实跑：`python -m unittest discover -s .claude/skills/sync-cc-tips/scripts -p "test_*.py"` → **`Ran 189 tests` / `OK`**（改前 181，净增 8）。7 个维护型 skill 全量复扫 `ok: true`；`commit-cc-plugin` 的 `landings` 为 `[51, 60, 82, 107, 218, 235]`，正是 6 个真实 CHECKPOINT，图例行（L38）已排除
+
+### Changed
+- 版本判定为 **Patch**：修复检查器误报，SKILL.md 正文、执行流程、确认点数量均未变。**新增的 9 条单测不构成 Minor**——它们测的是既有检查项的既有语义，没有新增用户可见功能
+
 ## [2.3.2] - 2026-09-12
 
 ### Changed
