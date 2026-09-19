@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0] - 2026-09-19
+
+### Changed
+- 写入目标从仓库根目录 `tools.md` 单文件改为 `knowledge-base/tools` 领域：每个工具登记为一条独立 `kind: reference` 条目，五个固定分类（Skill/MCP/CLI/Agent/Plugin）改为不互斥的 `tags` 数组，允许合理新增类别标签
+- Step 4 查重从"读取 tools.md 全文比对"改为 Grep 检索 `knowledge-base/tools/index.jsonl`（`knowledge-base-maintain` 的 `find_duplicates.py` 只处理 `kind: rule`，不适用于本 skill 全为 reference 的条目）
+- Step 6 写入流程改为**强制调用** `knowledge-base-maintain` skill 完成落地（`allowed-tools` 新增 `Skill`），不再手动内联复制其字段/版本号同步步骤——避免该 skill 演进时两处静默失配；本 skill 只决定"写什么"（领域固定 `tools`，`kind` 固定 `reference`），不重复实现"怎么安全写进知识库"
+- 原根目录 `tools.md` 已删除，历史内容迁移至 `knowledge-base/tools/`；`AGENTS.md` 新增"引入新工具前先查已有记录"的触发规则，使这份记录能在决策场景被主动检索，而非仅靠人工翻阅
+
 ## [1.1.1] - 2026-08-30
 
 ### Added

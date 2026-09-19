@@ -160,6 +160,16 @@
       ],
       "reviewed_at": "2026-09-13",
       "notes": "插件这一产物形态本身的机制：plugin.json 清单与组件装配契约、目录硬约束与路径解析、marketplace.json 与七种插件源、版本解析与缓存语义、插件间依赖的版本约束、两套安装推荐协议（CLI hint 与 marketplace relevance）、企业托管治理设置。内容取自官方 plugins / plugins-reference / plugin-marketplaces / plugin-dependencies / plugin-hints / plugin-relevance 六篇 2026-09-12 版本。⚠️ 仅约束 Claude Code；Codex 有自己的 codex plugin 体系与 .codex-plugin/plugin.json，字段与语义均不同，全部条目 applies_to 不含 Codex。四条边界：hook 事件表与输出契约归 claude-code-hooks（本领域只收插件 hook 的声明位置与合并规则）、${CLAUDE_PLUGIN_ROOT} 语义归 claude-code-hooks/rules/02（本领域只收逐组件的字段替换范围）、SKILL.md frontmatter 归 skill-authoring（本领域只收插件内 skill 的命名空间与发现规则）、MCP 协议与安全归 mcp（本领域只收插件捆绑 server 的作用域名形式）。本仓 plugins/*/ 八个插件与根 .claude-plugin/marketplace.json 是**被约束的对象**而非消费者；本仓专属版本约定在 AGENTS.md，与本领域是约定与判据的分层关系。有意不收录 claude plugin * 子命令的完整选项表与 LSP 字段明细——查阅型资料，只收其中构成判断依据的语义"
+    },
+    {
+      "domain": "tools",
+      "title": "工具与资源目录",
+      "categories": ["reference"],
+      "owner": "desktop client team",
+      "status": "active",
+      "consumers": [".claude/skills/record-tools"],
+      "reviewed_at": "2026-09-19",
+      "notes": "记录团队已调研或已使用的外部工具/资源（CLI、MCP server、Skill、Agent、Plugin）的能力、安装方式与取舍理由，纯描述性领域，无规范条款。2026-09-19 从根目录 tools.md 迁移而来，唯一写入方为 .claude/skills/record-tools skill；每个工具一条独立 reference 条目，原固定 5 分类改为 tags 数组承载。与 mcp 领域的区别：mcp 讲协议本身的架构与机制，tools 记录具体产品的评估结论"
     }
   ]
 }
