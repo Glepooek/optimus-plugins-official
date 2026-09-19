@@ -28,6 +28,7 @@
 - **复合 skills 很少见**：仅在 3 个以上阶段且每阶段 >200 行时使用
 - **上线前自检是否配对**：这个 skill 是指导用户完成某事的「引导器」，还是校验已有产物的「传感器」？有没有配对的另一半？避免只造轮子不造刹车
 - **引入新工具前先查已有记录**：新增依赖、接入新 MCP server、引入新 CLI 或评估新工具前，先检索 `knowledge-base/tools/`（`record-tools` skill 维护）有没有现成的调研结论，避免重复调研或重复接入；同时存在 MCP 与 CLI 两种方案时，优先选 CLI（coding agent 场景下更省 token，不必把大型 tool schema 塞进上下文——本仓 `GitHub CLI` 替代 `GitHub MCP Server`、`Playwright CLI` 与 `Playwright MCP` 互补并存两条记录即是该取舍的先例）
+- **子代理委托原样转发**：向专门子 agent（`plugins/*/agents/<name>.md`，如 `dotnet-diagnose`）转发请求时，原样转发输入与输出，不擅自添加评论、总结或解读——agent 独立上下文产出的判断就是结果本身。仅当用户明确要求解读或整合多个来源时才对其输出做加工
 
 ---
 
@@ -179,7 +180,7 @@ Minor/Major 升级前必须用 `darwin-skill` 给改动的 skill 评分：新分
 
 ## 本地测试
 
-改动 skill / hook / command 后用 `--plugin-dir` 加载本仓做交互验证，见 `test-locally` skill（`/test-locally` 触发）。以下清单本地复现「提交与推送」那六个必需检查中的**三个**——`gates-hooks`、`gates-tests`、`gates-data`；余下 `plugin-validate`（上游 action）、`new-skill-eval-case`（依赖 PR diff）与 `actionlint`（本机未装该二进制）**无本地等价命令，只能在 PR 上验证**，别把本节跑绿当成 CI 会绿。
+发起提交前先自我校验，不要默认第一版就是对的——尤其是新增/迁移/重命名文件后的悬空引用（路径、`§ 章节号`、`index.jsonl` 条目与 `anchor`）和正文声明的计数（"共 N 条""六字段"）与实际产出是否一致，这两类错误 CI 能拦住的只是其中机械可判定的子集，遗漏的部分只能靠人工在提交前检查。改动 skill / hook / command 后用 `--plugin-dir` 加载本仓做交互验证，见 `test-locally` skill（`/test-locally` 触发）。以下清单本地复现「提交与推送」那六个必需检查中的**三个**——`gates-hooks`、`gates-tests`、`gates-data`；余下 `plugin-validate`（上游 action）、`new-skill-eval-case`（依赖 PR diff）与 `actionlint`（本机未装该二进制）**无本地等价命令，只能在 PR 上验证**，别把本节跑绿当成 CI 会绿。
 
 **七项提交门禁**（对应 `gates-hooks`，CI 逐字复用同一个文件）：
 
