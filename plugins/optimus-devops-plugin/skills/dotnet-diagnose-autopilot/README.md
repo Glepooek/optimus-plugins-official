@@ -1,6 +1,6 @@
 # dotnet-diagnose-autopilot
 
-> 版本：1.0.0 | 分类：workflow
+> 版本：1.0.1 | 分类：workflow
 
 给定一份原始 .NET 诊断素材，自动识别类型、调度 dotnet-diagnose agent 完成分析，必要时用完全独立的第二次盲态调用交叉验证，产出结构化报告并标记分歧交人工复核。
 

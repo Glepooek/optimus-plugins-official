@@ -2,7 +2,7 @@
 name: dotnet-diagnose-autopilot
 description: 给定一份原始 .NET 诊断素材（崩溃日志、内存转储 SOS 输出、!syncblk 输出、dotnet-counters 时间序列），自动识别素材类型、调度 dotnet-diagnose agent 完成分析；若首次结论强度为"推测"，用完全独立的第二次盲态调用做交叉验证；产出含首次/复核/一致性判定/最终建议的结构化报告并落盘。两次结论不一致时并列展示，标记需人工复核，不擅自取舍。触发词：自主分诊、自动分析这份 dump、帮我判断这个根因靠不靠谱、交叉验证一下这个诊断结论、autopilot triage、autonomous .NET diagnosis。
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   author: desktop client team
   category: workflow
 compatibility: 需要同一工作树内已安装 optimus-devops-plugin 的 dotnet-diagnose agent 与 dotnet-diagnose-triage skill（本 skill 经 Task 工具调度前者，不直接读取判据）。
@@ -157,7 +157,7 @@ $HOME/dd-autopilot/report-<timestamp>.md
 
 `<timestamp>` 格式为 `YYYYMMDD-HHMMSS`（本机当前时间）。落盘前确认该目录存在（若不存在，`Write` 工具会自动创建父目录，无需额外的 `mkdir` 步骤）。诊断素材可能含敏感数据，该路径固定在仓库外，按 `knowledge-base/dotnet-debugging/rules/01-dump-handling.md § 2. 版本库隔离` 不得落进 git 工作树。
 
-报告内容同时在对话中完整输出一份，不仅依赖落盘文件——落盘失败不应挡住结论交付（见"失败处理"）。
+把"报告骨架"一节生成的完整报告——含"素材摘要"/"首次分析"/"复核分析"/"一致性判定"/"最终建议"全部标题与原文——作为最终回复逐字输出，不仅依赖落盘文件：落盘失败不应挡住结论交付（见"失败处理"）。**禁止另行总结、禁止用自己的话复述结论、禁止只挑重点摘要**——早期测试中若这里只写"同时在对话中输出一份"这类笼统措辞，外层会把完整报告压缩成一段自造摘要，导致"首次分析"“复核分析"这些标题段落在最终回复里完全消失，与 Step 2/5 处已修复过的转述总结是同一失效模式。
 
 ## 失败处理
 
