@@ -1,6 +1,6 @@
 # 知识库（knowledge-base）
 
-跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`、`architecture`、`design-patterns`、`data-structures-algorithms`、`mcp`、`dotnet-debugging`、`host-diagnostics`、`claude-code-hooks`、`claude-code-plugin-system`。其中 `dotnet`、`media` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
+跨插件共享的规范知识库，供人类阅读也供 skill 编程式查询。当前收纳领域：`dotnet`、`csharp`、`wpf`、`git`、`media`、`skill-authoring`、`architecture`、`design-patterns`、`data-structures-algorithms`、`mcp`、`dotnet-debugging`、`host-diagnostics`、`claude-code-hooks`、`claude-code-plugin-system`、`tools`。其中 `dotnet`、`media`、`tools` 为纯描述性参考领域（无规范条款），其余领域为规范条款 + 参考混合。
 
 ## 目录结构
 
@@ -47,6 +47,7 @@
 | `host-diagnostics` | 宿主进程**外部**的环境故障取证（模块注入、安全软件拦截、网络不通、硬件资源不足、系统环境劫持） | 与 `dotnet-debugging` 的进程内部取证互补；其 API Hook 条款讲**注入手法**，与 `claude-code-hooks` 同名不同义 |
 | `claude-code-hooks` | Claude Code hook 机制的编写与审查判据（事件选型、输出契约、决策控制、异步边界） | **仅约束 Claude Code，不适用 Codex**；与 `git` 的原生钩子、`host-diagnostics` 的 API Hook 注入手法三者同名而不同义 |
 | `claude-code-plugin-system` | 插件这一产物形态本身的机制：清单与组件装配契约、marketplace 与七种插件源、版本解析与缓存、插件间依赖、安装推荐协议、企业托管治理 | **仅约束 Claude Code，不适用 Codex**；hook 事件表与输出契约、`${CLAUDE_PLUGIN_ROOT}` 语义归 `claude-code-hooks`，SKILL.md frontmatter 归 `skill-authoring`，MCP 协议与安全归 `mcp`；本仓专属版本约定在 `AGENTS.md` |
+| `tools` | 记录已调研或已使用的外部工具/资源（CLI、MCP server、Skill、Agent、Plugin）的能力、安装方式与取舍理由 | 与 `mcp` 同名相关但不同义——`mcp` 讲协议本身的架构与机制，本领域记录具体某个 MCP server/CLI 产品的评估结论；纯描述性领域，无规范条款 |
 
 ## 消费方式
 
@@ -177,6 +178,7 @@ skill 需要引用某条规范/知识时，先用 Grep 在对应领域的 `index
 | `plugins/optimus-devops-plugin/skills/dotnet-diagnose-triage` | `dotnet-debugging`、`wpf` | 动态检索 |
 | `.githooks/check_hook_configs.py` | `claude-code-hooks` | 脚本型消费者；报错携带索引条目 ID。注意 `plugins/*/hooks/` 三处配置是**被约束的对象**，不是消费者 |
 | `.githooks/check_external_entries.py` | `claude-code-plugin-system` | 脚本型消费者；报错携带索引条目 ID。注意 `.claude-plugin/marketplace.json` 与 `plugins/*/` 八个插件是**被约束的对象**，不是消费者 |
+| `.claude/skills/record-tools` | `tools` | 唯一写入方；新增工具前先查重、写入后同步索引 |
 
 ### 目前无消费者的领域
 

@@ -27,6 +27,7 @@
 - **Skills 可相互引用**：子 skill 用相对路径，跨插件用绝对命名空间
 - **复合 skills 很少见**：仅在 3 个以上阶段且每阶段 >200 行时使用
 - **上线前自检是否配对**：这个 skill 是指导用户完成某事的「引导器」，还是校验已有产物的「传感器」？有没有配对的另一半？避免只造轮子不造刹车
+- **引入新工具前先查已有记录**：新增依赖、接入新 MCP server、引入新 CLI 或评估新工具前，先检索 `knowledge-base/tools/`（`record-tools` skill 维护）有没有现成的调研结论，避免重复调研或重复接入；同时存在 MCP 与 CLI 两种方案时，优先选 CLI（coding agent 场景下更省 token，不必把大型 tool schema 塞进上下文——本仓 `GitHub CLI` 替代 `GitHub MCP Server`、`Playwright CLI` 与 `Playwright MCP` 互补并存两条记录即是该取舍的先例）
 
 ---
 
